@@ -4,6 +4,118 @@ require_once 'config.php';
 
 // Page title
 $pageTitle = 'Residents';
+
+// ============================================
+// Database Connection
+// ============================================
+try {
+    $pdo = new PDO(
+        "mysql:host=" . DB_HOST . ";dbname=" . DB_NAME . ";charset=utf8mb4",
+        DB_USER,
+        DB_PASS,
+        [
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+            PDO::ATTR_EMULATE_PREPARES => false
+        ]
+    );
+} catch (PDOException $e) {
+    die("Database connection failed: " . $e->getMessage());
+}
+
+// ============================================
+// Helper Functions
+// ============================================
+
+/**
+ * Calculate age from date of birth
+ */
+function calculateAge($dateOfBirth) {
+    if (empty($dateOfBirth)) return 0;
+    $dob = new DateTime($dateOfBirth);
+    $now = new DateTime();
+    return $now->diff($dob)->y;
+}
+
+/**
+ * Generate formatted resident ID
+ */
+function generateResidentId($id) {
+    // Format: W-00000 (W- followed by 5 random numbers)
+    // Use the database ID to generate a consistent 5-digit number
+    $fiveDigitNumber = str_pad($id % 100000, 5, '0', STR_PAD_LEFT);
+    return "W-{$fiveDigitNumber}";
+}
+
+/**
+ * Get initials from name
+ */
+function getInitials($firstName, $lastName) {
+    $first = !empty($firstName) ? strtoupper(substr($firstName, 0, 1)) : '';
+    $last = !empty($lastName) ? strtoupper(substr($lastName, 0, 1)) : '';
+    return $first . $last;
+}
+
+/**
+ * Get avatar color class based on index
+ */
+function getAvatarColor($index) {
+    $colors = ['blue', 'pink', 'teal', 'yellow', 'green', 'orange', 'lime', 'indigo', 'cyan', 'purple'];
+    return 'avatar-' . $colors[$index % count($colors)];
+}
+
+/**
+ * Format full name
+ */
+function formatFullName($firstName, $middleName, $lastName, $suffix) {
+    $name = trim($firstName);
+    if (!empty($middleName)) {
+        $name .= ' ' . trim($middleName);
+    }
+    $name .= ' ' . trim($lastName);
+    if (!empty($suffix)) {
+        $name .= ' ' . trim($suffix);
+    }
+    return $name;
+}
+
+// ============================================
+// Fetch Residents Data
+// ============================================
+$residents = [];
+$totalResidents = 0;
+
+try {
+    // Get total count
+    $countStmt = $pdo->query("SELECT COUNT(*) as total FROM residents");
+    $totalResidents = $countStmt->fetch()['total'];
+    
+    // Fetch residents data
+    $stmt = $pdo->prepare("
+        SELECT 
+            id,
+            resident_id,
+            photo,
+            first_name,
+            middle_name,
+            last_name,
+            suffix,
+            sex,
+            date_of_birth,
+            verification_status,
+            voter_status,
+            activity_status
+        FROM residents
+        ORDER BY created_at DESC
+    ");
+    
+    $stmt->execute();
+    $residents = $stmt->fetchAll();
+    
+} catch (PDOException $e) {
+    error_log("Error fetching residents: " . $e->getMessage());
+    $residents = [];
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -46,10 +158,10 @@ $pageTitle = 'Residents';
             
             <!-- Filter Tabs -->
             <div class="filter-tabs">
-                <button class="tab-btn" data-filter="all">All</button>
+                <button class="tab-btn active" data-filter="all">All</button>
                 <button class="tab-btn" data-filter="verified">Verified</button>
                 <button class="tab-btn" data-filter="voters">Voters</button>
-                <button class="tab-btn active" data-filter="active">Active</button>
+                <button class="tab-btn" data-filter="active">Active</button>
             </div>
             
             <!-- Search and Filter Bar -->
@@ -85,7 +197,12 @@ $pageTitle = 'Residents';
                 <table class="data-table residents-table" id="residentsTable">
                     <thead>
                         <tr>
-                            <th>Full Name</th>
+                            <th class="header-with-info">
+                                <span class="header-text">
+                                    Full Name
+                                    <i class="fas fa-info-circle" title="Click on any resident name to view their profile"></i>
+                                </span>
+                            </th>
                             <th>Resident ID</th>
                             <th>Verification Status</th>
                             <th>Voter Status</th>
@@ -96,197 +213,73 @@ $pageTitle = 'Residents';
                         </tr>
                     </thead>
                     <tbody id="residentsTableBody">
-                        <!-- Sample data rows -->
-                        <tr>
-                            <td>
-                                <div class="resident-name">
-                                    <span class="avatar avatar-blue">LE</span>
-                                    <span>Laboriosam Enim Pos Sed Ad Magnam Aliqui</span>
-                                </div>
-                            </td>
-                            <td>BRY-DACD6-ECF4C</td>
-                            <td><span class="badge badge-pending">Pending</span></td>
-                            <td><span class="badge badge-no">No</span></td>
-                            <td>11/07/2025 - 0</td>
-                            <td>Male</td>
-                            <td><span class="badge badge-active">Active</span></td>
-                            <td>
-                                <button class="btn-action">
-                                    <i class="fas fa-ellipsis-h"></i>
-                                </button>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <div class="resident-name">
-                                    <span class="avatar avatar-pink">LS</span>
-                                    <span>Ladarius Schroeder</span>
-                                </div>
-                            </td>
-                            <td>BRY-91F51-21BEF</td>
-                            <td><span class="badge badge-verified">Verified</span></td>
-                            <td><span class="badge badge-no">No</span></td>
-                            <td>07/31/1982 - 43</td>
-                            <td>Female</td>
-                            <td><span class="badge badge-active">Active</span></td>
-                            <td>
-                                <button class="btn-action">
-                                    <i class="fas fa-ellipsis-h"></i>
-                                </button>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <div class="resident-name">
-                                    <span class="avatar avatar-teal">UC</span>
-                                    <span>Uriah Conn</span>
-                                </div>
-                            </td>
-                            <td>BRY-A2309-F0D48</td>
-                            <td><span class="badge badge-pending">Pending</span></td>
-                            <td><span class="badge badge-yes">Yes</span></td>
-                            <td>11/29/1954 - 71</td>
-                            <td>Other</td>
-                            <td><span class="badge badge-active">Active</span></td>
-                            <td>
-                                <button class="btn-action">
-                                    <i class="fas fa-ellipsis-h"></i>
-                                </button>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <div class="resident-name">
-                                    <span class="avatar avatar-yellow">BG</span>
-                                    <span>Braeden Grimes</span>
-                                </div>
-                            </td>
-                            <td>BRY-8F932-33D80</td>
-                            <td><span class="badge badge-pending">Pending</span></td>
-                            <td><span class="badge badge-yes">Yes</span></td>
-                            <td>05/15/2003 - 22</td>
-                            <td>Female</td>
-                            <td><span class="badge badge-active">Active</span></td>
-                            <td>
-                                <button class="btn-action">
-                                    <i class="fas fa-ellipsis-h"></i>
-                                </button>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <div class="resident-name">
-                                    <span class="avatar avatar-green">HG</span>
-                                    <span>Hallie Gleason</span>
-                                </div>
-                            </td>
-                            <td>BRY-5B196-D4DF2</td>
-                            <td><span class="badge badge-verified">Verified</span></td>
-                            <td><span class="badge badge-yes">Yes</span></td>
-                            <td>05/05/1962 - 63</td>
-                            <td>Male</td>
-                            <td><span class="badge badge-active">Active</span></td>
-                            <td>
-                                <button class="btn-action">
-                                    <i class="fas fa-ellipsis-h"></i>
-                                </button>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <div class="resident-name">
-                                    <span class="avatar avatar-orange">JK</span>
-                                    <span>Jules Koch</span>
-                                </div>
-                            </td>
-                            <td>BRY-CA0E1-51713</td>
-                            <td><span class="badge badge-verified">Verified</span></td>
-                            <td><span class="badge badge-no">No</span></td>
-                            <td>10/15/2008 - 17</td>
-                            <td>Male</td>
-                            <td><span class="badge badge-active">Active</span></td>
-                            <td>
-                                <button class="btn-action">
-                                    <i class="fas fa-ellipsis-h"></i>
-                                </button>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <div class="resident-name">
-                                    <span class="avatar avatar-lime">MS</span>
-                                    <span>Maymie Stamm</span>
-                                </div>
-                            </td>
-                            <td>BRY-7B96B-93196</td>
-                            <td><span class="badge badge-verified">Verified</span></td>
-                            <td><span class="badge badge-yes">Yes</span></td>
-                            <td>01/10/1969 - 56</td>
-                            <td>Male</td>
-                            <td><span class="badge badge-active">Active</span></td>
-                            <td>
-                                <button class="btn-action">
-                                    <i class="fas fa-ellipsis-h"></i>
-                                </button>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <div class="resident-name">
-                                    <span class="avatar avatar-indigo">AG</span>
-                                    <span>Annie Gibson</span>
-                                </div>
-                            </td>
-                            <td>BRY-C5B7A-171DA</td>
-                            <td><span class="badge badge-rejected">Rejected</span></td>
-                            <td><span class="badge badge-no">No</span></td>
-                            <td>04/27/1992 - 33</td>
-                            <td>Other</td>
-                            <td><span class="badge badge-active">Active</span></td>
-                            <td>
-                                <button class="btn-action">
-                                    <i class="fas fa-ellipsis-h"></i>
-                                </button>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <div class="resident-name">
-                                    <span class="avatar avatar-cyan">GB</span>
-                                    <span>Gerardo Boyle</span>
-                                </div>
-                            </td>
-                            <td>BRY-4BA4F-23A09</td>
-                            <td><span class="badge badge-verified">Verified</span></td>
-                            <td><span class="badge badge-yes">Yes</span></td>
-                            <td>10/12/2009 - 16</td>
-                            <td>Male</td>
-                            <td><span class="badge badge-active">Active</span></td>
-                            <td>
-                                <button class="btn-action">
-                                    <i class="fas fa-ellipsis-h"></i>
-                                </button>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <div class="resident-name">
-                                    <span class="avatar avatar-purple">KL</span>
-                                    <span>Kyla Leuschke</span>
-                                </div>
-                            </td>
-                            <td>BRY-2A6F9-92EE6</td>
-                            <td><span class="badge badge-pending">Pending</span></td>
-                            <td><span class="badge badge-no">No</span></td>
-                            <td>02/14/2003 - 22</td>
-                            <td>Other</td>
-                            <td><span class="badge badge-active">Active</span></td>
-                            <td>
-                                <button class="btn-action">
-                                    <i class="fas fa-ellipsis-h"></i>
-                                </button>
-                            </td>
-                        </tr>
+                        <?php if (empty($residents)): ?>
+                            <!-- Empty state -->
+                            <tr>
+                                <td colspan="8" style="text-align: center; padding: 40px;">
+                                    <i class="fas fa-users" style="font-size: 48px; color: #d1d5db; margin-bottom: 16px;"></i>
+                                    <p style="color: #6b7280; font-size: 16px; margin: 0;">No residents found</p>
+                                    <p style="color: #9ca3af; font-size: 14px; margin-top: 8px;">Start by adding a new resident</p>
+                                </td>
+                            </tr>
+                        <?php else: ?>
+                            <?php foreach ($residents as $index => $resident): 
+                                // Prepare data
+                                $fullName = formatFullName(
+                                    $resident['first_name'], 
+                                    $resident['middle_name'], 
+                                    $resident['last_name'], 
+                                    $resident['suffix']
+                                );
+                                $initials = getInitials($resident['first_name'], $resident['last_name']);
+                                $avatarColor = getAvatarColor($index);
+                                // Use resident_id from database, or generate if not set
+                                $residentId = !empty($resident['resident_id']) ? $resident['resident_id'] : generateResidentId($resident['id']);
+                                $age = calculateAge($resident['date_of_birth']);
+                                $dob = !empty($resident['date_of_birth']) ? date('m/d/Y', strtotime($resident['date_of_birth'])) : 'N/A';
+                                
+                                // Badge classes
+                                $verificationBadge = 'badge-' . strtolower($resident['verification_status']);
+                                $voterBadge = ($resident['voter_status'] === 'Yes') ? 'badge-yes' : 'badge-no';
+                                $activityBadge = 'badge-' . strtolower($resident['activity_status']);
+                            ?>
+                            <tr>
+                                <td>
+                                    <a href="resident_profile.php?id=<?php echo htmlspecialchars($resident['id']); ?>" class="resident-name-link">
+                                        <div class="resident-name">
+                                            <span class="avatar <?php echo htmlspecialchars($avatarColor); ?>">
+                                                <?php echo htmlspecialchars($initials); ?>
+                                            </span>
+                                            <span><?php echo htmlspecialchars($fullName); ?></span>
+                                        </div>
+                                    </a>
+                                </td>
+                                <td><?php echo htmlspecialchars($residentId); ?></td>
+                                <td>
+                                    <span class="badge <?php echo htmlspecialchars($verificationBadge); ?>">
+                                        <?php echo htmlspecialchars($resident['verification_status']); ?>
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="badge <?php echo htmlspecialchars($voterBadge); ?>">
+                                        <?php echo htmlspecialchars($resident['voter_status'] ?: 'No'); ?>
+                                    </span>
+                                </td>
+                                <td><?php echo htmlspecialchars($dob . ' - ' . $age); ?></td>
+                                <td><?php echo htmlspecialchars($resident['sex']); ?></td>
+                                <td>
+                                    <span class="badge <?php echo htmlspecialchars($activityBadge); ?>">
+                                        <?php echo htmlspecialchars($resident['activity_status']); ?>
+                                    </span>
+                                </td>
+                                <td>
+                                    <button class="btn-action" data-resident-id="<?php echo htmlspecialchars($resident['id']); ?>">
+                                        <i class="fas fa-ellipsis-h"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
                     </tbody>
                 </table>
             </div>
@@ -294,7 +287,7 @@ $pageTitle = 'Residents';
             <!-- Pagination -->
             <div class="pagination-container">
                 <div class="pagination-info">
-                    <span>TOTAL: <strong>16,722</strong></span>
+                    <span>TOTAL: <strong><?php echo number_format($totalResidents); ?></strong></span>
                 </div>
                 <div class="pagination">
                     <button class="page-btn" disabled>
@@ -314,6 +307,7 @@ $pageTitle = 'Residents';
             </div>
         </div>
     </main>
+    
     
     <!-- Custom JavaScript -->
     <script src="js/script.js"></script>

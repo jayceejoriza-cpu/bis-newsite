@@ -23,7 +23,7 @@ define('BARANGAY_LOGO', 'assets/images/logo.png');
 
 // Database Configuration (for future use)
 define('DB_HOST', 'localhost');
-define('DB_NAME', 'barangay_db');
+define('DB_NAME', 'bmis');
 define('DB_USER', 'root');
 define('DB_PASS', '');
 

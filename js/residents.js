@@ -185,8 +185,8 @@ function initializeButtons() {
 }
 
 function showCreateResidentModal() {
-    // TODO: Implement modal
-    alert('Create Resident Modal\n\nThis will open a form to add a new resident with fields:\n- Full Name\n- Date of Birth\n- Sex\n- Address\n- Contact Information\n- Voter Status\n- etc.');
+    // Redirect to create resident page
+    window.location.href = 'create-resident.php';
 }
 
 function showAdvancedFilters() {
@@ -314,13 +314,27 @@ function showActionMenu(row, button) {
 function handleAction(action, name, id, row) {
     console.log(`Action: ${action} for ${name} (${id})`);
     
+    // Get the actual database ID from the row
+    const actionBtn = row.querySelector('.btn-action');
+    const residentId = actionBtn ? actionBtn.getAttribute('data-resident-id') : null;
+    
     switch(action) {
         case 'view':
-            alert(`View Details\n\nResident: ${name}\nID: ${id}\n\nThis will open a detailed view of the resident's information.`);
+            if (residentId) {
+                // Navigate to resident profile page
+                window.location.href = `resident_profile.php?id=${residentId}`;
+            } else {
+                showNotification('Unable to load resident details', 'error');
+            }
             break;
             
         case 'edit':
-            alert(`Edit Resident\n\nResident: ${name}\nID: ${id}\n\nThis will open an edit form with the resident's current information.`);
+            if (residentId) {
+                // Navigate to edit resident page
+                window.location.href = `edit-resident.php?id=${residentId}`;
+            } else {
+                showNotification('Unable to load resident details', 'error');
+            }
             break;
             
         case 'print':
@@ -340,6 +354,7 @@ function handleAction(action, name, id, row) {
             break;
     }
 }
+
 
 // ===================================
 // Utility Functions
