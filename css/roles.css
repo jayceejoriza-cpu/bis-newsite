@@ -1,0 +1,242 @@
+/* ===================================
+   Roles & Permissions Page Styles
+   =================================== */
+
+.page-header {
+    margin-bottom: 25px;
+}
+
+/* Action Bar */
+.action-bar {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 25px;
+}
+
+.btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: var(--transition);
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-primary {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.btn-primary:hover {
+    background-color: #2563eb;
+    box-shadow: var(--shadow-md);
+}
+
+.btn-icon {
+    padding: 10px;
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    min-width: 40px;
+    justify-content: center;
+}
+
+.btn-icon:hover {
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+}
+
+/* Search Box */
+.search-box {
+    position: relative;
+    flex: 1;
+    max-width: 400px;
+}
+
+.search-box i.fa-search {
+    position: absolute;
+    left: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-secondary);
+    font-size: 14px;
+}
+
+.search-box input {
+    width: 100%;
+    padding: 10px 40px 10px 45px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    font-size: 14px;
+    color: var(--text-primary);
+    background-color: var(--bg-secondary);
+    transition: var(--transition);
+}
+
+.search-box input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.search-box input::placeholder {
+    color: var(--text-secondary);
+}
+
+.btn-clear {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: 5px;
+    display: none;
+}
+
+.search-box input:not(:placeholder-shown) ~ .btn-clear {
+    display: block;
+}
+
+.btn-clear:hover {
+    color: var(--text-primary);
+}
+
+/* Table Container */
+.table-container {
+    background-color: var(--bg-secondary);
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+}
+
+/* Data Table */
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.data-table thead {
+    background-color: var(--bg-primary);
+}
+
+.data-table th {
+    padding: 15px 20px;
+    text-align: left;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.data-table th.text-right {
+    text-align: right;
+}
+
+.data-table tbody tr {
+    border-bottom: 1px solid var(--border-color);
+    transition: var(--transition);
+}
+
+.data-table tbody tr:last-child {
+    border-bottom: none;
+}
+
+.data-table tbody tr:hover {
+    background-color: var(--bg-primary);
+}
+
+.data-table td {
+    padding: 18px 20px;
+    font-size: 14px;
+    color: var(--text-primary);
+}
+
+.data-table td.text-right {
+    text-align: right;
+}
+
+/* Role Name Badges */
+.role-name {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    background-color: #e5e7eb;
+    color: var(--text-primary);
+}
+
+.role-name.role-admin {
+    background-color: #fef3c7;
+    color: #92400e;
+}
+
+.role-name.role-kagawad {
+    background-color: #e9d5ff;
+    color: #6b21a8;
+}
+
+/* Action Button */
+.btn-action {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: 8px 12px;
+    border-radius: 6px;
+    transition: var(--transition);
+}
+
+.btn-action:hover {
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .action-bar {
+        flex-wrap: wrap;
+    }
+    
+    .search-box {
+        order: 3;
+        flex: 1 1 100%;
+        max-width: 100%;
+    }
+    
+    .table-container {
+        overflow-x: auto;
+    }
+    
+    .data-table {
+        min-width: 600px;
+    }
+}
+
+@media (max-width: 480px) {
+    .btn {
+        padding: 8px 16px;
+        font-size: 13px;
+    }
+    
+    .btn-primary i {
+        display: none;
+    }
+    
+    .data-table th,
+    .data-table td {
+        padding: 12px 15px;
+        font-size: 13px;
+    }
+}

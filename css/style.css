@@ -636,6 +636,169 @@ body {
 }
 
 /* ===================================
+   Common Components
+   =================================== */
+
+/* Search Box */
+.search-box {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.search-box input {
+    padding: 10px 40px 10px 40px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    font-size: 14px;
+    color: var(--text-primary);
+    background-color: var(--bg-secondary);
+    transition: var(--transition);
+    width: 100%;
+}
+
+.search-box input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.search-box input::placeholder {
+    color: var(--text-secondary);
+}
+
+.search-box i.fa-search {
+    position: absolute;
+    left: 12px;
+    color: var(--text-secondary);
+    font-size: 14px;
+    pointer-events: none;
+}
+
+.btn-clear {
+    position: absolute;
+    right: 8px;
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-clear:hover {
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+}
+
+/* Icon Buttons */
+.btn-icon {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--border-color);
+    background-color: var(--bg-secondary);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: var(--transition);
+    color: var(--text-secondary);
+    font-size: 16px;
+}
+
+.btn-icon:hover {
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    border-color: var(--primary-color);
+}
+
+.btn-icon:active {
+    transform: scale(0.95);
+}
+
+/* Primary Button */
+.btn-primary {
+    padding: 10px 20px;
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: var(--transition);
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-primary:hover {
+    background-color: #2563eb;
+    box-shadow: var(--shadow-md);
+}
+
+.btn-primary:active {
+    transform: scale(0.98);
+}
+
+/* Data Table */
+.data-table {
+    width: 100%;
+    background-color: var(--bg-secondary);
+    border-radius: 12px;
+}
+
+.data-table thead {
+    background-color: var(--bg-primary);
+}
+
+.data-table th {
+    text-align: left;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    font-size: 11px;
+    letter-spacing: 0.5px;
+    padding: 12px 15px;
+}
+
+.data-table td {
+    padding: 12px 15px;
+    color: var(--text-primary);
+    border-top: 1px solid var(--border-color);
+}
+
+.data-table tbody tr {
+    transition: var(--transition);
+}
+
+.data-table tbody tr:hover {
+    background-color: var(--bg-primary);
+}
+
+/* Action Button */
+.btn-action {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: 6px 10px;
+    border-radius: 6px;
+    transition: var(--transition);
+    font-size: 16px;
+}
+
+.btn-action:hover {
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+}
+
+/* ===================================
    Animations
    =================================== */
 @keyframes fadeIn {
