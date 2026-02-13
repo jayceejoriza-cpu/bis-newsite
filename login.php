@@ -67,8 +67,79 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="login.css">
+    <style>
+        /* Dark Mode Toggle Button */
+        .dark-mode-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            font-size: 1.5rem;
+            color: #4b5563;
+            transition: color 0.3s ease;
+            z-index: 1000;
+        }
+        
+        .dark-mode-toggle:hover {
+            color: #111827;
+        }
+
+        /* Dark Mode Styles */
+        body.dark-mode {
+            background-color: #111827;
+            color: #f3f4f6;
+        }
+        
+        body.dark-mode .dark-mode-toggle {
+            color: #fbbf24;
+        }
+        
+        body.dark-mode .dark-mode-toggle:hover {
+            color: #f59e0b;
+        }
+        
+        body.dark-mode .login-card {
+            background-color: #1f2937;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -2px rgba(0, 0, 0, 0.3);
+        }
+        
+        body.dark-mode h2, 
+        body.dark-mode h3,
+        body.dark-mode label {
+            color: #f3f4f6;
+        }
+        
+        body.dark-mode .subtitle,
+        body.dark-mode .text-muted {
+            color: #9ca3af !important;
+        }
+        
+        body.dark-mode .input-wrapper {
+            background-color: #374151;
+            border: 1px solid #4b5563;
+        }
+        
+        body.dark-mode .input-wrapper input {
+            color: #f3f4f6;
+            background-color: transparent;
+        }
+        
+        body.dark-mode .input-wrapper input::placeholder {
+            color: #9ca3af;
+        }
+        
+        body.dark-mode .input-icon {
+            color: #9ca3af;
+        }
+    </style>
 </head>
 <body>
+
+<button id="darkModeToggle" class="dark-mode-toggle" title="Toggle Dark Mode">
+    <i class="fas fa-moon"></i>
+</button>
 
 <div class="login-card">
 
@@ -113,6 +184,40 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     </form>
 
 </div>
+
+<script>
+    const toggleBtn = document.getElementById('darkModeToggle');
+    const body = document.body;
+    const icon = toggleBtn.querySelector('i');
+
+    // Check for saved user preference
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'dark') {
+        enableDarkMode();
+    }
+
+    toggleBtn.addEventListener('click', () => {
+        if (body.classList.contains('dark-mode')) {
+            disableDarkMode();
+        } else {
+            enableDarkMode();
+        }
+    });
+
+    function enableDarkMode() {
+        body.classList.add('dark-mode');
+        icon.classList.remove('fa-moon');
+        icon.classList.add('fa-sun');
+        localStorage.setItem('theme', 'dark');
+    }
+
+    function disableDarkMode() {
+        body.classList.remove('dark-mode');
+        icon.classList.remove('fa-sun');
+        icon.classList.add('fa-moon');
+        localStorage.setItem('theme', 'light');
+    }
+</script>
 
 </body>
 </html>
