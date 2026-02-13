@@ -1,0 +1,118 @@
+<?php
+require_once 'config.php';
+
+// If already logged in, go to dashboard
+if (isset($_SESSION['user_id'])) {
+    header("Location: index.php");
+    exit();
+}
+
+$error = "";
+
+if ($_SERVER["REQUEST_METHOD"] === "POST") {
+
+    $username = trim($_POST['username']);
+    $password = trim($_POST['password']);
+
+    if (!empty($username) && !empty($password)) {
+
+        $stmt = $conn->prepare("SELECT * FROM users WHERE username = ? LIMIT 1");
+        $stmt->bind_param("s", $username);
+        $stmt->execute();
+        $result = $stmt->get_result();
+
+        if ($result->num_rows === 1) {
+
+            $user = $result->fetch_assoc();
+
+            // Check if account is Active
+            if ($user['status'] !== 'Active') {
+                $error = "Your account is inactive. Please contact administrator.";
+            }
+            // Verify password
+            elseif (password_verify($password, $user['password'])) {
+
+                // Store session data
+                $_SESSION['user_id']   = $user['id'];
+                $_SESSION['username']  = $user['username'];
+                $_SESSION['full_name'] = $user['full_name'];
+                $_SESSION['role']      = $user['role'];
+
+                header("Location: index.php");
+                exit();
+            } 
+            else {
+                $error = "Invalid password.";
+            }
+
+        } else {
+            $error = "User not found.";
+        }
+
+        $stmt->close();
+    } else {
+        $error = "All fields are required.";
+    }
+}
+?>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - <?php echo SITE_NAME; ?></title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="login.css">
+</head>
+<body>
+
+<div class="login-card">
+
+    <div class="logo-section">
+        <img src="image/brgylogo.jpg" alt="Logo">
+        <div>
+            <h3>BARANGGAY WAWANDUE, TARIMA NI MIMON</h3>
+            <p class="text-muted">Barangay Information System</p>
+        </div>
+    </div>
+
+    <h2>Sign In</h2>
+    <p class="subtitle">Please login to your account</p>
+
+    <form method="POST">
+
+        <div class="input-group">
+            <label>Username</label>
+            <div class="input-wrapper">
+                <i class="fas fa-user input-icon"></i>
+                <input type="text" name="username" placeholder="Enter your username" required>
+            </div>
+        </div>
+
+        <div class="input-group">
+            <label>Password</label>
+            <div class="input-wrapper">
+                <i class="fas fa-lock input-icon"></i>
+                <input type="password" name="password" placeholder="Enter your password" required>
+            </div>
+        </div>
+
+        <?php if (!empty($error)): ?>
+            <div class="error-message">
+                <i class="fas fa-exclamation-circle"></i>
+                <span><?php echo $error; ?></span>
+            </div>
+        <?php endif; ?>
+
+        <button type="submit" class="btn">Sign In</button>
+
+    </form>
+
+</div>
+
+</body>
+</html>

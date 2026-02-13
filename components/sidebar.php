@@ -4,7 +4,7 @@
         <button class="menu-toggle" id="menuToggle">
             <i class="fas fa-bars"></i>
         </button>
-        <h2 class="sidebar-title"><?php echo BARANGAY_NAME; ?></h2>
+        <h2 class="sidebar-title">Gooning City</h2>
     </div>
     
     <nav class="sidebar-nav">
