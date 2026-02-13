@@ -99,12 +99,37 @@
                 </a>
             </li>
             
-            <li class="nav-item">
-                <a href="settings.php" class="nav-link">
+            <?php 
+            $current_page = basename($_SERVER['PHP_SELF']);
+            $settings_pages = ['activity-logs.php', 'archive.php', 'backup.php'];
+            $is_settings_active = in_array($current_page, $settings_pages);
+            ?>
+            <li class="nav-item has-submenu <?php echo $is_settings_active ? 'active open' : ''; ?>">
+                <a href="#" class="nav-link">
                     <i class="fas fa-cog"></i>
                     <span>Settings</span>
                     <i class="fas fa-chevron-right nav-arrow"></i>
                 </a>
+                <ul class="submenu">
+                    <li class="submenu-item <?php echo $current_page == 'activity-logs.php' ? 'active' : ''; ?>">
+                        <a href="activity-logs.php" class="submenu-link">
+                            <i class="fas fa-history"></i>
+                            <span>Activity Logs</span>
+                        </a>
+                    </li>
+                    <li class="submenu-item <?php echo $current_page == 'archive.php' ? 'active' : ''; ?>">
+                        <a href="archive.php" class="submenu-link">
+                            <i class="fas fa-archive"></i>
+                            <span>Archive</span>
+                        </a>
+                    </li>
+                    <li class="submenu-item <?php echo $current_page == 'backup.php' ? 'active' : ''; ?>">
+                        <a href="backup.php" class="submenu-link">
+                            <i class="fas fa-database"></i>
+                            <span>Backup</span>
+                        </a>
+                    </li>
+                </ul>
             </li>
         </ul>
     </nav>

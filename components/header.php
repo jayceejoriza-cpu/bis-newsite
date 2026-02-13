@@ -27,7 +27,7 @@
                     <div class="user-role"><?php echo isset($_SESSION['role']) ? htmlspecialchars($_SESSION['role']) : 'Role'; ?></div>
                 </div>
                 <div class="dropdown-divider"></div>
-                <a href="profile.php" class="dropdown-item">
+                <a href="user-profile.php" class="dropdown-item">
                     <i class="fas fa-user-circle"></i> Profile
                 </a>
                 <a href="settings.php" class="dropdown-item">

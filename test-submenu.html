@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Submenu Test</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+        }
+        .test-info {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            z-index: 9999;
+        }
+        .test-info h3 {
+            margin-top: 0;
+            color: #3b82f6;
+        }
+        .test-info ul {
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+        .test-info li {
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-info">
+        <h3>🧪 Submenu Test</h3>
+        <p><strong>Instructions:</strong></p>
+        <ul>
+            <li>Click on "Settings" in the sidebar</li>
+            <li>The submenu should expand/collapse</li>
+            <li>The arrow should rotate</li>
+            <li>Other submenus should close</li>
+        </ul>
+        <p><strong>Status:</strong> <span id="status">Ready to test</span></p>
+    </div>
+
+    <!-- Sidebar Component -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <button class="menu-toggle" id="menuToggle">
+                <i class="fas fa-bars"></i>
+            </button>
+            <h2 class="sidebar-title">Gooning City</h2>
+        </div>
+        
+        <nav class="sidebar-nav">
+            <ul class="nav-list">
+                <li class="nav-item active">
+                    <a href="#" class="nav-link">
+                        <i class="fas fa-th-large"></i>
+                        <span>Dashboard</span>
+                    </a>
+                </li>
+                
+                <li class="nav-section-title">User Management</li>
+                
+                <li class="nav-item has-submenu">
+                    <a href="#" class="nav-link">
+                        <i class="fas fa-users"></i>
+                        <span>Users</span>
+                        <i class="fas fa-chevron-right nav-arrow"></i>
+                    </a>
+                    <ul class="submenu">
+                        <li class="submenu-item">
+                            <a href="#" class="submenu-link">
+                                <i class="fas fa-user-tie"></i>
+                                <span>Officials</span>
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+                
+                <li class="nav-item">
+                    <a href="#" class="nav-link">
+                        <i class="fas fa-user-shield"></i>
+                        <span>Roles</span>
+                    </a>
+                </li>
+                
+                <li class="nav-divider"></li>
+                
+                <li class="nav-item has-submenu">
+                    <a href="#" class="nav-link">
+                        <i class="fas fa-cog"></i>
+                        <span>Settings</span>
+                        <i class="fas fa-chevron-right nav-arrow"></i>
+                    </a>
+                    <ul class="submenu">
+                        <li class="submenu-item">
+                            <a href="#" class="submenu-link">
+                                <i class="fas fa-history"></i>
+                                <span>Activity Logs</span>
+                            </a>
+                        </li>
+                        <li class="submenu-item">
+                            <a href="#" class="submenu-link">
+                                <i class="fas fa-archive"></i>
+                                <span>Archive</span>
+                            </a>
+                        </li>
+                        <li class="submenu-item">
+                            <a href="#" class="submenu-link">
+                                <i class="fas fa-database"></i>
+                                <span>Backup</span>
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+            </ul>
+        </nav>
+    </aside>
+
+    <main class="main-content">
+        <div style="padding: 40px;">
+            <h1>Submenu Functionality Test Page</h1>
+            <p>This is a test page to verify the Settings submenu is working correctly.</p>
+            <p>Click on the "Settings" menu item in the sidebar to test the submenu toggle functionality.</p>
+        </div>
+    </main>
+
+    <script src="js/script.js"></script>
+    <script>
+        // Add test status updates
+        document.addEventListener('DOMContentLoaded', function() {
+            const statusEl = document.getElementById('status');
+            const settingsItem = document.querySelector('.nav-item.has-submenu:last-child');
+            
+            if (settingsItem) {
+                const settingsLink = settingsItem.querySelector('.nav-link');
+                
+                settingsLink.addEventListener('click', function() {
+                    setTimeout(() => {
+                        if (settingsItem.classList.contains('open')) {
+                            statusEl.textContent = '✅ Submenu is OPEN';
+                            statusEl.style.color = '#10b981';
+                        } else {
+                            statusEl.textContent = '✅ Submenu is CLOSED';
+                            statusEl.style.color = '#ef4444';
+                        }
+                    }, 100);
+                });
+            }
+        });
+    </script>
+</body>
+</html>

@@ -13,7 +13,10 @@ function updateDateTime() {
         second: '2-digit'
     };
     const dateTimeString = now.toLocaleDateString('en-US', options);
-    document.getElementById('currentDateTime').textContent = dateTimeString;
+    const dateTimeElement = document.getElementById('currentDateTime');
+    if (dateTimeElement) {
+        dateTimeElement.textContent = dateTimeString;
+    }
 }
 
 // Update time every second
@@ -90,26 +93,30 @@ window.addEventListener('resize', () => {
 const themeToggle = document.getElementById('themeToggle');
 let isDarkMode = false;
 
-themeToggle.addEventListener('click', () => {
-    isDarkMode = !isDarkMode;
-    const icon = themeToggle.querySelector('i');
-    
-    if (isDarkMode) {
-        icon.classList.remove('fa-sun');
-        icon.classList.add('fa-moon');
-        // Add dark mode styles here if needed
-    } else {
-        icon.classList.remove('fa-moon');
-        icon.classList.add('fa-sun');
-        // Remove dark mode styles here if needed
-    }
-});
+if (themeToggle) {
+    themeToggle.addEventListener('click', () => {
+        isDarkMode = !isDarkMode;
+        const icon = themeToggle.querySelector('i');
+        
+        if (isDarkMode) {
+            icon.classList.remove('fa-sun');
+            icon.classList.add('fa-moon');
+            // Add dark mode styles here if needed
+        } else {
+            icon.classList.remove('fa-moon');
+            icon.classList.add('fa-sun');
+            // Remove dark mode styles here if needed
+        }
+    });
+}
 
 // ===================================
 // Population Growth Chart
 // ===================================
-const populationCtx = document.getElementById('populationChart').getContext('2d');
+const populationChartEl = document.getElementById('populationChart');
 
+if (populationChartEl) {
+const populationCtx = populationChartEl.getContext('2d');
 // Generate years from 2000 to 2025
 const years = [];
 for (let year = 2000; year <= 2025; year++) {
@@ -200,11 +207,15 @@ const populationChart = new Chart(populationCtx, {
         }
     }
 });
+}
 
 // ===================================
 // Blotter Records Chart
 // ===================================
-const blotterCtx = document.getElementById('blotterChart').getContext('2d');
+const blotterChartEl = document.getElementById('blotterChart');
+
+if (blotterChartEl) {
+const blotterCtx = blotterChartEl.getContext('2d');
 
 const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
@@ -309,11 +320,15 @@ const blotterChart = new Chart(blotterCtx, {
         }
     }
 });
+}
 
 // ===================================
 // Age Demographics Chart (Pie Chart)
 // ===================================
-const demographicsCtx = document.getElementById('demographicsChart').getContext('2d');
+const demographicsChartEl = document.getElementById('demographicsChart');
+
+if (demographicsChartEl) {
+const demographicsCtx = demographicsChartEl.getContext('2d');
 
 const demographicsChart = new Chart(demographicsCtx, {
     type: 'doughnut',
@@ -363,55 +378,108 @@ const demographicsChart = new Chart(demographicsCtx, {
         cutout: '60%'
     }
 });
+}
 
 // ===================================
 // Navigation Active State & Submenu Toggle
 // ===================================
-const navLinks = document.querySelectorAll('.nav-link');
-
-navLinks.forEach(link => {
-    link.addEventListener('click', (e) => {
-        const parentItem = link.parentElement;
+function initializeSidebar() {
+    // Handle submenu toggle
+    const navItems = document.querySelectorAll('.nav-item.has-submenu');
+    
+    navItems.forEach(item => {
+        const navLink = item.querySelector('.nav-link');
+        const submenu = item.querySelector('.submenu');
         
-        // Check if this is a submenu parent
-        if (parentItem.classList.contains('has-submenu')) {
-            e.preventDefault();
+        if (navLink && submenu) {
+            // Set initial max-height for submenus that are already open
+            // Use requestAnimationFrame to ensure DOM is fully rendered
+            if (item.classList.contains('open')) {
+                requestAnimationFrame(() => {
+                    // Force a reflow to ensure scrollHeight is calculated correctly
+                    submenu.style.display = 'block';
+                    const height = submenu.scrollHeight;
+                    submenu.style.display = '';
+                    
+                    // Set the max-height to the calculated height
+                    if (height > 0) {
+                        submenu.style.maxHeight = height + 'px';
+                    } else {
+                        // Fallback: set a large enough value if scrollHeight is still 0
+                        submenu.style.maxHeight = '500px';
+                    }
+                });
+            }
             
-            // Toggle submenu
-            parentItem.classList.toggle('open');
-            
-            // Close other submenus
-            document.querySelectorAll('.nav-item.has-submenu').forEach(item => {
-                if (item !== parentItem) {
+            navLink.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                const isOpen = item.classList.contains('open');
+                
+                // Close other submenus first
+                navItems.forEach(otherItem => {
+                    if (otherItem !== item && otherItem.classList.contains('open')) {
+                        const otherSubmenu = otherItem.querySelector('.submenu');
+                        otherItem.classList.remove('open');
+                        if (otherSubmenu) {
+                            otherSubmenu.style.maxHeight = '0px';
+                        }
+                    }
+                });
+                
+                // Toggle the current submenu
+                if (isOpen) {
+                    // Close it
                     item.classList.remove('open');
+                    submenu.style.maxHeight = '0px';
+                } else {
+                    // Open it
+                    item.classList.add('open');
+                    // Calculate the actual height needed
+                    const height = submenu.scrollHeight;
+                    submenu.style.maxHeight = height + 'px';
                 }
             });
-        } else {
-            // Remove active class from all items
+        }
+    });
+    
+    // Handle regular nav links (non-submenu)
+    const regularNavLinks = document.querySelectorAll('.nav-item:not(.has-submenu) .nav-link');
+    
+    regularNavLinks.forEach(link => {
+        link.addEventListener('click', function() {
+            // Remove active class from all nav items
             document.querySelectorAll('.nav-item').forEach(item => {
                 item.classList.remove('active');
             });
             
-            // Add active class to clicked item
-            parentItem.classList.add('active');
-        }
-    });
-});
-
-// Submenu links
-const submenuLinks = document.querySelectorAll('.submenu-link');
-
-submenuLinks.forEach(link => {
-    link.addEventListener('click', (e) => {
-        // Remove active class from all submenu items
-        document.querySelectorAll('.submenu-item').forEach(item => {
-            item.classList.remove('active');
+            // Add active class to clicked item's parent
+            this.parentElement.classList.add('active');
         });
-        
-        // Add active class to clicked submenu item
-        link.parentElement.classList.add('active');
     });
-});
+    
+    // Handle submenu links
+    const submenuLinks = document.querySelectorAll('.submenu-link');
+    
+    submenuLinks.forEach(link => {
+        link.addEventListener('click', function() {
+            // Remove active class from all submenu items
+            document.querySelectorAll('.submenu-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            
+            // Add active class to clicked submenu item
+            this.parentElement.classList.add('active');
+        });
+    });
+}
+
+// Initialize sidebar when DOM is ready
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeSidebar);
+} else {
+    initializeSidebar();
+}
 
 // ===================================
 // Smooth Scroll
@@ -432,11 +500,11 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
 // ===================================
 // Chart Resize Handler
 // ===================================
-window.addEventListener('resize', () => {
-    populationChart.resize();
-    blotterChart.resize();
-    demographicsChart.resize();
-});
+// window.addEventListener('resize', () => {
+//     populationChart.resize();
+//     blotterChart.resize();
+//     demographicsChart.resize();
+// });
 
 // ===================================
 // Console Welcome Message
