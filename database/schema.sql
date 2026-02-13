@@ -112,6 +112,62 @@ CREATE TABLE IF NOT EXISTS `residents` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Main residents information table';
 
 -- ============================================
+-- Table: households
+-- Description: Household information
+-- ============================================
+CREATE TABLE IF NOT EXISTS `households` (
+  `id` INT(11) NOT NULL AUTO_INCREMENT,
+  `household_number` VARCHAR(50) NOT NULL UNIQUE COMMENT 'Unique household identifier',
+  `household_head_id` INT(11) DEFAULT NULL COMMENT 'Foreign key to residents table',
+  `household_contact` VARCHAR(20) DEFAULT NULL,
+  `address` TEXT NOT NULL,
+  `water_source_type` VARCHAR(100) DEFAULT NULL,
+  `toilet_facility_type` VARCHAR(100) DEFAULT NULL,
+  `notes` TEXT DEFAULT NULL,
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `created_by` INT(11) DEFAULT NULL,
+  `updated_by` INT(11) DEFAULT NULL,
+  
+  PRIMARY KEY (`id`),
+  INDEX `idx_household_number` (`household_number`),
+  INDEX `idx_household_head_id` (`household_head_id`),
+  CONSTRAINT `fk_household_head` 
+    FOREIGN KEY (`household_head_id`) 
+    REFERENCES `residents` (`id`) 
+    ON DELETE SET NULL 
+    ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Household information';
+
+-- ============================================
+-- Table: household_members
+-- Description: Members of each household
+-- ============================================
+CREATE TABLE IF NOT EXISTS `household_members` (
+  `id` INT(11) NOT NULL AUTO_INCREMENT,
+  `household_id` INT(11) NOT NULL COMMENT 'Foreign key to households table',
+  `resident_id` INT(11) NOT NULL COMMENT 'Foreign key to residents table',
+  `relationship_to_head` VARCHAR(100) DEFAULT NULL COMMENT 'Relationship to household head',
+  `is_head` TINYINT(1) DEFAULT 0 COMMENT '1 if this member is the household head',
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `unique_household_resident` (`household_id`, `resident_id`),
+  INDEX `idx_household_id` (`household_id`),
+  INDEX `idx_resident_id` (`resident_id`),
+  CONSTRAINT `fk_hm_household` 
+    FOREIGN KEY (`household_id`) 
+    REFERENCES `households` (`id`) 
+    ON DELETE CASCADE 
+    ON UPDATE CASCADE,
+  CONSTRAINT `fk_hm_resident` 
+    FOREIGN KEY (`resident_id`) 
+    REFERENCES `residents` (`id`) 
+    ON DELETE CASCADE 
+    ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Household members';
+
+-- ============================================
 -- Table: emergency_contacts
 -- Description: Emergency contact information for residents
 -- ============================================

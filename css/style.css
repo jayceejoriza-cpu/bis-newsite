@@ -25,7 +25,7 @@
     --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
     
     /* Spacing */
-    --sidebar-width: 260px;
+    --sidebar-width: 240px;
     --sidebar-collapsed-width: 70px;
     --header-height: 70px;
     
@@ -95,23 +95,24 @@ body {
 }
 
 .sidebar-header {
-    padding: 20px;
+    padding: 16px 20px;
     border-bottom: 1px solid var(--border-color);
     display: flex;
     align-items: center;
-    gap: 15px;
+    gap: 12px;
 }
 
 .menu-toggle {
     background: none;
     border: none;
-    font-size: 20px;
+    font-size: 18px;
     color: var(--text-secondary);
     cursor: pointer;
-    padding: 8px;
-    border-radius: 6px;
+    padding: 10px;
+    border-radius: 8px;
     transition: var(--transition);
-    min-width: 36px;
+    width: 40px;
+    height: 40px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -127,7 +128,7 @@ body {
 }
 
 .sidebar-title {
-    font-size: 18px;
+    font-size: 16px;
     font-weight: 600;
     color: var(--text-primary);
     white-space: nowrap;
@@ -142,10 +143,12 @@ body {
 
 .nav-list {
     list-style: none;
+    margin-left: 0;
+    padding-left: 0;
 }
 
 .nav-section-title {
-    padding: 15px 20px 10px;
+    padding: 12px 20px 8px;
     font-size: 11px;
     font-weight: 600;
     text-transform: uppercase;
@@ -154,7 +157,7 @@ body {
 }
 
 .nav-item {
-    margin: 2px 10px;
+    margin: 4px 12px;
 }
 
 .nav-divider {
@@ -171,7 +174,7 @@ body {
 .nav-link {
     display: flex;
     align-items: center;
-    padding: 12px 15px;
+    padding: 10px 12px;
     color: var(--text-secondary);
     text-decoration: none;
     border-radius: 8px;
@@ -179,11 +182,16 @@ body {
     font-size: 14px;
     font-weight: 500;
     gap: 12px;
+    min-height: 40px;
 }
 
 .nav-link i:first-child {
     width: 20px;
-    font-size: 16px;
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
 }
 
 .nav-link span {
@@ -270,7 +278,7 @@ body {
 }
 
 .sidebar-footer {
-    padding: 20px;
+    padding: 16px 20px;
     border-top: 1px solid var(--border-color);
     text-align: center;
     font-size: 12px;

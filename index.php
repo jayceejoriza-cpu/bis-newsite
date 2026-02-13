@@ -9,6 +9,9 @@ require_once 'config.php';
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo SITE_NAME; ?> - Dashboard</title>
     
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="bootstrap/css/bootstrap.min.css">
+    
     <!-- Font Awesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
@@ -33,6 +36,9 @@ require_once 'config.php';
         <!-- Dashboard Content Component -->
         <?php include 'dashboard.php'; ?>
     </main>
+    
+    <!-- Bootstrap JS Bundle (includes Popper) -->
+    <script src="bootstrap/js/bootstrap.bundle.min.js"></script>
     
     <!-- Custom JavaScript -->
     <script src="js/script.js"></script>
