@@ -92,15 +92,16 @@ $stmt->close();
     <link rel="stylesheet" href="css/style.css">
     
     <style>
-        /* Page specific styles that complement header.php variables */
+        /* Page specific styles with synchronized dark mode transitions */
         .profile-card {
-            background-color: var(--bg-surface, #ffffff);
+            background-color: var(--bg-secondary);
             border-radius: 0.75rem;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            box-shadow: var(--shadow-sm);
             padding: 2.5rem;
-            border: 1px solid var(--border-color, #e5e7eb);
+            border: 1px solid var(--border-color);
             max-width: 800px;
             margin: 2rem auto;
+            transition: background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
         }
 
         .profile-header {
@@ -108,33 +109,37 @@ $stmt->close();
             align-items: center;
             margin-bottom: 2.5rem;
             padding-bottom: 1.5rem;
-            border-bottom: 1px solid var(--border-color, #e5e7eb);
+            border-bottom: 1px solid var(--border-color);
+            transition: border-color 0.3s ease;
         }
 
         .profile-avatar-large {
             width: 100px;
             height: 100px;
-            background-color: #e5e7eb;
-            color: #9ca3af;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 3rem;
             margin-right: 2rem;
+            transition: background 0.3s ease;
         }
 
         .profile-info h1 {
             margin: 0 0 0.5rem 0;
             font-size: 1.875rem;
             font-weight: 700;
-            color: var(--text-primary, #111827);
+            color: var(--text-primary);
+            transition: color 0.3s ease;
         }
 
         .profile-info p {
             margin: 0;
-            color: var(--text-secondary, #6b7280);
+            color: var(--text-secondary);
             font-size: 1rem;
+            transition: color 0.3s ease;
         }
 
         .form-group {
@@ -145,47 +150,51 @@ $stmt->close();
             display: block;
             margin-bottom: 0.5rem;
             font-weight: 500;
-            color: var(--text-primary, #374151);
+            color: var(--text-primary);
             font-size: 0.95rem;
+            transition: color 0.3s ease;
         }
 
         .form-control {
             width: 100%;
             padding: 0.75rem 1rem;
-            border: 1px solid var(--border-color, #d1d5db);
+            border: 1px solid var(--border-color);
             border-radius: 0.5rem;
-            background-color: var(--bg-primary, #f9fafb);
-            color: var(--text-primary, #111827);
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
             font-family: inherit;
             font-size: 0.95rem;
             box-sizing: border-box;
-            transition: border-color 0.2s, box-shadow 0.2s;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease, background-color 0.3s ease, color 0.3s ease;
         }
 
         .form-control:focus {
             outline: none;
             border-color: #3b82f6;
             box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
-            background-color: var(--bg-surface, #ffffff);
+            background-color: var(--bg-secondary);
         }
 
         .section-divider {
-            border-top: 1px solid var(--border-color, #e5e7eb);
+            border-top: 1px solid var(--border-color);
             margin: 2.5rem 0 2rem;
             padding-top: 1.5rem;
+            transition: border-color 0.3s ease;
         }
 
         .section-title {
             margin: 0 0 0.5rem 0;
-            color: var(--text-primary, #111827);
+            color: var(--text-primary);
             font-size: 1.25rem;
             font-weight: 600;
+            transition: color 0.3s ease;
         }
 
         .section-subtitle {
-            color: var(--text-secondary, #6b7280);
+            color: var(--text-secondary);
             font-size: 0.875rem;
             margin: 0 0 1.5rem 0;
+            transition: color 0.3s ease;
         }
 
         .btn-primary {
@@ -197,7 +206,7 @@ $stmt->close();
             font-weight: 600;
             font-size: 0.95rem;
             cursor: pointer;
-            transition: background-color 0.2s;
+            transition: background-color 0.3s ease, transform 0.2s ease;
             display: inline-flex;
             align-items: center;
             gap: 0.5rem;
@@ -207,6 +216,10 @@ $stmt->close();
             background-color: #1d4ed8;
         }
 
+        .btn-primary:active {
+            transform: scale(0.98);
+        }
+
         .alert {
             padding: 1rem 1.25rem;
             border-radius: 0.5rem;
@@ -214,6 +227,7 @@ $stmt->close();
             display: flex;
             align-items: center;
             gap: 0.75rem;
+            transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
         }
 
         .alert-success {
@@ -228,22 +242,17 @@ $stmt->close();
             border: 1px solid #fecaca;
         }
         
-        /* Dark mode overrides for specific elements not covered by vars */
+        /* Dark mode overrides */
         body.dark-mode .alert-success {
-            background-color: rgba(6, 78, 59, 0.5);
-            color: #d1fae5;
+            background-color: rgba(6, 78, 59, 0.3);
+            color: #6ee7b7;
             border-color: #065f46;
         }
         
         body.dark-mode .alert-danger {
-            background-color: rgba(127, 29, 29, 0.5);
-            color: #fecaca;
-            border-color: #7f1d1d;
-        }
-        
-        body.dark-mode .profile-avatar-large {
-            background-color: #374151;
-            color: #9ca3af;
+            background-color: rgba(127, 29, 29, 0.3);
+            color: #fca5a5;
+            border-color: #991b1b;
         }
     </style>
 </head>

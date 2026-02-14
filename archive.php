@@ -53,114 +53,7 @@ if (isset($conn)) {
     <!-- Custom CSS -->
     <link rel="stylesheet" href="css/style.css">
     
-    <style>
-        .archive-type-badge {
-            font-size: 0.75rem;
-            padding: 0.25rem 0.5rem;
-            border-radius: 4px;
-            font-weight: 600;
-            text-transform: uppercase;
-        }
-        
-        .badge-resident { background-color: #dbeafe; color: #1e40af; }
-        .badge-official { background-color: #d1fae5; color: #065f46; }
-        .badge-blotter { background-color: #fee2e2; color: #991b1b; }
-        .badge-permit { background-color: #e0f2fe; color: #075985; }
-        .badge-default { background-color: #f3f4f6; color: #374151; }
-        
-        .record-data {
-            background: var(--bg-secondary, #f8f9fa);
-            padding: 15px;
-            border-radius: 8px;
-            font-size: 0.9rem;
-            border: 1px solid var(--border-color, #e5e7eb);
-        }
-        
-        .record-data-item {
-            margin-bottom: 8px;
-            display: flex;
-        }
-        
-        .record-data-label {
-            font-weight: 600;
-            color: var(--text-secondary, #4b5563);
-            width: 120px;
-            flex-shrink: 0;
-        }
-        
-        .record-data-value {
-            color: var(--text-primary, #111827);
-        }
-        
-        /* Modal Styles */
-        .modal {
-            display: none;
-            position: fixed;
-            z-index: 1000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            overflow: auto;
-            background-color: rgba(0, 0, 0, 0.5);
-            animation: fadeIn 0.3s;
-        }
-        
-        .modal.active {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        
-        .modal-content {
-            background-color: var(--bg-surface, #ffffff);
-            padding: 0;
-            border-radius: 12px;
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
-            max-width: 600px;
-            width: 90%;
-            animation: slideIn 0.3s;
-            overflow: hidden;
-        }
-        
-        .modal-header {
-            padding: 1.5rem;
-            border-bottom: 1px solid var(--border-color, #e5e7eb);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        .modal-title {
-            font-size: 1.25rem;
-            font-weight: 600;
-            margin: 0;
-        }
-        
-        .modal-body {
-            padding: 1.5rem;
-            max-height: 70vh;
-            overflow-y: auto;
-        }
-        
-        .modal-footer {
-            padding: 1rem 1.5rem;
-            background-color: var(--bg-secondary, #f9fafb);
-            border-top: 1px solid var(--border-color, #e5e7eb);
-            text-align: right;
-        }
-        
-        .btn-close-modal {
-            background: none;
-            border: none;
-            font-size: 1.25rem;
-            cursor: pointer;
-            color: var(--text-secondary, #6b7280);
-        }
-        
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        @keyframes slideIn { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-    </style>
+=======
 </head>
 <body>
     <!-- Sidebar -->
@@ -232,10 +125,10 @@ if (isset($conn)) {
             
             <!-- Archives Table -->
             <div class="table-container">
-                <div class="table-header" style="display: flex; justify-content: space-between; align-items: center; padding: 1rem; border-bottom: 1px solid var(--border-color);">
-                    <h3 style="margin: 0; font-size: 1.1rem;">Archived Records</h3>
+                <div class="table-header">
+                    <h3>Archived Records</h3>
                     <div class="table-tools">
-                        <select id="filterType" class="form-control" style="width: 200px; padding: 0.5rem;">
+                        <select id="filterType" class="form-control" style="width: 200px;">
                             <option value="">All Types</option>
                             <option value="resident">Residents</option>
                             <option value="official">Officials</option>
@@ -281,7 +174,7 @@ if (isset($conn)) {
                                 <td><?php echo htmlspecialchars(ucwords($archive['deleted_by'])); ?></td>
                                 <td><?php echo htmlspecialchars(date('M d, Y h:i A', strtotime($archive['deleted_at']))); ?></td>
                                 <td>
-                                    <div style="display: flex; gap: 5px;">
+                                    <div style="display: flex; gap: 5px; flex-wrap: wrap;">
                                         <?php if(isset($_SESSION['username'])): ?>
                                         <a href="restore_archive.php?id=<?php echo htmlspecialchars($archive['id']); ?>" onclick="return confirm('Restore this record?')" class="btn btn-sm btn-success" title="Restore">
                                             <i class="fas fa-undo"></i>
@@ -299,7 +192,7 @@ if (isset($conn)) {
                             <?php endforeach; ?>
                         <?php else: ?>
                             <tr>
-                                <td colspan="6" style="text-align: center; padding: 20px;">No archived records found.</td>
+                                <td colspan="6" style="text-align: center; padding: 20px; color: var(--text-secondary);">No archived records found.</td>
                             </tr>
                         <?php endif; ?>
                     </tbody>
