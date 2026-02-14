@@ -316,7 +316,7 @@ function handleAction(action, name, id, row) {
     
     // Get the actual database ID from the row
     const actionBtn = row.querySelector('.btn-action');
-    const residentId = actionBtn ? actionBtn.getAttribute('data-resident-id') : null;
+    const residentId = actionBtn ? (actionBtn.getAttribute('data-resident-id') || actionBtn.getAttribute('data-id')) : null;
     
     switch(action) {
         case 'view':
@@ -342,14 +342,35 @@ function handleAction(action, name, id, row) {
             break;
             
         case 'delete':
-            if (confirm(`Are you sure you want to delete ${name}?\n\nThis action cannot be undone.`)) {
-                // Simulate deletion
-                row.style.opacity = '0';
-                setTimeout(() => {
-                    row.remove();
-                    residentsTable.refresh();
-                    showNotification('Resident deleted successfully', 'success');
-                }, 300);
+            if (confirm(`Are you sure you want to delete ${name}?\n\nThe record will be moved to the archive and can be restored later.`)) {
+                const formData = new FormData();
+                formData.append('id', residentId);
+                
+                fetch('delete_resident.php', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if(data.success) {
+                        // Show success notification
+                        showNotification(data.message, 'success');
+                        
+                        // Fade out the row
+                        row.style.opacity = '0';
+                        
+                        // Reload the page after a short delay to fetch fresh data
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 800);
+                    } else {
+                        showNotification('Error: ' + data.message, 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showNotification('An error occurred while processing your request', 'error');
+                });
             }
             break;
     }

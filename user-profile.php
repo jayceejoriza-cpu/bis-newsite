@@ -50,6 +50,15 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                     // Update session
                     $_SESSION['full_name'] = $full_name;
                     $_SESSION['username'] = $username;
+
+                    // Log Activity
+                    $log_user = $username;
+                    $log_action = 'Update Profile';
+                    $log_desc = 'User updated their profile information';
+                    $log_stmt = $conn->prepare("INSERT INTO activity_logs (user, action, description) VALUES (?, ?, ?)");
+                    $log_stmt->bind_param("sss", $log_user, $log_action, $log_desc);
+                    $log_stmt->execute();
+                    $log_stmt->close();
                 } else {
                     $error = "Error updating profile: " . $conn->error;
                 }

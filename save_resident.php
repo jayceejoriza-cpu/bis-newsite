@@ -281,6 +281,17 @@ try {
         $result = $conn->query("SELECT resident_id FROM residents WHERE id = $residentId");
         $row = $result->fetch_assoc();
         $generatedResidentId = $row['resident_id'];
+
+        // Log Activity
+        if (isset($_SESSION['username'])) {
+            $log_user = $_SESSION['username'];
+            $log_action = 'Update Resident';
+            $log_desc = "Updated resident record: $firstName $lastName ($generatedResidentId)";
+            $log_stmt = $conn->prepare("INSERT INTO activity_logs (user, action, description) VALUES (?, ?, ?)");
+            $log_stmt->bind_param("sss", $log_user, $log_action, $log_desc);
+            $log_stmt->execute();
+            $log_stmt->close();
+        }
         
         // Commit transaction
         $conn->commit();
@@ -370,6 +381,17 @@ try {
         }
         
         $contactIndex++;
+    }
+
+    // Log Activity
+    if (isset($_SESSION['username'])) {
+        $log_user = $_SESSION['username'];
+        $log_action = 'Add Resident';
+        $log_desc = "Added new resident: $firstName $lastName ($generatedResidentId)";
+        $log_stmt = $conn->prepare("INSERT INTO activity_logs (user, action, description) VALUES (?, ?, ?)");
+        $log_stmt->bind_param("sss", $log_user, $log_action, $log_desc);
+        $log_stmt->execute();
+        $log_stmt->close();
     }
 
     // Commit transaction

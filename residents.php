@@ -106,6 +106,7 @@ try {
             voter_status,
             activity_status
         FROM residents
+        WHERE activity_status != 'Archived'
         ORDER BY created_at DESC
     ");
     

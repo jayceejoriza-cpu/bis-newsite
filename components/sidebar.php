@@ -104,7 +104,7 @@
             $settings_pages = ['activity-logs.php', 'archive.php', 'backup.php'];
             $is_settings_active = in_array($current_page, $settings_pages);
             ?>
-            <li class="nav-item has-submenu <?php echo $is_settings_active ? 'active open' : ''; ?>">
+            <li class="nav-item has-submenu <?php echo $is_settings_active ? 'open' : ''; ?>">
                 <a href="#" class="nav-link">
                     <i class="fas fa-cog"></i>
                     <span>Settings</span>

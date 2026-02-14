@@ -78,16 +78,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['backup'])) {
 
                     if(!empty($sqlScript)){
                         // Log the backup activity
-                        $log_stmt = $conn->prepare("INSERT INTO audit_logs (user_id, action, table_name, record_id, new_values, ip_address, user_agent) VALUES (?, 'BACKUP', 'database', 0, ?, ?, ?)");
-                        $backup_info = json_encode([
-                            'database' => DB_NAME,
-                            'timestamp' => date('Y-m-d H:i:s'),
-                            'user' => $_SESSION['username'],
-                            'full_name' => $_SESSION['full_name']
-                        ]);
-                        $ip_address = $_SERVER['REMOTE_ADDR'] ?? 'Unknown';
-                        $user_agent = $_SERVER['HTTP_USER_AGENT'] ?? 'Unknown';
-                        $log_stmt->bind_param("isss", $_SESSION['user_id'], $backup_info, $ip_address, $user_agent);
+                        $log_user = $_SESSION['username'];
+                        $log_action = 'Backup Database';
+                        $log_desc = "Generated database backup for " . DB_NAME;
+                        $log_stmt = $conn->prepare("INSERT INTO activity_logs (user, action, description) VALUES (?, ?, ?)");
+                        $log_stmt->bind_param("sss", $log_user, $log_action, $log_desc);
                         $log_stmt->execute();
                         $log_stmt->close();
                         
@@ -112,14 +107,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['backup'])) {
                     $error = "Backup failed: " . $e->getMessage();
                     
                     // Log failed backup attempt
-                    $log_stmt = $conn->prepare("INSERT INTO audit_logs (user_id, action, table_name, record_id, new_values, ip_address, user_agent) VALUES (?, 'BACKUP_FAILED', 'database', 0, ?, ?, ?)");
-                    $error_info = json_encode([
-                        'error' => $e->getMessage(),
-                        'timestamp' => date('Y-m-d H:i:s')
-                    ]);
-                    $ip_address = $_SERVER['REMOTE_ADDR'] ?? 'Unknown';
-                    $user_agent = $_SERVER['HTTP_USER_AGENT'] ?? 'Unknown';
-                    $log_stmt->bind_param("isss", $_SESSION['user_id'], $error_info, $ip_address, $user_agent);
+                    $log_user = $_SESSION['username'];
+                    $log_action = 'Backup Failed';
+                    $log_desc = "Database backup failed: " . $e->getMessage();
+                    $log_stmt = $conn->prepare("INSERT INTO activity_logs (user, action, description) VALUES (?, ?, ?)");
+                    $log_stmt->bind_param("sss", $log_user, $log_action, $log_desc);
                     $log_stmt->execute();
                     $log_stmt->close();
                 }
@@ -127,14 +119,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['backup'])) {
                 $error = "Invalid password. Backup cancelled.";
                 
                 // Log failed authentication attempt
-                $log_stmt = $conn->prepare("INSERT INTO audit_logs (user_id, action, table_name, record_id, new_values, ip_address, user_agent) VALUES (?, 'BACKUP_AUTH_FAILED', 'database', 0, ?, ?, ?)");
-                $auth_info = json_encode([
-                    'reason' => 'Invalid password',
-                    'timestamp' => date('Y-m-d H:i:s')
-                ]);
-                $ip_address = $_SERVER['REMOTE_ADDR'] ?? 'Unknown';
-                $user_agent = $_SERVER['HTTP_USER_AGENT'] ?? 'Unknown';
-                $log_stmt->bind_param("isss", $_SESSION['user_id'], $auth_info, $ip_address, $user_agent);
+                $log_user = $_SESSION['username'];
+                $log_action = 'Backup Auth Failed';
+                $log_desc = "Backup attempt failed due to invalid password";
+                $log_stmt = $conn->prepare("INSERT INTO activity_logs (user, action, description) VALUES (?, ?, ?)");
+                $log_stmt->bind_param("sss", $log_user, $log_action, $log_desc);
                 $log_stmt->execute();
                 $log_stmt->close();
             }

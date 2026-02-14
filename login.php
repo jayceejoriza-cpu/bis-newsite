@@ -38,6 +38,15 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 $_SESSION['full_name'] = $user['full_name'];
                 $_SESSION['role']      = $user['role'];
 
+                // Log Activity
+                $log_user = $user['username'];
+                $log_action = 'Login';
+                $log_desc = 'User logged in successfully';
+                $log_stmt = $conn->prepare("INSERT INTO activity_logs (user, action, description) VALUES (?, ?, ?)");
+                $log_stmt->bind_param("sss", $log_user, $log_action, $log_desc);
+                $log_stmt->execute();
+                $log_stmt->close();
+
                 header("Location: index.php");
                 exit();
             } 

@@ -1,6 +1,18 @@
 <?php
 require_once 'config.php';
 $pageTitle = 'Activity Logs';
+
+// Fetch activity logs
+$logs = [];
+if (isset($conn)) {
+    $sql = "SELECT * FROM activity_logs ORDER BY timestamp DESC";
+    $result = $conn->query($sql);
+    if ($result) {
+        while ($row = $result->fetch_assoc()) {
+            $logs[] = $row;
+        }
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -18,8 +30,36 @@ $pageTitle = 'Activity Logs';
         <?php include 'components/header.php'; ?>
         <div class="dashboard-content">
             <h1 class="page-title"><?php echo $pageTitle; ?></h1>
-            <div class="chart-container">
-                <p>System activity logs will be displayed here.</p>
+            
+            <div class="table-container">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>User</th>
+                            <th>Action</th>
+                            <th>Description</th>
+                            <th>Timestamp</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php if (empty($logs)): ?>
+                            <tr>
+                                <td colspan="5" style="text-align: center; padding: 20px;">No activity logs found.</td>
+                            </tr>
+                        <?php else: ?>
+                            <?php foreach ($logs as $log): ?>
+                                <tr>
+                                    <td><?php echo htmlspecialchars($log['id']); ?></td>
+                                    <td><?php echo htmlspecialchars($log['user']); ?></td>
+                                    <td><?php echo htmlspecialchars($log['action']); ?></td>
+                                    <td><?php echo htmlspecialchars($log['description']); ?></td>
+                                    <td><?php echo htmlspecialchars(date('M d, Y h:i A', strtotime($log['timestamp']))); ?></td>
+                                </tr>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
+                    </tbody>
+                </table>
             </div>
         </div>
     </main>
