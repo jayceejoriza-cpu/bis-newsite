@@ -452,7 +452,7 @@ style.textContent = `
         box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
         padding: 8px;
         min-width: 180px;
-        z-index: 1000;
+        z-index: 9999;
         animation: fadeIn 0.2s ease;
     }
     

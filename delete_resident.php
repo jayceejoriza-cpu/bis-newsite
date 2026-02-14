@@ -4,6 +4,9 @@ require_once 'config.php';
 // Set JSON response header
 header('Content-Type: application/json');
 
+// Set charset to ensure JSON encoding works correctly
+$conn->set_charset("utf8mb4");
+
 // Check if user is logged in
 if (!isset($_SESSION['user_id'])) {
     echo json_encode(['success' => false, 'message' => 'Unauthorized access']);
@@ -27,7 +30,7 @@ if ($id <= 0) {
 // Check if archive table exists and create it if not (Outside transaction)
 $checkTable = $conn->query("SHOW TABLES LIKE 'archive'");
 if ($checkTable->num_rows == 0) {
-    $createTableSql = "CREATE TABLE `archive` (
+    $createTableSql = "CREATE TABLE IF NOT EXISTS `archive` (
         `id` int(11) NOT NULL AUTO_INCREMENT,
         `archive_type` varchar(50) DEFAULT NULL,
         `record_id` varchar(50) DEFAULT NULL,
@@ -59,16 +62,18 @@ try {
     $stmt->close();
 
     // Fetch emergency contacts to include in archive
-    $stmt = $conn->prepare("SELECT * FROM emergency_contacts WHERE resident_id = ?");
-    $stmt->bind_param("i", $id);
-    $stmt->execute();
-    $contactsResult = $stmt->get_result();
     $emergencyContacts = [];
-    while ($contact = $contactsResult->fetch_assoc()) {
-        $emergencyContacts[] = $contact;
+    $stmt = $conn->prepare("SELECT * FROM emergency_contacts WHERE resident_id = ?");
+    if ($stmt) {
+        $stmt->bind_param("i", $id);
+        $stmt->execute();
+        $contactsResult = $stmt->get_result();
+        while ($contact = $contactsResult->fetch_assoc()) {
+            $emergencyContacts[] = $contact;
+        }
+        $stmt->close();
     }
     $resident['emergency_contacts'] = $emergencyContacts;
-    $stmt->close();
 
     // Prepare data for archive
     // Use JSON_PARTIAL_OUTPUT_ON_ERROR and JSON_UNESCAPED_UNICODE
@@ -90,9 +95,11 @@ try {
 
     // Delete emergency contacts associated with the resident
     $stmt = $conn->prepare("DELETE FROM emergency_contacts WHERE resident_id = ?");
-    $stmt->bind_param("i", $id);
-    $stmt->execute();
-    $stmt->close();
+    if ($stmt) {
+        $stmt->bind_param("i", $id);
+        $stmt->execute();
+        $stmt->close();
+    }
 
     // Delete the resident record
     $stmt = $conn->prepare("DELETE FROM residents WHERE id = ?");
