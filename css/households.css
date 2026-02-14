@@ -365,6 +365,853 @@
     }
 }
 
+@keyframes slideUp {
+    from {
+        transform: translateY(50px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+/* ===================================
+   Create Household Modal Styles
+   =================================== */
+.household-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.8);
+    z-index: 10000;
+    align-items: center;
+    justify-content: center;
+    animation: fadeIn 0.3s ease;
+}
+
+.household-modal.show {
+    display: flex;
+}
+
+.household-modal-content {
+    background-color: var(--bg-secondary);
+    border-radius: 12px;
+    width: 90%;
+    max-width: 1000px;
+    max-height: 90vh;
+    overflow: hidden;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    animation: slideUp 0.3s ease;
+    display: flex;
+    flex-direction: column;
+}
+
+.household-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 25px;
+    border-bottom: 1px solid var(--border-color);
+    background-color: var(--bg-primary);
+    flex-shrink: 0;
+}
+
+.household-modal-header h3 {
+    margin: 0;
+    color: var(--text-primary);
+    font-size: 20px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.household-modal-header h3 i {
+    color: var(--primary-color);
+}
+
+.btn-close-modal {
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    border: none;
+    background-color: var(--bg-secondary);
+    color: var(--text-secondary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: var(--transition);
+    font-size: 18px;
+}
+
+.btn-close-modal:hover {
+    background-color: var(--danger-color);
+    color: white;
+    transform: rotate(90deg);
+}
+
+.household-modal-body {
+    padding: 25px;
+    background-color: var(--bg-secondary);
+    overflow-y: auto;
+    flex: 1;
+}
+
+.modal-section {
+    margin-bottom: 25px;
+}
+
+.modal-section:last-child {
+    margin-bottom: 0;
+}
+
+.section-title {
+    margin: 0 0 15px 0;
+    color: var(--text-primary);
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group.half-width {
+    margin-bottom: 0;
+}
+
+.form-group label {
+    display: block;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    margin-bottom: 6px;
+}
+
+.form-control {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    font-size: 14px;
+    color: var(--text-primary);
+    background-color: var(--bg-primary);
+    transition: var(--transition);
+    font-family: inherit;
+    box-sizing: border-box;
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.form-control::placeholder {
+    color: var(--text-secondary);
+    opacity: 0.6;
+}
+
+.form-control:disabled,
+.form-control:read-only {
+    background-color: var(--bg-secondary);
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+textarea.form-control {
+    resize: vertical;
+    min-height: 80px;
+}
+
+.form-text {
+    display: block;
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-top: 4px;
+}
+
+/* Phone Input Group */
+.phone-input-group {
+    display: flex;
+    align-items: center;
+    gap: 0;
+}
+
+.phone-prefix {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 12px;
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-right: none;
+    border-radius: 8px 0 0 8px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-primary);
+    white-space: nowrap;
+}
+
+.flag-icon {
+    width: 20px;
+    height: 14px;
+    border-radius: 2px;
+    object-fit: cover;
+}
+
+.phone-input {
+    border-radius: 0 8px 8px 0 !important;
+    flex: 1;
+}
+
+/* Search Button */
+.btn-search {
+    width: 100%;
+    padding: 10px 20px;
+    background-color: var(--bg-primary);
+    color: var(--primary-color);
+    border: 1px solid var(--primary-color);
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: var(--transition);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.btn-search:hover {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+/* Household Head Info */
+.household-head-info {
+    background-color: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 15px;
+}
+
+.head-info-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 15px;
+}
+
+.head-info-item {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.head-info-label {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.head-info-value {
+    font-size: 14px;
+    color: var(--text-primary);
+    font-weight: 500;
+}
+
+/* Household Members Section */
+.members-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.members-header .section-title {
+    margin: 0;
+}
+
+.btn-sm {
+    padding: 8px 16px;
+    font-size: 13px;
+}
+
+.members-table-container {
+    background-color: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.members-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+
+.members-table thead {
+    background-color: var(--bg-secondary);
+}
+
+.members-table th {
+    padding: 12px;
+    text-align: left;
+    font-weight: 600;
+    color: var(--text-primary);
+    border-bottom: 1px solid var(--border-color);
+    font-size: 12px;
+}
+
+.members-table td {
+    padding: 12px;
+    color: var(--text-primary);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.members-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.members-table tbody tr:hover:not(.no-members-row) {
+    background-color: var(--bg-secondary);
+}
+
+.no-members-row td {
+    font-style: italic;
+}
+
+.household-modal-footer {
+    padding: 20px 25px;
+    border-top: 1px solid var(--border-color);
+    background-color: var(--bg-primary);
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    flex-shrink: 0;
+}
+
+.household-modal-footer .btn {
+    min-width: 120px;
+    padding: 10px 24px;
+    font-size: 14px;
+    font-weight: 500;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: var(--transition);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border: none;
+}
+
+/* Secondary Button (Cancel) */
+.btn-secondary {
+    background-color: #e5e7eb;
+    color: #374151;
+    border: 1px solid #d1d5db;
+}
+
+.btn-secondary:hover {
+    background-color: #d1d5db;
+    border-color: #9ca3af;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.btn-secondary:active {
+    transform: scale(0.98);
+    background-color: #c4c8cf;
+}
+
+/* Success Button (Save) */
+.btn-success {
+    background-color: #10b981;
+    color: white;
+    border: 1px solid #10b981;
+}
+
+.btn-success:hover {
+    background-color: #059669;
+    border-color: #047857;
+    box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3);
+}
+
+.btn-success:active {
+    transform: scale(0.98);
+    background-color: #047857;
+}
+
+.btn-success:disabled,
+.btn-secondary:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.btn-success:disabled:hover,
+.btn-secondary:disabled:hover {
+    transform: none;
+    box-shadow: none;
+}
+
+/* ===================================
+   Search Resident Modal Styles
+   =================================== */
+.search-resident-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 10003;
+    align-items: center;
+    justify-content: flex-start;
+    padding-left: 50px;
+    animation: fadeIn 0.3s ease;
+}
+
+.search-resident-modal.show {
+    display: flex;
+}
+
+.search-resident-modal-content {
+    background-color: white;
+    border-radius: 8px;
+    width: 350px;
+    height: 600px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    animation: slideInLeft 0.3s ease;
+    display: flex;
+    flex-direction: column;
+}
+
+@keyframes slideInLeft {
+    from {
+        transform: translateX(-50px);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+.search-resident-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    border-bottom: 1px solid var(--border-color);
+    background-color: var(--bg-secondary);
+}
+
+.search-resident-modal-header h4 {
+    margin: 0;
+    color: var(--text-primary);
+    font-size: 16px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.search-resident-modal-header h4 i {
+    color: var(--primary-color);
+    font-size: 14px;
+}
+
+.btn-close-search-modal {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: none;
+    background-color: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: var(--transition);
+    font-size: 16px;
+}
+
+.btn-close-search-modal:hover {
+    background-color: var(--danger-color);
+    color: white;
+}
+
+.search-resident-modal-body {
+    padding: 20px;
+    background-color: white;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.search-subtitle {
+    margin: 0 0 15px 0;
+    font-size: 13px;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.search-input-container {
+    position: relative;
+    margin-bottom: 15px;
+}
+
+.search-input-container i {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-secondary);
+    font-size: 14px;
+}
+
+.search-input {
+    width: 100%;
+    padding: 10px 12px 10px 38px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    font-size: 13px;
+    color: var(--text-primary);
+    background-color: var(--bg-secondary);
+    transition: var(--transition);
+    box-sizing: border-box;
+}
+
+.search-input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.residents-list {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.loading-residents {
+    text-align: center;
+    padding: 30px;
+    color: var(--text-secondary);
+}
+
+.loading-residents i {
+    font-size: 24px;
+    margin-bottom: 10px;
+    display: block;
+}
+
+.resident-item {
+    padding: 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    margin-bottom: 10px;
+    cursor: pointer;
+    transition: var(--transition);
+    background-color: white;
+}
+
+.resident-item:hover {
+    background-color: var(--bg-secondary);
+    border-color: var(--primary-color);
+}
+
+.resident-item-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+}
+
+.resident-item-id {
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+.btn-show-more {
+    width: 100%;
+    padding: 10px;
+    background-color: var(--bg-secondary);
+    color: var(--primary-color);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: var(--transition);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    margin-top: 10px;
+}
+
+.btn-show-more:hover {
+    background-color: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+}
+
+/* Responsive Modal */
+@media (max-width: 768px) {
+    .search-resident-modal {
+        padding-left: 0;
+        justify-content: center;
+    }
+    
+    .search-resident-modal-content {
+        width: 90%;
+        max-width: 350px;
+    }
+    
+    .household-modal-content {
+        width: 95%;
+        max-height: 95vh;
+    }
+    
+    .household-modal-header {
+        padding: 15px 20px;
+    }
+    
+    .household-modal-header h3 {
+        font-size: 18px;
+    }
+    
+    .household-modal-body {
+        padding: 20px;
+    }
+    
+    .head-info-row {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+    
+    .household-modal-footer {
+        padding: 15px 20px;
+    }
+}
+
+@media (max-width: 480px) {
+    .household-modal-content {
+        width: 100%;
+        max-height: 100vh;
+        border-radius: 0;
+    }
+    
+    .household-modal-header {
+        padding: 12px 15px;
+    }
+    
+    .household-modal-header h3 {
+        font-size: 16px;
+    }
+    
+    .household-modal-body {
+        padding: 15px;
+    }
+    
+    .modal-section {
+        margin-bottom: 20px;
+    }
+    
+    .household-modal-footer {
+        padding: 12px 15px;
+        flex-direction: column;
+    }
+    
+    .household-modal-footer .btn {
+        width: 100%;
+    }
+    
+    .phone-prefix {
+        padding: 10px;
+        font-size: 13px;
+    }
+    
+    .flag-icon {
+        width: 18px;
+        height: 12px;
+    }
+}
+
+/* ===================================
+   Add Member Modal Styles
+   =================================== */
+.add-member-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 10002;
+    align-items: center;
+    justify-content: center;
+    animation: fadeIn 0.3s ease;
+}
+
+.add-member-modal.show {
+    display: flex;
+}
+
+.add-member-modal-content {
+    background-color: white;
+    border-radius: 8px;
+    width: 90%;
+    max-width: 450px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    animation: slideUp 0.3s ease;
+}
+
+.add-member-modal-body {
+    padding: 25px;
+}
+
+.member-name-input-group {
+    display: flex;
+    gap: 10px;
+    align-items: stretch;
+}
+
+.member-name-input {
+    flex: 1;
+}
+
+.btn-resident-search {
+    padding: 10px 20px;
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+    white-space: nowrap;
+}
+
+.btn-resident-search:hover {
+    background-color: #2563eb;
+}
+
+.btn-reset-member {
+    padding: 10px;
+    background-color: var(--bg-secondary);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 40px;
+}
+
+.btn-reset-member:hover {
+    background-color: var(--danger-color);
+    color: white;
+    border-color: var(--danger-color);
+    transform: rotate(180deg);
+}
+
+.add-member-modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border-color);
+}
+
+.add-member-modal-footer .btn {
+    min-width: 100px;
+}
+
+/* Delete Member Button */
+.btn-delete-member {
+    background-color: transparent;
+    border: none;
+    color: #ef4444;
+    cursor: pointer;
+    padding: 6px 10px;
+    border-radius: 6px;
+    transition: var(--transition);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-delete-member:hover {
+    background-color: #fee2e2;
+    color: #dc2626;
+}
+
+.btn-delete-member i {
+    font-size: 14px;
+}
+
+/* Responsive Add Member Modal */
+@media (max-width: 768px) {
+    .add-member-modal-content {
+        width: 95%;
+    }
+    
+    .add-member-modal-body {
+        padding: 20px;
+    }
+    
+    .member-name-input-group {
+        flex-direction: column;
+    }
+    
+    .btn-resident-search {
+        width: 100%;
+    }
+}
+
+@media (max-width: 480px) {
+    .add-member-modal-content {
+        width: 100%;
+        max-width: 100%;
+        border-radius: 0;
+    }
+    
+    .add-member-modal-body {
+        padding: 15px;
+    }
+    
+    .add-member-modal-footer {
+        flex-direction: column;
+    }
+    
+    .add-member-modal-footer .btn {
+        width: 100%;
+    }
+}
+
 /* Responsive Design */
 @media (max-width: 1200px) {
     .households-table {

@@ -36,6 +36,8 @@ try {
 // ============================================
 $resident = null;
 $emergencyContacts = [];
+$householdInfo = null;
+$householdMembers = [];
 
 try {
     // Fetch resident data
@@ -52,6 +54,71 @@ try {
     $contactStmt = $pdo->prepare("SELECT * FROM emergency_contacts WHERE resident_id = ?");
     $contactStmt->execute([$residentId]);
     $emergencyContacts = $contactStmt->fetchAll();
+    
+    // Fetch household information where resident is the household head
+    $householdStmt = $pdo->prepare("
+        SELECT h.*, 
+               CONCAT(r.first_name, ' ', COALESCE(r.middle_name, ''), ' ', r.last_name, ' ', COALESCE(r.suffix, '')) as head_name,
+               r.date_of_birth as head_dob,
+               r.sex as head_sex
+        FROM households h
+        LEFT JOIN residents r ON h.household_head_id = r.id
+        WHERE h.household_head_id = ?
+    ");
+    $householdStmt->execute([$residentId]);
+    $householdInfo = $householdStmt->fetch();
+    
+    // If resident is household head, fetch all members
+    if ($householdInfo) {
+        $membersStmt = $pdo->prepare("
+            SELECT hm.*,
+                   CONCAT(r.first_name, ' ', COALESCE(r.middle_name, ''), ' ', r.last_name, ' ', COALESCE(r.suffix, '')) as full_name,
+                   r.date_of_birth,
+                   r.sex,
+                   r.mobile_number,
+                   r.id as resident_id
+            FROM household_members hm
+            LEFT JOIN residents r ON hm.resident_id = r.id
+            WHERE hm.household_id = ?
+            ORDER BY hm.id
+        ");
+        $membersStmt->execute([$householdInfo['id']]);
+        $householdMembers = $membersStmt->fetchAll();
+    } else {
+        // Check if resident is a member of any household
+        $memberStmt = $pdo->prepare("
+            SELECT h.*, 
+                   CONCAT(r.first_name, ' ', COALESCE(r.middle_name, ''), ' ', r.last_name, ' ', COALESCE(r.suffix, '')) as head_name,
+                   r.date_of_birth as head_dob,
+                   r.sex as head_sex,
+                   r.id as head_resident_id,
+                   hm.relationship_to_head
+            FROM household_members hm
+            JOIN households h ON hm.household_id = h.id
+            LEFT JOIN residents r ON h.household_head_id = r.id
+            WHERE hm.resident_id = ?
+        ");
+        $memberStmt->execute([$residentId]);
+        $householdInfo = $memberStmt->fetch();
+        
+        // If resident is a member, fetch all other members
+        if ($householdInfo) {
+            $membersStmt = $pdo->prepare("
+                SELECT hm.*,
+                       CONCAT(r.first_name, ' ', COALESCE(r.middle_name, ''), ' ', r.last_name, ' ', COALESCE(r.suffix, '')) as full_name,
+                       r.date_of_birth,
+                       r.sex,
+                       r.mobile_number,
+                       r.id as resident_id
+                FROM household_members hm
+                LEFT JOIN residents r ON hm.resident_id = r.id
+                WHERE hm.household_id = ? AND hm.resident_id != ?
+                ORDER BY hm.id
+            ");
+            $membersStmt->execute([$householdInfo['id'], $residentId]);
+            $householdMembers = $membersStmt->fetchAll();
+        }
+    }
     
 } catch (PDOException $e) {
     error_log("Error fetching resident: " . $e->getMessage());
@@ -477,14 +544,129 @@ $age = calculateAge($resident['date_of_birth']);
                         </div>
                     </section>
                     
-                    <!-- Placeholder Sections -->
+                    <!-- Household Details Section -->
                     <section id="household-details" class="profile-section">
                         <div class="section-header">
                             <h2><i class="fas fa-home"></i> Household Details</h2>
                             <p>Household information and members</p>
                         </div>
                         <div class="section-content">
-                            <p class="no-data">Household information will be displayed here</p>
+                            <?php if ($householdInfo): ?>
+                                <div class="household-info-card">
+                                    <h3 class="subsection-title"><i class="fas fa-info-circle"></i> Household Information</h3>
+                                    <div class="info-grid">
+                                        <div class="info-item">
+                                            <label>Household Number</label>
+                                            <p><?php echo htmlspecialchars($householdInfo['household_number']); ?></p>
+                                        </div>
+                                        <div class="info-item">
+                                            <label>Household Contact</label>
+                                            <p><?php echo htmlspecialchars($householdInfo['household_contact'] ?: 'N/A'); ?></p>
+                                        </div>
+                                        <div class="info-item full-width">
+                                            <label>Address</label>
+                                            <p><?php echo htmlspecialchars($householdInfo['address']); ?></p>
+                                        </div>
+                                        <div class="info-item">
+                                            <label>Water Source Type</label>
+                                            <p><?php echo htmlspecialchars($householdInfo['water_source_type'] ?: 'N/A'); ?></p>
+                                        </div>
+                                        <div class="info-item">
+                                            <label>Toilet Facility Type</label>
+                                            <p><?php echo htmlspecialchars($householdInfo['toilet_facility_type'] ?: 'N/A'); ?></p>
+                                        </div>
+                                        <?php if (!empty($householdInfo['notes'])): ?>
+                                            <div class="info-item full-width">
+                                                <label>Notes</label>
+                                                <p><?php echo htmlspecialchars($householdInfo['notes']); ?></p>
+                                            </div>
+                                        <?php endif; ?>
+                                    </div>
+                                </div>
+                                
+                                <div class="household-head-card" style="margin-top: 30px;">
+                                    <h3 class="subsection-title"><i class="fas fa-user-tie"></i> Household Head</h3>
+                                    <div class="info-grid">
+                                        <div class="info-item">
+                                            <label>Full Name</label>
+                                            <p>
+                                                <?php if (isset($householdInfo['head_resident_id'])): ?>
+                                                    <a href="resident_profile.php?id=<?php echo $householdInfo['head_resident_id']; ?>" style="color: var(--primary-color); text-decoration: none;">
+                                                        <?php echo htmlspecialchars($householdInfo['head_name']); ?>
+                                                    </a>
+                                                <?php elseif ($householdInfo['household_head_id'] == $residentId): ?>
+                                                    <?php echo htmlspecialchars($householdInfo['head_name']); ?> <span style="color: var(--primary-color);">(You)</span>
+                                                <?php else: ?>
+                                                    <a href="resident_profile.php?id=<?php echo $householdInfo['household_head_id']; ?>" style="color: var(--primary-color); text-decoration: none;">
+                                                        <?php echo htmlspecialchars($householdInfo['head_name']); ?>
+                                                    </a>
+                                                <?php endif; ?>
+                                            </p>
+                                        </div>
+                                        <div class="info-item">
+                                            <label>Date of Birth</label>
+                                            <p><?php echo htmlspecialchars($householdInfo['head_dob'] ? date('F d, Y', strtotime($householdInfo['head_dob'])) : 'N/A'); ?></p>
+                                        </div>
+                                        <div class="info-item">
+                                            <label>Sex</label>
+                                            <p><?php echo htmlspecialchars($householdInfo['head_sex'] ?: 'N/A'); ?></p>
+                                        </div>
+                                        <?php if (isset($householdInfo['relationship_to_head'])): ?>
+                                            <div class="info-item">
+                                                <label>Your Relationship to Head</label>
+                                                <p><strong><?php echo htmlspecialchars($householdInfo['relationship_to_head']); ?></strong></p>
+                                            </div>
+                                        <?php endif; ?>
+                                    </div>
+                                </div>
+                                
+                                <?php 
+                                // Only show household members if current resident is the household head
+                                if ($householdInfo['household_head_id'] == $residentId && !empty($householdMembers)): 
+                                ?>
+                                    <div class="household-members-card" style="margin-top: 30px;">
+                                        <h3 class="subsection-title"><i class="fas fa-users"></i> Household Members (<?php echo count($householdMembers); ?>)</h3>
+                                        <div class="members-table-wrapper">
+                                            <table class="members-display-table">
+                                                <thead>
+                                                    <tr>
+                                                        <th>#</th>
+                                                        <th>Name</th>
+                                                        <th>Date of Birth</th>
+                                                        <th>Sex</th>
+                                                        <th>Relationship to Head</th>
+                                                        <th>Mobile Number</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <?php foreach ($householdMembers as $index => $member): ?>
+                                                        <tr>
+                                                            <td><?php echo $index + 1; ?></td>
+                                                            <td>
+                                                                <?php if ($member['resident_id']): ?>
+                                                                    <a href="resident_profile.php?id=<?php echo $member['resident_id']; ?>" style="color: var(--primary-color); text-decoration: none;">
+                                                                        <?php echo htmlspecialchars($member['full_name']); ?>
+                                                                    </a>
+                                                                <?php else: ?>
+                                                                    <?php echo htmlspecialchars($member['full_name']); ?>
+                                                                <?php endif; ?>
+                                                            </td>
+                                                            <td><?php echo htmlspecialchars($member['date_of_birth'] ? date('M d, Y', strtotime($member['date_of_birth'])) : 'N/A'); ?></td>
+                                                            <td><?php echo htmlspecialchars($member['sex'] ?: 'N/A'); ?></td>
+                                                            <td><?php echo htmlspecialchars($member['relationship_to_head']); ?></td>
+                                                            <td><?php echo htmlspecialchars($member['mobile_number'] ?: 'N/A'); ?></td>
+                                                        </tr>
+                                                    <?php endforeach; ?>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                <?php endif; ?>
+                                
+                                
+                            <?php else: ?>
+                                <p class="no-data">This resident is not associated with any household</p>
+                            <?php endif; ?>
                         </div>
                     </section>
                     
