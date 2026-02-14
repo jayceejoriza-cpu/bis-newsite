@@ -159,12 +159,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['backup'])) {
         }
         
         .backup-card {
-            background-color: var(--bg-surface, #ffffff);
+            background-color: var(--bg-secondary);
             border-radius: 12px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            box-shadow: var(--shadow-md);
             padding: 3rem 2rem;
             text-align: center;
-            border: 1px solid var(--border-color, #e5e7eb);
+            border: 1px solid var(--border-color);
+            transition: var(--color-transition);
         }
         
         .backup-icon-wrapper {
@@ -183,14 +184,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['backup'])) {
         .backup-title {
             font-size: 1.5rem;
             font-weight: 700;
-            color: var(--text-primary, #111827);
+            color: var(--text-primary);
             margin-bottom: 0.5rem;
+            transition: var(--color-transition);
         }
         
         .backup-description {
-            color: var(--text-secondary, #6b7280);
+            color: var(--text-secondary);
             margin-bottom: 2rem;
             line-height: 1.6;
+            transition: var(--color-transition);
         }
         
         .alert {
@@ -239,13 +242,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['backup'])) {
         }
         
         .modal-content {
-            background-color: var(--bg-surface, #ffffff);
+            background-color: var(--bg-secondary);
             padding: 2rem;
             border-radius: 12px;
             box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
             max-width: 450px;
             width: 90%;
             animation: slideIn 0.3s;
+            transition: var(--color-transition);
         }
         
         .modal-header {
@@ -270,8 +274,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['backup'])) {
         .modal-title {
             font-size: 1.25rem;
             font-weight: 600;
-            color: var(--text-primary, #111827);
+            color: var(--text-primary);
             margin: 0;
+            transition: var(--color-transition);
         }
         
         .modal-body {
@@ -279,9 +284,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['backup'])) {
         }
         
         .modal-text {
-            color: var(--text-secondary, #6b7280);
+            color: var(--text-secondary);
             margin-bottom: 1rem;
             line-height: 1.6;
+            transition: var(--color-transition);
         }
         
         .form-group {
@@ -291,9 +297,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['backup'])) {
         .form-label {
             display: block;
             font-weight: 500;
-            color: var(--text-primary, #111827);
+            color: var(--text-primary);
             margin-bottom: 0.5rem;
             font-size: 0.9rem;
+            transition: var(--color-transition);
         }
         
         .password-input-wrapper {
@@ -303,10 +310,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['backup'])) {
         .form-input {
             width: 100%;
             padding: 0.75rem 2.5rem 0.75rem 1rem;
-            border: 1px solid var(--border-color, #d1d5db);
+            border: 1px solid var(--border-color);
             border-radius: 8px;
             font-size: 1rem;
-            transition: all 0.3s;
+            background-color: var(--bg-secondary);
+            color: var(--text-primary);
+            transition: var(--color-transition);
             box-sizing: border-box;
         }
         
@@ -323,14 +332,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['backup'])) {
             transform: translateY(-50%);
             background: none;
             border: none;
-            color: var(--text-secondary, #6b7280);
+            color: var(--text-secondary);
             cursor: pointer;
             padding: 0.25rem;
             font-size: 1rem;
+            transition: var(--color-transition);
         }
         
         .toggle-password:hover {
-            color: var(--text-primary, #111827);
+            color: var(--text-primary);
         }
         
         .modal-footer {
@@ -340,9 +350,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['backup'])) {
         }
         
         .btn-secondary {
-            background-color: var(--bg-secondary, #f3f4f6);
-            color: var(--text-primary, #111827);
-            border: 1px solid var(--border-color, #d1d5db);
+            background-color: #6b7280;
+            color: white;
+            border: none;
         }
         
         .btn-secondary:hover {
@@ -366,25 +376,43 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['backup'])) {
         }
         
         /* Dark mode support */
+        body.dark-mode .backup-card {
+            background-color: #1f2937;
+            border-color: #374151;
+        }
+        
         body.dark-mode .backup-icon-wrapper {
             background-color: rgba(37, 99, 235, 0.2);
             color: #60a5fa;
         }
         
+        body.dark-mode .backup-title {
+            color: #f9fafb;
+        }
+        
+        body.dark-mode .backup-description {
+            color: #9ca3af;
+        }
+        
         body.dark-mode .alert-danger {
-            background-color: rgba(127, 29, 29, 0.5);
-            color: #fecaca;
-            border-color: #7f1d1d;
+            background-color: #7f1d1d;
+            color: #fca5a5;
+            border-color: #991b1b;
         }
         
         body.dark-mode .alert-success {
-            background-color: rgba(20, 83, 45, 0.5);
-            color: #bbf7d0;
-            border-color: #14532d;
+            background-color: #064e3b;
+            color: #6ee7b7;
+            border-color: #047857;
+        }
+        
+        body.dark-mode .modal {
+            background-color: rgba(0, 0, 0, 0.7);
         }
         
         body.dark-mode .modal-content {
-            background-color: var(--bg-surface, #1f2937);
+            background-color: #1f2937;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
         }
         
         body.dark-mode .modal-icon {
@@ -392,16 +420,43 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['backup'])) {
             color: #fbbf24;
         }
         
+        body.dark-mode .modal-title {
+            color: #f9fafb;
+        }
+        
+        body.dark-mode .modal-text {
+            color: #9ca3af;
+        }
+        
+        body.dark-mode .form-label {
+            color: #f9fafb;
+        }
+        
         body.dark-mode .form-input {
-            background-color: var(--bg-primary, #111827);
-            color: var(--text-primary, #f9fafb);
-            border-color: var(--border-color, #374151);
+            background-color: #111827;
+            color: #f9fafb;
+            border-color: #374151;
+        }
+        
+        body.dark-mode .form-input:focus {
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
+        }
+        
+        body.dark-mode .toggle-password {
+            color: #9ca3af;
+        }
+        
+        body.dark-mode .toggle-password:hover {
+            color: #f9fafb;
         }
         
         body.dark-mode .btn-secondary {
-            background-color: var(--bg-secondary, #374151);
-            color: var(--text-primary, #f9fafb);
-            border-color: var(--border-color, #4b5563);
+            background-color: #6b7280;
+        }
+        
+        body.dark-mode .btn-secondary:hover {
+            background-color: #4b5563;
         }
     </style>
 </head>

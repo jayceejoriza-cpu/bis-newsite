@@ -31,33 +31,93 @@ const mainContent = document.querySelector('.main-content');
 const menuToggle = document.getElementById('menuToggle');
 const mobileMenuToggle = document.getElementById('mobileMenuToggle');
 
-// Desktop sidebar collapse toggle
+// Create mobile backdrop element
+let mobileBackdrop = document.querySelector('.mobile-backdrop');
+if (!mobileBackdrop) {
+    mobileBackdrop = document.createElement('div');
+    mobileBackdrop.className = 'mobile-backdrop';
+    document.body.appendChild(mobileBackdrop);
+}
+
+// Function to open mobile sidebar
+function openMobileSidebar() {
+    if (window.innerWidth <= 768) {
+        sidebar.classList.add('active');
+        mobileBackdrop.classList.add('active');
+        document.body.classList.add('sidebar-open');
+    }
+}
+
+// Function to close mobile sidebar
+function closeMobileSidebar() {
+    sidebar.classList.remove('active');
+    mobileBackdrop.classList.remove('active');
+    document.body.classList.remove('sidebar-open');
+}
+
+// Desktop sidebar collapse toggle (inside sidebar)
 if (menuToggle) {
-    menuToggle.addEventListener('click', () => {
-        sidebar.classList.toggle('collapsed');
-        mainContent.classList.toggle('expanded');
+    menuToggle.addEventListener('click', (e) => {
+        e.stopPropagation();
         
-        // Save state to localStorage
-        const isCollapsed = sidebar.classList.contains('collapsed');
-        localStorage.setItem('sidebarCollapsed', isCollapsed);
+        if (window.innerWidth > 768) {
+            // Desktop behavior - collapse/expand sidebar
+            sidebar.classList.toggle('collapsed');
+            mainContent.classList.toggle('expanded');
+            
+            // Save state to localStorage
+            const isCollapsed = sidebar.classList.contains('collapsed');
+            localStorage.setItem('sidebarCollapsed', isCollapsed);
+        } else {
+            // Mobile behavior - close the sidebar
+            closeMobileSidebar();
+        }
     });
 }
 
 // Mobile menu toggle
 if (mobileMenuToggle) {
-    mobileMenuToggle.addEventListener('click', () => {
-        sidebar.classList.toggle('active');
+    mobileMenuToggle.addEventListener('click', (e) => {
+        e.stopPropagation();
+        
+        if (sidebar.classList.contains('active')) {
+            closeMobileSidebar();
+        } else {
+            openMobileSidebar();
+        }
     });
 }
 
-// Close sidebar when clicking outside on mobile
+// Close sidebar when clicking backdrop
+if (mobileBackdrop) {
+    mobileBackdrop.addEventListener('click', () => {
+        closeMobileSidebar();
+    });
+}
+
+// Close sidebar when clicking outside on mobile (improved)
 document.addEventListener('click', (e) => {
     if (window.innerWidth <= 768) {
-        if (!sidebar.contains(e.target) && mobileMenuToggle && !mobileMenuToggle.contains(e.target)) {
-            sidebar.classList.remove('active');
+        // Check if sidebar is open
+        if (sidebar.classList.contains('active')) {
+            // Don't close if clicking inside sidebar or on mobile menu toggle
+            if (!sidebar.contains(e.target) && 
+                mobileMenuToggle && 
+                !mobileMenuToggle.contains(e.target)) {
+                closeMobileSidebar();
+            }
         }
     }
 });
+
+// Prevent clicks inside sidebar from closing it
+if (sidebar) {
+    sidebar.addEventListener('click', (e) => {
+        if (window.innerWidth <= 768) {
+            e.stopPropagation();
+        }
+    });
+}
 
 // Restore sidebar state from localStorage on page load
 window.addEventListener('DOMContentLoaded', () => {
@@ -71,8 +131,8 @@ window.addEventListener('DOMContentLoaded', () => {
 // Handle window resize
 window.addEventListener('resize', () => {
     if (window.innerWidth > 768) {
-        // Remove mobile active class on desktop
-        sidebar.classList.remove('active');
+        // Desktop mode
+        closeMobileSidebar();
         
         // Restore collapsed state on desktop
         const sidebarCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
@@ -81,7 +141,7 @@ window.addEventListener('resize', () => {
             mainContent.classList.add('expanded');
         }
     } else {
-        // Remove collapsed class on mobile
+        // Mobile mode - remove collapsed class
         sidebar.classList.remove('collapsed');
         mainContent.classList.remove('expanded');
     }
@@ -91,22 +151,46 @@ window.addEventListener('resize', () => {
 // Theme Toggle
 // ===================================
 const themeToggle = document.getElementById('themeToggle');
-let isDarkMode = false;
 
-if (themeToggle) {
-    themeToggle.addEventListener('click', () => {
-        isDarkMode = !isDarkMode;
+// Check for saved theme preference or default to light mode
+const currentTheme = localStorage.getItem('theme') || 'light';
+
+// Apply the theme on page load
+if (currentTheme === 'dark') {
+    document.body.classList.add('dark-mode');
+    if (themeToggle) {
         const icon = themeToggle.querySelector('i');
-        
-        if (isDarkMode) {
+        if (icon) {
             icon.classList.remove('fa-sun');
             icon.classList.add('fa-moon');
-            // Add dark mode styles here if needed
-        } else {
-            icon.classList.remove('fa-moon');
-            icon.classList.add('fa-sun');
-            // Remove dark mode styles here if needed
         }
+    }
+}
+
+// Theme toggle functionality
+if (themeToggle) {
+    themeToggle.addEventListener('click', () => {
+        const icon = themeToggle.querySelector('i');
+        
+        // Toggle dark mode class on body
+        document.body.classList.toggle('dark-mode');
+        
+        // Check if dark mode is now active
+        const isDarkMode = document.body.classList.contains('dark-mode');
+        
+        // Update icon
+        if (icon) {
+            if (isDarkMode) {
+                icon.classList.remove('fa-sun');
+                icon.classList.add('fa-moon');
+            } else {
+                icon.classList.remove('fa-moon');
+                icon.classList.add('fa-sun');
+            }
+        }
+        
+        // Save theme preference to localStorage
+        localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
     });
 }
 

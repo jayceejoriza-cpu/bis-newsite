@@ -30,9 +30,23 @@
                 <a href="user-profile.php" class="dropdown-item">
                     <i class="fas fa-user-circle"></i> Profile
                 </a>
-                <a href="settings.php" class="dropdown-item">
-                    <i class="fas fa-cog"></i> Settings
-                </a>
+                <div class="dropdown-item has-submenu" id="headerSettingsSubmenu">
+                    <div class="dropdown-item-content">
+                        <i class="fas fa-cog"></i> Settings
+                        <i class="fas fa-chevron-right submenu-arrow"></i>
+                    </div>
+                    <div class="header-submenu">
+                        <a href="activity-logs.php" class="dropdown-item submenu-item">
+                            <i class="fas fa-history"></i> Activity Logs
+                        </a>
+                        <a href="archive.php" class="dropdown-item submenu-item">
+                            <i class="fas fa-archive"></i> Archive
+                        </a>
+                        <a href="backup.php" class="dropdown-item submenu-item">
+                            <i class="fas fa-database"></i> Backup
+                        </a>
+                    </div>
+                </div>
                 <div class="dropdown-divider"></div>
                 <a href="logout.php" class="dropdown-item text-danger">
                     <i class="fas fa-sign-out-alt"></i> Log Out
@@ -43,100 +57,20 @@
 </header>
 
 <style>
-    :root {
-        --bg-primary: #ffffff;
-        --bg-secondary: #f9fafb;
-        --bg-surface: #ffffff;
-        --bg-hover: #f3f4f6;
-        --border-color: #e5e7eb;
-        --text-primary: #111827;
-        --text-secondary: #6b7280;
-        --text-tertiary: #374151;
-        --danger-text: #ef4444;
-        --danger-bg-hover: #fef2f2;
-        --header-bg: #ffffff;
-        --header-text: #111827;
-        --header-border: #e5e7eb;
-        --sidebar-bg: #ffffff;
-        --sidebar-text: #111827;
-        --sidebar-border: #e5e7eb;
-        --sidebar-hover: #f3f4f6;
-        --sidebar-active: #e5e7eb;
-    }
-
-    body.dark-mode {
-        --bg-primary: #111827;
-        --bg-secondary: #111827;
-        --bg-surface: #1f2937;
-        --bg-hover: #374151;
-        --border-color: #374151;
-        --text-primary: #f3f4f6;
-        --text-secondary: #9ca3af;
-        --text-tertiary: #d1d5db;
-        --danger-text: #ef4444;
-        --danger-bg-hover: #7f1d1d;
-        --header-bg: #1f2937;
-        --header-text: #f3f4f6;
-        --header-border: #374151;
-        --sidebar-bg: #1f2937;
-        --sidebar-text: #f3f4f6;
-        --sidebar-border: #374151;
-        --sidebar-hover: #374151;
-        --sidebar-active: #4b5563;
-    }
-
-    /* General body styles for theme consistency */
-    body {
-        background-color: var(--bg-primary);
-        color: var(--text-primary);
-        transition: background-color 0.2s, color 0.2s;
-    }
-
-    /* Apply theme to header */
-    .header {
-        background-color: var(--header-bg);
-        color: var(--header-text);
-        border-bottom: 1px solid var(--header-border);
-    }
-
-    /* Apply theme to sidebar */
-    .sidebar {
-        background-color: var(--sidebar-bg);
-        color: var(--sidebar-text);
-        border-right: 1px solid var(--sidebar-border);
-        transition: background-color 0.2s, color 0.2s;
-    }
-
-    .sidebar a, .sidebar .nav-link {
-        color: var(--sidebar-text);
-    }
-
-    .sidebar a:hover, .sidebar .nav-link:hover {
-        background-color: var(--sidebar-hover);
-    }
-
-    .sidebar .active {
-        background-color: var(--sidebar-active);
-    }
-    
-    .theme-toggle,
-    .mobile-menu-toggle {
-        color: var(--header-text);
-    }
-
+    /* Dropdown Menu Styles */
     .dropdown-menu {
         position: absolute;
         top: 120%;
         right: 0;
         width: 200px;
-        background: var(--bg-surface);
+        background: var(--bg-secondary);
         border: 1px solid var(--border-color);
         border-radius: 8px;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        box-shadow: var(--shadow-md);
         opacity: 0;
         visibility: hidden;
         transform: translateY(-10px);
-        transition: opacity 0.3s ease, visibility 0.3s ease, transform 0.3s ease;
+        transition: opacity 0.3s ease, visibility 0.3s ease, transform 0.3s ease, background-color 0.3s ease, border-color 0.3s ease;
         z-index: 100;
         overflow: hidden;
     }
@@ -147,29 +81,32 @@
     }
     .dropdown-header {
         padding: 12px 16px;
-        background-color: var(--bg-secondary);
+        background-color: var(--bg-primary);
         border-bottom: 1px solid var(--border-color);
+        transition: background-color 0.3s ease, border-color 0.3s ease;
     }
     .dropdown-header .user-name {
         font-weight: 600;
         color: var(--text-primary);
         font-size: 14px;
+        transition: color 0.3s ease;
     }
     .dropdown-header .user-role {
         font-size: 12px;
         color: var(--text-secondary);
+        transition: color 0.3s ease;
     }
     .dropdown-item {
         display: flex;
         align-items: center;
         padding: 10px 16px;
-        color: var(--text-tertiary);
+        color: var(--text-primary);
         text-decoration: none;
         font-size: 14px;
-        transition: background-color 0.2s, color 0.2s;
+        transition: background-color 0.3s ease, color 0.3s ease;
     }
     .dropdown-item:hover {
-        background-color: var(--bg-hover);
+        background-color: var(--bg-primary);
         color: var(--text-primary);
     }
     .dropdown-item i {
@@ -177,78 +114,129 @@
         margin-right: 8px;
         text-align: center;
         color: var(--text-secondary);
+        transition: color 0.3s ease;
     }
     .dropdown-item.text-danger {
-        color: var(--danger-text);
+        color: #ef4444;
     }
     .dropdown-item.text-danger:hover {
-        background-color: var(--danger-bg-hover);
-    }
-    body.dark-mode .dropdown-item.text-danger:hover {
-        color: var(--text-primary);
+        background-color: var(--bg-primary);
     }
     .dropdown-divider {
         height: 1px;
         background-color: var(--border-color);
         margin: 4px 0;
+        transition: background-color 0.3s ease;
+    }
+    
+    /* Header Submenu Styles */
+    .dropdown-item.has-submenu {
+        position: relative;
+        padding: 0;
+        cursor: pointer;
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .dropdown-item-content {
+        display: flex;
+        align-items: center;
+        padding: 10px 16px;
+        width: 100%;
+        transition: background-color 0.3s ease, color 0.3s ease;
+    }
+    
+    .dropdown-item.has-submenu:hover .dropdown-item-content {
+        background-color: var(--bg-primary);
+    }
+    
+    .submenu-arrow {
+        margin-left: auto;
+        font-size: 10px;
+        transition: transform 0.3s ease, color 0.3s ease;
+    }
+    
+    .dropdown-item.has-submenu.open .submenu-arrow {
+        transform: rotate(90deg);
+    }
+    
+    .header-submenu {
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.3s ease;
+        background-color: var(--bg-primary);
+    }
+    
+    .dropdown-item.has-submenu.open .header-submenu {
+        max-height: 200px;
+    }
+    
+    .header-submenu .dropdown-item {
+        padding-left: 45px;
+        font-size: 13px;
+    }
+    
+    .header-submenu .dropdown-item i {
+        width: 16px;
+        font-size: 13px;
+    }
+    
+    .header-submenu .dropdown-item:hover {
+        background-color: var(--bg-secondary);
     }
 </style>
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Theme Toggle Functionality
-        const themeToggle = document.getElementById('themeToggle');
-        const body = document.body;
-        
-        // Check for saved theme preference
-        if (localStorage.getItem('theme') === 'dark') {
-            body.classList.add('dark-mode');
-            if (themeToggle) {
-                const icon = themeToggle.querySelector('i');
-                if (icon) {
-                    icon.classList.remove('fa-sun');
-                    icon.classList.add('fa-moon');
-                }
-            }
-        }
-
-        if (themeToggle) {
-            themeToggle.addEventListener('click', function() {
-                body.classList.toggle('dark-mode');
-                const icon = this.querySelector('i');
-                
-                if (body.classList.contains('dark-mode')) {
-                    localStorage.setItem('theme', 'dark');
-                    if (icon) {
-                        icon.classList.remove('fa-sun');
-                        icon.classList.add('fa-moon');
-                    }
-                } else {
-                    localStorage.setItem('theme', 'light');
-                    if (icon) {
-                        icon.classList.remove('fa-moon');
-                        icon.classList.add('fa-sun');
-                    }
-                }
-            });
-        }
-
+        // User Profile Dropdown
         const userProfile = document.getElementById('userProfileDropdown');
-        const dropdownMenu = userProfile.querySelector('.dropdown-menu');
+        const dropdownMenu = userProfile ? userProfile.querySelector('.dropdown-menu') : null;
+        const settingsSubmenu = document.getElementById('headerSettingsSubmenu');
+        const settingsContent = settingsSubmenu ? settingsSubmenu.querySelector('.dropdown-item-content') : null;
 
         if (userProfile && dropdownMenu) {
             userProfile.addEventListener('click', function(e) {
+                // Don't close dropdown if clicking inside it
                 if (dropdownMenu.contains(e.target)) {
                     return;
                 }
                 e.stopPropagation();
                 dropdownMenu.classList.toggle('show');
+                
+                // Close submenu when dropdown closes
+                if (!dropdownMenu.classList.contains('show') && settingsSubmenu) {
+                    settingsSubmenu.classList.remove('open');
+                }
             });
 
             document.addEventListener('click', function(e) {
                 if (!userProfile.contains(e.target)) {
                     dropdownMenu.classList.remove('show');
+                    // Close submenu when clicking outside
+                    if (settingsSubmenu) {
+                        settingsSubmenu.classList.remove('open');
+                    }
                 }
+            });
+        }
+        
+        // Settings Submenu Toggle
+        if (settingsContent) {
+            settingsContent.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                settingsSubmenu.classList.toggle('open');
+            });
+        }
+        
+        // Prevent submenu links from closing the dropdown
+        if (settingsSubmenu) {
+            const submenuLinks = settingsSubmenu.querySelectorAll('.header-submenu a');
+            submenuLinks.forEach(link => {
+                link.addEventListener('click', function(e) {
+                    // Allow navigation but stop propagation
+                    e.stopPropagation();
+                });
             });
         }
     });
