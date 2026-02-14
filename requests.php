@@ -1,0 +1,378 @@
+<?php
+// Include configuration
+require_once 'config.php';
+
+// Page title
+$pageTitle = 'Requests';
+
+// ============================================
+// Database Connection
+// ============================================
+try {
+    $pdo = new PDO(
+        "mysql:host=" . DB_HOST . ";dbname=" . DB_NAME . ";charset=utf8mb4",
+        DB_USER,
+        DB_PASS,
+        [
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+            PDO::ATTR_EMULATE_PREPARES => false
+        ]
+    );
+} catch (PDOException $e) {
+    die("Database connection failed: " . $e->getMessage());
+}
+
+// ============================================
+// Helper Functions
+// ============================================
+
+/**
+ * Format full name
+ */
+function formatFullName($firstName, $middleName, $lastName, $suffix) {
+    $name = trim($firstName);
+    if (!empty($middleName)) {
+        $name .= ' ' . trim($middleName);
+    }
+    $name .= ' ' . trim($lastName);
+    if (!empty($suffix)) {
+        $name .= ' ' . trim($suffix);
+    }
+    return $name;
+}
+
+// ============================================
+// Fetch Certificate Requests Data
+// ============================================
+$requests = [];
+$totalRequests = 0;
+
+try {
+    // Get total count
+    $countStmt = $pdo->query("SELECT COUNT(*) as total FROM certificate_requests");
+    $totalRequests = $countStmt->fetch()['total'];
+    
+    // Fetch certificate requests with resident and certificate details
+    $stmt = $pdo->prepare("
+        SELECT 
+            cr.id,
+            cr.reference_no,
+            cr.payment_status,
+            cr.certificate_fee,
+            cr.status,
+            cr.date_requested,
+            r.id as resident_id,
+            r.resident_id as resident_code,
+            r.first_name,
+            r.middle_name,
+            r.last_name,
+            r.suffix,
+            c.title as certificate_name
+        FROM certificate_requests cr
+        INNER JOIN residents r ON cr.resident_id = r.id
+        INNER JOIN certificates c ON cr.certificate_id = c.id
+        ORDER BY cr.date_requested DESC
+    ");
+    
+    $stmt->execute();
+    $requests = $stmt->fetchAll();
+    
+} catch (PDOException $e) {
+    error_log("Error fetching certificate requests: " . $e->getMessage());
+    $requests = [];
+}
+?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><?php echo $pageTitle; ?> - <?php echo SITE_NAME; ?></title>
+    
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="bootstrap/css/bootstrap.min.css">
+    
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- PDF.js Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/requests.css">
+</head>
+<body>
+    <!-- Sidebar -->
+    <?php include 'components/sidebar.php'; ?>
+    
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Header -->
+        <?php include 'components/header.php'; ?>
+        
+        <!-- Requests Content -->
+        <div class="dashboard-content">
+            <div class="page-header-section">
+                <div>
+                    <h1 class="page-title"><?php echo $pageTitle; ?></h1>
+                    <p class="page-subtitle">View and manage requests records</p>
+                </div>
+                <button class="btn btn-primary" id="createRequestBtn">
+                    <i class="fas fa-plus"></i>
+                    Create Certificate Request
+                </button>
+            </div>
+            
+            <!-- Search and Filter Bar -->
+            <div class="search-filter-bar">
+                <div class="search-box">
+                    <i class="fas fa-search"></i>
+                    <input type="text" placeholder="Search" id="searchInput">
+                    <button class="btn-clear" id="clearSearch">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                
+                <button class="btn btn-icon" id="filterBtn" title="Filter">
+                    <i class="fas fa-filter"></i>
+                </button>
+                
+                <button class="btn btn-icon" id="refreshBtn" title="Refresh">
+                    <i class="fas fa-sync-alt"></i>
+                </button>
+            </div>
+            
+            <!-- Requests Table -->
+            <div class="table-container">
+                <table class="data-table requests-table" id="requestsTable">
+                    <thead>
+                        <tr>
+                            <th>Reference No.</th>
+                            <th>Resident ID</th>
+                            <th>Resident Name</th>
+                            <th>Certificate</th>
+                            <th>Certificate Fee</th>
+                            <th>Date Request</th>
+                        </tr>
+                    </thead>
+                    <tbody id="requestsTableBody">
+                        <?php if (empty($requests)): ?>
+                            <!-- Empty state -->
+                            <tr>
+                                <td colspan="6" style="text-align: center; padding: 40px;">
+                                    <i class="fas fa-file-alt" style="font-size: 48px; color: #d1d5db; margin-bottom: 16px;"></i>
+                                    <p style="color: #6b7280; font-size: 16px; margin: 0;">No requests found</p>
+                                    <p style="color: #9ca3af; font-size: 14px; margin-top: 8px;">Certificate requests will appear here</p>
+                                </td>
+                            </tr>
+                        <?php else: ?>
+                            <?php foreach ($requests as $request): 
+                                // Prepare data
+                                $fullName = formatFullName(
+                                    $request['first_name'], 
+                                    $request['middle_name'], 
+                                    $request['last_name'], 
+                                    $request['suffix']
+                                );
+                                $residentCode = !empty($request['resident_code']) ? $request['resident_code'] : 'N/A';
+                                $dateRequested = !empty($request['date_requested']) ? date('F j, Y', strtotime($request['date_requested'])) : 'N/A';
+                            ?>
+                            <tr>
+                                <td>
+                                    <span class="reference-link">
+                                        <?php echo htmlspecialchars($request['reference_no']); ?>
+                                    </span>
+                                </td>
+                                <td><?php echo htmlspecialchars($residentCode); ?></td>
+                                <td>
+                                    <span class="resident-name">
+                                        <?php echo htmlspecialchars($fullName); ?>
+                                    </span>
+                                </td>
+                                <td><?php echo htmlspecialchars($request['certificate_name']); ?></td>
+                                <td><?php echo number_format($request['certificate_fee'], 2); ?></td>
+                                <td><?php echo htmlspecialchars($dateRequested); ?></td>
+                            </tr>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Pagination -->
+            <div class="pagination-container">
+                <div class="pagination-info">
+                    <span>TOTAL: <strong><?php echo number_format($totalRequests); ?></strong></span>
+                </div>
+                <div class="pagination">
+                    <button class="page-btn" disabled>
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+                    <button class="page-btn active">1</button>
+                    <button class="page-btn">2</button>
+                    <button class="page-btn">3</button>
+                    <button class="page-btn">
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+    
+    <!-- Create Certificate Request Modal -->
+    <div class="modal fade" id="createRequestModal" tabindex="-1" aria-labelledby="createRequestModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="createRequestModalLabel">
+                        <i class="fas fa-file-certificate"></i>
+                        Create Certificate Request
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- Form Only (No Preview Section) -->
+                    <div class="request-form-container">
+                            <form id="createRequestForm">
+                                <!-- Resident Selection -->
+                                <div class="form-group mb-3">
+                                    <label class="form-label">RESIDENT FULL NAME <span class="text-danger">*</span></label>
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" id="residentNameInput" placeholder="Select resident" readonly required>
+                                        <input type="hidden" id="selectedResidentId" name="resident_id">
+                                        <button type="button" class="btn btn-primary" id="selectResidentBtn">
+                                            <i class="fas fa-user"></i>
+                                            RESIDENT
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <!-- Certificate Type -->
+                                <div class="form-group mb-3">
+                                    <label class="form-label" for="certificateType">TYPE OF CERTIFICATION <span class="text-danger">*</span></label>
+                                    <select class="form-control" id="certificateType" name="certificate_id" required>
+                                        <option value="">Select certificate type</option>
+                                    </select>
+                                </div>
+                                
+                                <!-- Certificate Fee -->
+                                <div class="form-group mb-3">
+                                    <label class="form-label" for="certificateFeeInput">FEE <span class="text-danger">*</span></label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">₱</span>
+                                        <input type="number" class="form-control" id="certificateFeeInput" name="certificate_fee" value="0.00" step="0.01" min="0" readonly>
+                                    </div>
+                                </div>
+                                
+                                <!-- Dynamic Fields Container -->
+                                <div id="dynamicFieldsContainer" style="display: none;">
+                                    <div class="form-group mb-3">
+                                        <label class="form-label">OTHER INPUTS FROM THE CERTIFICATION</label>
+                                        <small class="d-block text-muted mb-2">(TYPE, NUMBER AND DROPDOWN)</small>
+                                        <div id="dynamicFieldsContent" class="dynamic-fields-area">
+                                            <!-- Dynamic fields will be inserted here -->
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                            </form>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-primary" id="previewCertificateBtn">
+                        <i class="fas fa-eye"></i>
+                        Preview
+                    </button>
+                    <button type="button" class="btn btn-primary" id="printCertificateBtn">
+                        <i class="fas fa-print"></i>
+                        Print
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Resident Selection Modal -->
+    <div class="modal fade" id="residentSelectionModal" tabindex="-1" aria-labelledby="residentSelectionModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="residentSelectionModalLabel">
+                        <i class="fas fa-users"></i>
+                        Select Resident
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- Search Box -->
+                    <div class="mb-3">
+                        <div class="input-group">
+                            <span class="input-group-text">
+                                <i class="fas fa-search"></i>
+                            </span>
+                            <input type="text" class="form-control" id="residentSearchInput" placeholder="Search by name, ID, or contact number">
+                        </div>
+                    </div>
+                    
+                    <!-- Residents List -->
+                    <div class="residents-list" id="residentsListContainer">
+                        <div class="text-center py-4">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p class="mt-2 text-muted">Loading residents...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Certificate Preview Modal -->
+    <div class="modal fade" id="certificatePreviewModal" tabindex="-1" aria-labelledby="certificatePreviewModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="certificatePreviewModalLabel">
+                        <i class="fas fa-eye"></i>
+                        Certificate Preview
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-0">
+                    <div class="preview-container" style="background: #f5f5f5; min-height: 500px; display: flex; align-items: center; justify-content: center;">
+                        <div id="certificatePreviewArea" style="max-width: 100%; overflow: auto;">
+                            <div class="preview-placeholder text-center p-5">
+                                <i class="fas fa-file-alt" style="font-size: 48px; color: #d1d5db;"></i>
+                                <p class="mt-3 text-muted">Select a certificate type and resident to preview</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times"></i>
+                        Close
+                    </button>
+                    <button type="button" class="btn btn-primary" id="downloadPreviewBtn">
+                        <i class="fas fa-download"></i>
+                        Download
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Bootstrap JS Bundle (includes Popper) -->
+    <script src="bootstrap/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Custom JavaScript -->
+    <script src="js/script.js"></script>
+    <script src="js/requests.js"></script>
+</body>
+</html>
