@@ -10,7 +10,7 @@ $searchTerm = isset($_GET['search']) ? trim($_GET['search']) : '';
 
 try {
     // Prepare SQL query to search residents
-    // Exclude residents who are already household heads or members
+    // Get ALL active residents (no household filtering for certificate requests)
     $sql = "SELECT 
                 r.id,
                 r.resident_id,
@@ -24,11 +24,7 @@ try {
                 r.mobile_number,
                 r.current_address
             FROM residents r
-            LEFT JOIN households h ON r.id = h.household_head_id
-            LEFT JOIN household_members hm ON r.id = hm.resident_id
-            WHERE r.activity_status = 'Active'
-            AND h.id IS NULL
-            AND hm.id IS NULL";
+            WHERE r.activity_status = 'Active'";
     
     // Add search condition if search term is provided
     if (!empty($searchTerm)) {
@@ -40,7 +36,7 @@ try {
         )";
     }
     
-    $sql .= " ORDER BY r.last_name, r.first_name LIMIT 50";
+    $sql .= " ORDER BY r.last_name, r.first_name LIMIT 100";
     
     // Prepare statement
     $stmt = $conn->prepare($sql);
@@ -53,10 +49,11 @@ try {
     $result = $stmt->get_result();
     $residents = $result->fetch_all(MYSQLI_ASSOC);
     
-    // Return success response
+    // Return success response with both 'data' and 'residents' for compatibility
     echo json_encode([
         'success' => true,
         'data' => $residents,
+        'residents' => $residents,
         'count' => count($residents)
     ]);
     

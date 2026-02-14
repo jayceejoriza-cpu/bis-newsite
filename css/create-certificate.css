@@ -1,0 +1,1379 @@
+/* ===================================
+   Create Certificate Page Styles - Light Mode
+   =================================== */
+
+/* Wrapper */
+.create-certificate-wrapper {
+    padding: 0;
+}
+
+/* Top Action Bar */
+.certificate-top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 30px;
+    background-color: var(--bg-secondary);
+    border-bottom: 1px solid var(--border-color);
+    margin-bottom: 0;
+}
+
+.top-bar-left {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.page-title-inline {
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.top-bar-right {
+    display: flex;
+    gap: 12px;
+}
+
+.btn-outline {
+    padding: 10px 20px;
+    background-color: transparent;
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: var(--transition);
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-outline:hover {
+    background-color: var(--bg-primary);
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+}
+
+/* Main Container */
+.certificate-editor-container {
+    display: flex;
+    gap: 20px;
+    height: calc(100vh - 180px);
+    min-height: 700px;
+    overflow: hidden;
+}
+
+/* Left Sidebar - Form Fields */
+.certificate-form-sidebar {
+    width: 400px;
+    background-color: var(--bg-secondary);
+    border-right: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.form-sidebar-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+}
+
+/* Published Toggle */
+.form-group-toggle {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    background-color: var(--bg-primary);
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+.toggle-label {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 50px;
+    height: 26px;
+    margin: 0;
+}
+
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: var(--transition);
+    border-radius: 26px;
+}
+
+.toggle-slider:before {
+    position: absolute;
+    content: "";
+    height: 20px;
+    width: 20px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: var(--transition);
+    border-radius: 50%;
+}
+
+.toggle-switch input:checked + .toggle-slider {
+    background-color: var(--primary-color);
+}
+
+.toggle-switch input:checked + .toggle-slider:before {
+    transform: translateX(24px);
+}
+
+/* Form Groups */
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+}
+
+/* Date Input Group */
+.date-input-group {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.date-input-group .form-control {
+    flex: 1;
+}
+
+.btn-date-add {
+    width: 38px;
+    height: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--border-color);
+    background-color: var(--bg-secondary);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: var(--transition);
+    color: var(--text-secondary);
+    font-size: 14px;
+}
+
+.btn-date-add:hover {
+    background-color: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+}
+
+/* Certificate Tabs */
+.certificate-tabs {
+    display: flex;
+    gap: 8px;
+    margin: 25px 0 20px;
+    border-bottom: 2px solid var(--border-color);
+}
+
+.tab-button {
+    flex: 1;
+    padding: 12px 16px;
+    border: none;
+    background: none;
+    color: var(--text-secondary);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+    position: relative;
+    letter-spacing: 0.5px;
+}
+
+.tab-button:hover {
+    color: var(--text-primary);
+}
+
+.tab-button.active {
+    color: var(--primary-color);
+}
+
+.tab-button.active::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background-color: var(--primary-color);
+}
+
+/* Tab Content */
+.tab-content-container {
+    margin-top: 20px;
+}
+
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Collapsible Sections */
+.collapsible-section {
+    margin-bottom: 15px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    overflow: hidden;
+    background-color: var(--bg-secondary);
+}
+
+.section-header {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 15px;
+    background-color: var(--bg-primary);
+    border: none;
+    cursor: pointer;
+    transition: var(--transition);
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.section-header:hover {
+    background-color: var(--bg-secondary);
+}
+
+.section-header i {
+    transition: transform 0.3s ease;
+    color: var(--text-secondary);
+    font-size: 12px;
+}
+
+.section-header.active i {
+    transform: rotate(180deg);
+}
+
+.section-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+}
+
+.section-content.active {
+    max-height: 500px;
+}
+
+/* Field List */
+.field-list {
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.field-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 6px;
+    cursor: grab;
+    transition: var(--transition);
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+}
+
+.field-item:hover {
+    background-color: var(--bg-primary);
+    border-color: var(--primary-color);
+}
+
+.field-item.dragging {
+    opacity: 0.5;
+    cursor: grabbing;
+}
+
+.drag-handle {
+    color: var(--text-secondary);
+    font-size: 14px;
+    cursor: grab;
+}
+
+.field-name {
+    font-size: 14px;
+    color: var(--text-primary);
+    user-select: none;
+    flex: 1;
+}
+
+/* Draggable Field */
+.draggable-field {
+    cursor: grab;
+}
+
+.draggable-field:active {
+    cursor: grabbing;
+}
+
+/* Tab Empty State */
+.tab-empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+    text-align: center;
+    color: var(--text-secondary);
+}
+
+.tab-empty-state i {
+    font-size: 48px;
+    margin-bottom: 15px;
+    opacity: 0.5;
+}
+
+.tab-empty-state p {
+    margin: 0;
+    font-size: 14px;
+}
+
+/* Field Description */
+.field-description {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-bottom: 12px;
+    line-height: 1.5;
+}
+
+/* Form Tab Buttons */
+.btn-sm {
+    padding: 8px 16px;
+    font-size: 13px;
+}
+
+.btn-outline-primary {
+    color: var(--primary-color);
+    border-color: var(--primary-color);
+    background-color: transparent;
+}
+
+.btn-outline-primary:hover {
+    color: white;
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+.w-100 {
+    width: 100%;
+}
+
+.mt-2 {
+    margin-top: 8px;
+}
+
+/* Dynamic Field Items in Form Tab */
+.form-field-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 12px;
+    border-radius: 6px;
+    background-color: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    margin-bottom: 8px;
+    transition: var(--transition);
+}
+
+.form-field-item:hover {
+    border-color: var(--primary-color);
+}
+
+.form-field-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+}
+
+.form-field-info i {
+    color: var(--text-secondary);
+}
+
+.form-field-label {
+    font-size: 14px;
+    color: var(--text-primary);
+    font-weight: 500;
+}
+
+.form-field-type {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-left: 8px;
+}
+
+.form-field-actions {
+    display: flex;
+    gap: 4px;
+}
+
+.btn-field-action {
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--border-color);
+    background-color: var(--bg-secondary);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: var(--transition);
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+.btn-field-action:hover {
+    background-color: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+}
+
+.btn-field-action.danger:hover {
+    background-color: var(--danger-color);
+    border-color: var(--danger-color);
+}
+
+/* Right Panel - PDF Editor */
+.certificate-pdf-panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background-color: var(--bg-primary);
+    overflow: hidden;
+}
+
+/* PDF Formatting Toolbar */
+.pdf-formatting-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 20px;
+    background-color: var(--bg-secondary);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.toolbar-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.toolbar-select {
+    padding: 6px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    font-size: 13px;
+    cursor: pointer;
+    min-width: 120px;
+}
+
+.toolbar-input {
+    width: 60px;
+    padding: 6px 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    font-size: 13px;
+    text-align: center;
+}
+
+.toolbar-btn {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: var(--transition);
+    font-size: 14px;
+}
+
+.toolbar-btn:hover {
+    background-color: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+}
+
+.toolbar-btn.active {
+    background-color: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+}
+
+.toolbar-divider {
+    width: 1px;
+    height: 24px;
+    background-color: var(--border-color);
+    margin: 0 4px;
+}
+
+/* PDF Canvas Area */
+.pdf-canvas-area {
+    flex: 1;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 20px;
+    overflow: auto;
+    position: relative;
+}
+
+.no-pdf-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    max-width: 400px;
+}
+
+.pdf-icon {
+    width: 120px;
+    height: 120px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--bg-secondary);
+    border-radius: 20px;
+    margin-bottom: 25px;
+    border: 2px solid var(--border-color);
+}
+
+.pdf-icon i {
+    font-size: 60px;
+    color: #ef4444;
+}
+
+.no-pdf-state h3 {
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 10px;
+}
+
+.no-pdf-state p {
+    font-size: 14px;
+    color: var(--text-secondary);
+    margin-bottom: 25px;
+}
+
+/* PDF Display Container */
+.pdf-display-container {
+    position: relative;
+    display: inline-block;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    max-width: 100%;
+    max-height: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+#pdfCanvas {
+    display: block;
+    background: white;
+    max-width: 100%;
+    height: auto;
+    margin: 0;
+    padding: 0;
+    position: relative;
+    top: 0;
+    left: 0;
+}
+
+/* Field Placeholder on PDF */
+.field-placeholder {
+    position: absolute;
+    padding: 8px 12px;
+    background-color: rgba(59, 130, 246, 0.2);
+    border: 2px solid var(--primary-color);
+    border-radius: 4px;
+    cursor: move;
+    user-select: none;
+    font-family: Arial, sans-serif;
+    font-size: 16px;
+    color: #000;
+    white-space: nowrap;
+    z-index: 10;
+}
+
+.field-placeholder:hover {
+    background-color: rgba(59, 130, 246, 0.3);
+}
+
+.field-placeholder.selected {
+    border-color: #f59e0b;
+    background-color: rgba(245, 158, 11, 0.2);
+}
+
+.field-placeholder .field-label {
+    pointer-events: none;
+}
+
+.field-placeholder .field-actions {
+    position: absolute;
+    top: -30px;
+    right: 0;
+    display: none;
+    gap: 4px;
+}
+
+.field-placeholder:hover .field-actions,
+.field-placeholder.selected .field-actions {
+    display: flex;
+}
+
+.field-action-btn {
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: white;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    color: var(--text-primary);
+}
+
+.field-action-btn:hover {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+/* Resize Handles */
+.resize-handle {
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    background-color: var(--primary-color);
+    border: 1px solid white;
+    border-radius: 50%;
+}
+
+.resize-handle.nw { top: -4px; left: -4px; cursor: nw-resize; }
+.resize-handle.ne { top: -4px; right: -4px; cursor: ne-resize; }
+.resize-handle.sw { bottom: -4px; left: -4px; cursor: sw-resize; }
+.resize-handle.se { bottom: -4px; right: -4px; cursor: se-resize; }
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+    .certificate-form-sidebar {
+        width: 350px;
+    }
+}
+
+@media (max-width: 992px) {
+    .certificate-editor-container {
+        flex-direction: column;
+        height: auto;
+    }
+    
+    .certificate-form-sidebar {
+        width: 100%;
+        border-right: none;
+        border-bottom: 1px solid var(--border-color);
+        max-height: 50vh;
+    }
+    
+    .certificate-pdf-panel {
+        min-height: 50vh;
+    }
+}
+
+@media (max-width: 768px) {
+    .certificate-top-bar {
+        padding: 15px;
+        flex-wrap: wrap;
+    }
+    
+    .page-title-inline {
+        font-size: 18px;
+    }
+    
+    .form-sidebar-content {
+        padding: 15px;
+    }
+    
+    .top-bar-right {
+        flex-wrap: wrap;
+    }
+    
+    .top-bar-right .btn {
+        flex: 1;
+        min-width: 100px;
+    }
+    
+    .pdf-canvas-area {
+        padding: 20px;
+    }
+    
+    .pdf-icon {
+        width: 100px;
+        height: 100px;
+    }
+    
+    .pdf-icon i {
+        font-size: 50px;
+    }
+    
+    .no-pdf-state h3 {
+        font-size: 18px;
+    }
+}
+
+@media (max-width: 480px) {
+    .certificate-tabs {
+        gap: 4px;
+    }
+    
+    .tab-button {
+        padding: 10px 8px;
+        font-size: 11px;
+    }
+    
+    .form-group label {
+        font-size: 12px;
+    }
+    
+    .form-control {
+        padding: 8px 10px;
+        font-size: 13px;
+    }
+    
+    .field-name {
+        font-size: 13px;
+    }
+    
+    .top-bar-right {
+        gap: 8px;
+    }
+    
+    .top-bar-right .btn {
+        padding: 8px 12px;
+        font-size: 13px;
+    }
+}
+
+/* Scrollbar Styling */
+.form-sidebar-content::-webkit-scrollbar {
+    width: 6px;
+}
+
+.form-sidebar-content::-webkit-scrollbar-track {
+    background: var(--bg-primary);
+}
+
+.form-sidebar-content::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 3px;
+}
+
+.form-sidebar-content::-webkit-scrollbar-thumb:hover {
+    background: var(--text-secondary);
+}
+
+/* Loading State */
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+}
+
+.loading-spinner {
+    width: 50px;
+    height: 50px;
+    border: 4px solid var(--border-color);
+    border-top-color: var(--primary-color);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Success Notification */
+.success-notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background-color: var(--secondary-color);
+    color: white;
+    padding: 15px 20px;
+    border-radius: 8px;
+    box-shadow: var(--shadow-lg);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    z-index: 9999;
+    animation: slideInRight 0.3s ease;
+}
+
+@keyframes slideInRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+.success-notification i {
+    font-size: 20px;
+}
+
+.success-notification.hide {
+    animation: slideOutRight 0.3s ease forwards;
+}
+
+@keyframes slideOutRight {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+}
+
+/* Preview Modal */
+#previewModal .modal-dialog {
+    max-width: 90%;
+}
+
+#previewModal .modal-content {
+    border-radius: 12px;
+    height: 90vh;
+    display: flex;
+    flex-direction: column;
+}
+
+#previewModal .modal-body {
+    flex: 1;
+    overflow: hidden;
+}
+
+.preview-container {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.preview-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 15px 20px;
+    background-color: var(--bg-primary);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.zoom-level {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-primary);
+    min-width: 50px;
+    text-align: center;
+}
+
+.preview-content {
+    flex: 1;
+    overflow: auto;
+    background-color: #f5f5f5;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 30px;
+}
+
+#previewCanvas {
+    display: block;
+    background: white;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    max-width: 100%;
+    width: auto;
+    height: auto;
+}
+
+/* Field Properties Modal Customization */
+#fieldPropertiesModal .modal-content {
+    border-radius: 12px;
+}
+
+#fieldPropertiesModal .modal-header {
+    background-color: var(--bg-primary);
+    border-bottom: 1px solid var(--border-color);
+}
+
+#fieldPropertiesModal .modal-body {
+    padding: 20px;
+}
+
+#fieldPropertiesModal .form-label {
+    font-weight: 500;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+}
+
+#fieldPropertiesModal .form-control {
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+}
+
+#fieldPropertiesModal .form-control:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* ===================================
+   Custom Modal Styling (Light Mode)
+   =================================== */
+
+/* Remove Bootstrap's dark backdrop */
+.modal-backdrop {
+    display: none !important;
+}
+
+/* Custom Modal Styling for Text/Number/Dropdown Modals */
+#addTextPlaceholderModal .modal-dialog,
+#addNumberPlaceholderModal .modal-dialog,
+#addDropdownPlaceholderModal .modal-dialog {
+    max-width: 400px;
+    margin: 100px auto;
+}
+
+#addTextPlaceholderModal .modal-content,
+#addNumberPlaceholderModal .modal-content,
+#addDropdownPlaceholderModal .modal-content {
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+    background-color: #2d2d2d;
+    color: #ffffff;
+}
+
+#addTextPlaceholderModal .modal-header,
+#addNumberPlaceholderModal .modal-header,
+#addDropdownPlaceholderModal .modal-header {
+    background-color: #2d2d2d;
+    border-bottom: 1px solid #404040;
+    padding: 16px 20px;
+}
+
+#addTextPlaceholderModal .modal-title,
+#addNumberPlaceholderModal .modal-title,
+#addDropdownPlaceholderModal .modal-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #ffffff;
+}
+
+#addTextPlaceholderModal .btn-close,
+#addNumberPlaceholderModal .btn-close,
+#addDropdownPlaceholderModal .btn-close {
+    filter: invert(1);
+    opacity: 0.7;
+}
+
+#addTextPlaceholderModal .btn-close:hover,
+#addNumberPlaceholderModal .btn-close:hover,
+#addDropdownPlaceholderModal .btn-close:hover {
+    opacity: 1;
+}
+
+#addTextPlaceholderModal .modal-body,
+#addNumberPlaceholderModal .modal-body,
+#addDropdownPlaceholderModal .modal-body {
+    padding: 20px;
+    background-color: #2d2d2d;
+}
+
+#addTextPlaceholderModal .form-label,
+#addNumberPlaceholderModal .form-label,
+#addDropdownPlaceholderModal .form-label {
+    font-size: 13px;
+    font-weight: 500;
+    color: #b0b0b0;
+    margin-bottom: 8px;
+}
+
+#addTextPlaceholderModal .form-control,
+#addNumberPlaceholderModal .form-control,
+#addDropdownPlaceholderModal .form-control {
+    background-color: #3a3a3a;
+    border: 1px solid #4a4a4a;
+    border-radius: 6px;
+    color: #ffffff;
+    padding: 10px 12px;
+    font-size: 14px;
+}
+
+#addTextPlaceholderModal .form-control:focus,
+#addNumberPlaceholderModal .form-control:focus,
+#addDropdownPlaceholderModal .form-control:focus {
+    background-color: #3a3a3a;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+    color: #ffffff;
+    outline: none;
+}
+
+#addTextPlaceholderModal .form-control::placeholder,
+#addNumberPlaceholderModal .form-control::placeholder,
+#addDropdownPlaceholderModal .form-control::placeholder {
+    color: #6b6b6b;
+}
+
+/* Toggle Switch in Modals */
+#addTextPlaceholderModal .toggle-switch,
+#addNumberPlaceholderModal .toggle-switch,
+#addDropdownPlaceholderModal .toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 44px;
+    height: 24px;
+}
+
+#addTextPlaceholderModal .toggle-switch input,
+#addNumberPlaceholderModal .toggle-switch input,
+#addDropdownPlaceholderModal .toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+#addTextPlaceholderModal .toggle-slider,
+#addNumberPlaceholderModal .toggle-slider,
+#addDropdownPlaceholderModal .toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #4a4a4a;
+    transition: 0.3s;
+    border-radius: 24px;
+}
+
+#addTextPlaceholderModal .toggle-slider:before,
+#addNumberPlaceholderModal .toggle-slider:before,
+#addDropdownPlaceholderModal .toggle-slider:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: 0.3s;
+    border-radius: 50%;
+}
+
+#addTextPlaceholderModal .toggle-switch input:checked + .toggle-slider,
+#addNumberPlaceholderModal .toggle-switch input:checked + .toggle-slider,
+#addDropdownPlaceholderModal .toggle-switch input:checked + .toggle-slider {
+    background-color: #3b82f6;
+}
+
+#addTextPlaceholderModal .toggle-switch input:checked + .toggle-slider:before,
+#addNumberPlaceholderModal .toggle-switch input:checked + .toggle-slider:before,
+#addDropdownPlaceholderModal .toggle-switch input:checked + .toggle-slider:before {
+    transform: translateX(20px);
+}
+
+/* Modal Footer */
+#addTextPlaceholderModal .modal-footer,
+#addNumberPlaceholderModal .modal-footer,
+#addDropdownPlaceholderModal .modal-footer {
+    background-color: #2d2d2d;
+    border-top: 1px solid #404040;
+    padding: 16px 20px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+#addTextPlaceholderModal .modal-footer .btn,
+#addNumberPlaceholderModal .modal-footer .btn,
+#addDropdownPlaceholderModal .modal-footer .btn {
+    padding: 8px 20px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+#addTextPlaceholderModal .modal-footer .btn-secondary,
+#addNumberPlaceholderModal .modal-footer .btn-secondary,
+#addDropdownPlaceholderModal .modal-footer .btn-secondary {
+    background-color: #4a4a4a;
+    color: #ffffff;
+}
+
+#addTextPlaceholderModal .modal-footer .btn-secondary:hover,
+#addNumberPlaceholderModal .modal-footer .btn-secondary:hover,
+#addDropdownPlaceholderModal .modal-footer .btn-secondary:hover {
+    background-color: #5a5a5a;
+}
+
+#addTextPlaceholderModal .modal-footer .btn-primary,
+#addNumberPlaceholderModal .modal-footer .btn-primary,
+#addDropdownPlaceholderModal .modal-footer .btn-primary {
+    background-color: #3b82f6;
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+#addTextPlaceholderModal .modal-footer .btn-primary:hover,
+#addNumberPlaceholderModal .modal-footer .btn-primary:hover,
+#addDropdownPlaceholderModal .modal-footer .btn-primary:hover {
+    background-color: #2563eb;
+}
+
+/* Dropdown Options Textarea */
+#addDropdownPlaceholderModal textarea.form-control {
+    resize: vertical;
+    min-height: 100px;
+}
+
+#addDropdownPlaceholderModal .text-muted {
+    color: #6b6b6b !important;
+    font-size: 12px;
+    margin-top: 4px;
+}
+
+/* Option Item Styling for Dropdown */
+.dropdown-option-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    background-color: #3a3a3a;
+    border: 1px solid #4a4a4a;
+    border-radius: 6px;
+    margin-bottom: 8px;
+    color: #ffffff;
+}
+
+.dropdown-option-item input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: #ffffff;
+    font-size: 14px;
+    outline: none;
+}
+
+.dropdown-option-item button {
+    background: transparent;
+    border: none;
+    color: #ef4444;
+    cursor: pointer;
+    padding: 4px 8px;
+    font-size: 14px;
+}
+
+.dropdown-option-item button:hover {
+    color: #dc2626;
+}
+
+/* Add Option Button */
+.btn-add-option {
+    width: 100%;
+    padding: 8px;
+    background-color: #3a3a3a;
+    border: 1px dashed #4a4a4a;
+    border-radius: 6px;
+    color: #3b82f6;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.btn-add-option:hover {
+    background-color: #404040;
+    border-color: #3b82f6;
+}
+
+/* Modal Animation */
+#addTextPlaceholderModal.show .modal-dialog,
+#addNumberPlaceholderModal.show .modal-dialog,
+#addDropdownPlaceholderModal.show .modal-dialog {
+    animation: modalSlideDown 0.3s ease;
+}
+
+@keyframes modalSlideDown {
+    from {
+        transform: translateY(-50px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+/* Custom Field Item in Form Tab */
+.custom-field-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 6px;
+    cursor: grab;
+    transition: var(--transition);
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    margin-bottom: 8px;
+}
+
+.custom-field-item:hover {
+    background-color: var(--bg-primary);
+    border-color: var(--primary-color);
+}
+
+.custom-field-item.dragging {
+    opacity: 0.5;
+    cursor: grabbing;
+}
+
+.custom-field-item .drag-handle {
+    color: var(--text-secondary);
+    font-size: 14px;
+    cursor: grab;
+}
+
+.custom-field-item .field-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.custom-field-item .field-label-text {
+    font-size: 14px;
+    color: var(--text-primary);
+    font-weight: 500;
+}
+
+.custom-field-item .field-type-badge {
+    font-size: 11px;
+    color: var(--text-secondary);
+    background-color: var(--bg-primary);
+    padding: 2px 8px;
+    border-radius: 4px;
+    display: inline-block;
+    width: fit-content;
+}
+
+.custom-field-item .field-actions-inline {
+    display: flex;
+    gap: 4px;
+}
+
+.custom-field-item .btn-field-edit,
+.custom-field-item .btn-field-delete {
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--border-color);
+    background-color: var(--bg-secondary);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: var(--transition);
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+.custom-field-item .btn-field-edit:hover {
+    background-color: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+}
+
+.custom-field-item .btn-field-delete:hover {
+    background-color: #ef4444;
+    color: white;
+    border-color: #ef4444;
+}

@@ -289,5 +289,73 @@ SELECT
 FROM residents;
 
 -- ============================================
+-- Table: certificates
+-- Description: Certificate templates and management
+-- ============================================
+CREATE TABLE IF NOT EXISTS `certificates` (
+  `id` INT(11) NOT NULL AUTO_INCREMENT,
+  `title` VARCHAR(255) NOT NULL COMMENT 'Certificate title/name',
+  `description` TEXT DEFAULT NULL COMMENT 'Certificate description',
+  `fee` DECIMAL(10,2) DEFAULT 0.00 COMMENT 'Certificate fee amount',
+  `status` ENUM('Published', 'Unpublished') DEFAULT 'Unpublished' COMMENT 'Publication status',
+  `template_content` TEXT DEFAULT NULL COMMENT 'Certificate template HTML/content',
+  `fields` TEXT DEFAULT NULL COMMENT 'JSON of customizable fields',
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `created_by` INT(11) DEFAULT NULL COMMENT 'User ID who created',
+  `updated_by` INT(11) DEFAULT NULL COMMENT 'User ID who last updated',
+  
+  PRIMARY KEY (`id`),
+  INDEX `idx_status` (`status`),
+  INDEX `idx_title` (`title`),
+  INDEX `idx_created_at` (`created_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Certificate templates';
+
+-- ============================================
+-- Table: certificate_requests
+-- Description: Certificate requests from residents
+-- ============================================
+CREATE TABLE IF NOT EXISTS `certificate_requests` (
+  `id` INT(11) NOT NULL AUTO_INCREMENT,
+  `reference_no` VARCHAR(50) NOT NULL UNIQUE COMMENT 'Unique reference number for the request',
+  `resident_id` INT(11) NOT NULL COMMENT 'Foreign key to residents table',
+  `certificate_id` INT(11) NOT NULL COMMENT 'Foreign key to certificates table',
+  `payment_status` ENUM('Paid', 'Unpaid', 'Waived') DEFAULT 'Unpaid' COMMENT 'Payment status',
+  `certificate_fee` DECIMAL(10,2) DEFAULT 0.00 COMMENT 'Fee amount for this request',
+  `status` ENUM('Pending', 'Approved', 'Rejected', 'Completed') DEFAULT 'Pending' COMMENT 'Request status',
+  `purpose` TEXT DEFAULT NULL COMMENT 'Purpose of the certificate request',
+  `field_values` TEXT DEFAULT NULL COMMENT 'JSON of custom field values from the certificate template',
+  `generated_certificate_path` VARCHAR(255) DEFAULT NULL COMMENT 'Path to generated certificate PDF',
+  `date_requested` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT 'Date when request was made',
+  `date_approved` DATETIME DEFAULT NULL COMMENT 'Date when request was approved',
+  `date_completed` DATETIME DEFAULT NULL COMMENT 'Date when request was completed',
+  `approved_by` INT(11) DEFAULT NULL COMMENT 'User ID who approved',
+  `completed_by` INT(11) DEFAULT NULL COMMENT 'User ID who completed',
+  `remarks` TEXT DEFAULT NULL COMMENT 'Additional remarks',
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `created_by` INT(11) DEFAULT NULL COMMENT 'User ID who created',
+  `updated_by` INT(11) DEFAULT NULL COMMENT 'User ID who last updated',
+  
+  PRIMARY KEY (`id`),
+  INDEX `idx_reference_no` (`reference_no`),
+  INDEX `idx_resident_id` (`resident_id`),
+  INDEX `idx_certificate_id` (`certificate_id`),
+  INDEX `idx_status` (`status`),
+  INDEX `idx_payment_status` (`payment_status`),
+  INDEX `idx_date_requested` (`date_requested`),
+  CONSTRAINT `fk_request_resident` 
+    FOREIGN KEY (`resident_id`) 
+    REFERENCES `residents` (`id`) 
+    ON DELETE CASCADE 
+    ON UPDATE CASCADE,
+  CONSTRAINT `fk_request_certificate` 
+    FOREIGN KEY (`certificate_id`) 
+    REFERENCES `certificates` (`id`) 
+    ON DELETE CASCADE 
+    ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Certificate requests from residents';
+
+-- ============================================
 -- End of Schema
 -- ============================================
