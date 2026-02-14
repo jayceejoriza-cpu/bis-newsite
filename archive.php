@@ -283,7 +283,7 @@ if (isset($conn)) {
                                 <td>
                                     <div style="display: flex; gap: 5px;">
                                         <?php if(isset($_SESSION['username'])): ?>
-                                        <a href="restore_archive.php?id=<?php echo $archive['id']; ?>" onclick="return confirm('Restore this record?')" class="btn btn-sm btn-success" title="Restore">
+                                        <a href="restore_archive.php?id=<?php echo htmlspecialchars($archive['id']); ?>" onclick="return confirm('Restore this record?')" class="btn btn-sm btn-success" title="Restore">
                                             <i class="fas fa-undo"></i>
                                         </a>
                                         <?php endif; ?>

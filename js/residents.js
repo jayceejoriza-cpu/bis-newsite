@@ -342,16 +342,40 @@ function handleAction(action, name, id, row) {
             break;
             
         case 'delete':
+            // Validate residentId before proceeding
+            if (!residentId) {
+                console.error('Delete failed: No resident ID found');
+                showNotification('Error: Unable to identify resident to delete', 'error');
+                return;
+            }
+            
+            console.log(`Attempting to delete resident ID: ${residentId}`);
+            
             if (confirm(`Are you sure you want to delete ${name}?\n\nThe record will be moved to the archive and can be restored later.`)) {
                 const formData = new FormData();
                 formData.append('id', residentId);
+                
+                console.log('Sending delete request to server...');
                 
                 fetch('delete_resident.php', {
                     method: 'POST',
                     body: formData
                 })
-                .then(response => response.json())
+                .then(response => {
+                    console.log('Response status:', response.status);
+                    console.log('Response headers:', response.headers);
+                    
+                    // Check if response is JSON
+                    const contentType = response.headers.get('content-type');
+                    if (!contentType || !contentType.includes('application/json')) {
+                        throw new Error('Server did not return JSON response');
+                    }
+                    
+                    return response.json();
+                })
                 .then(data => {
+                    console.log('Server response:', data);
+                    
                     if(data.success) {
                         // Show success notification
                         showNotification(data.message, 'success');
@@ -364,12 +388,13 @@ function handleAction(action, name, id, row) {
                             window.location.reload();
                         }, 800);
                     } else {
+                        console.error('Delete failed:', data.message);
                         showNotification('Error: ' + data.message, 'error');
                     }
                 })
                 .catch(error => {
-                    console.error('Error:', error);
-                    showNotification('An error occurred while processing your request', 'error');
+                    console.error('Delete request error:', error);
+                    showNotification('An error occurred while processing your request: ' + error.message, 'error');
                 });
             }
             break;

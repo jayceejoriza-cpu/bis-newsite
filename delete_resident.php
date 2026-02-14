@@ -110,19 +110,27 @@ try {
     }
 
     if ($stmt->affected_rows > 0) {
-        // Log Activity
+        // Commit transaction first to ensure delete is saved
+        $conn->commit();
+        
+        // Log Activity (outside transaction to prevent rollback if logging fails)
         if (isset($_SESSION['username'])) {
-            $log_user = $_SESSION['username'];
-            $log_action = 'Archive Resident';
-            $log_desc = "Moved resident to archive: $residentName ($residentIdCode)";
-            $log_stmt = $conn->prepare("INSERT INTO activity_logs (user, action, description) VALUES (?, ?, ?)");
-            $log_stmt->bind_param("sss", $log_user, $log_action, $log_desc);
-            $log_stmt->execute();
-            $log_stmt->close();
+            try {
+                $log_user = $_SESSION['username'];
+                $log_action = 'Archive Resident';
+                $log_desc = "Moved resident to archive: $residentName ($residentIdCode)";
+                $log_stmt = $conn->prepare("INSERT INTO activity_logs (user, action, description) VALUES (?, ?, ?)");
+                if ($log_stmt) {
+                    $log_stmt->bind_param("sss", $log_user, $log_action, $log_desc);
+                    $log_stmt->execute();
+                    $log_stmt->close();
+                }
+            } catch (Exception $log_error) {
+                // Log the error but don't fail the delete operation
+                error_log("Activity log error: " . $log_error->getMessage());
+            }
         }
         
-        // Commit transaction
-        $conn->commit();
         echo json_encode(['success' => true, 'message' => 'Resident moved to archive successfully']);
     } else {
         // If no rows affected, it might have been already deleted
