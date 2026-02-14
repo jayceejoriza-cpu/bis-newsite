@@ -890,7 +890,8 @@ function loadResidents(searchTerm = '') {
         </div>
     `;
     
-    fetch(`search_residents.php?search=${encodeURIComponent(searchTerm)}`)
+    // Add filter_households parameter to exclude already assigned residents
+    fetch(`search_residents.php?search=${encodeURIComponent(searchTerm)}&filter_households=true`)
         .then(response => response.json())
         .then(data => {
             if (data.success && data.data.length > 0) {
@@ -899,7 +900,8 @@ function loadResidents(searchTerm = '') {
                 container.innerHTML = `
                     <div class="loading-residents">
                         <i class="fas fa-user-slash"></i>
-                        <span>No residents found</span>
+                        <span>No available residents found</span>
+                        <p style="font-size: 12px; margin-top: 5px; color: var(--text-secondary);">All residents may already be assigned to households</p>
                     </div>
                 `;
             }
@@ -1069,10 +1071,12 @@ function confirmAddMember() {
         return;
     }
     
+    // Validate if resident is already added
     if (memberData.residentId) {
         const tbody = document.getElementById('membersTableBody');
         const existingRows = tbody.querySelectorAll('tr:not(.no-members-row)');
         
+        // Check if already added to this household
         for (let row of existingRows) {
             if (row.dataset.residentId === memberData.residentId) {
                 showNotification('This resident has already been added as a member', 'error');
@@ -1080,6 +1084,7 @@ function confirmAddMember() {
             }
         }
         
+        // Check if trying to add household head as member
         const householdHeadId = document.getElementById('selectedResidentId').value;
         if (memberData.residentId === householdHeadId) {
             showNotification('The household head cannot be added as a member', 'error');

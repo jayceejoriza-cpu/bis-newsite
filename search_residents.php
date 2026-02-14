@@ -8,9 +8,11 @@ header('Content-Type: application/json');
 // Get search term from request
 $searchTerm = isset($_GET['search']) ? trim($_GET['search']) : '';
 
+// Get optional parameter to filter available residents for households
+$filterHouseholds = isset($_GET['filter_households']) ? $_GET['filter_households'] === 'true' : false;
+
 try {
     // Prepare SQL query to search residents
-    // Get ALL active residents (no household filtering for certificate requests)
     $sql = "SELECT 
                 r.id,
                 r.resident_id,
@@ -25,6 +27,19 @@ try {
                 r.current_address
             FROM residents r
             WHERE r.activity_status = 'Active'";
+    
+    // If filtering for households, exclude residents already assigned
+    if ($filterHouseholds) {
+        $sql .= " AND r.id NOT IN (
+            SELECT household_head_id 
+            FROM households 
+            WHERE household_head_id IS NOT NULL
+        )
+        AND r.id NOT IN (
+            SELECT resident_id 
+            FROM household_members
+        )";
+    }
     
     // Add search condition if search term is provided
     if (!empty($searchTerm)) {
@@ -54,7 +69,8 @@ try {
         'success' => true,
         'data' => $residents,
         'residents' => $residents,
-        'count' => count($residents)
+        'count' => count($residents),
+        'filtered' => $filterHouseholds
     ]);
     
     $stmt->close();

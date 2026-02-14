@@ -21,6 +21,84 @@ try {
     // Start transaction
     $conn->begin_transaction();
     
+    // Validate that household head is not already assigned to another household
+    $checkHeadSql = "SELECT h.id, h.household_number 
+                     FROM households h 
+                     WHERE h.household_head_id = ?";
+    $checkHeadStmt = $conn->prepare($checkHeadSql);
+    $checkHeadStmt->bind_param('i', $data['householdHeadId']);
+    $checkHeadStmt->execute();
+    $checkHeadResult = $checkHeadStmt->get_result();
+    
+    if ($checkHeadResult->num_rows > 0) {
+        $existingHousehold = $checkHeadResult->fetch_assoc();
+        $checkHeadStmt->close();
+        throw new Exception('This resident is already assigned as household head in household ' . $existingHousehold['household_number']);
+    }
+    $checkHeadStmt->close();
+    
+    // Validate that household head is not already a member of another household
+    $checkHeadMemberSql = "SELECT hm.household_id, h.household_number 
+                           FROM household_members hm
+                           JOIN households h ON hm.household_id = h.id
+                           WHERE hm.resident_id = ?";
+    $checkHeadMemberStmt = $conn->prepare($checkHeadMemberSql);
+    $checkHeadMemberStmt->bind_param('i', $data['householdHeadId']);
+    $checkHeadMemberStmt->execute();
+    $checkHeadMemberResult = $checkHeadMemberStmt->get_result();
+    
+    if ($checkHeadMemberResult->num_rows > 0) {
+        $existingHousehold = $checkHeadMemberResult->fetch_assoc();
+        $checkHeadMemberStmt->close();
+        throw new Exception('This resident is already a member of household ' . $existingHousehold['household_number']);
+    }
+    $checkHeadMemberStmt->close();
+    
+    // Validate members are not already assigned to any household
+    if (!empty($data['members']) && is_array($data['members'])) {
+        foreach ($data['members'] as $member) {
+            if (!empty($member['residentId'])) {
+                // Check if member is already a household head
+                $checkMemberHeadSql = "SELECT h.id, h.household_number 
+                                       FROM households h 
+                                       WHERE h.household_head_id = ?";
+                $checkMemberHeadStmt = $conn->prepare($checkMemberHeadSql);
+                $checkMemberHeadStmt->bind_param('i', $member['residentId']);
+                $checkMemberHeadStmt->execute();
+                $checkMemberHeadResult = $checkMemberHeadStmt->get_result();
+                
+                if ($checkMemberHeadResult->num_rows > 0) {
+                    $existingHousehold = $checkMemberHeadResult->fetch_assoc();
+                    $checkMemberHeadStmt->close();
+                    throw new Exception($member['name'] . ' is already assigned as household head in household ' . $existingHousehold['household_number']);
+                }
+                $checkMemberHeadStmt->close();
+                
+                // Check if member is already in another household
+                $checkMemberSql = "SELECT hm.household_id, h.household_number 
+                                   FROM household_members hm
+                                   JOIN households h ON hm.household_id = h.id
+                                   WHERE hm.resident_id = ?";
+                $checkMemberStmt = $conn->prepare($checkMemberSql);
+                $checkMemberStmt->bind_param('i', $member['residentId']);
+                $checkMemberStmt->execute();
+                $checkMemberResult = $checkMemberStmt->get_result();
+                
+                if ($checkMemberResult->num_rows > 0) {
+                    $existingHousehold = $checkMemberResult->fetch_assoc();
+                    $checkMemberStmt->close();
+                    throw new Exception($member['name'] . ' is already a member of household ' . $existingHousehold['household_number']);
+                }
+                $checkMemberStmt->close();
+                
+                // Check if member is the same as household head
+                if ($member['residentId'] == $data['householdHeadId']) {
+                    throw new Exception('The household head cannot be added as a member');
+                }
+            }
+        }
+    }
+    
     // Insert household
     $sql = "INSERT INTO households (
         household_number,
@@ -101,7 +179,7 @@ try {
     // Return error response
     echo json_encode([
         'success' => false,
-        'message' => 'Error saving household: ' . $e->getMessage()
+        'message' => $e->getMessage()
     ]);
 }
 

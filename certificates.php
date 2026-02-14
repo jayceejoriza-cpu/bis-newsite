@@ -191,6 +191,10 @@ try {
             <i class="fas fa-exchange-alt"></i>
             Toggle Status
         </button>
+         <div class="action-menu-divider" style="
+        height: 1px;
+        background-color: #e5e7eb;
+        margin: 5px 0;"></div>
         <button class="context-menu-item danger" data-action="delete">
             <i class="fas fa-trash"></i>
             Delete

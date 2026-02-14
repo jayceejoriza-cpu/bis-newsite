@@ -875,7 +875,7 @@ document.addEventListener('DOMContentLoaded', function() {
             civil_status: 'Single',
             address: 'Manila City',
             mobile_number: '09123456789',
-            email: 'sample@email.com'
+            email: 'sample@email.com',
         };
         
         placedFields.forEach(field => {

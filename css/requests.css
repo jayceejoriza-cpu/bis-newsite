@@ -342,6 +342,36 @@
 }
 
 /* ===================================
+   Modal Z-Index Fix
+   =================================== */
+
+/* Fix modal backdrop appearing in front of modal */
+.modal-backdrop {
+    z-index: 1040 !important;
+}
+
+.modal {
+    z-index: 1050 !important;
+}
+
+.modal-dialog {
+    z-index: 1060 !important;
+}
+
+/* Ensure all modals are above backdrop */
+#createRequestModal,
+#residentSelectionModal,
+#certificatePreviewModal {
+    z-index: 1050 !important;
+}
+
+#createRequestModal .modal-dialog,
+#residentSelectionModal .modal-dialog,
+#certificatePreviewModal .modal-dialog {
+    z-index: 1060 !important;
+}
+
+/* ===================================
    Print Styles
    =================================== */
 
