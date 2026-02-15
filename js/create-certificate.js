@@ -33,6 +33,33 @@ document.addEventListener('DOMContentLoaded', function() {
     let isDragging = false;
     let dragOffset = { x: 0, y: 0 };
     
+    // Custom Field Management Variables (must be declared early for loadCertificateData)
+    let customFields = [];
+    let customFieldIdCounter = 1;
+    
+    // Custom Field DOM Elements (must be declared early for addCustomFieldToList)
+    const addTextPlaceholderBtn = document.getElementById('addTextPlaceholderBtn');
+    const addTextPlaceholderModal = document.getElementById('addTextPlaceholderModal');
+    const textPlaceholderLabel = document.getElementById('textPlaceholderLabel');
+    const textPlaceholderRequired = document.getElementById('textPlaceholderRequired');
+    const addTextPlaceholderSubmit = document.getElementById('addTextPlaceholderSubmit');
+    const textPlaceholderList = document.getElementById('textPlaceholderList');
+    
+    const addNumberPlaceholderBtn = document.getElementById('addNumberPlaceholderBtn');
+    const addNumberPlaceholderModal = document.getElementById('addNumberPlaceholderModal');
+    const numberPlaceholderLabel = document.getElementById('numberPlaceholderLabel');
+    const numberPlaceholderRequired = document.getElementById('numberPlaceholderRequired');
+    const addNumberPlaceholderSubmit = document.getElementById('addNumberPlaceholderSubmit');
+    const numberPlaceholderList = document.getElementById('numberPlaceholderList');
+    
+    const addDropdownPlaceholderBtn = document.getElementById('addDropdownPlaceholderBtn');
+    const addDropdownPlaceholderModal = document.getElementById('addDropdownPlaceholderModal');
+    const dropdownPlaceholderLabel = document.getElementById('dropdownPlaceholderLabel');
+    const dropdownPlaceholderOptions = document.getElementById('dropdownPlaceholderOptions');
+    const dropdownPlaceholderRequired = document.getElementById('dropdownPlaceholderRequired');
+    const addDropdownPlaceholderSubmit = document.getElementById('addDropdownPlaceholderSubmit');
+    const dropdownPlaceholderList = document.getElementById('dropdownPlaceholderList');
+    
     // ============================================
     // Initialize Dates
     // ============================================
@@ -58,6 +85,11 @@ document.addEventListener('DOMContentLoaded', function() {
     // Load Certificate Data Function
     // ============================================
     function loadCertificateData(data) {
+        console.log('=== LOADING CERTIFICATE DATA ===');
+        console.log('Certificate Data:', data);
+        console.log('Fields data:', data.fields);
+        console.log('Fields type:', typeof data.fields);
+        
         // Populate form fields
         certificateName.value = data.title || '';
         certificateFee.value = data.fee || '0.00';
@@ -112,33 +144,71 @@ document.addEventListener('DOMContentLoaded', function() {
             try {
                 const fields = typeof data.fields === 'string' ? JSON.parse(data.fields) : data.fields;
                 if (Array.isArray(fields)) {
-                    // First, load custom field definitions (not placed on canvas yet)
-                    const customFieldDefs = fields.filter(f => f.customField && !f.x && !f.y);
-                    customFieldDefs.forEach(fieldDef => {
-                        const customField = {
-                            id: fieldDef.fieldName,
-                            type: fieldDef.fieldType,
-                            label: fieldDef.fieldLabel,
-                            options: fieldDef.fieldOptions || null,
-                            required: fieldDef.fieldRequired || false
-                        };
+                    // STEP 1: First, identify and load ALL custom field definitions into customFields array
+                    // This includes both placed and unplaced custom fields
+                    const processedCustomFieldIds = new Set();
+                    let maxCustomFieldId = 0;
+                    
+                    fields.forEach(field => {
+                        // Check if this is a custom field (has customField flag or starts with 'custom_')
+                        const isCustomField = field.customField === true || 
+                                            (field.fieldName && field.fieldName.startsWith('custom_'));
                         
-                        // Add to customFields array
-                        customFields.push(customField);
-                        
-                        // Add to appropriate list
+                        if (isCustomField && !processedCustomFieldIds.has(field.fieldName)) {
+                            // Extract the numeric ID from custom field names (e.g., 'custom_text_1' -> 1)
+                            const idMatch = field.fieldName.match(/custom_(?:text|number|dropdown)_(\d+)/);
+                            if (idMatch) {
+                                const numericId = parseInt(idMatch[1]);
+                                if (numericId > maxCustomFieldId) {
+                                    maxCustomFieldId = numericId;
+                                }
+                            }
+                            
+                            // Create custom field definition
+                            const customField = {
+                                id: field.fieldName,
+                                type: field.fieldType || field.type || 'text',
+                                label: field.fieldLabel || field.label,
+                                options: field.fieldOptions || field.options || null,
+                                required: field.fieldRequired || field.required || false
+                            };
+                            
+                            // Add to customFields array (avoid duplicates)
+                            if (!customFields.find(cf => cf.id === customField.id)) {
+                                customFields.push(customField);
+                                console.log('Loaded custom field definition:', customField);
+                            }
+                            
+                            processedCustomFieldIds.add(field.fieldName);
+                        }
+                    });
+                    
+                    // Update the counter to avoid ID conflicts when adding new fields
+                    if (maxCustomFieldId > 0) {
+                        customFieldIdCounter = maxCustomFieldId + 1;
+                        console.log('Updated customFieldIdCounter to:', customFieldIdCounter);
+                    }
+                    
+                    // STEP 2: Add custom fields to the sidebar lists
+                    console.log('Adding custom fields to sidebar. Total custom fields:', customFields.length);
+                    customFields.forEach(customField => {
+                        console.log('Adding to list:', customField);
                         addCustomFieldToList(customField);
                     });
                     
-                    // Wait for PDF to load before placing fields
+                    // STEP 3: Wait for PDF to load, then place all fields on canvas
                     setTimeout(() => {
                         fields.forEach(field => {
-                            // Only place fields that have x,y coordinates
+                            // Only place fields that have x,y coordinates (these are placed on canvas)
                             if (field.x !== undefined && field.y !== undefined) {
+                                console.log('Placing field on canvas:', field.fieldName, 'at', field.x, field.y);
+                                
                                 addFieldPlaceholder(field.fieldName, field.fieldLabel, field.x, field.y);
-                                // Update field properties
+                                
+                                // Update field properties after placement
                                 const placedField = placedFields.find(f => f.fieldName === field.fieldName && f.x === field.x && f.y === field.y);
                                 if (placedField) {
+                                    // Copy all properties from saved field
                                     placedField.fontFamily = field.fontFamily || 'Arial';
                                     placedField.fontSize = field.fontSize || 16;
                                     placedField.fontColor = field.fontColor || '#000000';
@@ -149,7 +219,15 @@ document.addEventListener('DOMContentLoaded', function() {
                                     placedField.middleNameFormat = field.middleNameFormat || 'full';
                                     placedField.dateFormat = field.dateFormat || 'YYYY-MM-DD';
                                     
-                                    // Apply visual styles
+                                    // If it's a custom field, preserve the custom field metadata
+                                    if (field.customField) {
+                                        placedField.customField = true;
+                                        placedField.fieldType = field.fieldType;
+                                        placedField.fieldOptions = field.fieldOptions || null;
+                                        placedField.fieldRequired = field.fieldRequired || false;
+                                    }
+                                    
+                                    // Apply visual styles to the DOM element
                                     const element = document.getElementById(placedField.id);
                                     if (element) {
                                         element.style.fontFamily = placedField.fontFamily;
@@ -159,21 +237,26 @@ document.addEventListener('DOMContentLoaded', function() {
                                         element.style.fontStyle = placedField.fontItalic ? 'italic' : 'normal';
                                         element.style.textDecoration = placedField.fontUnderline ? 'underline' : 'none';
                                         
-                                        // Apply text case
+                                        // Apply text case transformation
                                         if (placedField.textCase === 'uppercase') {
                                             element.style.textTransform = 'uppercase';
                                         } else if (placedField.textCase === 'lowercase') {
                                             element.style.textTransform = 'lowercase';
+                                        } else {
+                                            element.style.textTransform = 'none';
                                         }
                                     }
                                 }
                             }
                         });
+                        
+                        console.log('Certificate loaded - Custom fields:', customFields.length, 'Placed fields:', placedFields.length);
                         showNotification('Certificate loaded successfully', 'success');
                     }, 1000);
                 }
             } catch (error) {
                 console.error('Error parsing fields:', error);
+                showNotification('Error loading certificate fields', 'error');
             }
         }
     }
@@ -678,23 +761,52 @@ document.addEventListener('DOMContentLoaded', function() {
         formData.append('dateIssued', dateIssued.value);
         formData.append('dateExpired', dateExpired.value);
         formData.append('published', publishedToggle.checked ? '1' : '0');
-        // Combine placed fields with custom field definitions
-        const allFields = placedFields.map(field => {
+        
+        // Build complete fields array: placed fields + unplaced custom field definitions
+        const allFields = [];
+        
+        // First, add all placed fields with their metadata
+        placedFields.forEach(field => {
             // Check if this is a custom field
             const customField = customFields.find(cf => cf.id === field.fieldName);
             if (customField) {
                 // Add custom field metadata to the placed field
-                return {
+                allFields.push({
                     ...field,
+                    customField: true,
+                    fieldType: customField.type,
+                    fieldLabel: customField.label, // Ensure label is preserved
+                    fieldOptions: customField.options || null,
+                    fieldRequired: customField.required || false
+                });
+            } else {
+                allFields.push(field);
+            }
+        });
+        
+        // Then, add unplaced custom field definitions (fields that exist but aren't on canvas)
+        // This ensures the form fields show in requests even if not placed on PDF
+        customFields.forEach(customField => {
+            // Check if this custom field is already in placedFields
+            const isPlaced = placedFields.some(pf => pf.fieldName === customField.id);
+            if (!isPlaced) {
+                // Add the custom field definition without x,y coordinates
+                allFields.push({
+                    fieldName: customField.id,
+                    fieldLabel: customField.label,
                     customField: true,
                     fieldType: customField.type,
                     fieldOptions: customField.options || null,
                     fieldRequired: customField.required || false
-                };
+                    // No x, y coordinates - this field is not placed on canvas
+                });
             }
-            return field;
         });
         
+        console.log('Saving fields - Total:', allFields.length);
+        console.log('Placed fields:', placedFields.length);
+        console.log('Custom fields:', customFields.length);
+        console.log('All fields being saved:', JSON.stringify(allFields, null, 2));
         formData.append('fields', JSON.stringify(allFields));
         formData.append('pdfFile', uploadedPdfFile);
         
@@ -1189,17 +1301,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // ============================================
     // Custom Field Management
     // ============================================
-    let customFields = [];
-    let customFieldIdCounter = 1;
+    // Note: customFields, customFieldIdCounter, and DOM elements are declared at the top
     
     // Add Text Placeholder Button
-    const addTextPlaceholderBtn = document.getElementById('addTextPlaceholderBtn');
-    const addTextPlaceholderModal = document.getElementById('addTextPlaceholderModal');
-    const textPlaceholderLabel = document.getElementById('textPlaceholderLabel');
-    const textPlaceholderRequired = document.getElementById('textPlaceholderRequired');
-    const addTextPlaceholderSubmit = document.getElementById('addTextPlaceholderSubmit');
-    const textPlaceholderList = document.getElementById('textPlaceholderList');
-    
     if (addTextPlaceholderBtn) {
         addTextPlaceholderBtn.addEventListener('click', function() {
             // Reset form
@@ -1242,13 +1346,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Add Number Placeholder Button
-    const addNumberPlaceholderBtn = document.getElementById('addNumberPlaceholderBtn');
-    const addNumberPlaceholderModal = document.getElementById('addNumberPlaceholderModal');
-    const numberPlaceholderLabel = document.getElementById('numberPlaceholderLabel');
-    const numberPlaceholderRequired = document.getElementById('numberPlaceholderRequired');
-    const addNumberPlaceholderSubmit = document.getElementById('addNumberPlaceholderSubmit');
-    const numberPlaceholderList = document.getElementById('numberPlaceholderList');
-    
     if (addNumberPlaceholderBtn) {
         addNumberPlaceholderBtn.addEventListener('click', function() {
             // Reset form
@@ -1291,14 +1388,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Add Dropdown Placeholder Button
-    const addDropdownPlaceholderBtn = document.getElementById('addDropdownPlaceholderBtn');
-    const addDropdownPlaceholderModal = document.getElementById('addDropdownPlaceholderModal');
-    const dropdownPlaceholderLabel = document.getElementById('dropdownPlaceholderLabel');
-    const dropdownPlaceholderOptions = document.getElementById('dropdownPlaceholderOptions');
-    const dropdownPlaceholderRequired = document.getElementById('dropdownPlaceholderRequired');
-    const addDropdownPlaceholderSubmit = document.getElementById('addDropdownPlaceholderSubmit');
-    const dropdownPlaceholderList = document.getElementById('dropdownPlaceholderList');
-    
     if (addDropdownPlaceholderBtn) {
         addDropdownPlaceholderBtn.addEventListener('click', function() {
             // Reset form

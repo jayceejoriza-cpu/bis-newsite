@@ -181,7 +181,7 @@ $pageTitle = 'Create Resident';
 
                                 <div class="form-group">
                                     <label for="ethnicity">Ethnicity<span class="required">*</span></label>
-                                     <select class="form-control" name="ethnicity">
+                                     <select class="form-control" name="ethnicity" required>
                                             <option value="">Select Ethnicity</option>
                                             <option value="IPS">IPS (Indigenous People)</option>
                                             <option value="Non-IPS">Non-IPS</option>

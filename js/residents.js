@@ -182,6 +182,22 @@ function initializeButtons() {
             residentsTable.exportToCSV(`residents-${timestamp}.csv`);
         });
     }
+    
+    // Apply Filters button
+    const applyFiltersBtn = document.getElementById('applyFiltersBtn');
+    if (applyFiltersBtn) {
+        applyFiltersBtn.addEventListener('click', () => {
+            applyAdvancedFilters();
+        });
+    }
+    
+    // Clear Filters button
+    const clearFiltersBtn = document.getElementById('clearFiltersBtn');
+    if (clearFiltersBtn) {
+        clearFiltersBtn.addEventListener('click', () => {
+            clearAdvancedFilters();
+        });
+    }
 }
 
 function showCreateResidentModal() {
@@ -190,8 +206,16 @@ function showCreateResidentModal() {
 }
 
 function showAdvancedFilters() {
-    // TODO: Implement advanced filter modal
-    alert('Advanced Filters\n\nFilter by:\n- Age Range\n- Sex\n- Verification Status\n- Voter Status\n- Activity Status\n- Date Range');
+    const filterPanel = document.getElementById('filterPanel');
+    const filterBtn = document.getElementById('filterBtn');
+    
+    if (filterPanel.style.display === 'none') {
+        filterPanel.style.display = 'block';
+        filterBtn.classList.add('active');
+    } else {
+        filterPanel.style.display = 'none';
+        filterBtn.classList.remove('active');
+    }
 }
 
 function refreshData() {
@@ -401,6 +425,126 @@ function handleAction(action, name, id, row) {
     }
 }
 
+
+// ===================================
+// Advanced Filter Functions
+// ===================================
+function applyAdvancedFilters() {
+    const filters = {
+        ageGroup: document.getElementById('filterAgeGroup').value,
+        dateOfBirth: document.getElementById('filterDateOfBirth').value,
+        religion: document.getElementById('filterReligion').value,
+        ethnicity: document.getElementById('filterEthnicity').value,
+        civilStatus: document.getElementById('filterCivilStatus').value,
+        education: document.getElementById('filterEducation').value,
+        employmentStatus: document.getElementById('filterEmploymentStatus').value,
+        fourPs: document.getElementById('filter4ps').value,
+        ageHealthGroup: document.getElementById('filterAgeHealthGroup').value
+    };
+    
+    console.log('Applying filters:', filters);
+    
+    // Filter the table based on selected criteria
+    residentsTable.filter(row => {
+        const cells = Array.from(row.cells);
+        
+        // Get the date of birth cell (index 4) and extract age
+        const dobCell = cells[4]?.textContent || '';
+        const ageMatch = dobCell.match(/- (\d+)$/);
+        const age = ageMatch ? parseInt(ageMatch[1]) : 0;
+        
+        // Get data attributes from the row
+        const rowData = {
+            religion: row.getAttribute('data-religion') || '',
+            ethnicity: row.getAttribute('data-ethnicity') || '',
+            civilStatus: row.getAttribute('data-civil-status') || '',
+            education: row.getAttribute('data-education') || '',
+            employment: row.getAttribute('data-employment') || '',
+            fourPs: row.getAttribute('data-fourps') || '',
+            ageHealthGroup: row.getAttribute('data-age-health-group') || ''
+        };
+        
+        // Age Group filter
+        if (filters.ageGroup) {
+            if (filters.ageGroup === '0-17' && (age < 0 || age > 17)) return false;
+            if (filters.ageGroup === '18-35' && (age < 18 || age > 35)) return false;
+            if (filters.ageGroup === '36-59' && (age < 36 || age > 59)) return false;
+            if (filters.ageGroup === '60+' && age < 60) return false;
+        }
+        
+        // Date of Birth filter (exact match)
+        if (filters.dateOfBirth) {
+            const filterDate = new Date(filters.dateOfBirth);
+            const formattedFilterDate = `${(filterDate.getMonth() + 1).toString().padStart(2, '0')}/${filterDate.getDate().toString().padStart(2, '0')}/${filterDate.getFullYear()}`;
+            const dobInCell = dobCell.split(' - ')[0];
+            if (dobInCell !== formattedFilterDate) return false;
+        }
+        
+        // Religion filter
+        if (filters.religion && rowData.religion.toLowerCase() !== filters.religion.toLowerCase()) {
+            return false;
+        }
+        
+        // Ethnicity filter
+        if (filters.ethnicity && rowData.ethnicity !== filters.ethnicity) {
+            return false;
+        }
+        
+        // Civil Status filter
+        if (filters.civilStatus && rowData.civilStatus !== filters.civilStatus) {
+            return false;
+        }
+        
+        // Educational Attainment filter
+        if (filters.education && rowData.education !== filters.education) {
+            return false;
+        }
+        
+        // Employment Status filter
+        if (filters.employmentStatus && rowData.employment !== filters.employmentStatus) {
+            return false;
+        }
+        
+        // 4Ps Member filter
+        if (filters.fourPs && rowData.fourPs !== filters.fourPs) {
+            return false;
+        }
+        
+        // Age/Health Group filter
+        if (filters.ageHealthGroup && rowData.ageHealthGroup !== filters.ageHealthGroup) {
+            return false;
+        }
+        
+        return true;
+    });
+    
+    // Count active filters
+    const activeFiltersCount = Object.values(filters).filter(v => v !== '').length;
+    
+    if (activeFiltersCount > 0) {
+        showNotification(`${activeFiltersCount} filter(s) applied successfully`, 'success');
+    } else {
+        showNotification('No filters selected', 'info');
+    }
+}
+
+function clearAdvancedFilters() {
+    // Reset all filter inputs
+    document.getElementById('filterAgeGroup').value = '';
+    document.getElementById('filterDateOfBirth').value = '';
+    document.getElementById('filterReligion').value = '';
+    document.getElementById('filterEthnicity').value = '';
+    document.getElementById('filterCivilStatus').value = '';
+    document.getElementById('filterEducation').value = '';
+    document.getElementById('filterEmploymentStatus').value = '';
+    document.getElementById('filter4ps').value = '';
+    document.getElementById('filterAgeHealthGroup').value = '';
+    
+    // Reset the table
+    residentsTable.reset();
+    
+    showNotification('Filters cleared', 'success');
+}
 
 // ===================================
 // Utility Functions

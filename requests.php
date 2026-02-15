@@ -129,7 +129,7 @@ try {
             </div>
             
             <!-- Search and Filter Bar -->
-            <div class="search-filter-bar">
+            <div class="search-filter-bar" style="position: relative;">
                 <div class="search-box">
                     <i class="fas fa-search"></i>
                     <input type="text" placeholder="Search" id="searchInput">
@@ -145,6 +145,56 @@ try {
                 <button class="btn btn-icon" id="refreshBtn" title="Refresh">
                     <i class="fas fa-sync-alt"></i>
                 </button>
+            </div>
+            
+            <!-- Advanced Filter Panel -->
+            <div class="filter-panel" id="filterPanel" style="display: none;">
+                <div class="filter-panel-header">
+                    <h3><i class="fas fa-filter"></i> Select Filters</h3>
+                </div>
+                <div class="filter-panel-body">
+                    <div class="filter-grid-single">
+                        <div class="filter-item">
+                            <label for="filterResidentID">Resident ID</label>
+                            <input type="text" id="filterResidentID" class="filter-select" placeholder="Enter Resident ID">
+                        </div>
+                        
+                        <div class="filter-item">
+                            <label for="filterResidentName">Resident Name</label>
+                            <input type="text" id="filterResidentName" class="filter-select" placeholder="Enter Resident Name">
+                        </div>
+                        
+                        <div class="filter-item">
+                            <label for="filterCertificate">Certificate</label>
+                            <select id="filterCertificate" class="filter-select">
+                                <option value="">All</option>
+                                <?php
+                                try {
+                                    $certStmt = $pdo->query("SELECT DISTINCT title FROM certificates WHERE status = 'Published' ORDER BY title");
+                                    while ($cert = $certStmt->fetch()) {
+                                        echo '<option value="' . htmlspecialchars($cert['title']) . '">' . htmlspecialchars($cert['title']) . '</option>';
+                                    }
+                                } catch (PDOException $e) {
+                                    // Silently fail if certificates table doesn't exist
+                                }
+                                ?>
+                            </select>
+                        </div>
+                        
+                        <div class="filter-item">
+                            <label for="filterDateRequest">Date Request</label>
+                            <input type="date" id="filterDateRequest" class="filter-select">
+                        </div>
+                    </div>
+                </div>
+                <div class="filter-panel-footer">
+                    <button class="btn btn-secondary" id="clearFiltersBtn">
+                        <i class="fas fa-times"></i> Clear
+                    </button>
+                    <button class="btn btn-primary" id="applyFiltersBtn">
+                        <i class="fas fa-check"></i> Apply Now
+                    </button>
+                </div>
             </div>
             
             <!-- Requests Table -->
@@ -182,7 +232,10 @@ try {
                                 $residentCode = !empty($request['resident_code']) ? $request['resident_code'] : 'N/A';
                                 $dateRequested = !empty($request['date_requested']) ? date('F j, Y', strtotime($request['date_requested'])) : 'N/A';
                             ?>
-                            <tr>
+                            <tr data-resident-id="<?php echo htmlspecialchars($residentCode); ?>"
+                                data-resident-name="<?php echo htmlspecialchars($fullName); ?>"
+                                data-certificate="<?php echo htmlspecialchars($request['certificate_name']); ?>"
+                                data-date-request="<?php echo htmlspecialchars($request['date_requested']); ?>">
                                 <td>
                                     <span class="reference-link">
                                         <?php echo htmlspecialchars($request['reference_no']); ?>

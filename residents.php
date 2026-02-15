@@ -90,7 +90,7 @@ try {
     $countStmt = $pdo->query("SELECT COUNT(*) as total FROM residents");
     $totalResidents = $countStmt->fetch()['total'];
     
-    // Fetch residents data
+    // Fetch residents data with all filter fields
     $stmt = $pdo->prepare("
         SELECT 
             id,
@@ -102,6 +102,13 @@ try {
             suffix,
             sex,
             date_of_birth,
+            religion,
+            ethnicity,
+            civil_status,
+            educational_attainment,
+            employment_status,
+            fourps_member,
+            age_health_group,
             verification_status,
             voter_status,
             activity_status
@@ -169,7 +176,7 @@ try {
             </div>
             
             <!-- Search and Filter Bar -->
-            <div class="search-filter-bar">
+            <div class="search-filter-bar" style="position: relative;">
                 <div class="search-box">
                     <i class="fas fa-search"></i>
                     <input type="text" placeholder="Search" id="searchInput">
@@ -192,6 +199,127 @@ try {
                     </button>
                     <button class="view-btn" data-view="grid">
                         <i class="fas fa-th"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Advanced Filter Panel -->
+            <div class="filter-panel" id="filterPanel" style="display: none;">
+                <div class="filter-panel-header">
+                    <h3><i class="fas fa-filter"></i> Select Filters</h3>
+                </div>
+                <div class="filter-panel-body">
+                    <div class="filter-grid">
+                        <!-- Column 1 -->
+                        <div class="filter-item">
+                            <label for="filterAgeGroup">Age Group</label>
+                            <select id="filterAgeGroup" class="filter-select">
+                                <option value="">All</option>
+                                <option value="0-17">0-17 (Minor)</option>
+                                <option value="18-35">18-35 (Young Adult)</option>
+                                <option value="36-59">36-59 (Adult)</option>
+                                <option value="60+">60+ (Senior)</option>
+                            </select>
+                        </div>
+                        
+                        <div class="filter-item">
+                            <label for="filterReligion">Religion</label>
+                            <select id="filterReligion" class="filter-select">
+                                <option value="">All</option>
+                                <option value="Roman Catholic">Roman Catholic</option>
+                                <option value="Islam">Islam</option>
+                                <option value="Iglesia ni Cristo">Iglesia ni Cristo</option>
+                                <option value="Protestant">Protestant</option>
+                                <option value="Born Again">Born Again</option>
+                                <option value="Others">Others</option>
+                            </select>
+                        </div>
+                        
+                        <div class="filter-item">
+                            <label for="filterCivilStatus">Civil Status</label>
+                            <select id="filterCivilStatus" class="filter-select">
+                                <option value="">All</option>
+                                <option value="Single">Single</option>
+                                <option value="Married">Married</option>
+                                <option value="Widowed">Widowed</option>
+                                <option value="Separated">Separated</option>
+                                <option value="Divorced">Divorced</option>
+                            </select>
+                        </div>
+                        
+                        <!-- Column 2 -->
+                        <div class="filter-item">
+                            <label for="filterDateOfBirth">Date of Birth</label>
+                            <input type="date" id="filterDateOfBirth" class="filter-select">
+                        </div>
+                        
+                        <div class="filter-item">
+                            <label for="filterEthnicity">Ethnicity</label>
+                            <select id="filterEthnicity" class="filter-select">
+                                <option value="">All</option>
+                                <option value="IPS">IPS (Indigenous People)</option>
+                                <option value="Non-IPS">Non-IPS</option>
+                            </select>
+                        </div>
+                        
+                        <div class="filter-item">
+                            <label for="filterEducation">Educational Attainment</label>
+                            <select id="filterEducation" class="filter-select">
+                                <option value="">All</option>
+                                <option value="No Formal Education">No Formal Education</option>
+                                <option value="Elementary Level">Elementary Level</option>
+                                <option value="Elementary Graduate">Elementary Graduate</option>
+                                <option value="High School Level">High School Level</option>
+                                <option value="High School Graduate">High School Graduate</option>
+                                <option value="College Level">College Level</option>
+                                <option value="College Graduate">College Graduate</option>
+                                <option value="Vocational">Vocational</option>
+                                <option value="Post Graduate">Post Graduate</option>
+                            </select>
+                        </div>
+                        
+                        <!-- Column 3 -->
+                        <div class="filter-item">
+                            <label for="filterEmploymentStatus">Employment Status</label>
+                            <select id="filterEmploymentStatus" class="filter-select">
+                                <option value="">All</option>
+                                <option value="Employed">Employed</option>
+                                <option value="Unemployed">Unemployed</option>
+                                <option value="Self-Employed">Self-Employed</option>
+                                <option value="Student">Student</option>
+                                <option value="Retired">Retired</option>
+                            </select>
+                        </div>
+                        
+                        <div class="filter-item">
+                            <label for="filter4ps">4Ps Member</label>
+                            <select id="filter4ps" class="filter-select">
+                                <option value="">All</option>
+                                <option value="Yes">Yes</option>
+                                <option value="No">No</option>
+                            </select>
+                        </div>
+                        
+                        <div class="filter-item">
+                            <label for="filterAgeHealthGroup">Age/Health Group</label>
+                            <select id="filterAgeHealthGroup" class="filter-select">
+                                <option value="">All</option>
+                                <option value="Newborn (0-28 days)">Newborn (0-28 days)</option>
+                                <option value="Infant (29 days - 1 year)">Infant (29 days - 1 year)</option>
+                                <option value="Child (1-9 years)">Child (1-9 years)</option>
+                                <option value="Adolescent (10-19 years)">Adolescent (10-19 years)</option>
+                                <option value="Adult (20-59 years)">Adult (20-59 years)</option>
+                                <option value="Senior Citizen (60+ years)">Senior Citizen (60+ years)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="filter-panel-footer">
+                    <button class="btn btn-secondary" id="clearFiltersBtn">
+                        <i class="fas fa-times"></i> Clear
+                    </button>
+                    <button class="btn btn-primary" id="applyFiltersBtn">
+                        <i class="fas fa-check"></i> Apply Now
                     </button>
                 </div>
             </div>
@@ -247,7 +375,13 @@ try {
                                 $voterBadge = ($resident['voter_status'] === 'Yes') ? 'badge-yes' : 'badge-no';
                                 $activityBadge = 'badge-' . strtolower($resident['activity_status']);
                             ?>
-                            <tr>
+                            <tr data-religion="<?php echo htmlspecialchars($resident['religion'] ?? ''); ?>"
+                                data-ethnicity="<?php echo htmlspecialchars($resident['ethnicity'] ?? ''); ?>"
+                                data-civil-status="<?php echo htmlspecialchars($resident['civil_status'] ?? ''); ?>"
+                                data-education="<?php echo htmlspecialchars($resident['educational_attainment'] ?? ''); ?>"
+                                data-employment="<?php echo htmlspecialchars($resident['employment_status'] ?? ''); ?>"
+                                data-fourps="<?php echo htmlspecialchars($resident['fourps_member'] ?? ''); ?>"
+                                data-age-health-group="<?php echo htmlspecialchars($resident['age_health_group'] ?? ''); ?>">
                                 <td>
                                     <a href="resident_profile.php?id=<?php echo htmlspecialchars($resident['id']); ?>" class="resident-name-link">
                                         <div class="resident-name">

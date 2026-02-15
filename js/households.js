@@ -360,8 +360,12 @@ function resetHouseholdForm() {
     document.getElementById('headSex').textContent = 'N/A';
     document.getElementById('selectedResidentId').value = '';
     
-    // Remove readonly attributes from inputs
-    document.getElementById('householdNumber').removeAttribute('readonly');
+    // Remove readonly attributes from inputs and reset styling
+    const householdNumberInput = document.getElementById('householdNumber');
+    householdNumberInput.removeAttribute('readonly');
+    householdNumberInput.style.backgroundColor = '';
+    householdNumberInput.style.cursor = '';
+    
     document.getElementById('householdContact').removeAttribute('readonly');
     document.getElementById('householdAddress').removeAttribute('readonly');
     document.getElementById('waterSource').removeAttribute('disabled');
@@ -626,7 +630,13 @@ function editHousehold(householdId) {
                 const modalTitle = modal.querySelector('.household-modal-header h3');
                 modalTitle.innerHTML = '<i class="fas fa-edit"></i> Edit Household';
                 
-                document.getElementById('householdNumber').value = data.household.household_number;
+                // Set household number and make it readonly (cannot be edited)
+                const householdNumberInput = document.getElementById('householdNumber');
+                householdNumberInput.value = data.household.household_number;
+                householdNumberInput.setAttribute('readonly', 'readonly');
+                householdNumberInput.style.backgroundColor = '#f3f4f6';
+                householdNumberInput.style.cursor = 'not-allowed';
+                
                 document.getElementById('householdContact').value = data.household.household_contact || '';
                 document.getElementById('householdAddress').value = data.household.address;
                 document.getElementById('waterSource').value = data.household.water_source_type || '';
@@ -641,9 +651,12 @@ function editHousehold(householdId) {
                 }
                 document.getElementById('headDateOfBirth').textContent = data.household.head_dob || 'N/A';
                 document.getElementById('headSex').textContent = data.household.head_sex || 'N/A';
+                document.getElementById('headmobilenumber').textContent = data.household.head_mobile || 'N/A';
                 document.getElementById('selectedResidentId').value = data.household.household_head_id;
                 
+                // Hide search resident button - household head cannot be changed during edit
                 document.getElementById('searchResidentBtn').style.display = 'none';
+                
                 document.getElementById('createHouseholdForm').setAttribute('data-household-id', householdId);
                 document.getElementById('saveHouseholdBtn').innerHTML = '<i class="fas fa-save"></i> Update';
                 
@@ -1133,9 +1146,11 @@ function addMemberToTable(member) {
 
 function saveHousehold() {
     const form = document.getElementById('createHouseholdForm');
+    const householdId = form.getAttribute('data-household-id');
+    const isEditMode = householdId !== null && householdId !== '' && householdId !== undefined;
     
+    // Build form data object
     const formData = {
-        householdNumber: document.getElementById('householdNumber').value.trim(),
         householdContact: document.getElementById('householdContact').value.trim(),
         householdAddress: document.getElementById('householdAddress').value.trim(),
         waterSource: document.getElementById('waterSource').value,
@@ -1144,10 +1159,19 @@ function saveHousehold() {
         householdHeadId: document.getElementById('selectedResidentId').value
     };
     
-    if (!formData.householdNumber) {
-        showNotification('Please enter the household number', 'error');
-        document.getElementById('householdNumber').focus();
-        return;
+    // Include household number only for CREATE operations
+    if (!isEditMode) {
+        formData.householdNumber = document.getElementById('householdNumber').value.trim();
+        
+        // Validate household number for CREATE
+        if (!formData.householdNumber) {
+            showNotification('Please enter the household number', 'error');
+            document.getElementById('householdNumber').focus();
+            return;
+        }
+    } else {
+        // Include household ID for UPDATE operations
+        formData.householdId = householdId;
     }
     
     if (!formData.householdAddress) {
@@ -1181,7 +1205,8 @@ function saveHousehold() {
     
     const saveBtn = document.getElementById('saveHouseholdBtn');
     const originalText = saveBtn.innerHTML;
-    saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+    const savingText = isEditMode ? 'Updating...' : 'Saving...';
+    saveBtn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> ${savingText}`;
     saveBtn.disabled = true;
     
     fetch('save_household.php', {
@@ -1194,7 +1219,8 @@ function saveHousehold() {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            showNotification('Household created successfully!', 'success');
+            const successMessage = isEditMode ? 'Household updated successfully!' : 'Household created successfully!';
+            showNotification(successMessage, 'success');
             
             setTimeout(() => {
                 closeCreateHouseholdModal();
