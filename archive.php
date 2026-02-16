@@ -265,11 +265,28 @@ if (isset($conn)) {
                 html += createRow('Address', data.address || data.current_address || 'N/A');
                 html += createRow('Contact', data.number || data.mobile_number || 'N/A');
             } else if (type === 'official') {
-                html += createRow('Name', data.name || 'N/A');
+                // Build full name from archived data
+                let fullName = '';
+                if (data.first_name) {
+                    fullName = data.first_name;
+                    if (data.middle_name) fullName += ' ' + data.middle_name;
+                    if (data.last_name) fullName += ' ' + data.last_name;
+                    if (data.suffix) fullName += ' ' + data.suffix;
+                } else {
+                    fullName = data.name || 'N/A';
+                }
+                
+                html += createRow('Name', fullName);
                 html += createRow('Position', data.position || 'N/A');
-                html += createRow('Chairmanship', data.chairmanship || 'N/A');
-                html += createRow('Term Start', data.termstart || 'N/A');
-                html += createRow('Term End', data.termend || 'N/A');
+                html += createRow('Committee', data.committee || data.chairmanship || 'N/A');
+                html += createRow('Hierarchy Level', data.hierarchy_level || 'N/A');
+                html += createRow('Term Start', data.term_start || data.termstart || 'N/A');
+                html += createRow('Term End', data.term_end || data.termend || 'N/A');
+                html += createRow('Status', data.status || 'N/A');
+                html += createRow('Appointment Type', data.appointment_type || 'N/A');
+                html += createRow('Contact Number', data.contact_number || 'N/A');
+                html += createRow('Email', data.email || 'N/A');
+                html += createRow('Resident ID', data.resident_id || 'N/A');
             } else if (type === 'blotter') {
                 html += createRow('Complainant', data.complainant || 'N/A');
                 html += createRow('Respondent', data.respondent || 'N/A');
