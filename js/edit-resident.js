@@ -29,6 +29,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Initialize emergency contacts
     initializeEmergencyContacts();
+    
+    // Initialize phone number formatting
+    initializePhoneNumberFormatting();
 });
 
 // ============================================
@@ -206,6 +209,10 @@ function populateEmergencyContacts(contacts) {
             </div>
         `;
         container.insertAdjacentHTML('beforeend', contactHtml);
+        
+        // Apply phone number formatting to the contact number field
+        const contactNumberInput = document.querySelector(`input[name="emergencyContactNumber_${emergencyContactCount}"]`);
+        applyPhoneNumberFormatting(contactNumberInput);
     });
 }
 
@@ -378,6 +385,80 @@ function initializePhotoUpload() {
 }
 
 // ============================================
+// Phone Number Formatting
+// ============================================
+function formatPhoneNumber(value) {
+    // Remove all non-digit characters
+    const numbers = value.replace(/\D/g, '');
+    
+    // Limit to 11 digits (Philippine mobile number format)
+    const limited = numbers.substring(0, 11);
+    
+    // Format as 0912-345-6789
+    if (limited.length <= 4) {
+        return limited;
+    } else if (limited.length <= 7) {
+        return limited.substring(0, 4) + '-' + limited.substring(4);
+    } else {
+        return limited.substring(0, 4) + '-' + limited.substring(4, 7) + '-' + limited.substring(7);
+    }
+}
+
+function applyPhoneNumberFormatting(input) {
+    if (!input) return;
+    
+    input.addEventListener('input', function(e) {
+        const cursorPosition = this.selectionStart;
+        const oldValue = this.value;
+        const oldLength = oldValue.length;
+        
+        // Format the value
+        const formatted = formatPhoneNumber(this.value);
+        this.value = formatted;
+        
+        // Adjust cursor position after formatting
+        const newLength = formatted.length;
+        const diff = newLength - oldLength;
+        
+        // If a hyphen was added right before cursor, move cursor forward
+        if (diff > 0 && formatted[cursorPosition] === '-') {
+            this.setSelectionRange(cursorPosition + diff, cursorPosition + diff);
+        } else {
+            this.setSelectionRange(cursorPosition + diff, cursorPosition + diff);
+        }
+    });
+    
+    // Prevent non-numeric input on keypress
+    input.addEventListener('keypress', function(e) {
+        // Allow: backspace, delete, tab, escape, enter
+        if ([8, 9, 27, 13].indexOf(e.keyCode) !== -1 ||
+            // Allow: Ctrl+A, Ctrl+C, Ctrl+V, Ctrl+X
+            (e.keyCode === 65 && e.ctrlKey === true) ||
+            (e.keyCode === 67 && e.ctrlKey === true) ||
+            (e.keyCode === 86 && e.ctrlKey === true) ||
+            (e.keyCode === 88 && e.ctrlKey === true)) {
+            return;
+        }
+        
+        // Ensure that it is a number and stop the keypress
+        if ((e.shiftKey || (e.keyCode < 48 || e.keyCode > 57)) && (e.keyCode < 96 || e.keyCode > 105)) {
+            e.preventDefault();
+        }
+    });
+}
+
+function initializePhoneNumberFormatting() {
+    // Apply to mobile number field
+    const mobileNumberInput = document.getElementById('mobileNumber');
+    applyPhoneNumberFormatting(mobileNumberInput);
+    
+    // Apply to existing emergency contact number fields
+    document.querySelectorAll('input[name^="emergencyContactNumber_"]').forEach(input => {
+        applyPhoneNumberFormatting(input);
+    });
+}
+
+// ============================================
 // Initialize Emergency Contacts
 // ============================================
 function initializeEmergencyContacts() {
@@ -429,6 +510,10 @@ function addEmergencyContact() {
     `;
     
     container.insertAdjacentHTML('beforeend', contactHtml);
+    
+    // Apply phone number formatting to the newly added contact number field
+    const newContactNumberInput = document.querySelector(`input[name="emergencyContactNumber_${emergencyContactCount}"]`);
+    applyPhoneNumberFormatting(newContactNumberInput);
 }
 
 // ============================================

@@ -1,0 +1,24 @@
+# Security Configuration for Test Files
+# Restrict access to authorized users only
+
+# Deny access from all by default
+Order Deny,Allow
+Deny from all
+
+# Allow access only from localhost (development environment)
+Allow from 127.0.0.1
+Allow from ::1
+
+# Optional: Allow from specific IP addresses
+# Allow from 192.168.1.100
+
+# Prevent directory listing
+Options -Indexes
+
+# Protect sensitive files
+<FilesMatch "\.(php|sql|md)$">
+    # Additional security headers
+    Header set X-Content-Type-Options "nosniff"
+    Header set X-Frame-Options "DENY"
+    Header set X-XSS-Protection "1; mode=block"
+</FilesMatch>

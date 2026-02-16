@@ -195,6 +195,127 @@ try {
     }
 
     // ============================================
+    // DUPLICATE PREVENTION CHECKS
+    // ============================================
+    
+    // Check 1: Exact Name Match (First Name + Last Name)
+    $duplicateCheckSql = "SELECT id, resident_id, CONCAT(first_name, ' ', IFNULL(middle_name, ''), ' ', last_name) as full_name, date_of_birth
+                          FROM residents 
+                          WHERE LOWER(first_name) = LOWER(?) 
+                          AND LOWER(last_name) = LOWER(?)
+                          AND activity_status != 'Deceased'";
+    
+    if ($mode === 'update' && $residentId) {
+        $duplicateCheckSql .= " AND id != ?";
+    }
+    
+    $stmt = $conn->prepare($duplicateCheckSql);
+    
+    if ($mode === 'update' && $residentId) {
+        $stmt->bind_param("ssi", $firstName, $lastName, $residentId);
+    } else {
+        $stmt->bind_param("ss", $firstName, $lastName);
+    }
+    
+    $stmt->execute();
+    $result = $stmt->get_result();
+    
+    if ($result->num_rows > 0) {
+        $duplicate = $result->fetch_assoc();
+        $stmt->close();
+        throw new Exception("A resident with the same name already exists: {$duplicate['full_name']} (ID: {$duplicate['resident_id']}, DOB: {$duplicate['date_of_birth']}). Please verify if this is a different person.");
+    }
+    $stmt->close();
+    
+    // Check 2: Mobile Number
+    $duplicateCheckSql = "SELECT id, resident_id, CONCAT(first_name, ' ', last_name) as full_name
+                          FROM residents 
+                          WHERE mobile_number = ?
+                          AND activity_status != 'Deceased'";
+    
+    if ($mode === 'update' && $residentId) {
+        $duplicateCheckSql .= " AND id != ?";
+    }
+    
+    $stmt = $conn->prepare($duplicateCheckSql);
+    
+    if ($mode === 'update' && $residentId) {
+        $stmt->bind_param("si", $mobileNumber, $residentId);
+    } else {
+        $stmt->bind_param("s", $mobileNumber);
+    }
+    
+    $stmt->execute();
+    $result = $stmt->get_result();
+    
+    if ($result->num_rows > 0) {
+        $duplicate = $result->fetch_assoc();
+        $stmt->close();
+        throw new Exception("This mobile number is already registered to another resident: {$duplicate['full_name']} (ID: {$duplicate['resident_id']})");
+    }
+    $stmt->close();
+    
+    // Check 3: Email Address (if provided)
+    if (!empty($email)) {
+        $duplicateCheckSql = "SELECT id, resident_id, CONCAT(first_name, ' ', last_name) as full_name
+                              FROM residents 
+                              WHERE LOWER(email) = LOWER(?)
+                              AND activity_status != 'Deceased'";
+        
+        if ($mode === 'update' && $residentId) {
+            $duplicateCheckSql .= " AND id != ?";
+        }
+        
+        $stmt = $conn->prepare($duplicateCheckSql);
+        
+        if ($mode === 'update' && $residentId) {
+            $stmt->bind_param("si", $email, $residentId);
+        } else {
+            $stmt->bind_param("s", $email);
+        }
+        
+        $stmt->execute();
+        $result = $stmt->get_result();
+        
+        if ($result->num_rows > 0) {
+            $duplicate = $result->fetch_assoc();
+            $stmt->close();
+            throw new Exception("This email address is already registered to another resident: {$duplicate['full_name']} (ID: {$duplicate['resident_id']})");
+        }
+        $stmt->close();
+    }
+    
+    // Check 4: Philhealth ID (if provided)
+    if (!empty($philhealthId)) {
+        $duplicateCheckSql = "SELECT id, resident_id, CONCAT(first_name, ' ', last_name) as full_name
+                              FROM residents 
+                              WHERE philhealth_id = ?
+                              AND activity_status != 'Deceased'";
+        
+        if ($mode === 'update' && $residentId) {
+            $duplicateCheckSql .= " AND id != ?";
+        }
+        
+        $stmt = $conn->prepare($duplicateCheckSql);
+        
+        if ($mode === 'update' && $residentId) {
+            $stmt->bind_param("si", $philhealthId, $residentId);
+        } else {
+            $stmt->bind_param("s", $philhealthId);
+        }
+        
+        $stmt->execute();
+        $result = $stmt->get_result();
+        
+        if ($result->num_rows > 0) {
+            $duplicate = $result->fetch_assoc();
+            $stmt->close();
+            throw new Exception("This Philhealth ID is already registered to another resident: {$duplicate['full_name']} (ID: {$duplicate['resident_id']})");
+        }
+        $stmt->close();
+    }
+
+    // ============================================
     // UPDATE MODE - Update Existing Resident
     // ============================================
     if ($mode === 'update') {
