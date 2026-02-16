@@ -78,6 +78,7 @@ try {
             bo.photo,
             bo.contact_number,
             bo.email,
+            bo.fullname,
             r.first_name,
             r.middle_name,
             r.last_name,
@@ -176,9 +177,11 @@ try {
                         <?php if (!empty($officialsByLevel[1])): ?>
                         <div class="hierarchy-level top">
                             <?php foreach ($officialsByLevel[1] as $official): 
-                                $fullName = !empty($official['first_name']) 
-                                    ? formatFullName($official['first_name'], $official['middle_name'], $official['last_name'], $official['suffix'])
-                                    : 'Vacant';
+                                $fullName = !empty($official['fullname']) 
+                                    ? $official['fullname']
+                                    : (!empty($official['first_name']) 
+                                        ? formatFullName($official['first_name'], $official['middle_name'], $official['last_name'], $official['suffix'])
+                                        : 'Vacant');
                                 $initials = !empty($official['first_name']) 
                                     ? getInitials($official['first_name'], $official['last_name'])
                                     : 'V';
@@ -364,6 +367,146 @@ try {
         </div>
     </main>
     
+    <!-- Create Official Modal -->
+    <div class="modal fade" id="createOfficialModal" tabindex="-1" aria-labelledby="createOfficialModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="createOfficialModalLabel">
+                        <i class="fas fa-user-plus"></i> Create Brgy Official
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="createOfficialForm">
+                        <!-- Photo Upload Section -->
+                        <div class="photo-upload-section">
+                            <div class="photo-preview" id="photoPreview">
+                                <i class="fas fa-user"></i>
+                            </div>
+                            <div class="photo-buttons">
+                                <button type="button" class="btn btn-primary btn-sm" id="uploadPhotoBtn">
+                                    <i class="fas fa-upload"></i> Upload Photo
+                                </button>
+                                <button type="button" class="btn btn-primary btn-sm" id="startCameraBtn">
+                                    <i class="fas fa-camera"></i> Start Camera
+                                </button>
+                                <button type="button" class="btn btn-secondary btn-sm" id="resetPhotoBtn" style="display: none;">
+                                    <i class="fas fa-redo"></i> Reset
+                                </button>
+                                <input type="file" id="photoInput" accept="image/jpeg,image/png,image/gif" style="display: none;">
+                                <input type="hidden" id="photoData" name="photo">
+                            </div>
+                            <p class="photo-hint">Allowed JPG, GIF or PNG. Max size of 1MB</p>
+                        </div>
+
+                        <!-- Fullname -->
+                        <div class="mb-3">
+                            <label for="fullname" class="form-label">Fullname</label>
+                            <input type="text" class="form-control" id="fullname" name="fullname" placeholder="Enter Fullname" required>
+                        </div>
+                        
+                        <!-- Contact Number -->
+                        <div class="mb-3">
+                            <label for="contactNumber" class="form-label">Contact Number</label>
+                            <input type="tel" class="form-control" id="contactNumber" name="contact_number" placeholder="e.g., +63 912 345 6789">
+                        </div>
+
+                        <!-- Chairmanship -->
+                        <div class="mb-3">
+                            <label for="chairmanship" class="form-label">Chairmanship</label>
+                            <select class="form-select" id="chairmanship" name="chairmanship">
+                                <option value="">Select Official Chairmanship</option>
+                                <option value="Executive">Executive</option>
+                                <option value="Health and Sanitation">Health and Sanitation</option>
+                                <option value="Peace and Order">Peace and Order</option>
+                                <option value="Infrastructure">Infrastructure</option>
+                                <option value="Education">Education</option>
+                                <option value="Youth Development">Youth Development</option>
+                                <option value="Administration">Administration</option>
+                                <option value="Finance">Finance</option>
+                                <option value="Agriculture">Agriculture</option>
+                                <option value="Environment">Environment</option>
+                                <option value="Social Services">Social Services</option>
+                            </select>
+                        </div>
+
+                        <!-- Position -->
+                        <div class="mb-3">
+                            <label for="position" class="form-label">Position</label>
+                            <select class="form-select" id="position" name="position" required>
+                                <option value="">Select Official Position</option>
+                                <option value="Barangay Captain">Barangay Captain</option>
+                                <option value="Kagawad">Kagawad</option>
+                                <option value="SK Chairman">SK Chairman</option>
+                                <option value="Barangay Secretary">Barangay Secretary</option>
+                                <option value="Barangay Treasurer">Barangay Treasurer</option>
+                            </select>
+                        </div>
+
+                        <!-- Term Start -->
+                        <div class="mb-3">
+                            <label for="termStart" class="form-label">Term Start</label>
+                            <input type="date" class="form-control" id="termStart" name="term_start" required>
+                        </div>
+
+                        <!-- Term End -->
+                        <div class="mb-3">
+                            <label for="termEnd" class="form-label">Term End</label>
+                            <input type="date" class="form-control" id="termEnd" name="term_end" required>
+                        </div>
+
+                        <!-- Status (Auto-calculated) -->
+                        <div class="mb-3">
+                            <label for="status" class="form-label">Status</label>
+                            <select class="form-select" id="status" name="status" required>
+                                <option value="Active">Active</option>
+                                <option value="Inactive">Inactive</option>
+                                <option value="Completed">Completed</option>
+                            </select>
+                            <small class="text-muted">Status is automatically determined based on term dates</small>
+                        </div>
+
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times"></i> Close
+                    </button>
+                    <button type="button" class="btn btn-primary" id="createOfficialSubmitBtn">
+                        <i class="fas fa-check"></i> Create
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Camera Modal -->
+    <div class="modal fade" id="cameraModal" tabindex="-1" aria-labelledby="cameraModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="cameraModalLabel">
+                        <i class="fas fa-camera"></i> Take Photo
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <video id="cameraVideo" width="100%" autoplay></video>
+                    <canvas id="cameraCanvas" style="display: none;"></canvas>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times"></i> Cancel
+                    </button>
+                    <button type="button" class="btn btn-primary" id="capturePhotoBtn">
+                        <i class="fas fa-camera"></i> Capture
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Bootstrap JS Bundle (includes Popper) -->
     <script src="bootstrap/js/bootstrap.bundle.min.js"></script>
     
