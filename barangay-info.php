@@ -1,6 +1,9 @@
 <?php
 require_once 'config.php';
 
+// Check authentication
+require_once 'auth_check.php';
+
 // Check if user is logged in
 if (!isset($_SESSION['user_id'])) {
     header("Location: login.php");
@@ -62,18 +65,18 @@ if (!$barangay_info) {
             background-color: var(--bg-secondary);
             border-radius: 12px;
             box-shadow: var(--shadow-md);
-            padding: 2rem;
-            margin-bottom: 2rem;
+            padding: 1.25rem;
+            margin-bottom: 1.25rem;
             border: 1px solid var(--border-color);
             transition: var(--color-transition);
         }
         
         .card-title {
-            font-size: 1.25rem;
+            font-size: 1.15rem;
             font-weight: 600;
             color: var(--text-primary);
-            margin-bottom: 1.5rem;
-            padding-bottom: 1rem;
+            margin-bottom: 1rem;
+            padding-bottom: 0.75rem;
             border-bottom: 2px solid var(--border-color);
             transition: var(--color-transition);
         }
@@ -81,12 +84,12 @@ if (!$barangay_info) {
         .form-row {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 1.5rem;
-            margin-bottom: 1.5rem;
+            gap: 1rem;
+            margin-bottom: 1rem;
         }
         
         .form-group {
-            margin-bottom: 1.5rem;
+            margin-bottom: 1rem;
         }
         
         .form-label {
@@ -106,10 +109,10 @@ if (!$barangay_info) {
         .form-input,
         .form-textarea {
             width: 100%;
-            padding: 0.75rem;
+            padding: 0.6rem;
             border: 1px solid var(--border-color);
             border-radius: 8px;
-            font-size: 1rem;
+            font-size: 0.95rem;
             background-color: var(--bg-secondary);
             color: var(--text-primary);
             transition: var(--color-transition);
@@ -118,7 +121,7 @@ if (!$barangay_info) {
         }
         
         .form-textarea {
-            min-height: 120px;
+            min-height: 80px;
             resize: vertical;
         }
         
@@ -132,8 +135,8 @@ if (!$barangay_info) {
         .logo-upload-section {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 2rem;
-            margin-bottom: 2rem;
+            gap: 1rem;
+            margin-bottom: 1rem;
         }
         
         .logo-upload-box {
@@ -142,13 +145,13 @@ if (!$barangay_info) {
         
         .logo-preview-container {
             width: 100%;
-            height: 200px;
+            height: 150px;
             border: 2px dashed var(--border-color);
             border-radius: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
-            margin-bottom: 1rem;
+            margin-bottom: 0.75rem;
             background-color: var(--bg-primary);
             transition: var(--color-transition);
             position: relative;
@@ -167,19 +170,19 @@ if (!$barangay_info) {
         
         .logo-placeholder {
             color: var(--text-secondary);
-            font-size: 3rem;
+            font-size: 2.5rem;
             transition: var(--color-transition);
         }
         
         .dashboard-image-preview-container {
             width: 100%;
-            height: 300px;
+            height: 200px;
             border: 2px dashed var(--border-color);
             border-radius: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
-            margin-bottom: 1rem;
+            margin-bottom: 0.75rem;
             background-color: var(--bg-primary);
             transition: var(--color-transition);
             position: relative;
@@ -211,14 +214,14 @@ if (!$barangay_info) {
             align-items: center;
             justify-content: center;
             gap: 0.5rem;
-            padding: 0.75rem 1.5rem;
+            padding: 0.6rem 1.25rem;
             background-color: var(--bg-primary);
             color: var(--text-primary);
             border: 1px solid var(--border-color);
             border-radius: 8px;
             cursor: pointer;
             transition: var(--color-transition);
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             font-weight: 500;
             width: 100%;
         }
@@ -238,12 +241,12 @@ if (!$barangay_info) {
         }
         
         .btn-save {
-            padding: 0.75rem 2rem;
+            padding: 0.65rem 1.75rem;
             background-color: var(--primary-color);
             color: white;
             border: none;
             border-radius: 8px;
-            font-size: 1rem;
+            font-size: 0.95rem;
             font-weight: 500;
             cursor: pointer;
             transition: var(--color-transition);
@@ -262,13 +265,13 @@ if (!$barangay_info) {
         }
         
         .alert {
-            padding: 1rem;
+            padding: 0.75rem;
             border-radius: 8px;
-            margin-bottom: 1.5rem;
+            margin-bottom: 1rem;
             display: flex;
             align-items: center;
-            gap: 0.75rem;
-            font-size: 0.9rem;
+            gap: 0.5rem;
+            font-size: 0.85rem;
         }
         
         .alert-success {
@@ -287,8 +290,8 @@ if (!$barangay_info) {
             display: flex;
             justify-content: flex-end;
             gap: 1rem;
-            margin-top: 2rem;
-            padding-top: 2rem;
+            margin-top: 1.25rem;
+            padding-top: 1.25rem;
             border-top: 1px solid var(--border-color);
         }
         
@@ -490,7 +493,7 @@ if (!$barangay_info) {
                                 <label class="form-label">Municipality/City Logo</label>
                                 <div class="logo-preview-container" id="municipalLogoPreview">
                                     <?php if (!empty($barangay_info['municipal_logo']) && file_exists($barangay_info['municipal_logo'])): ?>
-                                        <img src="<?php echo htmlspecialchars($barangay_info['municipal_logo']); ?>" alt="Municipal Logo" class="logo-preview">
+                                        <img src="<?php echo htmlspecialchars($barangay_info['municipal_logo']); ?>?v=<?php echo time(); ?>" alt="Municipal Logo" class="logo-preview">
                                     <?php else: ?>
                                         <i class="fas fa-building logo-placeholder"></i>
                                     <?php endif; ?>
@@ -508,7 +511,7 @@ if (!$barangay_info) {
                                         <i class="fas fa-upload"></i>
                                         <span>Choose File</span>
                                     </label>
-                                    <span class="file-name" id="municipalLogoName">No file chosen</span>
+                                    <span class="file-name" id="municipal_logoName">No file chosen</span>
                                 </div>
                             </div>
                             
@@ -517,7 +520,7 @@ if (!$barangay_info) {
                                 <label class="form-label">Barangay Logo</label>
                                 <div class="logo-preview-container" id="barangayLogoPreview">
                                     <?php if (!empty($barangay_info['barangay_logo']) && file_exists($barangay_info['barangay_logo'])): ?>
-                                        <img src="<?php echo htmlspecialchars($barangay_info['barangay_logo']); ?>" alt="Barangay Logo" class="logo-preview">
+                                        <img src="<?php echo htmlspecialchars($barangay_info['barangay_logo']); ?>?v=<?php echo time(); ?>" alt="Barangay Logo" class="logo-preview">
                                     <?php else: ?>
                                         <i class="fas fa-flag logo-placeholder"></i>
                                     <?php endif; ?>
@@ -535,23 +538,23 @@ if (!$barangay_info) {
                                         <i class="fas fa-upload"></i>
                                         <span>Choose File</span>
                                     </label>
-                                    <span class="file-name" id="barangayLogoName">No file chosen</span>
+                                    <span class="file-name" id="barangay_logoName">No file chosen</span>
                                 </div>
                             </div>
                         </div>
                     </div>
                     
-                    <!-- Dashboard Image Card -->
+                    <!-- Login Background Image Card -->
                     <div class="info-card">
                         <h2 class="card-title">
-                            <i class="fas fa-panorama"></i> Dashboard Image
+                            <i class="fas fa-panorama"></i> Login Background Image
                         </h2>
                         
                         <div class="form-group">
-                            <label class="form-label">Dashboard Background Image</label>
+                            <label class="form-label">Login Page Background Image</label>
                             <div class="dashboard-image-preview-container" id="dashboardImagePreview">
                                 <?php if (!empty($barangay_info['dashboard_image']) && file_exists($barangay_info['dashboard_image'])): ?>
-                                    <img src="<?php echo htmlspecialchars($barangay_info['dashboard_image']); ?>" alt="Dashboard Image" class="dashboard-image-preview">
+                                    <img src="<?php echo htmlspecialchars($barangay_info['dashboard_image']); ?>?v=<?php echo time(); ?>" alt="Login Background Image" class="dashboard-image-preview">
                                 <?php else: ?>
                                     <i class="fas fa-image logo-placeholder"></i>
                                 <?php endif; ?>
@@ -569,8 +572,11 @@ if (!$barangay_info) {
                                     <i class="fas fa-upload"></i>
                                     <span>Choose File</span>
                                 </label>
-                                <span class="file-name" id="dashboardImageName">No file chosen</span>
+                                <span class="file-name" id="dashboard_imageName">No file chosen</span>
                             </div>
+                            <p style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.5rem; margin-bottom: 0;">
+                                <i class="fas fa-info-circle"></i> This image will be used as the background for the login page
+                            </p>
                         </div>
                     </div>
                     

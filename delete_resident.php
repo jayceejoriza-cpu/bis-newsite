@@ -1,17 +1,14 @@
 <?php
 require_once 'config.php';
 
+// Check authentication
+require_once 'auth_check.php';
+
 // Set JSON response header
 header('Content-Type: application/json');
 
 // Set charset to ensure JSON encoding works correctly
 $conn->set_charset("utf8mb4");
-
-// Check if user is logged in
-if (!isset($_SESSION['user_id'])) {
-    echo json_encode(['success' => false, 'message' => 'Unauthorized access']);
-    exit;
-}
 
 // Check request method
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {

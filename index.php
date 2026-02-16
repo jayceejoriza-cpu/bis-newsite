@@ -1,6 +1,9 @@
 <?php
 // Include configuration
 require_once 'config.php';
+
+// Check authentication
+require_once 'auth_check.php';
 ?>
 <!DOCTYPE html>
 <html lang="en">

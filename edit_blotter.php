@@ -7,6 +7,9 @@
 // Include configuration
 require_once 'config.php';
 
+// Check authentication
+require_once 'auth_check.php';
+
 // Set JSON header for AJAX responses
 if (isset($_GET['ajax']) && $_GET['ajax'] === 'true') {
     header('Content-Type: application/json');

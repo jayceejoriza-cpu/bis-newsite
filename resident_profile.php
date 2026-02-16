@@ -2,6 +2,9 @@
 // Include configuration
 require_once 'config.php';
 
+// Check authentication
+require_once 'auth_check.php';
+
 // Get resident ID from URL
 $residentId = isset($_GET['id']) ? intval($_GET['id']) : 0;
 

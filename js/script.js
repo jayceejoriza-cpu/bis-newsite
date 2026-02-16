@@ -126,7 +126,46 @@ window.addEventListener('DOMContentLoaded', () => {
         sidebar.classList.add('collapsed');
         mainContent.classList.add('expanded');
     }
+    
+    // Restore sidebar scroll position
+    const savedScrollPosition = sessionStorage.getItem('sidebarScrollPosition');
+    if (savedScrollPosition && sidebar) {
+        sidebar.scrollTop = parseInt(savedScrollPosition, 10);
+    }
 });
+
+// Save sidebar scroll position before page unload
+if (sidebar) {
+    // Save scroll position when navigating away
+    window.addEventListener('beforeunload', () => {
+        sessionStorage.setItem('sidebarScrollPosition', sidebar.scrollTop);
+    });
+    
+    // Also save on link clicks for faster response
+    const allLinks = sidebar.querySelectorAll('a');
+    allLinks.forEach(link => {
+        link.addEventListener('click', (e) => {
+            // Save scroll position immediately when clicking any link
+            sessionStorage.setItem('sidebarScrollPosition', sidebar.scrollTop);
+            
+            // Prevent the browser from scrolling the sidebar to bring the link into view
+            // This is especially important for submenu items at the bottom
+            setTimeout(() => {
+                if (sidebar) {
+                    const savedPosition = sessionStorage.getItem('sidebarScrollPosition');
+                    if (savedPosition) {
+                        sidebar.scrollTop = parseInt(savedPosition, 10);
+                    }
+                }
+            }, 0);
+        });
+    });
+    
+    // Additional handler to maintain scroll position during page transitions
+    sidebar.addEventListener('scroll', () => {
+        sessionStorage.setItem('sidebarScrollPosition', sidebar.scrollTop);
+    });
+}
 
 // Handle window resize
 window.addEventListener('resize', () => {
@@ -155,8 +194,9 @@ const themeToggle = document.getElementById('themeToggle');
 // Check for saved theme preference or default to light mode
 const currentTheme = localStorage.getItem('theme') || 'light';
 
-// Apply the theme on page load
+// Apply the theme on page load (check both html and body for consistency)
 if (currentTheme === 'dark') {
+    document.documentElement.classList.add('dark-mode');
     document.body.classList.add('dark-mode');
     if (themeToggle) {
         const icon = themeToggle.querySelector('i');
@@ -172,7 +212,8 @@ if (themeToggle) {
     themeToggle.addEventListener('click', () => {
         const icon = themeToggle.querySelector('i');
         
-        // Toggle dark mode class on body
+        // Toggle dark mode class on both html and body
+        document.documentElement.classList.toggle('dark-mode');
         document.body.classList.toggle('dark-mode');
         
         // Check if dark mode is now active
@@ -546,7 +587,12 @@ function initializeSidebar() {
     const submenuLinks = document.querySelectorAll('.submenu-link');
     
     submenuLinks.forEach(link => {
-        link.addEventListener('click', function() {
+        link.addEventListener('click', function(e) {
+            // Save current scroll position before navigation
+            if (sidebar) {
+                sessionStorage.setItem('sidebarScrollPosition', sidebar.scrollTop);
+            }
+            
             // Remove active class from all submenu items
             document.querySelectorAll('.submenu-item').forEach(item => {
                 item.classList.remove('active');

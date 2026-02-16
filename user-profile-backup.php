@@ -142,9 +142,8 @@ $stmt->close();
 
         .profile-header-content {
             display: flex;
-            align-items: flex-start;
+            align-items: flex-end;
             gap: 2rem;
-            padding-top: 1.5rem;
         }
 
         .profile-avatar-container {
@@ -153,15 +152,15 @@ $stmt->close();
         }
 
         .profile-avatar-large {
-            width: 120px;
-            height: 120px;
+            width: 140px;
+            height: 140px;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 3rem;
+            font-size: 4rem;
             font-weight: 600;
             border: 5px solid var(--bg-secondary);
             box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
@@ -206,7 +205,6 @@ $stmt->close();
         .profile-info {
             flex: 1;
             padding-bottom: 0.5rem;
-            padding-top: 4rem;
         }
 
         .profile-info h1 {
@@ -833,11 +831,10 @@ $stmt->close();
                     <!-- Profile Stats -->
                     <div class="profile-stats">
                         <div class="stat-item">
-                            <div class="stat-label">Role</div>
                             <div class="stat-value"><?php echo htmlspecialchars($user['role']); ?></div>
+                            <div class="stat-label">Role</div>
                         </div>
                         <div class="stat-item">
-                            <div class="stat-label">Member Since</div>
                             <div class="stat-value">
                                 <?php 
                                 if (!empty($user['created_at'])) {
@@ -848,9 +845,9 @@ $stmt->close();
                                 }
                                 ?>
                             </div>
+                            <div class="stat-label">Member Since</div>
                         </div>
                         <div class="stat-item">
-                            <div class="stat-label">Last Login</div>
                             <div class="stat-value">
                                 <?php 
                                 if (!empty($last_login)) {
@@ -861,6 +858,7 @@ $stmt->close();
                                 }
                                 ?>
                             </div>
+                            <div class="stat-label">Last Login</div>
                         </div>
                     </div>
                 </div>
@@ -918,115 +916,4 @@ $stmt->close();
                                         <i class="fas fa-shield-alt"></i>
                                         Role
                                     </label>
-                                    <input type="text" class="form-control" value="<?php echo htmlspecialchars($user['role']); ?>" disabled>
-                                </div>
-
-                                <div class="form-group">
-                                    <label>
-                                        <i class="fas fa-toggle-on"></i>
-                                        Status
-                                    </label>
-                                    <input type="text" class="form-control" value="<?php echo htmlspecialchars($user['status']); ?>" disabled>
-                                </div>
-                            </div>
-
-                            <div class="form-actions">
-                                <button type="button" class="btn-secondary" onclick="window.location.reload()">
-                                    <i class="fas fa-undo"></i>
-                                    Reset
-                                </button>
-                                <button type="submit" class="btn-primary">
-                                    <i class="fas fa-save"></i>
-                                    Save Changes
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-
-                    <!-- Security Settings Card -->
-                    <div class="content-card">
-                        <div class="content-card-header">
-                            <div class="content-card-icon">
-                                <i class="fas fa-lock"></i>
-                            </div>
-                            <div>
-                                <h3 class="content-card-title">Security Settings</h3>
-                                <p class="content-card-subtitle">Manage your password and account security</p>
-                            </div>
-                        </div>
-
-                        <div class="info-box">
-                            <i class="fas fa-info-circle"></i>
-                            <p>For your security, we recommend using a strong password with at least 8 characters, including uppercase, lowercase, numbers, and special characters.</p>
-                        </div>
-
-                        <form method="POST" action="">
-                            <input type="hidden" name="full_name" value="<?php echo htmlspecialchars($user['full_name']); ?>">
-                            <input type="hidden" name="username" value="<?php echo htmlspecialchars($user['username']); ?>">
-
-                            <div class="form-group">
-                                <label for="password">
-                                    <i class="fas fa-key"></i>
-                                    New Password
-                                </label>
-                                <input type="password" id="password" name="password" class="form-control" placeholder="Leave blank to keep current password">
-                                <div class="password-strength">
-                                    <div class="password-strength-bar" id="passwordStrengthBar"></div>
-                                </div>
-                                <p class="password-hint" id="passwordHint">Password strength: <span id="strengthText">Not set</span></p>
-                            </div>
-
-                            <div class="form-group">
-                                <label for="confirm_password">
-                                    <i class="fas fa-check-circle"></i>
-                                    Confirm New Password
-                                </label>
-                                <input type="password" id="confirm_password" name="confirm_password" class="form-control" placeholder="Confirm your new password">
-                            </div>
-
-                            <div class="form-actions">
-                                <button type="submit" class="btn-primary">
-                                    <i class="fas fa-shield-alt"></i>
-                                    Update Password
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </main>
-
-    <!-- Avatar Modal -->
-    <div class="avatar-modal" id="avatarModal">
-        <div class="avatar-modal-content">
-            <div class="avatar-modal-header">
-                <h3 class="avatar-modal-title">Select an Image</h3>
-                <button type="button" class="close-modal-btn" id="closeAvatarModal">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            <div class="avatar-modal-body">
-                <div class="upload-section">
-                    <div class="upload-area" id="uploadArea">
-                        <i class="fas fa-cloud-upload-alt"></i>
-                        <p>Upload Image</p>
-                    </div>
-                    <input type="file" id="avatarUploadInput" accept="image/*" style="display: none;">
-                </div>
-
-                <div class="recent-avatars-section">
-                    <h4 class="recent-avatars-title">Recent Avatars</h4>
-                    <p class="recent-avatars-subtitle">Access your 6 most recent avatar uploads.</p>
-                    <div class="recent-avatars-grid" id="recentAvatarsGrid">
-                        <!-- Recent avatars will be loaded here -->
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <script src="js/script.js"></script>
-    <script src="js/user-profile.js"></script>
-</body>
-</html>
+                                    <input type="text" class="form-
