@@ -1,4 +1,21 @@
 <!-- Header Component -->
+<?php
+// Fetch current user's profile image if not already loaded
+if (isset($_SESSION['user_id']) && !isset($header_user_avatar)) {
+    $header_user_id = $_SESSION['user_id'];
+    $header_stmt = $conn->prepare("SELECT profile_image FROM users WHERE id = ?");
+    $header_stmt->bind_param("i", $header_user_id);
+    $header_stmt->execute();
+    $header_result = $header_stmt->get_result();
+    if ($header_result->num_rows > 0) {
+        $header_user_data = $header_result->fetch_assoc();
+        $header_user_avatar = $header_user_data['profile_image'];
+    } else {
+        $header_user_avatar = null;
+    }
+    $header_stmt->close();
+}
+?>
 <header class="header">
     <div class="header-left">
         <button class="mobile-menu-toggle" id="mobileMenuToggle">
@@ -18,7 +35,11 @@
         
         <div class="user-profile" id="userProfileDropdown" style="cursor: pointer; position: relative; display: flex; align-items: center;">
             <div class="user-avatar">
-                <i class="fas fa-user"></i>
+                <?php if (!empty($header_user_avatar) && file_exists($header_user_avatar)): ?>
+                    <img src="<?php echo htmlspecialchars($header_user_avatar); ?>?v=<?php echo time(); ?>" alt="Profile" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">
+                <?php else: ?>
+                    <i class="fas fa-user"></i>
+                <?php endif; ?>
             </div>
             
             <div class="dropdown-menu">

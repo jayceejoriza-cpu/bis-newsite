@@ -57,6 +57,20 @@ body {
     transition: var(--color-transition);
 }
 
+/* Prevent Bootstrap modal from adding padding to body and causing layout shifts */
+body.modal-open {
+    padding-right: 0 !important;
+    overflow: hidden !important;
+}
+
+/* Prevent all fixed elements from shifting when modal opens */
+body.modal-open .sidebar,
+body.modal-open .header,
+body.modal-open .main-content {
+    padding-right: 0 !important;
+    margin-right: 0 !important;
+}
+
 /* ===================================
    Sidebar Styles
    =================================== */
@@ -74,6 +88,17 @@ body {
     transition: width 0.3s ease, transform 0.3s ease, var(--color-transition);
     overflow-y: auto;
     overflow-x: hidden;
+}
+
+/* Prevent sidebar from shifting when Bootstrap modals are open */
+body.modal-open .sidebar {
+    left: 0 !important;
+    padding-right: 0 !important;
+    width: var(--sidebar-width) !important;
+}
+
+body.modal-open .sidebar.collapsed {
+    width: var(--sidebar-collapsed-width) !important;
 }
 
 .sidebar.collapsed {
@@ -229,6 +254,18 @@ body {
     color: var(--primary-color);
 }
 
+/* Ensure nav items don't cause layout shifts when modals open */
+body.modal-open .nav-item .nav-link,
+body.modal-open .nav-item.active .nav-link {
+    margin-right: 0 !important;
+    padding-right: 10px !important;
+}
+
+body.modal-open .submenu-item .submenu-link,
+body.modal-open .submenu-item.active .submenu-link {
+    margin-right: 0 !important;
+}
+
 /* Submenu Styles */
 .submenu {
     list-style: none;
@@ -365,6 +402,36 @@ body {
     z-index: 100;
     box-shadow: var(--shadow-sm);
     transition: var(--color-transition);
+}
+
+/* Prevent header from shifting when Bootstrap modals are open */
+body.modal-open .header {
+    padding-right: 30px !important;
+    margin-right: 0 !important;
+}
+
+/* Ensure main content doesn't shift */
+body.modal-open .main-content {
+    margin-left: var(--sidebar-width) !important;
+}
+
+body.modal-open .main-content.expanded {
+    margin-left: var(--sidebar-collapsed-width) !important;
+}
+
+/* Mobile specific modal fixes */
+@media (max-width: 768px) {
+    body.modal-open .sidebar {
+        width: var(--sidebar-width) !important;
+    }
+    
+    body.modal-open .main-content {
+        margin-left: 0 !important;
+    }
+    
+    body.modal-open .header {
+        padding-right: 15px !important;
+    }
 }
 
 .header-left {

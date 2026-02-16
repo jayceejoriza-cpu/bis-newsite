@@ -7,6 +7,19 @@ if (isset($_SESSION['user_id'])) {
     exit();
 }
 
+// Fetch barangay info for login background
+$login_bg_image = null;
+$stmt = $conn->prepare("SELECT dashboard_image FROM barangay_info WHERE id = 1 LIMIT 1");
+$stmt->execute();
+$result = $stmt->get_result();
+if ($result->num_rows > 0) {
+    $barangay_data = $result->fetch_assoc();
+    if (!empty($barangay_data['dashboard_image']) && file_exists($barangay_data['dashboard_image'])) {
+        $login_bg_image = $barangay_data['dashboard_image'];
+    }
+}
+$stmt->close();
+
 $error = "";
 
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
@@ -76,6 +89,38 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="css/login-style.css">
+    <?php if ($login_bg_image): ?>
+    <style>
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url('<?php echo htmlspecialchars($login_bg_image); ?>');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            z-index: -2;
+        }
+        
+        body::after {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: -1;
+        }
+        
+        body.dark-mode::after {
+            background-color: rgba(0, 0, 0, 0.7);
+        }
+    </style>
+    <?php endif; ?>
 </head>
 <body>
 
