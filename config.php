@@ -40,12 +40,30 @@ if ($conn->connect_error) {
 define('BASE_URL', 'http://localhost/bis-newsite/');
 define('COMPONENTS_PATH', __DIR__ . '/components/');
 
-// Dashboard Statistics (These would normally come from database)
+// Dashboard Statistics - Fetch from database
 $dashboard_stats = [
-    'total_residents' => 16798,
-    'total_households' => 1,
-    'pending_requests' => 2,
+    'total_residents' => 0,
+    'total_households' => 0,
+    'pending_requests' => 0,
 ];
+
+// Fetch total residents (active only)
+$result = $conn->query("SELECT COUNT(*) as count FROM residents WHERE activity_status = 'Active'");
+if ($result && $row = $result->fetch_assoc()) {
+    $dashboard_stats['total_residents'] = (int)$row['count'];
+}
+
+// Fetch total households
+$result = $conn->query("SELECT COUNT(*) as count FROM households");
+if ($result && $row = $result->fetch_assoc()) {
+    $dashboard_stats['total_households'] = (int)$row['count'];
+}
+
+// Fetch pending certificate requests
+$result = $conn->query("SELECT COUNT(*) as count FROM certificate_requests WHERE status = 'Pending'");
+if ($result && $row = $result->fetch_assoc()) {
+    $dashboard_stats['pending_requests'] = (int)$row['count'];
+}
 
 // Menu Items Configuration
 $menu_items = [

@@ -239,270 +239,267 @@ if (themeToggle) {
 // Population Growth Chart
 // ===================================
 const populationChartEl = document.getElementById('populationChart');
+let populationChart = null;
 
 if (populationChartEl) {
-const populationCtx = populationChartEl.getContext('2d');
-// Generate years from 2000 to 2025
-const years = [];
-for (let year = 2000; year <= 2025; year++) {
-    years.push(year);
-}
-
-// Generate population data with slight variations
-const populationData = years.map((year, index) => {
-    const baseValue = 650;
-    const variation = Math.sin(index * 0.5) * 50;
-    const trend = index * 2;
-    return baseValue + variation + trend;
-});
-
-const populationChart = new Chart(populationCtx, {
-    type: 'line',
-    data: {
-        labels: years,
-        datasets: [{
-            label: 'Population',
-            data: populationData,
-            backgroundColor: 'rgba(147, 197, 253, 0.5)',
-            borderColor: 'rgba(59, 130, 246, 0.8)',
-            borderWidth: 2,
-            fill: true,
-            tension: 0.4,
-            pointRadius: 0,
-            pointHoverRadius: 5,
-            pointHoverBackgroundColor: 'rgba(59, 130, 246, 1)',
-            pointHoverBorderColor: '#fff',
-            pointHoverBorderWidth: 2
-        }]
-    },
-    options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-            legend: {
-                display: false
-            },
-            tooltip: {
-                mode: 'index',
-                intersect: false,
-                backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                padding: 12,
-                titleColor: '#fff',
-                bodyColor: '#fff',
-                borderColor: 'rgba(59, 130, 246, 0.5)',
-                borderWidth: 1,
-                displayColors: false,
-                callbacks: {
-                    label: function(context) {
-                        return 'Population: ' + Math.round(context.parsed.y);
-                    }
-                }
-            }
+    const populationCtx = populationChartEl.getContext('2d');
+    
+    // Initialize chart with empty data
+    populationChart = new Chart(populationCtx, {
+        type: 'line',
+        data: {
+            labels: [],
+            datasets: [{
+                label: 'Population',
+                data: [],
+                backgroundColor: 'rgba(147, 197, 253, 0.5)',
+                borderColor: 'rgba(59, 130, 246, 0.8)',
+                borderWidth: 2,
+                fill: true,
+                tension: 0.4,
+                pointRadius: 0,
+                pointHoverRadius: 5,
+                pointHoverBackgroundColor: 'rgba(59, 130, 246, 1)',
+                pointHoverBorderColor: '#fff',
+                pointHoverBorderWidth: 2
+            }]
         },
-        scales: {
-            x: {
-                grid: {
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
                     display: false
                 },
-                ticks: {
-                    maxRotation: 0,
-                    autoSkip: true,
-                    maxTicksLimit: 15,
-                    color: '#6b7280'
-                }
-            },
-            y: {
-                beginAtZero: true,
-                grid: {
-                    color: 'rgba(0, 0, 0, 0.05)',
-                    drawBorder: false
-                },
-                ticks: {
-                    color: '#6b7280',
-                    callback: function(value) {
-                        return value;
+                tooltip: {
+                    mode: 'index',
+                    intersect: false,
+                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                    padding: 12,
+                    titleColor: '#fff',
+                    bodyColor: '#fff',
+                    borderColor: 'rgba(59, 130, 246, 0.5)',
+                    borderWidth: 1,
+                    displayColors: false,
+                    callbacks: {
+                        label: function(context) {
+                            return 'Population: ' + Math.round(context.parsed.y);
+                        }
                     }
                 }
+            },
+            scales: {
+                x: {
+                    grid: {
+                        display: false
+                    },
+                    ticks: {
+                        maxRotation: 0,
+                        autoSkip: true,
+                        maxTicksLimit: 15,
+                        color: '#6b7280'
+                    }
+                },
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.05)',
+                        drawBorder: false
+                    },
+                    ticks: {
+                        color: '#6b7280',
+                        callback: function(value) {
+                            return value;
+                        }
+                    }
+                }
+            },
+            interaction: {
+                mode: 'nearest',
+                axis: 'x',
+                intersect: false
             }
-        },
-        interaction: {
-            mode: 'nearest',
-            axis: 'x',
-            intersect: false
         }
-    }
-});
+    });
+    
+    // Fetch real data from API
+    fetchPopulationData();
 }
 
 // ===================================
 // Blotter Records Chart
 // ===================================
 const blotterChartEl = document.getElementById('blotterChart');
+let blotterChart = null;
 
 if (blotterChartEl) {
-const blotterCtx = blotterChartEl.getContext('2d');
-
-const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-
-// Generate data for blotter records
-const blotterData = {
-    pending: months.map(() => Math.random() * 0.5 + 0.2),
-    underInvestigation: months.map(() => Math.random() * 0.8 + 0.3),
-    dismissed: months.map(() => Math.random() * 0.3 + 0.1),
-    resolved: months.map(() => Math.random() * 1.5 + 0.5)
-};
-
-const blotterChart = new Chart(blotterCtx, {
-    type: 'line',
-    data: {
-        labels: months,
-        datasets: [
-            {
-                label: 'Pending',
-                data: blotterData.pending,
-                backgroundColor: 'rgba(255, 107, 107, 0.6)',
-                borderColor: 'rgba(255, 107, 107, 1)',
-                borderWidth: 2,
-                fill: true,
-                tension: 0.4,
-                pointRadius: 0
-            },
-            {
-                label: 'Under Investigation',
-                data: blotterData.underInvestigation,
-                backgroundColor: 'rgba(255, 165, 0, 0.6)',
-                borderColor: 'rgba(255, 165, 0, 1)',
-                borderWidth: 2,
-                fill: true,
-                tension: 0.4,
-                pointRadius: 0
-            },
-            {
-                label: 'Dismissed',
-                data: blotterData.dismissed,
-                backgroundColor: 'rgba(211, 211, 211, 0.6)',
-                borderColor: 'rgba(211, 211, 211, 1)',
-                borderWidth: 2,
-                fill: true,
-                tension: 0.4,
-                pointRadius: 0
-            },
-            {
-                label: 'Resolved',
-                data: blotterData.resolved,
-                backgroundColor: 'rgba(144, 238, 144, 0.6)',
-                borderColor: 'rgba(144, 238, 144, 1)',
-                borderWidth: 2,
-                fill: true,
-                tension: 0.4,
-                pointRadius: 0
-            }
-        ]
-    },
-    options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-            legend: {
-                display: false
-            },
-            tooltip: {
-                mode: 'index',
-                intersect: false,
-                backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                padding: 12,
-                titleColor: '#fff',
-                bodyColor: '#fff',
-                borderColor: 'rgba(59, 130, 246, 0.5)',
-                borderWidth: 1
-            }
+    const blotterCtx = blotterChartEl.getContext('2d');
+    
+    // Initialize chart with empty data
+    blotterChart = new Chart(blotterCtx, {
+        type: 'line',
+        data: {
+            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+            datasets: [
+                {
+                    label: 'Pending',
+                    data: [],
+                    backgroundColor: 'rgba(255, 107, 107, 0.6)',
+                    borderColor: 'rgba(255, 107, 107, 1)',
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.4,
+                    pointRadius: 0
+                },
+                {
+                    label: 'Under Investigation',
+                    data: [],
+                    backgroundColor: 'rgba(255, 165, 0, 0.6)',
+                    borderColor: 'rgba(255, 165, 0, 1)',
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.4,
+                    pointRadius: 0
+                },
+                {
+                    label: 'Dismissed',
+                    data: [],
+                    backgroundColor: 'rgba(211, 211, 211, 0.6)',
+                    borderColor: 'rgba(211, 211, 211, 1)',
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.4,
+                    pointRadius: 0
+                },
+                {
+                    label: 'Resolved',
+                    data: [],
+                    backgroundColor: 'rgba(144, 238, 144, 0.6)',
+                    borderColor: 'rgba(144, 238, 144, 1)',
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.4,
+                    pointRadius: 0
+                }
+            ]
         },
-        scales: {
-            x: {
-                grid: {
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
                     display: false
                 },
-                ticks: {
-                    color: '#6b7280'
+                tooltip: {
+                    mode: 'index',
+                    intersect: false,
+                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                    padding: 12,
+                    titleColor: '#fff',
+                    bodyColor: '#fff',
+                    borderColor: 'rgba(59, 130, 246, 0.5)',
+                    borderWidth: 1
                 }
             },
-            y: {
-                beginAtZero: true,
-                stacked: false,
-                grid: {
-                    color: 'rgba(0, 0, 0, 0.05)',
-                    drawBorder: false
+            scales: {
+                x: {
+                    grid: {
+                        display: false
+                    },
+                    ticks: {
+                        color: '#6b7280'
+                    }
                 },
-                ticks: {
-                    color: '#6b7280'
+                y: {
+                    beginAtZero: true,
+                    stacked: false,
+                    max: 100,
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.05)',
+                        drawBorder: false
+                    },
+                    ticks: {
+                        color: '#6b7280',
+                        stepSize: 10,
+                        callback: function(value) {
+                            return value;
+                        }
+                    }
                 }
+            },
+            interaction: {
+                mode: 'nearest',
+                axis: 'x',
+                intersect: false
             }
-        },
-        interaction: {
-            mode: 'nearest',
-            axis: 'x',
-            intersect: false
         }
-    }
-});
+    });
+    
+    // Fetch real data from API
+    fetchBlotterData();
 }
 
 // ===================================
 // Age Demographics Chart (Pie Chart)
 // ===================================
 const demographicsChartEl = document.getElementById('demographicsChart');
+let demographicsChart = null;
 
 if (demographicsChartEl) {
-const demographicsCtx = demographicsChartEl.getContext('2d');
-
-const demographicsChart = new Chart(demographicsCtx, {
-    type: 'doughnut',
-    data: {
-        labels: ['Children (0-17)', 'Young Adults (18-29)', 'Adults (30-59)', 'Seniors (60+)'],
-        datasets: [{
-            data: [30, 18, 35, 17],
-            backgroundColor: [
-                'rgba(74, 222, 128, 0.8)',
-                'rgba(59, 130, 246, 0.8)',
-                'rgba(251, 146, 60, 0.8)',
-                'rgba(239, 68, 68, 0.8)'
-            ],
-            borderColor: [
-                'rgba(74, 222, 128, 1)',
-                'rgba(59, 130, 246, 1)',
-                'rgba(251, 146, 60, 1)',
-                'rgba(239, 68, 68, 1)'
-            ],
-            borderWidth: 2,
-            hoverOffset: 10
-        }]
-    },
-    options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-            legend: {
-                display: false
-            },
-            tooltip: {
-                backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                padding: 12,
-                titleColor: '#fff',
-                bodyColor: '#fff',
-                borderColor: 'rgba(59, 130, 246, 0.5)',
-                borderWidth: 1,
-                callbacks: {
-                    label: function(context) {
-                        const label = context.label || '';
-                        const value = context.parsed || 0;
-                        return label + ': ' + value + '%';
+    const demographicsCtx = demographicsChartEl.getContext('2d');
+    
+    // Initialize chart with empty data
+    demographicsChart = new Chart(demographicsCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Children (0-17)', 'Young Adults (18-29)', 'Adults (30-59)', 'Seniors (60+)'],
+            datasets: [{
+                data: [],
+                backgroundColor: [
+                    'rgba(74, 222, 128, 0.8)',
+                    'rgba(59, 130, 246, 0.8)',
+                    'rgba(251, 146, 60, 0.8)',
+                    'rgba(239, 68, 68, 0.8)'
+                ],
+                borderColor: [
+                    'rgba(74, 222, 128, 1)',
+                    'rgba(59, 130, 246, 1)',
+                    'rgba(251, 146, 60, 1)',
+                    'rgba(239, 68, 68, 1)'
+                ],
+                borderWidth: 2,
+                hoverOffset: 10
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                    padding: 12,
+                    titleColor: '#fff',
+                    bodyColor: '#fff',
+                    borderColor: 'rgba(59, 130, 246, 0.5)',
+                    borderWidth: 1,
+                    callbacks: {
+                        label: function(context) {
+                            const label = context.label || '';
+                            const value = context.parsed || 0;
+                            return label + ': ' + value + '%';
+                        }
                     }
                 }
-            }
-        },
-        cutout: '60%'
-    }
-});
+            },
+            cutout: '60%'
+        }
+    });
+    
+    // Fetch real data from API
+    fetchDemographicsData();
 }
 
 // ===================================
@@ -635,6 +632,110 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
 //     blotterChart.resize();
 //     demographicsChart.resize();
 // });
+
+// ===================================
+// API Data Fetching Functions
+// ===================================
+
+/**
+ * Fetch population growth data from API
+ */
+function fetchPopulationData() {
+    fetch('get_dashboard_data.php?type=population')
+        .then(response => response.json())
+        .then(result => {
+            if (result.success && result.data) {
+                const data = result.data;
+                
+                // Update chart with real data (now using months)
+                if (populationChart && data.months && data.counts) {
+                    populationChart.data.labels = data.months;
+                    populationChart.data.datasets[0].data = data.counts;
+                    populationChart.update();
+                }
+            } else {
+                console.error('Failed to fetch population data:', result.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching population data:', error);
+        });
+}
+
+/**
+ * Fetch blotter records data from API
+ */
+function fetchBlotterData(year = 'all') {
+    const url = `get_dashboard_data.php?type=blotter&year=${year}`;
+    
+    fetch(url)
+        .then(response => response.json())
+        .then(result => {
+            if (result.success && result.data) {
+                const data = result.data;
+                
+                // Update chart with real data (including labels)
+                if (blotterChart && data.months) {
+                    blotterChart.data.labels = data.months;
+                    blotterChart.data.datasets[0].data = data.pending;
+                    blotterChart.data.datasets[1].data = data.underInvestigation;
+                    blotterChart.data.datasets[2].data = data.dismissed;
+                    blotterChart.data.datasets[3].data = data.resolved;
+                    blotterChart.update();
+                }
+            } else {
+                console.error('Failed to fetch blotter data:', result.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching blotter data:', error);
+        });
+}
+
+/**
+ * Initialize blotter year filter
+ */
+function initializeBlotterYearFilter() {
+    const yearFilter = document.getElementById('blotterYearFilter');
+    
+    if (yearFilter) {
+        yearFilter.addEventListener('change', function() {
+            const selectedYear = this.value;
+            fetchBlotterData(selectedYear);
+        });
+    }
+}
+
+// Initialize year filter when DOM is ready
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeBlotterYearFilter);
+} else {
+    initializeBlotterYearFilter();
+}
+
+/**
+ * Fetch demographics data from API
+ */
+function fetchDemographicsData() {
+    fetch('get_dashboard_data.php?type=demographics')
+        .then(response => response.json())
+        .then(result => {
+            if (result.success && result.data) {
+                const data = result.data;
+                
+                // Update chart with real data (use percentages for display)
+                if (demographicsChart && data.percentages) {
+                    demographicsChart.data.datasets[0].data = data.percentages;
+                    demographicsChart.update();
+                }
+            } else {
+                console.error('Failed to fetch demographics data:', result.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching demographics data:', error);
+        });
+}
 
 // ===================================
 // Console Welcome Message

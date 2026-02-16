@@ -57,7 +57,20 @@
                     <h2 class="chart-title">Blotter Records</h2>
                     <p class="chart-subtitle">Monthly Case Breakdown by Status</p>
                 </div>
-                <div class="chart-year">Year - <?php echo date('Y'); ?></div>
+                <div class="chart-year-filter">
+                    <label for="blotterYearFilter" style="margin-right: 8px; font-weight: 500;">Year:</label>
+                    <select id="blotterYearFilter" class="year-filter-select">
+                        <?php
+                        $currentYear = date('Y');
+                        // Generate years from 2020 to current year + 1
+                        for ($year = $currentYear + 1; $year >= 2020; $year--) {
+                            $selected = ($year == $currentYear) ? 'selected' : '';
+                            echo "<option value='$year' $selected>$year</option>";
+                        }
+                        ?>
+                        <option value="all">All Time (12 months)</option>
+                    </select>
+                </div>
             </div>
             <div class="chart-legend">
                 <span class="legend-item">

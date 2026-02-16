@@ -103,7 +103,8 @@ body.modal-open .sidebar.collapsed {
 
 .sidebar.collapsed {
     width: var(--sidebar-collapsed-width);
-    overflow: visible;
+    overflow-x: hidden;
+    overflow-y: auto;
 }
 
 .sidebar.collapsed .sidebar-title,
@@ -190,17 +191,19 @@ body.modal-open .sidebar.collapsed {
 }
 
 .nav-section-title {
-    padding: 15px 20px 10px;
+    padding: 8px 20px 8px;
     font-size: 11px;
     font-weight: 600;
     text-transform: uppercase;
     color: var(--text-secondary);
     letter-spacing: 0.5px;
     transition: var(--color-transition);
+    margin-top: 4px;
 }
 
 .nav-item {
     margin: 2px 10px;
+    border-radius: 8px;
 }
 
 .nav-divider {
@@ -218,7 +221,7 @@ body.modal-open .sidebar.collapsed {
 .nav-link {
     display: flex;
     align-items: center;
-    padding: 12px 10px;
+    padding: 8px 12px;
     color: var(--text-secondary);
     text-decoration: none;
     border-radius: 8px;
@@ -252,6 +255,24 @@ body.modal-open .sidebar.collapsed {
 .nav-item.active .nav-link {
     background-color: #dbeafe;
     color: var(--primary-color);
+}
+
+/* Active state for collapsed sidebar - only show background on icon */
+.sidebar.collapsed .nav-item.active .nav-link {
+    background-color: transparent;
+    color: var(--primary-color);
+    position: relative;
+}
+
+.sidebar.collapsed .nav-item.active .nav-link i:first-child {
+    background-color: #dbeafe;
+    padding: 8px;
+    border-radius: 8px;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 /* Ensure nav items don't cause layout shifts when modals open */
@@ -294,7 +315,7 @@ body.modal-open .submenu-item.active .submenu-link {
 .submenu-link {
     display: flex;
     align-items: center;
-    padding: 10px 15px 10px 45px;
+    padding: 8px 12px 8px 42px;
     color: var(--text-secondary);
     text-decoration: none;
     border-radius: 8px;
@@ -319,6 +340,12 @@ body.modal-open .submenu-item.active .submenu-link {
     color: var(--primary-color);
 }
 
+/* Active submenu item in collapsed sidebar */
+.sidebar.collapsed .submenu-item.active .submenu-link {
+    background-color: #dbeafe;
+    color: var(--primary-color);
+}
+
 /* Collapsed sidebar submenu */
 .sidebar.collapsed .nav-item {
     position: relative;
@@ -326,9 +353,9 @@ body.modal-open .submenu-item.active .submenu-link {
 
 .sidebar.collapsed .submenu {
     display: none;
-    position: absolute;
-    left: calc(100% + 10px);
-    top: 0;
+    position: fixed;
+    left: var(--sidebar-collapsed-width);
+    top: auto;
     width: 220px;
     background-color: var(--sidebar-bg);
     border: 1px solid var(--border-color);
@@ -338,6 +365,7 @@ body.modal-open .submenu-item.active .submenu-link {
     max-height: none !important;
     z-index: 1001;
     transition: var(--color-transition);
+    margin-left: 10px;
 }
 
 /* Bridge to prevent submenu closing when moving cursor across gap */
@@ -354,12 +382,33 @@ body.modal-open .submenu-item.active .submenu-link {
     display: block;
 }
 
+/* Ensure submenu doesn't cause horizontal scroll */
+.sidebar.collapsed .nav-item.has-submenu {
+    overflow: visible;
+}
+
 .sidebar.collapsed .submenu-link {
     padding-left: 20px;
 }
 
 .sidebar.collapsed .nav-item.has-submenu .nav-arrow {
     display: none;
+}
+
+/* Ensure collapsed sidebar doesn't cause page overflow */
+body:has(.sidebar.collapsed) {
+    overflow-x: hidden;
+}
+
+/* Position submenu relative to nav item when collapsed */
+.sidebar.collapsed .nav-item.has-submenu:hover > .submenu {
+    display: block;
+    position: fixed;
+}
+
+/* Calculate submenu position dynamically based on nav item position */
+.sidebar.collapsed .nav-item {
+    overflow: visible;
 }
 
 .sidebar-footer {
@@ -633,6 +682,52 @@ body.modal-open .main-content.expanded {
     transition: var(--color-transition);
 }
 
+.chart-year-filter {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.chart-year-filter label {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    transition: var(--color-transition);
+}
+
+.year-filter-select {
+    padding: 6px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    background-color: var(--bg-secondary);
+    color: var(--text-primary);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: var(--color-transition);
+    outline: none;
+}
+
+.year-filter-select:hover {
+    border-color: var(--primary-color);
+}
+
+.year-filter-select:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+body.dark-mode .year-filter-select {
+    background-color: #1f2937;
+    border-color: #374151;
+    color: #f9fafb;
+}
+
+body.dark-mode .year-filter-select:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+}
+
 .chart-legend {
     display: flex;
     flex-wrap: wrap;
@@ -678,7 +773,7 @@ body.modal-open .main-content.expanded {
 
 @media (max-width: 768px) {
     :root {
-        --sidebar-width: 260px;
+        --sidebar-width: 280px;
     }
     
     .sidebar {
