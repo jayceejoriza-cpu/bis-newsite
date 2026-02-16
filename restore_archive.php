@@ -1,13 +1,8 @@
 <?php
 require_once 'config.php';
 
-// Check if user is logged in
-if (!isset($_SESSION['user_id'])) {
-    $_SESSION['message'] = 'Unauthorized access';
-    $_SESSION['success'] = 'danger';
-    header('Location: archive.php');
-    exit;
-}
+// Check authentication
+require_once 'auth_check.php';
 
 // Get archive ID
 $id = isset($_GET['id']) ? intval($_GET['id']) : 0;

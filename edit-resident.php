@@ -2,6 +2,9 @@
 // Include configuration
 require_once 'config.php';
 
+// Check authentication
+require_once 'auth_check.php';
+
 // Check if resident ID is provided
 if (!isset($_GET['id']) || empty($_GET['id'])) {
     header('Location: residents.php');

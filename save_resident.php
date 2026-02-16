@@ -9,6 +9,9 @@
 // Include configuration
 require_once 'config.php';
 
+// Check authentication
+require_once 'auth_check.php';
+
 // Set JSON response header
 header('Content-Type: application/json');
 
