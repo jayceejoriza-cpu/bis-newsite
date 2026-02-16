@@ -15,8 +15,8 @@ $error = "";
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $full_name = trim($_POST['full_name']);
     $username = trim($_POST['username']);
-    $password = $_POST['password'];
-    $confirm_password = $_POST['confirm_password'];
+    $password = $_POST['password'] ?? '';
+    $confirm_password = $_POST['confirm_password'] ?? '';
 
     if (empty($full_name) || empty($username)) {
         $error = "Full Name and Username are required.";
@@ -33,9 +33,21 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 if ($password !== $confirm_password) {
                     $error = "Passwords do not match.";
                 } else {
-                    $hashed_password = password_hash($password, PASSWORD_DEFAULT);
-                    $stmt = $conn->prepare("UPDATE users SET full_name = ?, username = ?, password = ? WHERE id = ?");
-                    $stmt->bind_param("sssi", $full_name, $username, $hashed_password, $user_id);
+                    // Check if new password is the same as current password
+                    $current_password_stmt = $conn->prepare("SELECT password FROM users WHERE id = ?");
+                    $current_password_stmt->bind_param("i", $user_id);
+                    $current_password_stmt->execute();
+                    $current_password_result = $current_password_stmt->get_result();
+                    $current_user_data = $current_password_result->fetch_assoc();
+                    $current_password_stmt->close();
+                    
+                    if (password_verify($password, $current_user_data['password'])) {
+                        $error = "The new password cannot be the same as your current password.";
+                    } else {
+                        $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+                        $stmt = $conn->prepare("UPDATE users SET full_name = ?, username = ?, password = ? WHERE id = ?");
+                        $stmt->bind_param("sssi", $full_name, $username, $hashed_password, $user_id);
+                    }
                 }
             } else {
                 $stmt = $conn->prepare("UPDATE users SET full_name = ?, username = ? WHERE id = ?");
@@ -93,6 +105,7 @@ $stmt->close();
     
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css">
     <link rel="stylesheet" href="css/style.css">
     
     <style>
@@ -780,6 +793,235 @@ $stmt->close();
                 grid-template-columns: repeat(3, 1fr);
             }
         }
+
+        /* Image Cropper Modal */
+        .crop-modal {
+            display: none;
+            position: fixed;
+            z-index: 2001;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.85);
+        }
+
+        .crop-modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .crop-modal-content {
+            background-color: #2b2d31;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow: hidden;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
+        }
+
+        .crop-modal-header {
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid #3f4147;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #2b2d31;
+        }
+
+        .crop-modal-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin: 0;
+            color: #f2f3f5;
+        }
+
+        .crop-close-btn {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #b5bac1;
+            padding: 4px 8px;
+            border-radius: 4px;
+            transition: background-color 0.2s ease, color 0.2s ease;
+        }
+
+        .crop-close-btn:hover {
+            background-color: #3f4147;
+            color: #f2f3f5;
+        }
+
+        .crop-modal-body {
+            padding: 1.5rem;
+            background-color: #313338;
+        }
+
+        .crop-container {
+            position: relative;
+            width: 100%;
+            height: 400px;
+            background-color: #1e1f22;
+            border-radius: 8px;
+            overflow: hidden;
+            margin-bottom: 1.5rem;
+        }
+
+        .crop-container img {
+            max-width: 100%;
+            display: block;
+        }
+
+        /* Circular crop overlay */
+        .cropper-view-box,
+        .cropper-face {
+            border-radius: 50%;
+        }
+
+        .cropper-view-box {
+            box-shadow: 0 0 0 1px #39aef0;
+            outline: 0;
+        }
+
+        .crop-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .zoom-control {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .zoom-control label {
+            color: #b5bac1;
+            font-size: 0.875rem;
+            font-weight: 500;
+            min-width: 60px;
+        }
+
+        .zoom-slider {
+            flex: 1;
+            height: 4px;
+            border-radius: 2px;
+            background: #3f4147;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        .zoom-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #5865f2;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+
+        .zoom-slider::-webkit-slider-thumb:hover {
+            background: #4752c4;
+        }
+
+        .zoom-slider::-moz-range-thumb {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #5865f2;
+            cursor: pointer;
+            border: none;
+            transition: background-color 0.2s ease;
+        }
+
+        .zoom-slider::-moz-range-thumb:hover {
+            background: #4752c4;
+        }
+
+        .zoom-value {
+            color: #f2f3f5;
+            font-size: 0.875rem;
+            font-weight: 600;
+            min-width: 45px;
+            text-align: right;
+        }
+
+        .crop-actions {
+            display: flex;
+            gap: 0.75rem;
+            justify-content: flex-end;
+            padding-top: 1rem;
+            border-top: 1px solid #3f4147;
+        }
+
+        .crop-btn {
+            padding: 0.625rem 1.25rem;
+            border: none;
+            border-radius: 4px;
+            font-weight: 600;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .crop-btn-reset {
+            background-color: transparent;
+            color: #f2f3f5;
+        }
+
+        .crop-btn-reset:hover {
+            background-color: #3f4147;
+        }
+
+        .crop-btn-cancel {
+            background-color: transparent;
+            color: #f2f3f5;
+        }
+
+        .crop-btn-cancel:hover {
+            background-color: #3f4147;
+        }
+
+        .crop-btn-apply {
+            background-color: #5865f2;
+            color: #ffffff;
+        }
+
+        .crop-btn-apply:hover {
+            background-color: #4752c4;
+        }
+
+        .crop-btn-apply:disabled {
+            background-color: #3f4147;
+            color: #6d6f78;
+            cursor: not-allowed;
+        }
+
+        @media (max-width: 768px) {
+            .crop-container {
+                height: 300px;
+            }
+
+            .crop-modal-content {
+                width: 95%;
+            }
+
+            .crop-actions {
+                flex-direction: column;
+            }
+
+            .crop-btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
     </style>
 </head>
 <body>
@@ -1026,6 +1268,46 @@ $stmt->close();
         </div>
     </div>
 
+    <!-- Crop Modal -->
+    <div class="crop-modal" id="cropModal">
+        <div class="crop-modal-content">
+            <div class="crop-modal-header">
+                <h3 class="crop-modal-title">Edit Image</h3>
+                <button type="button" class="crop-close-btn" id="closeCropModal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="crop-modal-body">
+                <div class="crop-container">
+                    <img id="cropImage" src="" alt="Image to crop">
+                </div>
+                <div class="crop-controls">
+                    <div class="zoom-control">
+                        <label for="zoomSlider">
+                            <i class="fas fa-search-plus"></i> Zoom
+                        </label>
+                        <input type="range" id="zoomSlider" class="zoom-slider" min="0" max="100" value="0" step="1">
+                        <span class="zoom-value" id="zoomValue">100%</span>
+                    </div>
+                </div>
+                <div class="crop-actions">
+                    <button type="button" class="crop-btn crop-btn-reset" id="resetCropBtn">
+                        <i class="fas fa-undo"></i>
+                        Reset
+                    </button>
+                    <button type="button" class="crop-btn crop-btn-cancel" id="cancelCropBtn">
+                        Cancel
+                    </button>
+                    <button type="button" class="crop-btn crop-btn-apply" id="applyCropBtn">
+                        <i class="fas fa-check"></i>
+                        Apply
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
     <script src="js/script.js"></script>
     <script src="js/user-profile.js"></script>
 </body>

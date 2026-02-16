@@ -101,7 +101,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const files = e.dataTransfer.files;
             if (files.length > 0) {
                 uploadInput.files = files;
-                handleFileUpload(files[0]);
+                handleFileSelection(files[0]);
             }
         });
     }
@@ -110,13 +110,13 @@ document.addEventListener('DOMContentLoaded', function() {
     if (uploadInput) {
         uploadInput.addEventListener('change', function(e) {
             if (e.target.files.length > 0) {
-                handleFileUpload(e.target.files[0]);
+                handleFileSelection(e.target.files[0]);
             }
         });
     }
 
-    // Handle file upload
-    function handleFileUpload(file) {
+    // Handle file selection (show crop modal)
+    function handleFileSelection(file) {
         // Validate file type
         const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
         if (!allowedTypes.includes(file.type)) {
@@ -131,13 +131,23 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
+        // Read file and show crop modal
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            showCropModal(e.target.result, file.name);
+        };
+        reader.readAsDataURL(file);
+    }
+
+    // Handle file upload (after cropping)
+    function handleFileUpload(blob, filename) {
         // Show loading state
         uploadArea.classList.add('uploading');
         uploadArea.innerHTML = '<i class="fas fa-spinner fa-spin" style="font-size: 2rem; color: #3b82f6;"></i><p style="margin-top: 10px;">Uploading...</p>';
 
         // Create form data
         const formData = new FormData();
-        formData.append('avatar', file);
+        formData.append('avatar', blob, filename);
 
         // Upload file
         fetch('upload_avatar.php', {
@@ -246,6 +256,172 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+    // Image Cropper
+    let cropper = null;
+    let currentFile = null;
+
+    const cropModal = document.getElementById('cropModal');
+    const closeCropModalBtn = document.getElementById('closeCropModal');
+    const cropImage = document.getElementById('cropImage');
+    const zoomSlider = document.getElementById('zoomSlider');
+    const zoomValue = document.getElementById('zoomValue');
+    const resetCropBtn = document.getElementById('resetCropBtn');
+    const cancelCropBtn = document.getElementById('cancelCropBtn');
+    const applyCropBtn = document.getElementById('applyCropBtn');
+
+    // Show crop modal
+    function showCropModal(imageSrc, filename) {
+        currentFile = filename;
+        cropImage.src = imageSrc;
+        
+        // Close avatar modal
+        avatarModal.classList.remove('active');
+        
+        // Show crop modal
+        cropModal.classList.add('active');
+
+        // Initialize cropper
+        if (cropper) {
+            cropper.destroy();
+        }
+
+        cropper = new Cropper(cropImage, {
+            aspectRatio: 1,
+            viewMode: 1,
+            dragMode: 'move',
+            autoCropArea: 1,
+            restore: false,
+            guides: false,
+            center: true,
+            highlight: false,
+            cropBoxMovable: false,
+            cropBoxResizable: false,
+            toggleDragModeOnDblclick: false,
+            ready: function() {
+                // Set initial zoom
+                const containerData = cropper.getContainerData();
+                const imageData = cropper.getImageData();
+                const minZoom = Math.max(
+                    containerData.width / imageData.naturalWidth,
+                    containerData.height / imageData.naturalHeight
+                );
+                
+                // Store min zoom for slider
+                zoomSlider.setAttribute('data-min-zoom', minZoom);
+                zoomSlider.value = 0;
+                zoomValue.textContent = '100%';
+            }
+        });
+    }
+
+    // Close crop modal
+    if (closeCropModalBtn) {
+        closeCropModalBtn.addEventListener('click', function() {
+            closeCropModal();
+        });
+    }
+
+    if (cancelCropBtn) {
+        cancelCropBtn.addEventListener('click', function() {
+            closeCropModal();
+        });
+    }
+
+    function closeCropModal() {
+        cropModal.classList.remove('active');
+        if (cropper) {
+            cropper.destroy();
+            cropper = null;
+        }
+        currentFile = null;
+        
+        // Reset upload input
+        if (uploadInput) {
+            uploadInput.value = '';
+        }
+        
+        // Show avatar modal again
+        avatarModal.classList.add('active');
+    }
+
+    // Zoom slider
+    if (zoomSlider) {
+        zoomSlider.addEventListener('input', function() {
+            if (!cropper) return;
+            
+            const value = parseFloat(this.value);
+            const minZoom = parseFloat(this.getAttribute('data-min-zoom')) || 0;
+            
+            // Calculate zoom ratio (0-100 slider to minZoom-2x zoom)
+            const maxZoom = minZoom * 2;
+            const zoomRatio = minZoom + (maxZoom - minZoom) * (value / 100);
+            
+            cropper.zoomTo(zoomRatio);
+            
+            // Update zoom percentage display
+            const percentage = Math.round((zoomRatio / minZoom) * 100);
+            zoomValue.textContent = percentage + '%';
+        });
+    }
+
+    // Reset crop
+    if (resetCropBtn) {
+        resetCropBtn.addEventListener('click', function() {
+            if (!cropper) return;
+            
+            cropper.reset();
+            zoomSlider.value = 0;
+            zoomValue.textContent = '100%';
+        });
+    }
+
+    // Apply crop
+    if (applyCropBtn) {
+        applyCropBtn.addEventListener('click', function() {
+            if (!cropper) return;
+            
+            applyCropBtn.disabled = true;
+            applyCropBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+            
+            // Get cropped canvas
+            const canvas = cropper.getCroppedCanvas({
+                width: 512,
+                height: 512,
+                imageSmoothingEnabled: true,
+                imageSmoothingQuality: 'high'
+            });
+            
+            // Convert to blob
+            canvas.toBlob(function(blob) {
+                if (blob) {
+                    // Close crop modal
+                    cropModal.classList.remove('active');
+                    if (cropper) {
+                        cropper.destroy();
+                        cropper = null;
+                    }
+                    
+                    // Show avatar modal for upload progress
+                    avatarModal.classList.add('active');
+                    
+                    // Upload the cropped image
+                    handleFileUpload(blob, currentFile);
+                } else {
+                    showNotification('Failed to process image. Please try again.', 'error');
+                    applyCropBtn.disabled = false;
+                    applyCropBtn.innerHTML = '<i class="fas fa-check"></i> Apply';
+                }
+            }, 'image/jpeg', 0.95);
+        });
+    }
+
+    // Close crop modal when clicking outside
+    cropModal.addEventListener('click', function(e) {
+        if (e.target === cropModal) {
+            closeCropModal();
+        }
+    });
+
     // Show notification
     function showNotification(message, type) {
         // Remove existing notifications
@@ -260,6 +436,45 @@ document.addEventListener('DOMContentLoaded', function() {
             <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i>
             <span>${message}</span>
         `;
+        
+        // Add notification styles if not already present
+        if (!document.querySelector('style[data-notification-styles]')) {
+            const style = document.createElement('style');
+            style.setAttribute('data-notification-styles', 'true');
+            style.textContent = `
+                .avatar-notification {
+                    position: fixed;
+                    top: 20px;
+                    right: 20px;
+                    padding: 1rem 1.5rem;
+                    border-radius: 8px;
+                    display: flex;
+                    align-items: center;
+                    gap: 0.75rem;
+                    z-index: 10000;
+                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+                    opacity: 0;
+                    transform: translateX(100px);
+                    transition: opacity 0.3s ease, transform 0.3s ease;
+                }
+                .avatar-notification.show {
+                    opacity: 1;
+                    transform: translateX(0);
+                }
+                .avatar-notification.success {
+                    background-color: #10b981;
+                    color: white;
+                }
+                .avatar-notification.error {
+                    background-color: #ef4444;
+                    color: white;
+                }
+                .avatar-notification i {
+                    font-size: 1.25rem;
+                }
+            `;
+            document.head.appendChild(style);
+        }
         
         document.body.appendChild(notification);
 

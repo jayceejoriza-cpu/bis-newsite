@@ -202,34 +202,62 @@ function restoreResident($conn, $data) {
 }
 
 function restoreOfficial($conn, $data) {
-    // Check if officials table exists
-    $checkTable = $conn->query("SHOW TABLES LIKE 'officials'");
+    // Check if barangay_officials table exists
+    $checkTable = $conn->query("SHOW TABLES LIKE 'barangay_officials'");
     if ($checkTable->num_rows == 0) {
-        throw new Exception("Officials table does not exist");
+        throw new Exception("Barangay officials table does not exist");
     }
     
-    $stmt = $conn->prepare("INSERT INTO officials (name, chairmanship, position, termstart, termend, status) VALUES (?, ?, ?, ?, ?, ?)");
+    // Prepare columns and values for restoration
+    $columns = [];
+    $values = [];
+    $types = '';
     
-    // Assign variables for bind_param
-    $name = $data['name'];
-    $chairmanship = $data['chairmanship'] ?? null;
-    $position = $data['position'];
-    $termstart = $data['termstart'] ?? null;
-    $termend = $data['termend'] ?? null;
-    $status = $data['status'] ?? 'Active';
+    // List of columns to restore (excluding id to get new auto-increment)
+    $allowedColumns = [
+        'resident_id', 'position', 'committee', 'hierarchy_level',
+        'term_start', 'term_end', 'status', 'appointment_type',
+        'photo', 'contact_number', 'email', 'created_at', 'updated_at'
+    ];
     
-    $stmt->bind_param("ssssss",
-        $name,
-        $chairmanship,
-        $position,
-        $termstart,
-        $termend,
-        $status
-    );
+    foreach ($allowedColumns as $column) {
+        if (array_key_exists($column, $data) && $data[$column] !== null) {
+            $columns[] = "`$column`";
+            $values[] = $data[$column];
+            
+            // Determine type for bind_param
+            if (in_array($column, ['resident_id', 'hierarchy_level'])) {
+                $types .= 'i'; // Integer
+            } else {
+                $types .= 's'; // String
+            }
+        }
+    }
+    
+    if (empty($columns)) {
+        throw new Exception("No valid data to restore for official");
+    }
+    
+    // Build INSERT query
+    $sql = "INSERT INTO barangay_officials (" . implode(', ', $columns) . ") VALUES (" . str_repeat('?, ', count($columns) - 1) . "?)";
+    $stmt = $conn->prepare($sql);
+    
+    if (!$stmt) {
+        throw new Exception("Failed to prepare statement: " . $conn->error);
+    }
+    
+    // Bind parameters dynamically
+    $bindParams = [];
+    $bindParams[] = $types;
+    for ($i = 0; $i < count($values); $i++) {
+        $bindParams[] = &$values[$i];
+    }
+    call_user_func_array([$stmt, 'bind_param'], $bindParams);
     
     if (!$stmt->execute()) {
         throw new Exception("Failed to restore official: " . $stmt->error);
     }
+    
     $stmt->close();
 }
 

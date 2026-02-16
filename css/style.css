@@ -140,12 +140,13 @@ body.modal-open .sidebar.collapsed {
 }
 
 .sidebar-header {
-    padding: 20px;
+    padding: 18px 20px;
     border-bottom: 1px solid var(--border-color);
     display: flex;
     align-items: center;
-    gap: 15px;
+    gap: 16px;
     transition: var(--color-transition);
+    min-height: 70px;
 }
 
 .menu-toggle {
@@ -158,9 +159,11 @@ body.modal-open .sidebar.collapsed {
     border-radius: 6px;
     transition: var(--color-transition), transform 0.2s ease;
     min-width: 36px;
+    height: 36px;
     display: flex;
     align-items: center;
     justify-content: center;
+    flex-shrink: 0;
 }
 
 .menu-toggle:hover {
@@ -178,6 +181,9 @@ body.modal-open .sidebar.collapsed {
     color: var(--text-primary);
     white-space: nowrap;
     transition: opacity 0.3s ease, var(--color-transition);
+    line-height: 1.2;
+    display: flex;
+    align-items: center;
 }
 
 .sidebar-nav {
