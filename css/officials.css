@@ -518,3 +518,158 @@ body.dark-mode .btn-delete {
         transform: rotate(360deg);
     }
 }
+
+/* ===================================
+   Modal Styles
+   =================================== */
+   .modal-content {
+    background-color: var(--bg-secondary);
+    padding: 0;
+    border-radius: 12px;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+    max-width: 900px;
+    width: 90%;
+    animation: slideIn 0.3s;
+    overflow: hidden;
+    transition: var(--color-transition);
+}
+/* Photo Upload Section */
+.photo-upload-section {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 25px;
+    align-items: flex-start;
+}
+
+.photo-preview {
+    width: 170px;
+    height: 170px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #93c5fd 0%, #bfdbfe 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    flex-shrink: 0;
+    transition: var(--color-transition);
+}
+
+.photo-preview i {
+    font-size: 80px;
+    color: #1e3a8a;
+}
+
+.photo-preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.photo-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    flex: 1;
+}
+
+.photo-buttons .btn {
+    width: 100%;
+    justify-content: center;
+}
+
+.photo-hint {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-top: 10px;
+    transition: var(--color-transition);
+}
+
+/* Form Labels */
+.form-label {
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+    display: block;
+    transition: var(--color-transition);
+}
+
+/* Form Controls */
+.form-control,
+.form-select {
+    padding: 10px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    font-size: 14px;
+    transition: var(--color-transition);
+    background-color: var(--bg-secondary);
+    color: var(--text-primary);
+    width: 100%;
+}
+
+.form-control:focus,
+.form-select:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.form-control::placeholder {
+    color: #9ca3af;
+}
+
+/* Form Group Spacing */
+.mb-3 {
+    margin-bottom: 1rem !important;
+}
+
+/* Modal Body Spacing */
+.modal-body {
+    padding: 1.5rem;
+}
+
+.modal-body form {
+    margin: 0;
+}
+
+/* Dark Mode Form Controls */
+body.dark-mode .photo-upload-section {
+    background-color: #111827;
+}
+
+body.dark-mode .photo-preview {
+    background-color: #374151;
+    border-color: #4b5563;
+}
+
+body.dark-mode .form-control,
+body.dark-mode .form-select {
+    background-color: #1f2937;
+    border-color: #374151;
+    color: #f9fafb;
+}
+
+body.dark-mode .form-control:focus,
+body.dark-mode .form-select:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+}
+
+/* Camera Video */
+#cameraVideo {
+    border-radius: 8px;
+    max-width: 100%;
+}
+
+/* Modal Z-Index Fix */
+.modal {
+    z-index: 1055 !important;
+}
+
+.modal-backdrop {
+    z-index: 1050 !important;
+}
+
+/* Ensure modal content is above backdrop */
+.modal-dialog {
+    z-index: 1056 !important;
+}
