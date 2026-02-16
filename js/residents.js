@@ -404,13 +404,36 @@ function handleAction(action, name, id, row) {
                         // Show success notification
                         showNotification(data.message, 'success');
                         
-                        // Fade out the row
+                        // Add transition for smooth fade out
+                        row.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
                         row.style.opacity = '0';
+                        row.style.transform = 'translateX(-20px)';
                         
-                        // Reload the page after a short delay to fetch fresh data
+                        // Wait for animation to complete, then remove row and update table
                         setTimeout(() => {
-                            window.location.reload();
-                        }, 800);
+                            // Remove the row from DOM
+                            row.remove();
+                            
+                            // Update the EnhancedTable instance
+                            // This will refresh the internal arrays and recalculate pagination
+                            residentsTable.allRows = Array.from(residentsTable.tbody.querySelectorAll('tr'));
+                            residentsTable.filteredRows = [...residentsTable.allRows];
+                            
+                            // Check if current page is now empty
+                            const totalRows = residentsTable.filteredRows.length;
+                            const totalPages = Math.ceil(totalRows / residentsTable.options.pageSize);
+                            
+                            // If current page is beyond total pages, go to last page
+                            if (residentsTable.currentPage > totalPages && totalPages > 0) {
+                                residentsTable.currentPage = totalPages;
+                            }
+                            
+                            // Update the display and pagination
+                            residentsTable.updateDisplay();
+                            residentsTable.updatePagination();
+                            
+                            console.log(`Resident deleted. Remaining residents: ${totalRows}`);
+                        }, 300);
                     } else {
                         console.error('Delete failed:', data.message);
                         showNotification('Error: ' + data.message, 'error');

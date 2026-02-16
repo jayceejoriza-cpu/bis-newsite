@@ -695,14 +695,27 @@ $pageTitle = 'Create Resident';
                 </div>
             </div>
             <div class="review-modal-footer">
-                <button type="button" class="btn btn-secondary" onclick="closeReviewModal()">
-                    <i class="fas fa-edit"></i>
-                    Edit Information
-                </button>
-                <button type="button" class="btn btn-success" id="finalSubmitBtn" onclick="submitFormFromReview()">
-                    <i class="fas fa-check"></i>
-                    Confirm & Submit
-                </button>
+                <!-- Confirmation Checkbox -->
+                <div class="confirmation-checkbox-container">
+                    <label class="confirmation-checkbox-label">
+                        <input type="checkbox" id="confirmDetailsCheckbox" class="confirmation-checkbox">
+                        <span class="checkbox-text">
+                            I confirm that all the details provided above are correct
+                        </span>
+                    </label>
+                </div>
+                
+                <!-- Action Buttons -->
+                <div class="review-modal-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeReviewModal()">
+                        <i class="fas fa-edit"></i>
+                        Edit Information
+                    </button>
+                    <button type="button" class="btn btn-success" id="finalSubmitBtn" onclick="submitFormFromReview()" disabled>
+                        <i class="fas fa-check"></i>
+                        Confirm & Submit
+                    </button>
+                </div>
             </div>
         </div>
     </div>

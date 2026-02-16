@@ -634,6 +634,22 @@ function showSuccessMessage(message = 'Resident Created Successfully!', data = n
         </div>
     `;
     
+    // Hide the review button and navigation buttons
+    const reviewBtn = document.getElementById('reviewBtn');
+    if (reviewBtn) {
+        reviewBtn.style.display = 'none';
+    }
+    
+    const prevBtn = document.getElementById('prevBtn');
+    if (prevBtn) {
+        prevBtn.style.display = 'none';
+    }
+    
+    const nextBtn = document.getElementById('nextBtn');
+    if (nextBtn) {
+        nextBtn.style.display = 'none';
+    }
+    
     // Scroll to top
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
@@ -1185,6 +1201,12 @@ function openReviewModal() {
         // Populate the review modal with form data
         populateReviewModal();
         
+        // Reset checkbox and disable submit button
+        resetConfirmationCheckbox();
+        
+        // Initialize confirmation checkbox event listener
+        initializeConfirmationCheckbox();
+        
         // Show modal
         modal.style.display = 'flex';
         document.body.style.overflow = 'hidden';
@@ -1198,8 +1220,65 @@ function closeReviewModal() {
     if (modal) {
         modal.style.display = 'none';
         document.body.style.overflow = 'auto';
+        
+        // Reset checkbox when closing modal
+        resetConfirmationCheckbox();
+        
         console.log('Review modal closed');
     }
+}
+
+// ===================================
+// Confirmation Checkbox Functions
+// ===================================
+function resetConfirmationCheckbox() {
+    const checkbox = document.getElementById('confirmDetailsCheckbox');
+    const submitBtn = document.getElementById('finalSubmitBtn');
+    
+    if (checkbox) {
+        checkbox.checked = false;
+    }
+    
+    if (submitBtn) {
+        submitBtn.disabled = true;
+    }
+}
+
+function initializeConfirmationCheckbox() {
+    // Use setTimeout to ensure DOM is fully ready
+    setTimeout(() => {
+        const checkbox = document.getElementById('confirmDetailsCheckbox');
+        const submitBtn = document.getElementById('finalSubmitBtn');
+        
+        console.log('=== CHECKBOX INITIALIZATION ===');
+        console.log('Checkbox found:', !!checkbox);
+        console.log('Submit button found:', !!submitBtn);
+        
+        if (checkbox && submitBtn) {
+            // Add event listener directly to checkbox
+            checkbox.addEventListener('change', function(e) {
+                console.log('=== CHECKBOX CHANGED ===');
+                console.log('Checked:', this.checked);
+                console.log('Button disabled before:', submitBtn.disabled);
+                
+                if (this.checked) {
+                    submitBtn.disabled = false;
+                    submitBtn.removeAttribute('disabled');
+                    console.log('Button disabled after enable:', submitBtn.disabled);
+                    console.log('Button should now be ENABLED');
+                } else {
+                    submitBtn.disabled = true;
+                    submitBtn.setAttribute('disabled', 'disabled');
+                    console.log('Button disabled after disable:', submitBtn.disabled);
+                    console.log('Button should now be DISABLED');
+                }
+            });
+            
+            console.log('Event listener attached successfully!');
+        } else {
+            console.error('FAILED: Elements not found!');
+        }
+    }, 100);
 }
 
 function populateReviewModal() {
