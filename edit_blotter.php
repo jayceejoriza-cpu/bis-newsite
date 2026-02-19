@@ -7,9 +7,6 @@
 // Include configuration
 require_once 'config.php';
 
-// Check authentication
-require_once 'auth_check.php';
-
 // Set JSON header for AJAX responses
 if (isset($_GET['ajax']) && $_GET['ajax'] === 'true') {
     header('Content-Type: application/json');
@@ -508,8 +505,54 @@ try {
 
 <script>
 // Edit Blotter Record Modal JavaScript
+// Note: openEditBlotterModal is defined globally for access from blotter.js
+let editRecordModal;
+
+document.addEventListener('DOMContentLoaded', function() {
+    editRecordModal = new bootstrap.Modal(document.getElementById('editRecordModal'));
+});
+
+// Global function to open edit modal
+window.openEditBlotterModal = function(recordId) {
+    // Ensure modal is initialized
+    if (!editRecordModal) {
+        editRecordModal = new bootstrap.Modal(document.getElementById('editRecordModal'));
+    }
+    
+    // Reset form and step
+    const form = document.getElementById('editRecordForm');
+    if (form) {
+        form.reset();
+    }
+    editCurrentStep = 0;
+    updateEditStepIndicator();
+    updateEditFooterButtons();
+    
+    // Show loading state
+    document.querySelector('#editRecordModal .modal-body').innerHTML = '<div class="text-center p-5"><i class="fas fa-spinner fa-spin fa-3x"></i><p class="mt-3">Loading record...</p></div>';
+    
+    // Show modal
+    editRecordModal.show();
+    
+    // Fetch record data
+    fetch(`edit_blotter.php?ajax=true&id=${recordId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                loadEditRecordData(data.data);
+            } else {
+                alert('Error loading record: ' + data.message);
+                editRecordModal.hide();
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching record:', error);
+            alert('An error occurred while loading the record.');
+            editRecordModal.hide();
+        });
+};
+
 (function() {
-    const editRecordModal = new bootstrap.Modal(document.getElementById('editRecordModal'));
     let editCurrentStep = 0;
     const editSteps = ['edit-basic-info', 'edit-parties', 'edit-incident', 'edit-actions'];
     const editStepItems = document.querySelectorAll('#editRecordModal .step-item');
@@ -522,37 +565,6 @@ try {
     let editWitnessCount = 0;
     let editActionCount = 0;
     
-    // Function to open edit modal with record data
-    window.openEditBlotterModal = function(recordId) {
-        // Reset form and step
-        document.getElementById('editRecordForm').reset();
-        editCurrentStep = 0;
-        updateEditStepIndicator();
-        updateEditFooterButtons();
-        
-        // Show loading state
-        document.querySelector('#editRecordModal .modal-body').innerHTML = '<div class="text-center p-5"><i class="fas fa-spinner fa-spin fa-3x"></i><p class="mt-3">Loading record...</p></div>';
-        
-        // Show modal
-        editRecordModal.show();
-        
-        // Fetch record data
-        fetch(`edit_blotter.php?ajax=true&id=${recordId}`)
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    loadEditRecordData(data.data);
-                } else {
-                    alert('Error loading record: ' + data.message);
-                    editRecordModal.hide();
-                }
-            })
-            .catch(error => {
-                console.error('Error fetching record:', error);
-                alert('An error occurred while loading the record.');
-                editRecordModal.hide();
-            });
-    };
     
     // Function to load record data into form
     function loadEditRecordData(data) {

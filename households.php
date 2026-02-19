@@ -50,7 +50,19 @@ $pageTitle = 'Households';
                 </button>
             </div>
             
-            <!-- Search and Filter Bar -->
+          
+            
+            <!-- Filter Tabs -->
+            <div class="filter-tabs">
+                <button class="tab-btn active" data-filter="all">All</button>
+                <button class="tab-btn" data-filter="single-person">Single-person</button>
+                <button class="tab-btn" data-filter="small">Small</button>
+                <button class="tab-btn" data-filter="medium">Medium</button>
+                <button class="tab-btn" data-filter="large">Large</button>
+                <button class="tab-btn" data-filter="very-large">Very Large</button>
+            </div>
+
+              <!-- Search and Filter Bar -->
             <div class="search-filter-bar">
                 <div class="search-box">
                     <i class="fas fa-search"></i>
@@ -63,16 +75,6 @@ $pageTitle = 'Households';
                 <button class="btn btn-icon" id="refreshBtn">
                     <i class="fas fa-sync-alt"></i>
                 </button>
-            </div>
-            
-            <!-- Filter Tabs -->
-            <div class="filter-tabs">
-                <button class="tab-btn active" data-filter="all">All</button>
-                <button class="tab-btn" data-filter="single-person">Single-person</button>
-                <button class="tab-btn" data-filter="small">Small</button>
-                <button class="tab-btn" data-filter="medium">Medium</button>
-                <button class="tab-btn" data-filter="large">Large</button>
-                <button class="tab-btn" data-filter="very-large">Very Large</button>
             </div>
             
             <!-- Households Table -->

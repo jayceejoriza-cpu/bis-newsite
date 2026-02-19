@@ -9,55 +9,25 @@ require_once 'auth_check.php';
 $pageTitle = 'Certificates';
 
 // ============================================
-// Database Connection
+// Static Certificate Types
+// Each entry can have either:
+//   'link'  => 'some-file.php'   (navigates directly)
+//   'modal' => 'modalId'         (opens a modal first)
 // ============================================
-try {
-    $pdo = new PDO(
-        "mysql:host=" . DB_HOST . ";dbname=" . DB_NAME . ";charset=utf8mb4",
-        DB_USER,
-        DB_PASS,
-        [
-            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-            PDO::ATTR_EMULATE_PREPARES => false
-        ]
-    );
-} catch (PDOException $e) {
-    die("Database connection failed: " . $e->getMessage());
-}
-
-// ============================================
-// Fetch Certificates Data
-// ============================================
-$certificates = [];
-$totalCertificates = 0;
-
-try {
-    // Get total count
-    $countStmt = $pdo->query("SELECT COUNT(*) as total FROM certificates");
-    $totalCertificates = $countStmt->fetch()['total'];
-    
-    // Fetch certificates data
-    $stmt = $pdo->prepare("
-        SELECT 
-            id,
-            title,
-            description,
-            fee,
-            status,
-            created_at,
-            updated_at
-        FROM certificates
-        ORDER BY created_at DESC
-    ");
-    
-    $stmt->execute();
-    $certificates = $stmt->fetchAll();
-    
-} catch (PDOException $e) {
-    error_log("Error fetching certificates: " . $e->getMessage());
-    $certificates = [];
-}
+$certificateTypes = [
+    [
+        'title'       => 'Certificate of Indigency',
+        'description' => 'For residents who need proof of indigency',
+        'icon'        => 'fa-file-alt',
+        'modal'       => 'indigencyModal',
+    ],
+    [
+        'title'       => 'Certificate of Residency',
+        'description' => 'For residents who need proof of residency',
+        'icon'        => 'fa-home',
+        'modal'       => 'residencyModal',
+    ],
+];
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -65,16 +35,16 @@ try {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo $pageTitle; ?> - <?php echo SITE_NAME; ?></title>
-    
+
     <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="bootstrap/css/bootstrap.min.css">
-    
+
     <!-- Font Awesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
+
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    
+
     <!-- Custom CSS -->
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/certificates.css">
@@ -82,131 +52,237 @@ try {
 <body>
     <!-- Sidebar -->
     <?php include 'components/sidebar.php'; ?>
-    
+
     <!-- Main Content -->
     <main class="main-content">
         <!-- Header -->
         <?php include 'components/header.php'; ?>
-        
+
         <!-- Certificates Content -->
         <div class="dashboard-content">
             <div class="page-header-section">
                 <div>
                     <h1 class="page-title"><?php echo $pageTitle; ?></h1>
-                    <p class="page-subtitle">Manage and create certificates with customizable fields</p>
+                    <p class="page-subtitle">Select a certificate type to issue</p>
                 </div>
-                <button class="btn btn-primary" id="createCertificateBtn">
-                    <i class="fas fa-plus"></i>
-                    Create Certificate
-                </button>
             </div>
-            
-            <!-- Search and Actions Bar -->
+
+            <!-- Search Bar -->
             <div class="search-actions-bar">
                 <div class="search-box">
                     <i class="fas fa-search"></i>
-                    <input type="text" placeholder="Search" id="searchInput">
-                    <button class="btn-clear" id="clearSearch">
+                    <input type="text" placeholder="Search certificates..." id="searchInput">
+                    <button class="btn-clear" id="clearSearch" style="display:none;">
                         <i class="fas fa-times"></i>
                     </button>
                 </div>
-                
+
                 <button class="btn btn-icon" id="refreshBtn" title="Refresh">
                     <i class="fas fa-sync-alt"></i>
                 </button>
-                
-                <div class="filter-tabs">
-                    <button class="tab-btn active" data-filter="all">All</button>
-                    <button class="tab-btn" data-filter="published">Publish</button>
-                    <button class="tab-btn" data-filter="unpublished">Unpublished</button>
-                </div>
             </div>
-            
+
             <!-- Certificates Grid -->
             <div class="certificates-grid" id="certificatesGrid">
-                <?php if (empty($certificates)): ?>
-                    <!-- Empty state -->
+                <?php if (empty($certificateTypes)): ?>
                     <div class="empty-state">
                         <i class="fas fa-certificate"></i>
-                        <p>No certificates found</p>
-                        <p class="empty-subtitle">Start by creating a new certificate</p>
+                        <p>No certificates available</p>
+                        <p class="empty-subtitle">Add certificate entries to the <code>$certificateTypes</code> array in <code>certificates.php</code></p>
                     </div>
                 <?php else: ?>
-                    <?php foreach ($certificates as $certificate): 
-                        $statusClass = strtolower($certificate['status']);
-                        $statusIcon = ($certificate['status'] === 'Published') ? 'fa-check-circle' : 'fa-times-circle';
-                    ?>
-                    <div class="certificate-card certificate-card-clickable" data-status="<?php echo htmlspecialchars($statusClass); ?>" data-id="<?php echo htmlspecialchars($certificate['id']); ?>">
+                    <?php foreach ($certificateTypes as $cert): ?>
+                    <div class="certificate-card certificate-card-clickable"
+                         data-title="<?php echo htmlspecialchars(strtolower($cert['title'])); ?>"
+                         <?php if (!empty($cert['modal'])): ?>
+                         data-modal="<?php echo htmlspecialchars($cert['modal']); ?>"
+                         <?php elseif (!empty($cert['link'])): ?>
+                         data-link="<?php echo htmlspecialchars($cert['link']); ?>"
+                         <?php endif; ?>>
                         <div class="card-header">
-                            <h3 class="card-title"><?php echo htmlspecialchars($certificate['title']); ?></h3>
-                            <button class="btn-menu" data-id="<?php echo htmlspecialchars($certificate['id']); ?>">
-                                <i class="fas fa-ellipsis-v"></i>
-                            </button>
+                            <h3 class="card-title"><?php echo htmlspecialchars($cert['title']); ?></h3>
                         </div>
-                        
+
                         <div class="card-body">
                             <div class="certificate-icon">
-                                <i class="fas fa-file-alt"></i>
+                                <i class="fas <?php echo htmlspecialchars($cert['icon']); ?>"></i>
                             </div>
                         </div>
-                        
+
                         <div class="card-footer">
-                            <span class="status-badge status-<?php echo htmlspecialchars($statusClass); ?>">
-                                <i class="fas <?php echo htmlspecialchars($statusIcon); ?>"></i>
-                                <?php echo htmlspecialchars($certificate['status']); ?>
+                            <span class="cert-description"><?php echo htmlspecialchars($cert['description']); ?></span>
+                            <span class="cert-open-hint">
+                                <i class="fas fa-arrow-right"></i>
                             </span>
-                            <span class="fee-amount">Fee <?php echo number_format($certificate['fee'], 2); ?></span>
                         </div>
                     </div>
                     <?php endforeach; ?>
                 <?php endif; ?>
             </div>
-            
-            <!-- Pagination -->
-            <div class="pagination-container">
-                <div class="pagination-info">
-                    <span>TOTAL: <strong><?php echo number_format($totalCertificates); ?></strong></span>
+        </div>
+    </main>
+
+    <!-- ============================================
+         Certificate of Indigency Modal
+         ============================================ -->
+    <div class="modal fade" id="indigencyModal" tabindex="-1" aria-labelledby="indigencyModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content cert-request-modal">
+                <!-- Modal Header -->
+                <div class="modal-header cert-modal-header">
+                    <div class="cert-modal-title-wrap">
+                        <i class="fas fa-file-alt cert-modal-icon"></i>
+                        <h5 class="modal-title" id="indigencyModalLabel">Create Certificate of Indigency Request</h5>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="pagination">
-                    <button class="page-btn" disabled>
-                        <i class="fas fa-chevron-left"></i>
+
+                <!-- Modal Body -->
+                <div class="modal-body cert-modal-body">
+
+                    <!-- Resident Full Name -->
+                    <div class="cert-field-group">
+                        <label class="cert-field-label">
+                            RESIDENT FULL NAME <span class="required-star">*</span>
+                        </label>
+                        <div class="resident-search-wrap">
+                            <div class="resident-input-group">
+                                <input type="text"
+                                       id="indigencyResidentName"
+                                       class="form-control cert-input"
+                                       placeholder="Select resident"
+                                       autocomplete="off">
+                                <input type="hidden" id="indigencyResidentId">
+                                <button type="button" class="btn btn-primary btn-resident" id="indigencyResidentBtn">
+                                    <i class="fas fa-user"></i>
+                                    RESIDENT
+                                </button>
+                            </div>
+                            <!-- Autocomplete Dropdown -->
+                            <div class="resident-dropdown" id="indigencyResidentDropdown" style="display:none;"></div>
+                        </div>
+                    </div>
+
+                    <!-- Date -->
+                    <div class="cert-field-group">
+                        <label class="cert-field-label">
+                            DATE <span class="required-star">*</span>
+                        </label>
+                        <input type="date"
+                               id="indigencyDate"
+                               class="form-control cert-input"
+                               value="<?php echo date('Y-m-d'); ?>"
+                               required>
+                    </div>
+
+                    <!-- Type of Assistance -->
+                    <div class="cert-field-group">
+                        <label class="cert-field-label">TYPE OF ASSISTANCE</label>
+                        <input type="text"
+                               id="indigencyAssistance"
+                               class="form-control cert-input"
+                               placeholder="e.g., Medical, Educational, Financial">
+                    </div>
+
+                </div>
+
+                <!-- Modal Footer -->
+                <div class="modal-footer cert-modal-footer">
+                    <button type="button" class="btn btn-cancel" data-bs-dismiss="modal">
+                        <i class="fas fa-times"></i>
+                        Cancel
                     </button>
-                    <button class="page-btn active">1</button>
-                    <button class="page-btn">
-                        <i class="fas fa-chevron-right"></i>
+                    <button type="button" class="btn btn-print-cert" id="indigencyPrintBtn">
+                        <i class="fas fa-print"></i>
+                        Print Certificate
                     </button>
                 </div>
             </div>
         </div>
-    </main>
-    
-    <!-- Context Menu for Certificate Actions -->
-    <div class="context-menu" id="contextMenu" style="display: none;">
-        <button class="context-menu-item" data-action="edit">
-            <i class="fas fa-edit"></i>
-            Edit
-        </button>
-        <button class="context-menu-item" data-action="duplicate">
-            <i class="fas fa-copy"></i>
-            Duplicate
-        </button>
-        <button class="context-menu-item" data-action="toggle-status">
-            <i class="fas fa-exchange-alt"></i>
-            Toggle Status
-        </button>
-         <div class="action-menu-divider" style="
-        height: 1px;
-        background-color: #e5e7eb;
-        margin: 5px 0;"></div>
-        <button class="context-menu-item danger" data-action="delete">
-            <i class="fas fa-trash"></i>
-            Delete
-        </button>
     </div>
-    
+
+    <!-- ============================================
+         Certificate of Residency Modal
+         ============================================ -->
+    <div class="modal fade" id="residencyModal" tabindex="-1" aria-labelledby="residencyModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content cert-request-modal">
+                <!-- Modal Header -->
+                <div class="modal-header cert-modal-header">
+                    <div class="cert-modal-title-wrap">
+                        <i class="fas fa-home cert-modal-icon"></i>
+                        <h5 class="modal-title" id="residencyModalLabel">Create Certificate of Residency Request</h5>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+
+                <!-- Modal Body -->
+                <div class="modal-body cert-modal-body">
+
+                    <!-- Resident Full Name -->
+                    <div class="cert-field-group">
+                        <label class="cert-field-label">
+                            RESIDENT FULL NAME <span class="required-star">*</span>
+                        </label>
+                        <div class="resident-search-wrap">
+                            <div class="resident-input-group">
+                                <input type="text"
+                                       id="residencyResidentName"
+                                       class="form-control cert-input"
+                                       placeholder="Select resident"
+                                       autocomplete="off">
+                                <input type="hidden" id="residencyResidentId">
+                                <button type="button" class="btn btn-primary btn-resident" id="residencyResidentBtn">
+                                    <i class="fas fa-user"></i>
+                                    RESIDENT
+                                </button>
+                            </div>
+                            <!-- Autocomplete Dropdown -->
+                            <div class="resident-dropdown" id="residencyResidentDropdown" style="display:none;"></div>
+                        </div>
+                    </div>
+
+                    <!-- Date -->
+                    <div class="cert-field-group">
+                        <label class="cert-field-label">
+                            DATE <span class="required-star">*</span>
+                        </label>
+                        <input type="date"
+                               id="residencyDate"
+                               class="form-control cert-input"
+                               value="<?php echo date('Y-m-d'); ?>"
+                               required>
+                    </div>
+
+                    <!-- Purpose -->
+                    <div class="cert-field-group">
+                        <label class="cert-field-label">PURPOSE <small class="text-muted" style="text-transform:none;font-weight:400;">(for "issued upon request... for ___")</small></label>
+                        <input type="text"
+                               id="residencyPurpose"
+                               class="form-control cert-input"
+                               placeholder="e.g., Employment, Scholarship, Loan Application">
+                    </div>
+
+                </div>
+
+                <!-- Modal Footer -->
+                <div class="modal-footer cert-modal-footer">
+                    <button type="button" class="btn btn-cancel" data-bs-dismiss="modal">
+                        <i class="fas fa-times"></i>
+                        Cancel
+                    </button>
+                    <button type="button" class="btn btn-print-cert" id="residencyPrintBtn">
+                        <i class="fas fa-print"></i>
+                        Print Certificate
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Bootstrap JS Bundle (includes Popper) -->
     <script src="bootstrap/js/bootstrap.bundle.min.js"></script>
-    
+
     <!-- Custom JavaScript -->
     <script src="js/script.js"></script>
     <script src="js/certificates.js"></script>

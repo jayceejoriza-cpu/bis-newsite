@@ -1,382 +1,495 @@
 /**
  * Certificates Page JavaScript
- * Handles search, filtering, and certificate management
+ * Handles search, card navigation, and certificate request modals
  */
 
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
+
     // ============================================
     // DOM Elements
     // ============================================
-    const searchInput = document.getElementById('searchInput');
-    const clearSearchBtn = document.getElementById('clearSearch');
-    const refreshBtn = document.getElementById('refreshBtn');
-    const createCertificateBtn = document.getElementById('createCertificateBtn');
-    const filterTabs = document.querySelectorAll('.tab-btn');
+    const searchInput      = document.getElementById('searchInput');
+    const clearSearchBtn   = document.getElementById('clearSearch');
+    const refreshBtn       = document.getElementById('refreshBtn');
     const certificatesGrid = document.getElementById('certificatesGrid');
-    const certificateCards = document.querySelectorAll('.certificate-card');
-    const contextMenu = document.getElementById('contextMenu');
-    const menuButtons = document.querySelectorAll('.btn-menu');
-    
-    let currentFilter = 'all';
-    let currentCertificateId = null;
-    
+
     // ============================================
     // Search Functionality
     // ============================================
     if (searchInput) {
-        searchInput.addEventListener('input', function() {
-            const searchTerm = this.value.toLowerCase().trim();
-            filterCertificates(searchTerm, currentFilter);
-            
-            // Show/hide clear button
+        searchInput.addEventListener('input', function () {
+            const term = this.value.toLowerCase().trim();
+            filterCards(term);
             if (clearSearchBtn) {
-                clearSearchBtn.style.display = searchTerm ? 'flex' : 'none';
+                clearSearchBtn.style.display = term ? 'flex' : 'none';
             }
         });
     }
-    
-    // Clear search
+
     if (clearSearchBtn) {
-        clearSearchBtn.addEventListener('click', function() {
+        clearSearchBtn.addEventListener('click', function () {
             searchInput.value = '';
             this.style.display = 'none';
-            filterCertificates('', currentFilter);
+            filterCards('');
             searchInput.focus();
         });
     }
-    
-    // ============================================
-    // Filter Tabs
-    // ============================================
-    filterTabs.forEach(tab => {
-        tab.addEventListener('click', function() {
-            // Remove active class from all tabs
-            filterTabs.forEach(t => t.classList.remove('active'));
-            
-            // Add active class to clicked tab
-            this.classList.add('active');
-            
-            // Get filter value
-            currentFilter = this.getAttribute('data-filter');
-            
-            // Apply filter
-            const searchTerm = searchInput ? searchInput.value.toLowerCase().trim() : '';
-            filterCertificates(searchTerm, currentFilter);
+
+    function filterCards(term) {
+        const cards = document.querySelectorAll('.certificate-card');
+        let visible = 0;
+        cards.forEach(function (card) {
+            const title = card.getAttribute('data-title') || '';
+            const matches = !term || title.includes(term);
+            card.classList.toggle('hidden', !matches);
+            if (matches) visible++;
         });
-    });
-    
-    // ============================================
-    // Filter Certificates Function
-    // ============================================
-    function filterCertificates(searchTerm, filter) {
-        let visibleCount = 0;
-        
-        certificateCards.forEach(card => {
-            const title = card.querySelector('.card-title').textContent.toLowerCase();
-            const status = card.getAttribute('data-status');
-            
-            // Check search match
-            const matchesSearch = !searchTerm || title.includes(searchTerm);
-            
-            // Check filter match
-            let matchesFilter = false;
-            if (filter === 'all') {
-                matchesFilter = true;
-            } else if (filter === 'published') {
-                matchesFilter = status === 'published';
-            } else if (filter === 'unpublished') {
-                matchesFilter = status === 'unpublished';
-            }
-            
-            // Show/hide card
-            if (matchesSearch && matchesFilter) {
-                card.classList.remove('hidden');
-                visibleCount++;
-            } else {
-                card.classList.add('hidden');
-            }
-        });
-        
-        // Show empty state if no results
-        showEmptyState(visibleCount === 0 && certificateCards.length > 0);
+        showEmptyState(visible === 0 && cards.length > 0);
     }
-    
-    // ============================================
-    // Empty State
-    // ============================================
+
     function showEmptyState(show) {
-        let emptyState = certificatesGrid.querySelector('.empty-state');
-        
-        if (show && !emptyState) {
+        let emptyState = certificatesGrid ? certificatesGrid.querySelector('.empty-state-search') : null;
+        if (show && !emptyState && certificatesGrid) {
             emptyState = document.createElement('div');
-            emptyState.className = 'empty-state';
+            emptyState.className = 'empty-state empty-state-search';
             emptyState.innerHTML = `
                 <i class="fas fa-search"></i>
                 <p>No certificates found</p>
-                <p class="empty-subtitle">Try adjusting your search or filter</p>
+                <p class="empty-subtitle">Try a different search term</p>
             `;
             certificatesGrid.appendChild(emptyState);
         } else if (!show && emptyState) {
             emptyState.remove();
         }
     }
-    
+
     // ============================================
     // Refresh Button
     // ============================================
     if (refreshBtn) {
-        refreshBtn.addEventListener('click', function() {
-            // Add spinning animation
+        refreshBtn.addEventListener('click', function () {
             const icon = this.querySelector('i');
             icon.classList.add('fa-spin');
-            
-            // Reload page after short delay
-            setTimeout(() => {
-                location.reload();
-            }, 500);
+            setTimeout(function () { location.reload(); }, 500);
         });
     }
-    
+
     // ============================================
-    // Create Certificate Button
+    // Certificate Card Click
+    // — Opens a modal if data-modal is set
+    // — Navigates directly if data-link is set
     // ============================================
-    if (createCertificateBtn) {
-        createCertificateBtn.addEventListener('click', function() {
-            // Navigate to create certificate page
-            window.location.href = 'create-certificate.php';
-        });
-    }
-    
-    // ============================================
-    // Context Menu for Certificate Actions
-    // ============================================
-    menuButtons.forEach(button => {
-        button.addEventListener('click', function(e) {
-            e.stopPropagation();
-            
-            currentCertificateId = this.getAttribute('data-id');
-            
-            // Position context menu
-            const rect = this.getBoundingClientRect();
-            contextMenu.style.top = `${rect.bottom + 5}px`;
-            contextMenu.style.left = `${rect.left - 150}px`;
-            contextMenu.style.display = 'block';
+    document.querySelectorAll('.certificate-card-clickable').forEach(function (card) {
+        card.addEventListener('click', function () {
+            const modalId = this.getAttribute('data-modal');
+            const link    = this.getAttribute('data-link');
+
+            if (modalId) {
+                const modalEl = document.getElementById(modalId);
+                if (modalEl) {
+                    const bsModal = new bootstrap.Modal(modalEl);
+                    bsModal.show();
+                }
+            } else if (link) {
+                window.location.href = link;
+            }
         });
     });
-    
-    // Close context menu when clicking outside
-    document.addEventListener('click', function(e) {
-        if (!e.target.closest('.context-menu') && !e.target.closest('.btn-menu')) {
-            contextMenu.style.display = 'none';
-        }
-    });
-    
+
     // ============================================
-    // Context Menu Actions
+    // Certificate of Indigency Modal Logic
     // ============================================
-    const contextMenuItems = document.querySelectorAll('.context-menu-item');
-    contextMenuItems.forEach(item => {
-        item.addEventListener('click', function() {
-            const action = this.getAttribute('data-action');
-            handleCertificateAction(action, currentCertificateId);
-            contextMenu.style.display = 'none';
+    const residentNameInput  = document.getElementById('indigencyResidentName');
+    const residentIdInput    = document.getElementById('indigencyResidentId');
+    const residentDropdown   = document.getElementById('indigencyResidentDropdown');
+    const residentBtn        = document.getElementById('indigencyResidentBtn');
+    const dateInput          = document.getElementById('indigencyDate');
+    const assistanceInput    = document.getElementById('indigencyAssistance');
+    const printBtn           = document.getElementById('indigencyPrintBtn');
+    const indigencyModalEl   = document.getElementById('indigencyModal');
+
+    let searchTimeout = null;
+
+    // Reset modal fields when it opens
+    if (indigencyModalEl) {
+        indigencyModalEl.addEventListener('show.bs.modal', function () {
+            if (residentNameInput) residentNameInput.value = '';
+            if (residentIdInput)   residentIdInput.value   = '';
+            if (residentDropdown)  { residentDropdown.innerHTML = ''; residentDropdown.style.display = 'none'; }
+            if (dateInput)         dateInput.value = getTodayDate();
+            if (assistanceInput)   assistanceInput.value = '';
+            clearResidentError();
         });
-    });
-    
-    // ============================================
-    // Handle Certificate Actions
-    // ============================================
-    function handleCertificateAction(action, certificateId) {
-        switch(action) {
-            case 'edit':
-                // Navigate to edit-certificate.php with certificate ID
-                window.location.href = `edit-certificate.php?id=${certificateId}`;
-                break;
-                
-            case 'duplicate':
-                // TODO: Duplicate certificate
-                console.log('Duplicate certificate:', certificateId);
-                if (confirm('Are you sure you want to duplicate this certificate?')) {
-                    alert(`Duplicate certificate ${certificateId} - Feature coming soon`);
-                }
-                break;
-                
-            case 'toggle-status':
-                // TODO: Toggle publish/unpublish status
-                console.log('Toggle status:', certificateId);
-                toggleCertificateStatus(certificateId);
-                break;
-                
-            case 'delete':
-                // TODO: Delete certificate
-                console.log('Delete certificate:', certificateId);
-                if (confirm('Are you sure you want to delete this certificate? This action cannot be undone.')) {
-                    deleteCertificate(certificateId);
-                }
-                break;
-        }
     }
-    
-    // ============================================
-    // Toggle Certificate Status
-    // ============================================
-    function toggleCertificateStatus(certificateId) {
-        // TODO: Implement AJAX call to toggle status
-        const card = document.querySelector(`.certificate-card[data-id="${certificateId}"]`);
-        if (card) {
-            const currentStatus = card.getAttribute('data-status');
-            const newStatus = currentStatus === 'published' ? 'unpublished' : 'published';
-            
-            // Update card status (temporary - should be done via AJAX)
-            card.setAttribute('data-status', newStatus);
-            
-            const statusBadge = card.querySelector('.status-badge');
-            statusBadge.className = `status-badge status-${newStatus}`;
-            statusBadge.innerHTML = `
-                <i class="fas ${newStatus === 'published' ? 'fa-check-circle' : 'fa-times-circle'}"></i>
-                ${newStatus.charAt(0).toUpperCase() + newStatus.slice(1)}
-            `;
-            
-            // Show success message
-            showNotification(`Certificate status changed to ${newStatus}`, 'success');
-        }
-    }
-    
-    // ============================================
-    // Delete Certificate
-    // ============================================
-    function deleteCertificate(certificateId) {
-        // TODO: Implement AJAX call to delete certificate
-        const card = document.querySelector(`.certificate-card[data-id="${certificateId}"]`);
-        if (card) {
-            // Fade out animation
-            card.style.opacity = '0';
-            card.style.transform = 'scale(0.9)';
-            
-            setTimeout(() => {
-                card.remove();
-                
-                // Update total count
-                const totalElement = document.querySelector('.total-count strong');
-                if (totalElement) {
-                    const currentTotal = parseInt(totalElement.textContent.replace(/,/g, ''));
-                    totalElement.textContent = (currentTotal - 1).toLocaleString();
-                }
-                
-                // Show empty state if no cards left
-                const remainingCards = document.querySelectorAll('.certificate-card:not(.hidden)');
-                if (remainingCards.length === 0) {
-                    showEmptyState(true);
-                }
-                
-                showNotification('Certificate deleted successfully', 'success');
-            }, 300);
-        }
-    }
-    
-    // ============================================
-    // Show Notification
-    // ============================================
-    function showNotification(message, type = 'info') {
-        // Create notification element
-        const notification = document.createElement('div');
-        notification.className = `notification notification-${type}`;
-        notification.innerHTML = `
-            <i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-info-circle'}"></i>
-            <span>${message}</span>
-        `;
-        notification.style.cssText = `
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: ${type === 'success' ? '#10b981' : '#3b82f6'};
-            color: white;
-            padding: 15px 20px;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            z-index: 9999;
-            animation: slideInRight 0.3s ease-out;
-        `;
-        
-        document.body.appendChild(notification);
-        
-        // Remove after 3 seconds
-        setTimeout(() => {
-            notification.style.animation = 'slideOutRight 0.3s ease-out';
-            setTimeout(() => notification.remove(), 300);
-        }, 3000);
-    }
-    
-    // ============================================
-    // Action Icons (Bottom)
-    // ============================================
-    const actionButtons = document.querySelectorAll('.action-btn');
-    actionButtons.forEach(button => {
-        button.addEventListener('click', function() {
-            const title = this.getAttribute('title');
-            showNotification(`${title} feature coming soon`, 'info');
-        });
-    });
-    
-    // ============================================
-    // Certificate Card Click to Edit
-    // ============================================
-    const clickableCards = document.querySelectorAll('.certificate-card-clickable');
-    clickableCards.forEach(card => {
-        card.addEventListener('click', function(e) {
-            // Don't navigate if clicking on menu button or context menu
-            if (e.target.closest('.btn-menu') || e.target.closest('.context-menu')) {
+
+    // Resident name input — live search
+    if (residentNameInput) {
+        residentNameInput.addEventListener('input', function () {
+            // Clear previously selected ID when user types again
+            if (residentIdInput) residentIdInput.value = '';
+            clearResidentError();
+
+            const term = this.value.trim();
+            clearTimeout(searchTimeout);
+
+            if (term.length < 1) {
+                hideDropdown();
                 return;
             }
-            
-            const certificateId = this.getAttribute('data-id');
-            if (certificateId) {
-                console.log('Navigating to edit certificate:', certificateId);
-                window.location.href = `edit-certificate.php?id=${certificateId}`;
-            }
+
+            searchTimeout = setTimeout(function () {
+                searchResidents(term);
+            }, 250);
         });
-    });
-    
-    // ============================================
-    // Initialize
-    // ============================================
-    // Apply initial filter
-    filterCertificates('', currentFilter);
-    
-    // Hide clear button initially
-    if (clearSearchBtn) {
-        clearSearchBtn.style.display = 'none';
+
+        residentNameInput.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') hideDropdown();
+        });
     }
+
+    // RESIDENT button — clears selection and focuses input
+    if (residentBtn) {
+        residentBtn.addEventListener('click', function (e) {
+            e.stopPropagation();
+            if (residentNameInput) {
+                residentNameInput.value = '';
+                residentNameInput.focus();
+            }
+            if (residentIdInput) residentIdInput.value = '';
+            hideDropdown();
+        });
+    }
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', function (e) {
+        if (residentDropdown && !e.target.closest('.resident-search-wrap')) {
+            hideDropdown();
+        }
+    });
+
+    // Search residents via AJAX
+    function searchResidents(term) {
+        fetch('search_residents.php?search=' + encodeURIComponent(term))
+            .then(function (res) { return res.json(); })
+            .then(function (data) {
+                if (data.success && data.residents) {
+                    renderDropdown(data.residents);
+                } else {
+                    hideDropdown();
+                }
+            })
+            .catch(function () { hideDropdown(); });
+    }
+
+    // Render autocomplete dropdown
+    function renderDropdown(residents) {
+        if (!residentDropdown) return;
+
+        if (residents.length === 0) {
+            residentDropdown.innerHTML = '<div class="resident-dropdown-empty">No residents found</div>';
+            residentDropdown.style.display = 'block';
+            return;
+        }
+
+        residentDropdown.innerHTML = '';
+        residents.forEach(function (r) {
+            const item = document.createElement('div');
+            item.className = 'resident-dropdown-item';
+            item.innerHTML = `
+                <span class="resident-dropdown-name">${escapeHtml(r.full_name.trim())}</span>
+                <span class="resident-dropdown-id">${escapeHtml(r.resident_id || '')}</span>
+            `;
+            item.addEventListener('mousedown', function (e) {
+                e.preventDefault(); // prevent blur before click
+                selectResident(r);
+            });
+            residentDropdown.appendChild(item);
+        });
+
+        residentDropdown.style.display = 'block';
+    }
+
+    // Select a resident from dropdown
+    function selectResident(resident) {
+        if (residentNameInput) residentNameInput.value = resident.full_name.trim();
+        if (residentIdInput)   residentIdInput.value   = resident.id;
+        hideDropdown();
+        clearResidentError();
+    }
+
+    function hideDropdown() {
+        if (residentDropdown) {
+            residentDropdown.style.display = 'none';
+            residentDropdown.innerHTML = '';
+        }
+    }
+
+    // ============================================
+    // Print Certificate Button
+    // ============================================
+    if (printBtn) {
+        printBtn.addEventListener('click', function () {
+            const residentId  = residentIdInput  ? residentIdInput.value.trim()  : '';
+            const date        = dateInput        ? dateInput.value.trim()        : '';
+            const assistance  = assistanceInput  ? assistanceInput.value.trim()  : '';
+
+            // Validate resident
+            if (!residentId) {
+                showResidentError('Please select a resident from the list.');
+                if (residentNameInput) residentNameInput.focus();
+                return;
+            }
+
+            // Validate date
+            if (!date) {
+                if (dateInput) {
+                    dateInput.classList.add('is-invalid');
+                    dateInput.focus();
+                }
+                return;
+            } else {
+                if (dateInput) dateInput.classList.remove('is-invalid');
+            }
+
+            // Build URL and navigate
+            const params = new URLSearchParams({
+                resident_id: residentId,
+                date:        date,
+                assistance:  assistance
+            });
+
+            window.location.href = 'certificate-indigency.php?' + params.toString();
+        });
+    }
+
+    // ============================================
+    // Certificate of Residency Modal Logic
+    // ============================================
+    const residencyNameInput    = document.getElementById('residencyResidentName');
+    const residencyIdInput      = document.getElementById('residencyResidentId');
+    const residencyDropdown     = document.getElementById('residencyResidentDropdown');
+    const residencyResidentBtn  = document.getElementById('residencyResidentBtn');
+    const residencyDateInput    = document.getElementById('residencyDate');
+    const residencyPurposeInput = document.getElementById('residencyPurpose');
+    const residencyPrintBtn     = document.getElementById('residencyPrintBtn');
+    const residencyModalEl      = document.getElementById('residencyModal');
+
+    let residencySearchTimeout = null;
+
+    // Reset modal fields when it opens
+    if (residencyModalEl) {
+        residencyModalEl.addEventListener('show.bs.modal', function () {
+            if (residencyNameInput)    residencyNameInput.value    = '';
+            if (residencyIdInput)      residencyIdInput.value      = '';
+            if (residencyDropdown)     { residencyDropdown.innerHTML = ''; residencyDropdown.style.display = 'none'; }
+            if (residencyDateInput)    residencyDateInput.value    = getTodayDate();
+            if (residencyPurposeInput) residencyPurposeInput.value = '';
+            clearResidencyError();
+        });
+    }
+
+    // Resident name input — live search
+    if (residencyNameInput) {
+        residencyNameInput.addEventListener('input', function () {
+            if (residencyIdInput) residencyIdInput.value = '';
+            clearResidencyError();
+
+            const term = this.value.trim();
+            clearTimeout(residencySearchTimeout);
+
+            if (term.length < 1) {
+                hideResidencyDropdown();
+                return;
+            }
+
+            residencySearchTimeout = setTimeout(function () {
+                searchResidencyResidents(term);
+            }, 250);
+        });
+
+        residencyNameInput.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') hideResidencyDropdown();
+        });
+    }
+
+    // RESIDENT button — clears selection and focuses input
+    if (residencyResidentBtn) {
+        residencyResidentBtn.addEventListener('click', function (e) {
+            e.stopPropagation();
+            if (residencyNameInput) {
+                residencyNameInput.value = '';
+                residencyNameInput.focus();
+            }
+            if (residencyIdInput) residencyIdInput.value = '';
+            hideResidencyDropdown();
+        });
+    }
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', function (e) {
+        if (residencyDropdown && !e.target.closest('#residencyModal .resident-search-wrap')) {
+            hideResidencyDropdown();
+        }
+    });
+
+    // Search residents via AJAX
+    function searchResidencyResidents(term) {
+        fetch('search_residents.php?search=' + encodeURIComponent(term))
+            .then(function (res) { return res.json(); })
+            .then(function (data) {
+                if (data.success && data.residents) {
+                    renderResidencyDropdown(data.residents);
+                } else {
+                    hideResidencyDropdown();
+                }
+            })
+            .catch(function () { hideResidencyDropdown(); });
+    }
+
+    // Render autocomplete dropdown
+    function renderResidencyDropdown(residents) {
+        if (!residencyDropdown) return;
+
+        if (residents.length === 0) {
+            residencyDropdown.innerHTML = '<div class="resident-dropdown-empty">No residents found</div>';
+            residencyDropdown.style.display = 'block';
+            return;
+        }
+
+        residencyDropdown.innerHTML = '';
+        residents.forEach(function (r) {
+            const item = document.createElement('div');
+            item.className = 'resident-dropdown-item';
+            item.innerHTML = `
+                <span class="resident-dropdown-name">${escapeHtml(r.full_name.trim())}</span>
+                <span class="resident-dropdown-id">${escapeHtml(r.resident_id || '')}</span>
+            `;
+            item.addEventListener('mousedown', function (e) {
+                e.preventDefault();
+                selectResidencyResident(r);
+            });
+            residencyDropdown.appendChild(item);
+        });
+
+        residencyDropdown.style.display = 'block';
+    }
+
+    // Select a resident from dropdown
+    function selectResidencyResident(resident) {
+        if (residencyNameInput) residencyNameInput.value = resident.full_name.trim();
+        if (residencyIdInput)   residencyIdInput.value   = resident.id;
+        hideResidencyDropdown();
+        clearResidencyError();
+    }
+
+    function hideResidencyDropdown() {
+        if (residencyDropdown) {
+            residencyDropdown.style.display = 'none';
+            residencyDropdown.innerHTML = '';
+        }
+    }
+
+    // Print Certificate Button
+    if (residencyPrintBtn) {
+        residencyPrintBtn.addEventListener('click', function () {
+            const residentId = residencyIdInput      ? residencyIdInput.value.trim()      : '';
+            const date       = residencyDateInput    ? residencyDateInput.value.trim()    : '';
+            const purpose    = residencyPurposeInput ? residencyPurposeInput.value.trim() : '';
+
+            // Validate resident
+            if (!residentId) {
+                showResidencyError('Please select a resident from the list.');
+                if (residencyNameInput) residencyNameInput.focus();
+                return;
+            }
+
+            // Validate date
+            if (!date) {
+                if (residencyDateInput) {
+                    residencyDateInput.classList.add('is-invalid');
+                    residencyDateInput.focus();
+                }
+                return;
+            } else {
+                if (residencyDateInput) residencyDateInput.classList.remove('is-invalid');
+            }
+
+            // Build URL and navigate
+            const params = new URLSearchParams({
+                resident_id: residentId,
+                date:        date,
+                purpose:     purpose
+            });
+
+            window.location.href = 'certificate-residency.php?' + params.toString();
+        });
+    }
+
+    function showResidencyError(msg) {
+        clearResidencyError();
+        if (!residencyNameInput) return;
+        residencyNameInput.classList.add('is-invalid');
+        const err = document.createElement('div');
+        err.className = 'invalid-feedback residency-error-msg';
+        err.textContent = msg;
+        residencyNameInput.closest('.resident-input-group').after(err);
+    }
+
+    function clearResidencyError() {
+        if (residencyNameInput) residencyNameInput.classList.remove('is-invalid');
+        const existing = document.querySelector('.residency-error-msg');
+        if (existing) existing.remove();
+    }
+
+    // ============================================
+    // Helpers
+    // ============================================
+    function getTodayDate() {
+        const d = new Date();
+        const yyyy = d.getFullYear();
+        const mm   = String(d.getMonth() + 1).padStart(2, '0');
+        const dd   = String(d.getDate()).padStart(2, '0');
+        return `${yyyy}-${mm}-${dd}`;
+    }
+
+    function showResidentError(msg) {
+        clearResidentError();
+        if (!residentNameInput) return;
+        residentNameInput.classList.add('is-invalid');
+        const err = document.createElement('div');
+        err.className = 'invalid-feedback resident-error-msg';
+        err.textContent = msg;
+        residentNameInput.closest('.resident-input-group').after(err);
+    }
+
+    function clearResidentError() {
+        if (residentNameInput) residentNameInput.classList.remove('is-invalid');
+        const existing = document.querySelector('.resident-error-msg');
+        if (existing) existing.remove();
+    }
+
+    function escapeHtml(str) {
+        const div = document.createElement('div');
+        div.appendChild(document.createTextNode(str));
+        return div.innerHTML;
+    }
+
 });
 
 // ============================================
-// Add CSS animations
+// Animation keyframes
 // ============================================
-const style = document.createElement('style');
-style.textContent = `
-    @keyframes slideInRight {
-        from {
-            transform: translateX(100%);
-            opacity: 0;
+(function () {
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes slideInRight {
+            from { transform: translateX(100%); opacity: 0; }
+            to   { transform: translateX(0);    opacity: 1; }
         }
-        to {
-            transform: translateX(0);
-            opacity: 1;
+        @keyframes slideOutRight {
+            from { transform: translateX(0);    opacity: 1; }
+            to   { transform: translateX(100%); opacity: 0; }
         }
-    }
-    
-    @keyframes slideOutRight {
-        from {
-            transform: translateX(0);
-            opacity: 1;
-        }
-        to {
-            transform: translateX(100%);
-            opacity: 0;
-        }
-    }
-`;
-document.head.appendChild(style);
+    `;
+    document.head.appendChild(style);
+})();

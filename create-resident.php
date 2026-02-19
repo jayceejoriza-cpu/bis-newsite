@@ -284,21 +284,21 @@ $pageTitle = 'Create Resident';
                                     </div>
                                     <div class="form-grid" style="margin-top: 15px; margin-bottom: 15px">
                                         <div class="form-group">
-                                            <label>Contact Person Name <span class="required">*</span></label>
-                                            <input type="text" name="emergencyContactName_1" class="form-control" required placeholder="Enter Contact Person Name">
-                                            <small class="form-hint">Contact person name is required</small>
+                                            <label>Contact Person Name</label>
+                                            <input type="text" name="emergencyContactName_1" class="form-control" placeholder="Enter Contact Person Name">
+                                          
                                         </div>
                                         
                                         <div class="form-group">
-                                            <label>Relationship <span class="required">*</span></label>
-                                            <input type="text" name="emergencyRelationship_1" class="form-control" required placeholder="Enter Relationship">
-                                            <small class="form-hint">Relationship is required</small>
+                                            <label>Relationship</label>
+                                            <input type="text" name="emergencyRelationship_1" class="form-control" placeholder="Enter Relationship">
+                                           
                                         </div>
                                         
                                         <div class="form-group">
-                                            <label>Contact Number <span class="required">*</span></label>
-                                            <input type="tel" name="emergencyContactNumber_1" class="form-control" required placeholder="+63 XXX XXX XXXX">
-                                            <small class="form-hint">Contact number is required</small>
+                                            <label>Contact Number </label>
+                                            <input type="tel" name="emergencyContactNumber_1" class="form-control"  placeholder="+63 XXX XXX XXXX">
+                                           
                                         </div>
                                         
                                         <div class="form-group">

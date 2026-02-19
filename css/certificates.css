@@ -195,6 +195,34 @@
     font-weight: 500;
 }
 
+/* Static card footer elements */
+.cert-description {
+    font-size: 12px;
+    color: var(--text-secondary);
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.cert-open-hint {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background-color: var(--primary-color);
+    color: white;
+    font-size: 12px;
+    flex-shrink: 0;
+    transition: var(--transition);
+}
+
+.certificate-card-clickable:hover .cert-open-hint {
+    transform: translateX(3px);
+}
+
 /* Empty State */
 .empty-state {
     grid-column: 1 / -1;
@@ -489,3 +517,220 @@
 .certificate-card:nth-child(4) { animation-delay: 0.2s; }
 .certificate-card:nth-child(5) { animation-delay: 0.25s; }
 .certificate-card:nth-child(6) { animation-delay: 0.3s; }
+
+/* ===================================
+   Certificate Request Modal
+   =================================== */
+
+.cert-request-modal {
+    border-radius: 14px;
+    overflow: hidden;
+    border: none;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+}
+
+.cert-modal-header {
+    background-color: var(--bg-secondary);
+    border-bottom: 1px solid var(--border-color);
+    padding: 18px 24px;
+}
+
+.cert-modal-title-wrap {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.cert-modal-icon {
+    font-size: 18px;
+    color: var(--primary-color);
+}
+
+.cert-modal-header .modal-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.cert-modal-body {
+    padding: 24px;
+    background-color: var(--bg-secondary);
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+/* Field Group */
+.cert-field-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.cert-field-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    margin: 0;
+}
+
+.required-star {
+    color: #ef4444;
+    margin-left: 2px;
+}
+
+.cert-input {
+    height: 44px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    font-size: 14px;
+    padding: 0 14px;
+    transition: border-color 0.2s;
+}
+
+.cert-input:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    outline: none;
+}
+
+.cert-input.is-invalid {
+    border-color: #ef4444;
+}
+
+/* Resident Search */
+.resident-search-wrap {
+    position: relative;
+}
+
+.resident-input-group {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.resident-input-group .cert-input {
+    flex: 1;
+}
+
+.btn-resident {
+    height: 44px;
+    padding: 0 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+}
+
+/* Autocomplete Dropdown */
+.resident-dropdown {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+    z-index: 1060;
+    max-height: 220px;
+    overflow-y: auto;
+}
+
+.resident-dropdown-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 14px;
+    cursor: pointer;
+    transition: background-color 0.15s;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.resident-dropdown-item:last-child {
+    border-bottom: none;
+}
+
+.resident-dropdown-item:hover {
+    background-color: var(--bg-primary);
+}
+
+.resident-dropdown-name {
+    font-size: 14px;
+    color: var(--text-primary);
+    font-weight: 500;
+}
+
+.resident-dropdown-id {
+    font-size: 12px;
+    color: var(--text-secondary);
+    background-color: var(--bg-primary);
+    padding: 2px 8px;
+    border-radius: 4px;
+    border: 1px solid var(--border-color);
+}
+
+.resident-dropdown-empty {
+    padding: 14px;
+    text-align: center;
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+/* Modal Footer */
+.cert-modal-footer {
+    background-color: var(--bg-secondary);
+    border-top: 1px solid var(--border-color);
+    padding: 16px 24px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.btn-cancel {
+    height: 40px;
+    padding: 0 20px;
+    border-radius: 8px;
+    background-color: #4b5563;
+    color: white;
+    border: none;
+    font-size: 14px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: background-color 0.2s;
+}
+
+.btn-cancel:hover {
+    background-color: #374151;
+    color: white;
+}
+
+.btn-print-cert {
+    height: 40px;
+    padding: 0 20px;
+    border-radius: 8px;
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    font-size: 14px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: background-color 0.2s;
+}
+
+.btn-print-cert:hover {
+    background-color: var(--primary-hover, #2563eb);
+    color: white;
+}
