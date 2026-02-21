@@ -173,8 +173,8 @@ $age = calculateAge($resident['date_of_birth']);
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="css/resident-profile.css">
+    <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="stylesheet" href="assets/css/resident-profile.css">
 </head>
 <body>
     <!-- Sidebar -->
@@ -708,7 +708,7 @@ $age = calculateAge($resident['date_of_birth']);
     </main>
     
     <!-- Custom JavaScript -->
-    <script src="js/script.js"></script>
+    <script src="assets/js/script.js"></script>
     <script>
         // Set active navigation
         document.addEventListener('DOMContentLoaded', () => {
@@ -775,7 +775,7 @@ $age = calculateAge($resident['date_of_birth']);
             
             if (residentId) {
                 // Redirect to edit resident page
-                window.location.href = `edit-resident.php?id=${residentId}`;
+                window.location.href = `model/edit-resident.php?id=${residentId}`;
             } else {
                 alert('Resident ID not found');
             }

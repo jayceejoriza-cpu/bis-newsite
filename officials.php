@@ -134,11 +134,11 @@ try {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo $pageTitle; ?> - <?php echo SITE_NAME; ?></title>
-    <link rel="stylesheet" href="bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" href="assets/bootstrap/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="css/officials.css">
+    <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="stylesheet" href="assets/css/officials.css">
 </head>
 <body>
     <?php include 'components/sidebar.php'; ?>
@@ -411,6 +411,7 @@ try {
                                 <option value="SK Chairman">SK Chairman</option>
                                 <option value="Barangay Secretary">Barangay Secretary</option>
                                 <option value="Barangay Treasurer">Barangay Treasurer</option>
+                                <option value="Barangay Administator">Barangay Administator</option>
                             </select>
                         </div>
 
@@ -619,6 +620,7 @@ try {
                                 <option value="SK Chairman">SK Chairman</option>
                                 <option value="Barangay Secretary">Barangay Secretary</option>
                                 <option value="Barangay Treasurer">Barangay Treasurer</option>
+                                <option value="Barangay Administator">Barangay Administator</option>
                             </select>
                         </div>
 
@@ -688,9 +690,9 @@ try {
     </div>
 
     <!-- Bootstrap JS -->
-    <script src="bootstrap/js/bootstrap.bundle.min.js"></script>
+    <script src="assets/bootstrap/js/bootstrap.bundle.min.js"></script>
     <!-- Custom JS -->
-    <script src="js/script.js"></script>
-    <script src="js/officials.js"></script>
+    <script src="assets/js/script.js"></script>
+    <script src="assets/js/officials.js"></script>
 </body>
 </html>

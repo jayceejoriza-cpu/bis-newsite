@@ -94,7 +94,7 @@ try {
     <title><?php echo $pageTitle; ?> - <?php echo SITE_NAME; ?></title>
     
     <!-- Bootstrap CSS -->
-    <link rel="stylesheet" href="bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" href="assets/bootstrap/css/bootstrap.min.css">
     
     <!-- Font Awesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -106,8 +106,8 @@ try {
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="css/requests.css">
+    <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="stylesheet" href="assets/css/requests.css">
 </head>
 <body>
     <!-- Sidebar -->
@@ -425,10 +425,10 @@ try {
     </div>
     
     <!-- Bootstrap JS Bundle (includes Popper) -->
-    <script src="bootstrap/js/bootstrap.bundle.min.js"></script>
+    <script src="assets/bootstrap/js/bootstrap.bundle.min.js"></script>
     
     <!-- Custom JavaScript -->
-    <script src="js/script.js"></script>
-    <script src="js/requests.js"></script>
+    <script src="assets/js/script.js"></script>
+    <script src="assets/js/requests.js"></script>
 </body>
 </html>

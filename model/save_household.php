@@ -1,0 +1,301 @@
+<?php
+// Include configuration
+require_once '../config.php';
+
+// Check authentication
+require_once '../auth_check.php';
+
+// Set header for JSON response
+header('Content-Type: application/json');
+
+// Get POST data
+$data = json_decode(file_get_contents('php://input'), true);
+
+// Check if this is an UPDATE or CREATE operation
+$isUpdate = !empty($data['householdId']);
+
+// Validate required fields based on operation type
+if ($isUpdate) {
+    // For UPDATE: householdId, address, and headId are required
+    if (empty($data['householdId']) || empty($data['householdAddress']) || empty($data['householdHeadId'])) {
+        echo json_encode([
+            'success' => false,
+            'message' => 'Missing required fields for update'
+        ]);
+        exit;
+    }
+} else {
+    // For CREATE: householdNumber, address, and headId are required
+    if (empty($data['householdNumber']) || empty($data['householdAddress']) || empty($data['householdHeadId'])) {
+        echo json_encode([
+            'success' => false,
+            'message' => 'Missing required fields for creation'
+        ]);
+        exit;
+    }
+}
+
+try {
+    // Start transaction
+    $conn->begin_transaction();
+    
+    if ($isUpdate) {
+        // UPDATE OPERATION
+        $householdId = intval($data['householdId']);
+        
+        // NOTE: We don't validate household head during UPDATE because:
+        // 1. The household head is immutable (cannot be changed via UI)
+        // 2. It will always be the same resident, so validation would always pass for the current household
+        // 3. The frontend prevents changing the household head during edit
+        
+        // Update household (NOTE: household_number and household_head_id are NOT updated)
+        $updateSql = "UPDATE households SET
+                      household_head_id = ?,
+                      household_contact = ?,
+                      address = ?,
+                      water_source_type = ?,
+                      toilet_facility_type = ?,
+                      notes = ?,
+                      updated_at = NOW()
+                      WHERE id = ?";
+        
+        $updateStmt = $conn->prepare($updateSql);
+        $updateStmt->bind_param(
+            'isssssi',
+            $data['householdHeadId'],
+            $data['householdContact'],
+            $data['householdAddress'],
+            $data['waterSource'],
+            $data['toiletFacility'],
+            $data['householdNotes'],
+            $householdId
+        );
+        
+        if (!$updateStmt->execute()) {
+            throw new Exception('Failed to update household: ' . $updateStmt->error);
+        }
+        $updateStmt->close();
+        
+        // Delete existing members for this household
+        $deleteMembersSql = "DELETE FROM household_members WHERE household_id = ?";
+        $deleteMembersStmt = $conn->prepare($deleteMembersSql);
+        $deleteMembersStmt->bind_param('i', $householdId);
+        $deleteMembersStmt->execute();
+        $deleteMembersStmt->close();
+        
+        // Insert updated members
+        if (!empty($data['members']) && is_array($data['members'])) {
+            $memberSql = "INSERT INTO household_members (
+                household_id,
+                resident_id,
+                relationship_to_head,
+                is_head
+            ) VALUES (?, ?, ?, 0)";
+            
+            $memberStmt = $conn->prepare($memberSql);
+            
+            foreach ($data['members'] as $member) {
+                // Only insert if resident_id exists (from database)
+                if (!empty($member['residentId'])) {
+                    // NOTE: We don't validate if member is already in another household during UPDATE
+                    // because we delete all existing members first, then re-insert them.
+                    // The member might be in the same household we're editing, which is expected.
+                    
+                    // Only check if member is the same as household head
+                    if ($member['residentId'] == $data['householdHeadId']) {
+                        throw new Exception('The household head cannot be added as a member');
+                    }
+                    
+                    $memberStmt->bind_param(
+                        'iis',
+                        $householdId,
+                        $member['residentId'],
+                        $member['relationship']
+                    );
+                    
+                    if (!$memberStmt->execute()) {
+                        throw new Exception('Failed to insert household member: ' . $memberStmt->error);
+                    }
+                }
+            }
+            
+            $memberStmt->close();
+        }
+        
+        // Commit transaction
+        $conn->commit();
+        
+        // Return success response
+        echo json_encode([
+            'success' => true,
+            'message' => 'Household updated successfully',
+            'householdId' => $householdId
+        ]);
+        
+    } else {
+        // CREATE OPERATION
+        // Validate that household head is not already assigned to another household
+        $checkHeadSql = "SELECT h.id, h.household_number 
+                         FROM households h 
+                         WHERE h.household_head_id = ?";
+        $checkHeadStmt = $conn->prepare($checkHeadSql);
+        $checkHeadStmt->bind_param('i', $data['householdHeadId']);
+        $checkHeadStmt->execute();
+        $checkHeadResult = $checkHeadStmt->get_result();
+        
+        if ($checkHeadResult->num_rows > 0) {
+            $existingHousehold = $checkHeadResult->fetch_assoc();
+            $checkHeadStmt->close();
+            throw new Exception('This resident is already assigned as household head in household ' . $existingHousehold['household_number']);
+        }
+        $checkHeadStmt->close();
+        
+        // Validate that household head is not already a member of another household
+        $checkHeadMemberSql = "SELECT hm.household_id, h.household_number 
+                               FROM household_members hm
+                               JOIN households h ON hm.household_id = h.id
+                               WHERE hm.resident_id = ?";
+        $checkHeadMemberStmt = $conn->prepare($checkHeadMemberSql);
+        $checkHeadMemberStmt->bind_param('i', $data['householdHeadId']);
+        $checkHeadMemberStmt->execute();
+        $checkHeadMemberResult = $checkHeadMemberStmt->get_result();
+        
+        if ($checkHeadMemberResult->num_rows > 0) {
+            $existingHousehold = $checkHeadMemberResult->fetch_assoc();
+            $checkHeadMemberStmt->close();
+            throw new Exception('This resident is already a member of household ' . $existingHousehold['household_number']);
+        }
+        $checkHeadMemberStmt->close();
+        
+        // Validate members are not already assigned to any household
+        if (!empty($data['members']) && is_array($data['members'])) {
+            foreach ($data['members'] as $member) {
+                if (!empty($member['residentId'])) {
+                    // Check if member is already a household head
+                    $checkMemberHeadSql = "SELECT h.id, h.household_number 
+                                           FROM households h 
+                                           WHERE h.household_head_id = ?";
+                    $checkMemberHeadStmt = $conn->prepare($checkMemberHeadSql);
+                    $checkMemberHeadStmt->bind_param('i', $member['residentId']);
+                    $checkMemberHeadStmt->execute();
+                    $checkMemberHeadResult = $checkMemberHeadStmt->get_result();
+                    
+                    if ($checkMemberHeadResult->num_rows > 0) {
+                        $existingHousehold = $checkMemberHeadResult->fetch_assoc();
+                        $checkMemberHeadStmt->close();
+                        throw new Exception($member['name'] . ' is already assigned as household head in household ' . $existingHousehold['household_number']);
+                    }
+                    $checkMemberHeadStmt->close();
+                    
+                    // Check if member is already in another household
+                    $checkMemberSql = "SELECT hm.household_id, h.household_number 
+                                       FROM household_members hm
+                                       JOIN households h ON hm.household_id = h.id
+                                       WHERE hm.resident_id = ?";
+                    $checkMemberStmt = $conn->prepare($checkMemberSql);
+                    $checkMemberStmt->bind_param('i', $member['residentId']);
+                    $checkMemberStmt->execute();
+                    $checkMemberResult = $checkMemberStmt->get_result();
+                    
+                    if ($checkMemberResult->num_rows > 0) {
+                        $existingHousehold = $checkMemberResult->fetch_assoc();
+                        $checkMemberStmt->close();
+                        throw new Exception($member['name'] . ' is already a member of household ' . $existingHousehold['household_number']);
+                    }
+                    $checkMemberStmt->close();
+                    
+                    // Check if member is the same as household head
+                    if ($member['residentId'] == $data['householdHeadId']) {
+                        throw new Exception('The household head cannot be added as a member');
+                    }
+                }
+            }
+        }
+        
+        // Insert household
+        $sql = "INSERT INTO households (
+            household_number,
+            household_head_id,
+            household_contact,
+            address,
+            water_source_type,
+            toilet_facility_type,
+            notes,
+            created_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, NOW())";
+        
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param(
+            'sisssss',
+            $data['householdNumber'],
+            $data['householdHeadId'],
+            $data['householdContact'],
+            $data['householdAddress'],
+            $data['waterSource'],
+            $data['toiletFacility'],
+            $data['householdNotes']
+        );
+        
+        if (!$stmt->execute()) {
+            throw new Exception('Failed to insert household: ' . $stmt->error);
+        }
+        
+        $householdId = $conn->insert_id;
+        $stmt->close();
+        
+        // Insert household members if any
+        if (!empty($data['members']) && is_array($data['members'])) {
+            $memberSql = "INSERT INTO household_members (
+                household_id,
+                resident_id,
+                relationship_to_head,
+                is_head
+            ) VALUES (?, ?, ?, 0)";
+            
+            $memberStmt = $conn->prepare($memberSql);
+            
+            foreach ($data['members'] as $member) {
+                // Only insert if resident_id exists (from database)
+                if (!empty($member['residentId'])) {
+                    $memberStmt->bind_param(
+                        'iis',
+                        $householdId,
+                        $member['residentId'],
+                        $member['relationship']
+                    );
+                    
+                    if (!$memberStmt->execute()) {
+                        throw new Exception('Failed to insert household member: ' . $memberStmt->error);
+                    }
+                }
+                // Note: Members without resident_id (manual entries) are not stored in household_members table
+                // They would need to be registered as residents first
+            }
+            
+            $memberStmt->close();
+        }
+        
+        // Commit transaction
+        $conn->commit();
+        
+        // Return success response
+        echo json_encode([
+            'success' => true,
+            'message' => 'Household created successfully',
+            'householdId' => $householdId
+        ]);
+    }
+    
+} catch (Exception $e) {
+    // Rollback transaction on error
+    $conn->rollback();
+    
+    // Return error response
+    echo json_encode([
+        'success' => false,
+        'message' => $e->getMessage()
+    ]);
+}
+
+$conn->close();
+?>

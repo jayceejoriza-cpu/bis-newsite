@@ -16,7 +16,7 @@ $pageTitle = 'Households';
     <title><?php echo $pageTitle; ?> - <?php echo SITE_NAME; ?></title>
     
     <!-- Bootstrap CSS -->
-    <link rel="stylesheet" href="bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" href="assets/bootstrap/css/bootstrap.min.css">
     
     <!-- Font Awesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -25,8 +25,8 @@ $pageTitle = 'Households';
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="css/households.css">
+    <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="stylesheet" href="assets/css/households.css">
 </head>
 <body>
     <!-- Sidebar -->
@@ -359,11 +359,11 @@ $pageTitle = 'Households';
     
     
     <!-- Bootstrap JS Bundle (includes Popper) -->
-    <script src="bootstrap/js/bootstrap.bundle.min.js"></script>
+    <script src="assets/bootstrap/js/bootstrap.bundle.min.js"></script>
     
     <!-- Custom JavaScript -->
-    <script src="js/script.js"></script>
-    <script src="js/table.js"></script>
-    <script src="js/households.js"></script>
+    <script src="assets/js/script.js"></script>
+    <script src="assets/js/table.js"></script>
+    <script src="assets/js/households.js"></script>
 </body>
 </html>

@@ -106,7 +106,7 @@ $stmt->close();
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css">
-    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="assets/css/style.css">
     
     <style>
         /* Profile Container */
@@ -1308,7 +1308,7 @@ $stmt->close();
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
-    <script src="js/script.js"></script>
-    <script src="js/user-profile.js"></script>
+    <script src="assets/js/script.js"></script>
+    <script src="assets/js/user-profile.js"></script>
 </body>
 </html>

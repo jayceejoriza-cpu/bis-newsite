@@ -53,7 +53,7 @@ if (!$barangay_info) {
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="assets/css/style.css">
     
     <style>
         .barangay-info-container {
@@ -593,7 +593,7 @@ if (!$barangay_info) {
     </main>
     
     <!-- Custom JavaScript -->
-    <script src="js/script.js"></script>
+    <script src="assets/js/script.js"></script>
     
     <script>
         // Image preview function

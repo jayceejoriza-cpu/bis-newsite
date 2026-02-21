@@ -298,7 +298,7 @@ function pct($part, $total) {
     <title><?php echo $pageTitle; ?> - <?php echo SITE_NAME; ?></title>
 
     <!-- Bootstrap CSS -->
-    <link rel="stylesheet" href="bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" href="assets/bootstrap/css/bootstrap.min.css">
 
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -310,8 +310,8 @@ function pct($part, $total) {
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="css/reports.css">
+    <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="stylesheet" href="assets/css/reports.css">
 
     <script>
         // Apply dark mode immediately to prevent flash
@@ -1160,10 +1160,10 @@ function pct($part, $total) {
     </main>
 
     <!-- Bootstrap JS -->
-    <script src="bootstrap/js/bootstrap.bundle.min.js"></script>
+    <script src="assets/bootstrap/js/bootstrap.bundle.min.js"></script>
 
     <!-- Custom JS -->
-    <script src="js/script.js"></script>
-    <script src="js/reports.js"></script>
+    <script src="assets/js/script.js"></script>
+    <script src="assets/js/reports.js"></script>
 </body>
 </html>

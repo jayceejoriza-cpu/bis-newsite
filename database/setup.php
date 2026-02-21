@@ -274,7 +274,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['setup'])) {
         echo '</div>';
 
         echo '<div style="text-align: center; margin-top: 30px;">';
-        echo '<a href="../create-resident.php" class="btn btn-success">Go to Create Resident</a> ';
+        echo '<a href="../model/create-resident.php" class="btn btn-success">Go to Create Resident</a> ';
         echo '<a href="../residents.php" class="btn">View Residents</a>';
         echo '</div>';
 

@@ -180,13 +180,13 @@ if (isset($conn)) {
                                 <td>
                                     <div style="display: flex; gap: 5px; flex-wrap: wrap;">
                                         <?php if(isset($_SESSION['username'])): ?>
-                                        <a href="restore_archive.php?id=<?php echo htmlspecialchars($archive['id']); ?>" onclick="return confirm('Restore this record?')" class="btn btn-sm btn-success" title="Restore">
+                                        <a href="model/restore_archive.php?id=<?php echo htmlspecialchars($archive['id']); ?>" onclick="return confirm('Restore this record?')" class="btn btn-sm btn-success" title="Restore">
                                             <i class="fas fa-undo"></i>
                                         </a>
                                         <?php endif; ?>
                                         
                                         <?php if(isset($_SESSION['username']) && (isset($_SESSION['role']) && $_SESSION['role'] == 'Administrator')): ?>
-                                        <a href="delete_archive.php?id=<?php echo $archive['id']; ?>" onclick="return confirm('Permanently delete this archive? This cannot be undone!')" class="btn btn-sm btn-danger" title="Permanent Delete">
+                                        <a href="model/delete_archive.php?id=<?php echo $archive['id']; ?>" onclick="return confirm('Permanently delete this archive? This cannot be undone!')" class="btn btn-sm btn-danger" title="Permanent Delete">
                                             <i class="fas fa-trash"></i>
                                         </a>
                                         <?php endif; ?>
@@ -223,7 +223,7 @@ if (isset($conn)) {
         </div>
     </div>
     
-    <script src="js/script.js"></script>
+    <script src="assets/js/script.js"></script>
     <script>
         // Filter functionality
         document.getElementById('filterType').addEventListener('change', function() {

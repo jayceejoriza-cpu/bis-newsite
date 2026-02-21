@@ -9,13 +9,17 @@ if (isset($_SESSION['user_id'])) {
 
 // Fetch barangay info for login background
 $login_bg_image = null;
-$stmt = $conn->prepare("SELECT dashboard_image FROM barangay_info WHERE id = 1 LIMIT 1");
+$barangay_logo = 'assets/image/brgylogo.jpg'; // Default fallback
+$stmt = $conn->prepare("SELECT dashboard_image, barangay_logo FROM barangay_info WHERE id = 1 LIMIT 1");
 $stmt->execute();
 $result = $stmt->get_result();
 if ($result->num_rows > 0) {
     $barangay_data = $result->fetch_assoc();
     if (!empty($barangay_data['dashboard_image']) && file_exists($barangay_data['dashboard_image'])) {
         $login_bg_image = $barangay_data['dashboard_image'];
+    }
+    if (!empty($barangay_data['barangay_logo']) && file_exists($barangay_data['barangay_logo'])) {
+        $barangay_logo = $barangay_data['barangay_logo'];
     }
 }
 $stmt->close();
@@ -88,7 +92,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="css/login-style.css">
+    <link rel="stylesheet" href="assets/css/login-style.css">
     <?php if ($login_bg_image): ?>
     <style>
         body::before {
@@ -131,7 +135,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 <div class="login-card">
 
     <div class="logo-section">
-        <img src="image/brgylogo.jpg" alt="Logo">
+        <img src="<?php echo htmlspecialchars($barangay_logo); ?>" alt="Logo">
         <div>
             <h3>BARANGGAY WAWANDUE, TARIMA NI MIMON</h3>
             <p class="text-muted">Barangay Information System</p>

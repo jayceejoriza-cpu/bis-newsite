@@ -136,7 +136,7 @@ try {
     <title><?php echo $pageTitle; ?> - <?php echo SITE_NAME; ?></title>
     
     <!-- Bootstrap CSS -->
-    <link rel="stylesheet" href="bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" href="assets/bootstrap/css/bootstrap.min.css">
     
     <!-- Font Awesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -145,8 +145,8 @@ try {
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="css/residents.css">
+    <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="stylesheet" href="assets/css/residents.css">
 </head>
 <body>
     <!-- Sidebar -->
@@ -213,15 +213,17 @@ try {
                 </div>
                 <div class="filter-panel-body">
                     <div class="filter-grid">
-                        <!-- Column 1 -->
+                        
                         <div class="filter-item">
-                            <label for="filterAgeGroup">Age Group</label>
-                            <select id="filterAgeGroup" class="filter-select">
+                            <label for="filterAgeHealthGroup">Age/Health Group</label>
+                            <select id="filterAgeHealthGroup" class="filter-select">
                                 <option value="">All</option>
-                                <option value="0-17">0-17 (Minor)</option>
-                                <option value="18-35">18-35 (Young Adult)</option>
-                                <option value="36-59">36-59 (Adult)</option>
-                                <option value="60+">60+ (Senior)</option>
+                                <option value="Newborn (0-28 days)">Newborn (0-28 days)</option>
+                                <option value="Infant (29 days - 1 year)">Infant (29 days - 1 year)</option>
+                                <option value="Child (1-9 years)">Child (1-9 years)</option>
+                                <option value="Adolescent (10-19 years)">Adolescent (10-19 years)</option>
+                                <option value="Adult (20-59 years)">Adult (20-59 years)</option>
+                                <option value="Senior Citizen (60+ years)">Senior Citizen (60+ years)</option>
                             </select>
                         </div>
                         
@@ -303,18 +305,7 @@ try {
                             </select>
                         </div>
                         
-                        <div class="filter-item">
-                            <label for="filterAgeHealthGroup">Age/Health Group</label>
-                            <select id="filterAgeHealthGroup" class="filter-select">
-                                <option value="">All</option>
-                                <option value="Newborn (0-28 days)">Newborn (0-28 days)</option>
-                                <option value="Infant (29 days - 1 year)">Infant (29 days - 1 year)</option>
-                                <option value="Child (1-9 years)">Child (1-9 years)</option>
-                                <option value="Adolescent (10-19 years)">Adolescent (10-19 years)</option>
-                                <option value="Adult (20-59 years)">Adult (20-59 years)</option>
-                                <option value="Senior Citizen (60+ years)">Senior Citizen (60+ years)</option>
-                            </select>
-                        </div>
+                        
                     </div>
                 </div>
                 <div class="filter-panel-footer">
@@ -452,11 +443,11 @@ try {
     
     
     <!-- Bootstrap JS Bundle (includes Popper) -->
-    <script src="bootstrap/js/bootstrap.bundle.min.js"></script>
+    <script src="assets/bootstrap/js/bootstrap.bundle.min.js"></script>
     
     <!-- Custom JavaScript -->
-    <script src="js/script.js"></script>
-    <script src="js/table.js"></script>
-    <script src="js/residents.js"></script>
+    <script src="assets/js/script.js"></script>
+    <script src="assets/js/table.js"></script>
+    <script src="assets/js/residents.js"></script>
 </body>
 </html>
