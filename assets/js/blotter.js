@@ -285,7 +285,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <label class="form-label">Mobile Number</label>
                                 <div class="input-group">
                                     <span class="input-group-text">
-                                        <img src="https://flagcdn.com/w20/ph.png" alt="PH" style="width: 20px;">
+                                        <img src="assets/image/contactph.png" alt="PH" style="width: 20px;">
                                         +63
                                     </span>
                                     <input type="text" class="form-control" name="victim_contact[]" placeholder="9XX XXX XXXX">
@@ -357,7 +357,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <label class="form-label">Mobile Number</label>
                                 <div class="input-group">
                                     <span class="input-group-text">
-                                        <img src="https://flagcdn.com/w20/ph.png" alt="PH" style="width: 20px;">
+                                        <img src="assets/image/contactph.png" alt="PH" style="width: 20px;">
                                         +63
                                     </span>
                                     <input type="text" class="form-control" name="complainant_contact[]" placeholder="9XX XXX XXXX">
@@ -410,7 +410,7 @@ document.addEventListener('DOMContentLoaded', function() {
             saveRecordBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
             
             // Send data to server via AJAX
-            fetch('save_blotter_record.php', {
+            fetch('model/save_blotter_record.php', {
                 method: 'POST',
                 body: formData
             })
@@ -572,7 +572,7 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log('Updating status:', recordId, newStatus);
         
         // Send AJAX request to update status
-        fetch('update_blotter_status.php', {
+        fetch('model/update_blotter_status.php', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded',
@@ -603,7 +603,7 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log('Archive blotter record:', recordId);
         
         // Send AJAX request to archive
-        fetch('archive_blotter_record.php', {
+        fetch('model/archive_blotter_record.php', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded',
@@ -634,7 +634,7 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log('Delete blotter record:', recordId);
         
         // Send AJAX request to delete
-        fetch('delete_blotter_record.php', {
+        fetch('model/delete_blotter_record.php', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded',
@@ -767,7 +767,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <label class="form-label">Mobile Number</label>
                                 <div class="input-group">
                                     <span class="input-group-text">
-                                        <img src="https://flagcdn.com/w20/ph.png" alt="PH" style="width: 20px;">
+                                        <img src="assets/image/contactph.png" alt="PH" style="width: 20px;">
                                         +63
                                     </span>
                                     <input type="text" class="form-control" name="witness_contact[]" placeholder="9XX XXX XXXX">
@@ -893,7 +893,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <label class="form-label">Mobile Number</label>
                                 <div class="input-group">
                                     <span class="input-group-text">
-                                        <img src="https://flagcdn.com/w20/ph.png" alt="PH" style="width: 20px;">
+                                        <img src="assets/image/contactph.png" alt="PH" style="width: 20px;">
                                         +63
                                     </span>
                                     <input type="text" class="form-control" name="respondent_contact[]" placeholder="9XX XXX XXXX">
@@ -975,7 +975,7 @@ document.addEventListener('DOMContentLoaded', function() {
             </div>
         `;
         
-        fetch(`search_residents.php?search=${encodeURIComponent(searchTerm)}`)
+        fetch(`model/search_residents.php?search=${encodeURIComponent(searchTerm)}`)
             .then(response => response.json())
             .then(data => {
                 if (data.success && data.data.length > 0) {

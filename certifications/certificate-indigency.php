@@ -177,7 +177,7 @@ $residentFullName = ucwords(trim(
         /* ===========================
            Base
         =========================== */
-        body { font-family: Arial, sans-serif; }
+        
 
         .print-action-bar {
             display: flex;
@@ -719,5 +719,25 @@ $residentFullName = ucwords(trim(
     <script src="../assets/bootstrap/js/bootstrap.bundle.min.js"></script>
     <!-- Custom JS -->
     <script src="../assets/js/script.js"></script>
+    <script>
+          // Fix sidebar links for subdirectory (handles hardcoded links in sidebar)
+        document.addEventListener('DOMContentLoaded', function() {
+            const sidebarLinks = document.querySelectorAll('.sidebar a, .sidebar-wrapper a, .nav-item a');
+            sidebarLinks.forEach(link => {
+                const href = link.getAttribute('href');
+                // Check if link is relative and doesn't start with ../ or other protocols
+                if (href && 
+                    !href.startsWith('http') && 
+                    !href.startsWith('/') && 
+                    !href.startsWith('#') && 
+                    !href.startsWith('javascript') && 
+                    !href.startsWith('../')) {
+                    
+                    link.setAttribute('href', '../' + href);
+                }
+            });
+        });
+            
+    </script>
 </body>
 </html>

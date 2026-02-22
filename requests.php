@@ -125,10 +125,6 @@ try {
                     <h1 class="page-title"><?php echo $pageTitle; ?></h1>
                     <p class="page-subtitle">View and manage requests records</p>
                 </div>
-                <button class="btn btn-primary" id="createRequestBtn">
-                    <i class="fas fa-plus"></i>
-                    Create Certificate Request
-                </button>
             </div>
             
             <!-- Search and Filter Bar -->

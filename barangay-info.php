@@ -632,7 +632,7 @@ if (!$barangay_info) {
             submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
             
             try {
-                const response = await fetch('save_barangay_info.php', {
+                const response = await fetch('model/save_barangay_info.php', {
                     method: 'POST',
                     body: formData
                 });

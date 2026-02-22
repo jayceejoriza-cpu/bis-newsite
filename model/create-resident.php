@@ -5,6 +5,16 @@ require_once '../config.php';
 // Check authentication
 require_once '../auth_check.php';
 
+// Fix sidebar menu links for subdirectory
+if (isset($menu_items)) {
+    foreach ($menu_items as &$item) {
+        if (isset($item['url']) && !empty($item['url']) && !preg_match('/^(http|\/|#|javascript)/', $item['url'])) {
+            $item['url'] = '../' . $item['url'];
+        }
+    }
+    unset($item);
+}
+
 // Page title
 $pageTitle = 'Create Resident';
 ?>
@@ -598,6 +608,24 @@ $pageTitle = 'Create Resident';
             if (limited.length <= 6) return limited.substring(0, 3) + ' ' + limited.substring(3);
             return limited.substring(0, 3) + ' ' + limited.substring(3, 6) + ' ' + limited.substring(6);
         }
+
+        // Fix sidebar links for subdirectory (handles hardcoded links in sidebar)
+        document.addEventListener('DOMContentLoaded', function() {
+            const sidebarLinks = document.querySelectorAll('.sidebar a, .sidebar-wrapper a, .nav-item a');
+            sidebarLinks.forEach(link => {
+                const href = link.getAttribute('href');
+                // Check if link is relative and doesn't start with ../ or other protocols
+                if (href && 
+                    !href.startsWith('http') && 
+                    !href.startsWith('/') && 
+                    !href.startsWith('#') && 
+                    !href.startsWith('javascript') && 
+                    !href.startsWith('../')) {
+                    
+                    link.setAttribute('href', '../' + href);
+                }
+            });
+        });
     </script>
     
     <!-- Webcam Modal -->

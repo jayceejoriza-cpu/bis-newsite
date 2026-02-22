@@ -347,7 +347,7 @@ $age = calculateAge($resident['date_of_birth']);
                                 </div>
                                 <div class="info-item">
                                     <label>Mobile Number</label>
-                                    <p><?php echo htmlspecialchars($resident['mobile_number'] ?: 'N/A'); ?></p>
+                                    <p>+63 <?php echo htmlspecialchars($resident['mobile_number'] ?: 'N/A'); ?></p>
                                 </div>
                                 <div class="info-item">
                                     <label>Email Address</label>

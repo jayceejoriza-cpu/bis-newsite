@@ -259,7 +259,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 assistance:  assistance
             });
 
-            window.location.href = 'certificate-indigency.php?' + params.toString();
+            window.location.href = 'certifications/certificate-indigency.php?' + params.toString();
         });
     }
 
@@ -423,7 +423,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 purpose:     purpose
             });
 
-            window.location.href = 'certificate-residency.php?' + params.toString();
+            window.location.href = 'certifications/certificate-residency.php?' + params.toString();
         });
     }
 

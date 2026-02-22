@@ -1504,7 +1504,6 @@ body.dark-mode .record-data-value {
 }
 
 .modal-body {
-    padding: 0;
     max-height: 70vh;
     overflow-y: auto;
     background-color: var(--bg-primary);

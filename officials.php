@@ -300,7 +300,7 @@ try {
                                             <?php echo htmlspecialchars($official['appointment_type']); ?>
                                         </span>
                                     </td>
-                                    <td><?php echo htmlspecialchars($official['contact_number'] ?? 'N/A'); ?></td>
+                                    <td>+63 <?php echo htmlspecialchars($official['contact_number'] ?? 'N/A'); ?></td>
                                     <td>
                                         <div class="action-buttons">
                                             <button class="btn-view" data-official-id="<?php echo $official['id']; ?>">
