@@ -57,8 +57,15 @@ try {
 // ============================================
 // Determine Selected Term Period
 // ============================================
-$selectedTermStart = $_GET['term_start'] ?? ($captainTerms[0]['term_start'] ?? null);
-$selectedTermEnd   = $_GET['term_end']   ?? ($captainTerms[0]['term_end']   ?? null);
+$viewAll = isset($_GET['view']) && $_GET['view'] === 'all';
+
+if ($viewAll) {
+    $selectedTermStart = null;
+    $selectedTermEnd   = null;
+} else {
+    $selectedTermStart = $_GET['term_start'] ?? ($captainTerms[0]['term_start'] ?? null);
+    $selectedTermEnd   = $_GET['term_end']   ?? ($captainTerms[0]['term_end']   ?? null);
+}
 
 // ============================================
 // Fetch Officials Data
@@ -192,14 +199,14 @@ try {
                                 <div class="term-period-dropdown-empty">No term periods found</div>
                             <?php else: ?>
                                 <select class="term-period-select" id="termPeriodSelect" onchange="filterByTermPeriod(this.value)">
-                                    <option value="">All Terms</option>
+                                    <option value="" <?php echo $viewAll ? 'selected' : ''; ?>>All Terms</option>
                                     <?php foreach ($captainTerms as $term): ?>
                                         <?php
                                             $tStart = $term['term_start'];
                                             $tEnd   = $term['term_end'];
                                             $label  = date('Y', strtotime($tStart)) . ' – ' . date('Y', strtotime($tEnd));
                                             $val    = $tStart . '|' . $tEnd;
-                                            $sel    = ($selectedTermStart === $tStart) ? 'selected' : '';
+                                            $sel    = (!$viewAll && $selectedTermStart === $tStart) ? 'selected' : '';
                                         ?>
                                         <option value="<?php echo htmlspecialchars($val); ?>" <?php echo $sel; ?>>
                                             <?php echo htmlspecialchars($label); ?>
@@ -221,7 +228,7 @@ try {
                         <thead>
                             <tr>
                                 <th>Official Name</th>
-                                <th>Position</th>
+                                
                                 <th>Committee</th>
                                 <th>Term Period</th>
                                 <th>Status</th>
@@ -287,7 +294,7 @@ try {
                                             </div>
                                         </div>
                                     </td>
-                                    <td><?php echo htmlspecialchars($official['position']); ?></td>
+                                  
                                     <td><?php echo htmlspecialchars($official['committee'] ?? 'N/A'); ?></td>
                                     <td><?php echo htmlspecialchars($termPeriod); ?></td>
                                     <td>

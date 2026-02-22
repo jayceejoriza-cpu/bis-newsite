@@ -4,13 +4,43 @@
 $current_page = basename($_SERVER['PHP_SELF']);
 $settings_pages = ['activity-logs.php', 'archive.php', 'backup.php', 'barangay-info.php'];
 $is_settings_active = in_array($current_page, $settings_pages);
+
+// Fetch Barangay Info for Sidebar
+$sidebar_brgy_name = 'BIS';
+$sidebar_brgy_logo = 'assets/images/logo.png';
+
+if (isset($conn)) {
+    $s_stmt = $conn->prepare("SELECT barangay_name, barangay_logo FROM barangay_info WHERE id = 1 LIMIT 1");
+    if ($s_stmt) {
+        $s_stmt->execute();
+        $s_result = $s_stmt->get_result();
+        if ($s_result->num_rows > 0) {
+            $s_row = $s_result->fetch_assoc();
+            if (!empty($s_row['barangay_name'])) {
+                $sidebar_brgy_name = $s_row['barangay_name'];
+            }
+            if (!empty($s_row['barangay_logo'])) {
+                $sidebar_brgy_logo = $s_row['barangay_logo'];
+            }
+        }
+        $s_stmt->close();
+    }
+}
+
+// Adjust logo path if in subdirectory
+if (!file_exists($sidebar_brgy_logo) && file_exists('../' . $sidebar_brgy_logo)) {
+    $sidebar_brgy_logo = '../' . $sidebar_brgy_logo;
+}
 ?>
 <aside class="sidebar" id="sidebar">
     <div class="sidebar-header">
         <button class="menu-toggle" id="menuToggle">
             <i class="fas fa-bars"></i>
         </button>
-        <h2 class="sidebar-title">Gooning City</h2>
+        <div class="sidebar-brand" style="display: flex; align-items: center; overflow: hidden;">
+            <img src="<?php echo htmlspecialchars($sidebar_brgy_logo); ?>" alt="Logo" style="width: 30px; height: 30px; object-fit: contain; ">
+            <h2 class="sidebar-title" style="font-size: 15px; margin: 0; white-space: nowrap;"><?php echo htmlspecialchars($sidebar_brgy_name); ?></h2>
+        </div>
     </div>
     
     <nav class="sidebar-nav">

@@ -120,6 +120,40 @@ try {
             }
         })();
     </script>
+    <style>
+        /* View Modal Styles */
+        .party-view-item {
+            background-color: #fff;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 10px;
+            transition: all 0.2s ease;
+            border-left: 4px solid #e9ecef;
+        }
+        .party-view-item:hover {
+            border-color: #dee2e6;
+            border-left-color: var(--primary-color);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            transform: translateY(-2px);
+        }
+        .action-view-item {
+            background-color: #f8f9fa;
+            border-left: 4px solid var(--primary-color);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 4px;
+        }
+        .view-info-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #6c757d;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+    </style>
 </head>
 <body>
     <?php include 'components/sidebar.php'; ?>
@@ -547,6 +581,103 @@ try {
                         <button type="button" class="btn btn-primary" id="modalNextBtn">Next</button>
                         <button type="button" class="btn btn-primary" id="saveRecordBtn" style="display: none;">Save Record</button>
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- View Blotter Record Modal -->
+    <div class="modal fade" id="viewRecordModal" tabindex="-1">
+        <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">View Blotter Record Details</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="viewRecordForm">
+                        <!-- Basic Info -->
+                        <h5 class="mb-3 text-primary"><i class="fas fa-info-circle"></i> Basic Information</h5>
+                        <div class="row mb-3">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Status</label>
+                                <input type="text" class="form-control" id="view_status" readonly>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Incident Date</label>
+                                <input type="text" class="form-control" id="view_incident_date" readonly>
+                            </div>
+                        </div>
+                        
+                        <!-- Parties Involved -->
+                        <h5 class="mb-3 mt-4 text-primary"><i class="fas fa-users"></i> Parties Involved</h5>
+                        
+                        <!-- Complainant Section -->
+                        <div class="party-section mb-4">
+                            <div class="party-header">
+                                <h6 class="party-title"><i class="fas fa-user"></i> Complainant</h6>
+                            </div>
+                            <div id="viewComplainantsContainer"></div>
+                        </div>
+                        
+                        <!-- Victims Section -->
+                        <div class="party-section mb-4">
+                            <div class="party-header">
+                                <h6 class="party-title"><i class="fas fa-user-injured"></i> Victims</h6>
+                            </div>
+                            <div id="viewVictimsContainer"></div>
+                        </div>
+                        
+                        <!-- Respondents Section -->
+                        <div class="party-section mb-4">
+                            <div class="party-header">
+                                <h6 class="party-title"><i class="fas fa-user-shield"></i> Respondents</h6>
+                            </div>
+                            <div id="viewRespondentsContainer"></div>
+                        </div>
+                        
+                        <!-- Witnesses Section -->
+                        <div class="party-section mb-4">
+                            <div class="party-header">
+                                <h6 class="party-title"><i class="fas fa-eye"></i> Witnesses</h6>
+                            </div>
+                            <div id="viewWitnessesContainer"></div>
+                        </div>
+                        
+                        <!-- Incident Details -->
+                        <h5 class="mb-3 mt-4 text-primary"><i class="fas fa-exclamation-triangle"></i> Incident Details</h5>
+                        <div class="mb-3">
+                            <label class="form-label">Incident Type</label>
+                            <input type="text" class="form-control" id="view_incident_type" readonly>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Incident Location</label>
+                            <textarea class="form-control" id="view_incident_location" rows="2" readonly></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Incident Details</label>
+                            <textarea class="form-control" id="view_incident_description" rows="6" readonly></textarea>
+                        </div>
+                        
+                        <!-- Actions & Resolution -->
+                        <h5 class="mb-3 mt-4 text-primary"><i class="fas fa-clipboard-check"></i> Actions & Resolution</h5>
+                        <div class="party-section mb-4">
+                            <div class="party-header">
+                                <h6 class="party-title">Action Taken</h6>
+                            </div>
+                            <div id="viewActionsContainer"></div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Resolution</label>
+                            <textarea class="form-control" id="view_resolution" rows="4" readonly></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" id="printRecordBtn">
+                        <i class="fas fa-print"></i> Print Record
+                    </button>
                 </div>
             </div>
         </div>

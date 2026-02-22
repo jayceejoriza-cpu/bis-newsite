@@ -102,7 +102,7 @@ document.addEventListener('click', function (e) {
 // ── Term Period Filter (server-side) ─────────────────────────────────────────
 function filterByTermPeriod(value) {
     if (!value) {
-        window.location.href = 'officials.php';
+        window.location.href = 'officials.php?view=all';
         return;
     }
     const parts = value.split('|');

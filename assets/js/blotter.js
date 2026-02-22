@@ -547,8 +547,128 @@ document.addEventListener('DOMContentLoaded', function() {
     // View blotter details
     function viewBlotterDetails(recordId) {
         console.log('View blotter details:', recordId);
-        // TODO: Fetch record details and show in modal
-        alert('View Details - Feature coming soon\nRecord ID: ' + recordId);
+        const viewModalEl = document.getElementById('viewRecordModal');
+        if (!viewModalEl) return;
+        
+        // Initialize or get modal instance
+        let viewRecordModal = bootstrap.Modal.getInstance(viewModalEl);
+        if (!viewRecordModal) {
+            viewRecordModal = new bootstrap.Modal(viewModalEl);
+        }
+        
+        // Fetch record details
+        fetch(`model/edit_blotter.php?ajax=true&id=${recordId}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    populateViewModal(data.data);
+                    viewRecordModal.show();
+                } else {
+                    alert('Error loading record: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching record:', error);
+                alert('An error occurred while loading the record.');
+            });
+    }
+
+    function populateViewModal(data) {
+        const record = data.record;
+        
+        // Basic Info
+        const statusEl = document.getElementById('view_status');
+        if (statusEl) statusEl.value = record.status;
+        
+        const dateEl = document.getElementById('view_incident_date');
+        if (dateEl) dateEl.value = formatDateTime(record.incident_date);
+        
+        // Incident Details
+        const typeEl = document.getElementById('view_incident_type');
+        if (typeEl) typeEl.value = record.incident_type;
+        
+        const locEl = document.getElementById('view_incident_location');
+        if (locEl) locEl.value = record.incident_location;
+        
+        const descEl = document.getElementById('view_incident_description');
+        if (descEl) descEl.value = record.incident_description;
+        
+        const resEl = document.getElementById('view_resolution');
+        if (resEl) resEl.value = record.resolution || 'No resolution recorded.';
+
+        // Populate Containers
+        populateViewParties('viewComplainantsContainer', data.complainants);
+        populateViewParties('viewVictimsContainer', data.victims);
+        populateViewParties('viewRespondentsContainer', data.respondents);
+        populateViewParties('viewWitnessesContainer', data.witnesses);
+        populateViewActions('viewActionsContainer', data.actions);
+        
+        // Setup Print Button
+        const printBtn = document.getElementById('printRecordBtn');
+        if(printBtn) {
+            printBtn.onclick = function() {
+                window.open(`print_blotter.php?id=${record.id}`, '_blank');
+            };
+        }
+    }
+    
+    function populateViewParties(containerId, parties) {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+        
+        container.innerHTML = '';
+        
+        if (!parties || parties.length === 0) {
+            container.innerHTML = '<p class="text-muted fst-italic small">No records found.</p>';
+            return;
+        }
+        
+        parties.forEach((party) => {
+            const html = `
+                <div class="party-view-item">
+                    <div class="fw-bold text-dark mb-1" style="font-size: 1.05rem;">${party.name}</div>
+                    <div class="small text-muted d-flex align-items-center">
+                        ${party.contact_number ? `<i class="fas fa-phone-alt me-1"></i> ${party.contact_number}` : ''}
+                        ${party.address ? `<span class="mx-2 text-secondary">|</span> <i class="fas fa-map-marker-alt me-1"></i> ${party.address}` : ''}
+                    </div>
+                </div>
+            `;
+            container.insertAdjacentHTML('beforeend', html);
+        });
+    }
+
+    function populateViewActions(containerId, actions) {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+        
+        container.innerHTML = '';
+        
+        if (!actions || actions.length === 0) {
+            container.innerHTML = '<p class="text-muted fst-italic small">No actions recorded.</p>';
+            return;
+        }
+        
+        actions.forEach(action => {
+            const html = `
+                <div class="action-view-item">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="fw-bold small text-primary"><i class="far fa-calendar-alt me-1"></i> ${action.date}</span>
+                        <span class="badge bg-secondary">${action.officer || 'Officer'}</span>
+                    </div>
+                    <div class="text-dark">${action.details}</div>
+                </div>
+            `;
+            container.insertAdjacentHTML('beforeend', html);
+        });
+    }
+
+    function formatDateTime(dateString) {
+        if (!dateString) return '';
+        const date = new Date(dateString);
+        return date.toLocaleString('en-US', { 
+            year: 'numeric', month: 'long', day: 'numeric', 
+            hour: '2-digit', minute: '2-digit' 
+        });
     }
     
     // Edit blotter record

@@ -82,9 +82,9 @@ $pageTitle = 'Households';
                 <table class="data-table households-table" id="householdsTable">
                     <thead>
                         <tr>
-                            <th>Household Number <i class="fas fa-sort sort-icon"></i></th>
-                            <th>Household Head <i class="fas fa-sort sort-icon"></i></th>
-                            <th>Household Member <i class="fas fa-sort sort-icon"></i></th>
+                            <th>Household Number </th>
+                            <th>Household Head </th>
+                            <th>Household Member</th>
                             <th>Action</th>
                         </tr>
                     </thead>

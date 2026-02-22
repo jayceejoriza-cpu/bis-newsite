@@ -124,6 +124,7 @@ body.modal-open .sidebar.collapsed {
 }
 
 .sidebar.collapsed .sidebar-title,
+.sidebar.collapsed .sidebar-brand,
 .sidebar.collapsed .nav-link span,
 .sidebar.collapsed .nav-arrow,
 .sidebar.collapsed .nav-section-title,
@@ -168,7 +169,6 @@ body.modal-open .sidebar.collapsed {
     border-bottom: 1px solid var(--border-color);
     display: flex;
     align-items: center;
-    gap: 16px;
     transition: var(--color-transition);
     min-height: 70px;
 }

@@ -11,80 +11,6 @@ $pageTitle = 'Requests';
 // ============================================
 // Database Connection
 // ============================================
-try {
-    $pdo = new PDO(
-        "mysql:host=" . DB_HOST . ";dbname=" . DB_NAME . ";charset=utf8mb4",
-        DB_USER,
-        DB_PASS,
-        [
-            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-            PDO::ATTR_EMULATE_PREPARES => false
-        ]
-    );
-} catch (PDOException $e) {
-    die("Database connection failed: " . $e->getMessage());
-}
-
-// ============================================
-// Helper Functions
-// ============================================
-
-/**
- * Format full name
- */
-function formatFullName($firstName, $middleName, $lastName, $suffix) {
-    $name = trim($firstName);
-    if (!empty($middleName)) {
-        $name .= ' ' . trim($middleName);
-    }
-    $name .= ' ' . trim($lastName);
-    if (!empty($suffix)) {
-        $name .= ' ' . trim($suffix);
-    }
-    return $name;
-}
-
-// ============================================
-// Fetch Certificate Requests Data
-// ============================================
-$requests = [];
-$totalRequests = 0;
-
-try {
-    // Get total count
-    $countStmt = $pdo->query("SELECT COUNT(*) as total FROM certificate_requests");
-    $totalRequests = $countStmt->fetch()['total'];
-    
-    // Fetch certificate requests with resident and certificate details
-    $stmt = $pdo->prepare("
-        SELECT 
-            cr.id,
-            cr.reference_no,
-            cr.payment_status,
-            cr.certificate_fee,
-            cr.status,
-            cr.date_requested,
-            r.id as resident_id,
-            r.resident_id as resident_code,
-            r.first_name,
-            r.middle_name,
-            r.last_name,
-            r.suffix,
-            c.title as certificate_name
-        FROM certificate_requests cr
-        INNER JOIN residents r ON cr.resident_id = r.id
-        INNER JOIN certificates c ON cr.certificate_id = c.id
-        ORDER BY cr.date_requested DESC
-    ");
-    
-    $stmt->execute();
-    $requests = $stmt->fetchAll();
-    
-} catch (PDOException $e) {
-    error_log("Error fetching certificate requests: " . $e->getMessage());
-    $requests = [];
-}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -201,57 +127,15 @@ try {
                 <table class="data-table requests-table" id="requestsTable">
                     <thead>
                         <tr>
-                            <th>Reference No.</th>
                             <th>Resident ID</th>
                             <th>Resident Name</th>
                             <th>Certificate</th>
-                            <th>Certificate Fee</th>
+                            <th>Purpose</th>
                             <th>Date Request</th>
                         </tr>
                     </thead>
                     <tbody id="requestsTableBody">
-                        <?php if (empty($requests)): ?>
-                            <!-- Empty state -->
-                            <tr>
-                                <td colspan="6" style="text-align: center; padding: 40px;">
-                                    <i class="fas fa-file-alt" style="font-size: 48px; color: #d1d5db; margin-bottom: 16px;"></i>
-                                    <p style="color: #6b7280; font-size: 16px; margin: 0;">No requests found</p>
-                                    <p style="color: #9ca3af; font-size: 14px; margin-top: 8px;">Certificate requests will appear here</p>
-                                </td>
-                            </tr>
-                        <?php else: ?>
-                            <?php foreach ($requests as $request): 
-                                // Prepare data
-                                $fullName = formatFullName(
-                                    $request['first_name'], 
-                                    $request['middle_name'], 
-                                    $request['last_name'], 
-                                    $request['suffix']
-                                );
-                                $residentCode = !empty($request['resident_code']) ? $request['resident_code'] : 'N/A';
-                                $dateRequested = !empty($request['date_requested']) ? date('F j, Y', strtotime($request['date_requested'])) : 'N/A';
-                            ?>
-                            <tr data-resident-id="<?php echo htmlspecialchars($residentCode); ?>"
-                                data-resident-name="<?php echo htmlspecialchars($fullName); ?>"
-                                data-certificate="<?php echo htmlspecialchars($request['certificate_name']); ?>"
-                                data-date-request="<?php echo htmlspecialchars($request['date_requested']); ?>">
-                                <td>
-                                    <span class="reference-link">
-                                        <?php echo htmlspecialchars($request['reference_no']); ?>
-                                    </span>
-                                </td>
-                                <td><?php echo htmlspecialchars($residentCode); ?></td>
-                                <td>
-                                    <span class="resident-name">
-                                        <?php echo htmlspecialchars($fullName); ?>
-                                    </span>
-                                </td>
-                                <td><?php echo htmlspecialchars($request['certificate_name']); ?></td>
-                                <td><?php echo number_format($request['certificate_fee'], 2); ?></td>
-                                <td><?php echo htmlspecialchars($dateRequested); ?></td>
-                            </tr>
-                            <?php endforeach; ?>
-                        <?php endif; ?>
+                        
                     </tbody>
                 </table>
             </div>
