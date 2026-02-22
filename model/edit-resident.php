@@ -62,6 +62,29 @@ $pageTitle = 'Edit Resident';
                 grid-template-columns: 1fr;
             }
         }
+        
+        .phone-input-group {
+            display: flex;
+            align-items: stretch;
+        }
+        .phone-prefix {
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            padding: 0 10px;
+            border-right: none;
+            border-radius: 4px 0 0 4px;
+        }
+        .phone-input {
+            border-top-left-radius: 0;
+            border-bottom-left-radius: 0;
+        }
+        .flag-icon {
+            width: 20px;
+        }
     </style>
 </head>
 <body>
@@ -279,7 +302,13 @@ $pageTitle = 'Edit Resident';
                             <div class="form-grid">
                                 <div class="form-group">
                                     <label for="mobileNumber">Mobile Number <span class="required">*</span></label>
-                                    <input type="tel" id="mobileNumber" name="mobileNumber" class="form-control" placeholder="+63 XXX XXX XXXX" required>
+                                    <div class="phone-input-group">
+                                        <span class="phone-prefix">
+                                            <img src="../assets/image/contactph.png" alt="PH" class="flag-icon">
+                                            +63
+                                        </span>
+                                        <input type="tel" id="mobileNumber" name="mobileNumber" class="form-control phone-input" placeholder="XXX XXX XXXX" pattern="[0-9 ]+" maxlength="12" oninput="let v=this.value.replace(/\D/g,'').substring(0,10);if(v.length>6)this.value=v.slice(0,3)+' '+v.slice(3,6)+' '+v.slice(6);else if(v.length>3)this.value=v.slice(0,3)+' '+v.slice(3);else this.value=v;" required>
+                                    </div>
                                 </div>
                                 
                                 <div class="form-group">
@@ -578,6 +607,16 @@ $pageTitle = 'Edit Resident';
     <!-- Custom JavaScript -->
     <script src="../assets/js/script.js"></script>
     <script src="../assets/js/edit-resident.js"></script>
+    <script>
+        // Override phone number formatting to use spaces instead of hyphens
+        function formatPhoneNumber(value) {
+            const numbers = value.replace(/\D/g, '');
+            const limited = numbers.substring(0, 10);
+            if (limited.length <= 3) return limited;
+            if (limited.length <= 6) return limited.substring(0, 3) + ' ' + limited.substring(3);
+            return limited.substring(0, 3) + ' ' + limited.substring(3, 6) + ' ' + limited.substring(6);
+        }
+    </script>
     
     <!-- Webcam Modal -->
     <div id="webcamModal" class="webcam-modal">

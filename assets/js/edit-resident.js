@@ -196,9 +196,8 @@ function populateEmergencyContacts(contacts) {
                     </div>
                     
                     <div class="form-group">
-                        <label>Contact Number <span class="required">*</span></label>
-                        <input type="tel" name="emergencyContactNumber_${emergencyContactCount}" class="form-control" required placeholder="+63 XXX XXX XXXX" value="${contact.contact_number || ''}">
-                        <small class="form-hint">Contact number is required</small>
+                        <label>Contact Number</label>
+                        <input type="tel" name="emergencyContactNumber_${emergencyContactCount}" class="form-control" placeholder="+63 XXX XXX XXXX" value="${contact.contact_number || ''}">
                     </div>
                     
                     <div class="form-group">
@@ -391,16 +390,16 @@ function formatPhoneNumber(value) {
     // Remove all non-digit characters
     const numbers = value.replace(/\D/g, '');
     
-    // Limit to 11 digits (Philippine mobile number format)
-    const limited = numbers.substring(0, 11);
+    // Limit to 10 digits (Philippine mobile number format without 0 prefix if +63 is used)
+    const limited = numbers.substring(0, 10);
     
-    // Format as 0912-345-6789
-    if (limited.length <= 4) {
+    // Format as 912 345 6789
+    if (limited.length <= 3) {
         return limited;
-    } else if (limited.length <= 7) {
-        return limited.substring(0, 4) + '-' + limited.substring(4);
+    } else if (limited.length <= 6) {
+        return limited.substring(0, 3) + ' ' + limited.substring(3);
     } else {
-        return limited.substring(0, 4) + '-' + limited.substring(4, 7) + '-' + limited.substring(7);
+        return limited.substring(0, 3) + ' ' + limited.substring(3, 6) + ' ' + limited.substring(6);
     }
 }
 
@@ -420,8 +419,8 @@ function applyPhoneNumberFormatting(input) {
         const newLength = formatted.length;
         const diff = newLength - oldLength;
         
-        // If a hyphen was added right before cursor, move cursor forward
-        if (diff > 0 && formatted[cursorPosition] === '-') {
+        // If a space was added right before cursor, move cursor forward
+        if (diff > 0 && formatted[cursorPosition] === ' ') {
             this.setSelectionRange(cursorPosition + diff, cursorPosition + diff);
         } else {
             this.setSelectionRange(cursorPosition + diff, cursorPosition + diff);
@@ -484,21 +483,20 @@ function addEmergencyContact() {
             </div>
             <div class="form-grid" style="margin-top: 15px; margin-bottom: 15px">
                 <div class="form-group">
-                    <label>Contact Person Name <span class="required">*</span></label>
-                    <input type="text" name="emergencyContactName_${emergencyContactCount}" class="form-control" required placeholder="Enter Contact Person Name">
-                    <small class="form-hint">Contact person name is required</small>
+                    <label>Contact Person Name</label>
+                    <input type="text" name="emergencyContactName_${emergencyContactCount}" class="form-control"  placeholder="Enter Contact Person Name">
+                    
                 </div>
                 
                 <div class="form-group">
-                    <label>Relationship <span class="required">*</span></label>
-                    <input type="text" name="emergencyRelationship_${emergencyContactCount}" class="form-control" required placeholder="Enter Relationship">
-                    <small class="form-hint">Relationship is required</small>
+                    <label>Relationship</label>
+                    <input type="text" name="emergencyRelationship_${emergencyContactCount}" class="form-control"  placeholder="Enter Relationship">
+
                 </div>
                 
                 <div class="form-group">
-                    <label>Contact Number <span class="required">*</span></label>
-                    <input type="tel" name="emergencyContactNumber_${emergencyContactCount}" class="form-control" required placeholder="+63 XXX XXX XXXX">
-                    <small class="form-hint">Contact number is required</small>
+                    <label>Contact Number</label>
+                    <input type="tel" name="emergencyContactNumber_${emergencyContactCount}" class="form-control" placeholder="+63 XXX XXX XXXX">
                 </div>
                 
                 <div class="form-group">

@@ -27,6 +27,41 @@ $pageTitle = 'Create Resident';
     <!-- Custom CSS -->
     <link rel="stylesheet" href="../assets/css/style.css">
     <link rel="stylesheet" href="../assets/css/create-resident.css">
+    <style>
+/* Phone Input Group */
+.phone-input-group {
+    display: flex;
+    align-items: center;
+    gap: 0;
+}
+
+.phone-prefix {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 12px;
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-right: none;
+    border-radius: 8px 0 0 8px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-primary);
+    white-space: nowrap;
+}
+
+.flag-icon {
+    width: 20px;
+    height: 14px;
+    border-radius: 2px;
+    object-fit: cover;
+}
+
+.phone-input {
+    border-radius: 0 8px 8px 0 !important;
+    flex: 1;
+}
+    </style>
 </head>
 <body>
     <!-- Sidebar -->
@@ -202,7 +237,13 @@ $pageTitle = 'Create Resident';
                             <div class="form-grid">
                                 <div class="form-group">
                                     <label for="mobileNumber">Mobile Number <span class="required">*</span></label>
-                                    <input type="tel" id="mobileNumber" name="mobileNumber" class="form-control" placeholder="+63 XXX XXX XXXX" required>
+                                    <div class="phone-input-group">
+                                        <span class="phone-prefix">
+                                            <img src="../assets/image/contactph.png" alt="PH" class="flag-icon">
+                                            +63
+                                        </span>
+                                        <input type="tel" id="mobileNumber" name="mobileNumber" class="form-control phone-input" placeholder="XXX XXX XXXX" pattern="[0-9 ]+" maxlength="12" oninput="let v=this.value.replace(/\D/g,'').substring(0,10);if(v.length>6)this.value=v.slice(0,3)+' '+v.slice(3,6)+' '+v.slice(6);else if(v.length>3)this.value=v.slice(0,3)+' '+v.slice(3);else this.value=v;" required>
+                                    </div>
                                 </div>
                                 
                                 <div class="form-group">
@@ -297,8 +338,13 @@ $pageTitle = 'Create Resident';
                                         
                                         <div class="form-group">
                                             <label>Contact Number </label>
-                                            <input type="tel" name="emergencyContactNumber_1" class="form-control"  placeholder="+63 XXX XXX XXXX">
-                                           
+                                            <div class="phone-input-group">
+                                                <span class="phone-prefix">
+                                                    <img src="../assets/image/contactph.png" alt="PH" class="flag-icon">
+                                                    +63
+                                                </span>
+                                                <input type="tel" name="emergencyContactNumber_1" class="form-control phone-input" placeholder="XXX XXX XXXX" pattern="[0-9 ]+" maxlength="12" oninput="let v=this.value.replace(/\D/g,'').substring(0,10);if(v.length>6)this.value=v.slice(0,3)+' '+v.slice(3,6)+' '+v.slice(6);else if(v.length>3)this.value=v.slice(0,3)+' '+v.slice(3);else this.value=v;">
+                                            </div>
                                         </div>
                                         
                                         <div class="form-group">
@@ -543,6 +589,16 @@ $pageTitle = 'Create Resident';
     <!-- Custom JavaScript -->
     <script src="../assets/js/script.js"></script>
     <script src="../assets/js/create-resident.js"></script>
+    <script>
+        // Override phone number formatting to use spaces instead of hyphens
+        function formatPhoneNumber(value) {
+            const numbers = value.replace(/\D/g, '');
+            const limited = numbers.substring(0, 10);
+            if (limited.length <= 3) return limited;
+            if (limited.length <= 6) return limited.substring(0, 3) + ' ' + limited.substring(3);
+            return limited.substring(0, 3) + ' ' + limited.substring(3, 6) + ' ' + limited.substring(6);
+        }
+    </script>
     
     <!-- Webcam Modal -->
     <div id="webcamModal" class="webcam-modal">

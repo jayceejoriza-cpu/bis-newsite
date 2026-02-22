@@ -1,26 +1,15 @@
-# Path Fixing TODO
+# Sidebar Fix - Empty Space Issue
 
-## Group 1 — certifications/ folder (PHP includes + HTML asset paths)
-- [x] certifications/certificate-indigency.php
-- [x] certifications/certificate-lowincome.php
-- [x] certifications/certificate-RBC.php
-- [x] certifications/certificate-residency.php
-- [x] certifications/certificate-soloparent.php
+## Problem
+When clicking "Resident Records", a large empty space appears between the Settings nav item and the sidebar footer. This does NOT happen when "Barangay Info" is active (Settings submenu is open).
 
-## Group 2 — JS fetch paths (add model/ prefix)
-- [x] assets/js/requests.js
-- [x] assets/js/requests-backup.js
-- [x] assets/js/edit-blotter.js
-- [x] assets/js/reports.js
+## Root Cause
+`.sidebar-nav` has `flex: 1` which forces it to fill ALL remaining space in the sidebar regardless of content length. When the Settings submenu is closed, the nav content is shorter but the nav area still expands — creating a large empty gap.
 
-## Group 3 — JS navigation paths (add ../ prefix)
-- [x] assets/js/edit-resident.js
-- [x] assets/js/create-resident.js
-- [x] assets/js/create-certificate.js
+## Steps
 
-## Group 4 — PHP upload paths (add assets/ to directory)
-- [x] model/save_resident.php
-- [x] model/upload_avatar.php
-- [x] model/save_barangay_info.php
-
-## ALL TASKS COMPLETE ✓
+- [x] Analyze sidebar.php, style.css, and script.js
+- [x] Identify root cause
+- [x] Create plan and get user approval
+- [x] Fix `.sidebar-nav` in assets/css/style.css — remove `flex: 1` and `overflow-y: auto`
+- [x] Verify fix in browser

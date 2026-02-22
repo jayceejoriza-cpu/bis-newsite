@@ -137,7 +137,7 @@ $pageTitle = 'Households';
                                 <label for="householdContact">Household Contact Number</label>
                                 <div class="phone-input-group">
                                     <span class="phone-prefix">
-                                        <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 900 600'%3E%3Crect fill='%230038a8' width='900' height='600'/%3E%3Crect fill='%23ce1126' y='300' width='900' height='300'/%3E%3Cpath fill='%23fcd116' d='M0,0 L450,300 L0,600 Z'/%3E%3Cpath fill='%23fff' d='M150,225 L180,240 L150,255 M150,285 L180,300 L150,315 M150,345 L180,360 L150,375' stroke='%23000' stroke-width='2'/%3E%3Ccircle fill='%23fcd116' cx='150' cy='300' r='45'/%3E%3C/svg%3E" alt="PH" class="flag-icon">
+                                        <img src="assets\image\contactph.png" alt="PH" class="flag-icon">
                                         +63
                                     </span>
                                     <input type="tel" id="householdContact" name="householdContact" class="form-control phone-input" placeholder="XXX XXX XXXX">
@@ -334,7 +334,7 @@ $pageTitle = 'Households';
                         <label for="memberMobile">Mobile Number</label>
                         <div class="phone-input-group">
                             <span class="phone-prefix">
-                                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 900 600'%3E%3Crect fill='%230038a8' width='900' height='600'/%3E%3Crect fill='%23ce1126' y='300' width='900' height='300'/%3E%3Cpath fill='%23fcd116' d='M0,0 L450,300 L0,600 Z'/%3E%3Cpath fill='%23fff' d='M150,225 L180,240 L150,255 M150,285 L180,300 L150,315 M150,345 L180,360 L150,375' stroke='%23000' stroke-width='2'/%3E%3Ccircle fill='%23fcd116' cx='150' cy='300' r='45'/%3E%3C/svg%3E" alt="PH" class="flag-icon">
+                               <img src="assets\image\contactph.png" alt="PH" class="flag-icon">
                                 +63
                             </span>
                             <input type="tel" id="memberMobile" name="memberMobile" class="form-control phone-input" placeholder="XXX XXX XXXX">
