@@ -5,6 +5,12 @@ require_once 'config.php';
 // Check authentication
 require_once 'auth_check.php';
 
+// Load permissions
+require_once 'permissions.php';
+
+// Enforce: redirect if user lacks view permission
+requirePermission('perm_resident_view');
+
 // Page title
 $pageTitle = 'Residents';
 
@@ -164,10 +170,12 @@ try {
                     <h1 class="page-title"><?php echo $pageTitle; ?></h1>
                     <p class="page-subtitle">View and manage resident records</p>
                 </div>
+                <?php if (hasPermission('perm_resident_create')): ?>
                 <button class="btn btn-primary" id="createResidentBtn">
                     <i class="fas fa-plus"></i>
                     Create Resident
                 </button>
+                <?php endif; ?>
             </div>
             
             <!-- Filter Tabs -->
@@ -445,6 +453,16 @@ try {
     <!-- Bootstrap JS Bundle (includes Popper) -->
     <script src="assets/bootstrap/js/bootstrap.bundle.min.js"></script>
     
+    <!-- Permission flags for JS -->
+    <script>
+    window.BIS_PERMS = {
+        resident_view:   <?php echo hasPermission('perm_resident_view')   ? 'true' : 'false'; ?>,
+        resident_create: <?php echo hasPermission('perm_resident_create') ? 'true' : 'false'; ?>,
+        resident_edit:   <?php echo hasPermission('perm_resident_edit')   ? 'true' : 'false'; ?>,
+        resident_delete: <?php echo hasPermission('perm_resident_delete') ? 'true' : 'false'; ?>
+    };
+    </script>
+
     <!-- Custom JavaScript -->
     <script src="assets/js/script.js"></script>
     <script src="assets/js/table.js"></script>
