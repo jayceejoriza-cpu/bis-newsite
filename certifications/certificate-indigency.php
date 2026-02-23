@@ -530,7 +530,7 @@ $residentFullName = ucwords(trim(
 
         <!-- Print Action Bar -->
         <div class="print-action-bar">
-            <button class="btn btn-info btn-sm" onclick="window.print()">
+            <button class="btn btn-info btn-sm" onclick="saveAndPrint()">
                 <i class="fa fa-print"></i>
                 Print Certificate
             </button>
@@ -737,6 +737,31 @@ $residentFullName = ucwords(trim(
                 }
             });
         });
+
+        function saveAndPrint() {
+            const formData = new FormData();
+            formData.append('resident_id', '<?php echo $resident_id; ?>');
+            formData.append('certificate_type', 'Certificate of Indigency');
+            formData.append('purpose', '<?php echo !empty($assistance) ? htmlspecialchars($assistance) . " Assistance" : "Indigency Assistance"; ?>');
+
+            fetch('../model/save_print_log.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    window.print();
+                } else {
+                    console.error('Failed to save print log:', data.message);
+                    window.print(); // Print anyway
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                window.print();
+            });
+        }
             
     </script>
 </body>

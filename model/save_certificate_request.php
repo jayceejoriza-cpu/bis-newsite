@@ -40,7 +40,6 @@ try {
     // Get form data
     $resident_id = isset($_POST['resident_id']) ? intval($_POST['resident_id']) : 0;
     $certificate_id = isset($_POST['certificate_id']) ? intval($_POST['certificate_id']) : 0;
-    $certificate_fee = isset($_POST['certificate_fee']) ? floatval($_POST['certificate_fee']) : 0.00;
     $purpose = isset($_POST['purpose']) ? trim($_POST['purpose']) : '';
     $field_values = isset($_POST['field_values']) ? $_POST['field_values'] : '{}';
     
@@ -71,10 +70,8 @@ try {
             reference_no,
             resident_id,
             certificate_id,
-            certificate_fee,
             purpose,
             field_values,
-            payment_status,
             status,
             date_requested,
             created_at
@@ -82,10 +79,8 @@ try {
             :reference_no,
             :resident_id,
             :certificate_id,
-            :certificate_fee,
             :purpose,
             :field_values,
-            'Unpaid',
             'Pending',
             NOW(),
             NOW()
@@ -96,7 +91,6 @@ try {
         ':reference_no' => $reference_no,
         ':resident_id' => $resident_id,
         ':certificate_id' => $certificate_id,
-        ':certificate_fee' => $certificate_fee,
         ':purpose' => $purpose,
         ':field_values' => $field_values
     ]);

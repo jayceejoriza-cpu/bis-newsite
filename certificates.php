@@ -27,6 +27,24 @@ $certificateTypes = [
         'icon'        => 'fa-home',
         'modal'       => 'residencyModal',
     ],
+    [
+        'title'       => 'Certificate of Low Income',
+        'description' => 'For residents who need proof of low income',
+        'icon'        => 'fa-money-bill-wave',
+        'modal'       => 'lowIncomeModal',
+    ],
+    [
+        'title'       => 'Certificate of Solo Parent',
+        'description' => 'For residents who need proof of solo parent status',
+        'icon'        => 'fa-user-friends',
+        'modal'       => 'soloParentModal',
+    ],
+    [
+        'title'       => 'Registration of Birth Certificate',
+        'description' => 'For late registration of birth',
+        'icon'        => 'fa-baby',
+        'modal'       => 'rbcModal',
+    ],
 ];
 ?>
 <!DOCTYPE html>
@@ -275,6 +293,132 @@ $certificateTypes = [
                         <i class="fas fa-print"></i>
                         Print Certificate
                     </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================
+         Certificate of Low Income Modal
+         ============================================ -->
+    <div class="modal fade" id="lowIncomeModal" tabindex="-1" aria-labelledby="lowIncomeModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content cert-request-modal">
+                <div class="modal-header cert-modal-header">
+                    <div class="cert-modal-title-wrap">
+                        <i class="fas fa-money-bill-wave cert-modal-icon"></i>
+                        <h5 class="modal-title" id="lowIncomeModalLabel">Create Low Income Certificate Request</h5>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body cert-modal-body">
+                    <div class="cert-field-group">
+                        <label class="cert-field-label">RESIDENT FULL NAME <span class="required-star">*</span></label>
+                        <div class="resident-search-wrap">
+                            <div class="resident-input-group">
+                                <input type="text" id="lowIncomeResidentName" class="form-control cert-input" placeholder="Select resident" autocomplete="off">
+                                <input type="hidden" id="lowIncomeResidentId">
+                                <button type="button" class="btn btn-primary btn-resident" id="lowIncomeResidentBtn"><i class="fas fa-user"></i> RESIDENT</button>
+                            </div>
+                            <div class="resident-dropdown" id="lowIncomeResidentDropdown" style="display:none;"></div>
+                        </div>
+                    </div>
+                    <div class="cert-field-group">
+                        <label class="cert-field-label">DATE <span class="required-star">*</span></label>
+                        <input type="date" id="lowIncomeDate" class="form-control cert-input" value="<?php echo date('Y-m-d'); ?>" required>
+                    </div>
+                    <div class="cert-field-group">
+                        <label class="cert-field-label">PURPOSE</label>
+                        <input type="text" id="lowIncomePurpose" class="form-control cert-input" value="Low Income Verification" placeholder="e.g., Medical Assistance">
+                    </div>
+                </div>
+                <div class="modal-footer cert-modal-footer">
+                    <button type="button" class="btn btn-cancel" data-bs-dismiss="modal"><i class="fas fa-times"></i> Cancel</button>
+                    <button type="button" class="btn btn-print-cert" id="lowIncomePrintBtn"><i class="fas fa-print"></i> Print Certificate</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================
+         Certificate of Solo Parent Modal
+         ============================================ -->
+    <div class="modal fade" id="soloParentModal" tabindex="-1" aria-labelledby="soloParentModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content cert-request-modal">
+                <div class="modal-header cert-modal-header">
+                    <div class="cert-modal-title-wrap">
+                        <i class="fas fa-user-friends cert-modal-icon"></i>
+                        <h5 class="modal-title" id="soloParentModalLabel">Create Solo Parent Certificate Request</h5>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body cert-modal-body">
+                    <div class="cert-field-group">
+                        <label class="cert-field-label">RESIDENT FULL NAME <span class="required-star">*</span></label>
+                        <div class="resident-search-wrap">
+                            <div class="resident-input-group">
+                                <input type="text" id="soloParentResidentName" class="form-control cert-input" placeholder="Select resident" autocomplete="off">
+                                <input type="hidden" id="soloParentResidentId">
+                                <button type="button" class="btn btn-primary btn-resident" id="soloParentResidentBtn"><i class="fas fa-user"></i> RESIDENT</button>
+                            </div>
+                            <div class="resident-dropdown" id="soloParentResidentDropdown" style="display:none;"></div>
+                        </div>
+                    </div>
+                    <div class="cert-field-group">
+                        <label class="cert-field-label">DATE <span class="required-star">*</span></label>
+                        <input type="date" id="soloParentDate" class="form-control cert-input" value="<?php echo date('Y-m-d'); ?>" required>
+                    </div>
+                    <div class="cert-field-group">
+                        <label class="cert-field-label">PURPOSE</label>
+                        <input type="text" id="soloParentPurpose" class="form-control cert-input" value="Solo Parent Verification" placeholder="e.g., Financial Assistance">
+                    </div>
+                </div>
+                <div class="modal-footer cert-modal-footer">
+                    <button type="button" class="btn btn-cancel" data-bs-dismiss="modal"><i class="fas fa-times"></i> Cancel</button>
+                    <button type="button" class="btn btn-print-cert" id="soloParentPrintBtn"><i class="fas fa-print"></i> Print Certificate</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================
+         Registration of Birth Certificate Modal
+         ============================================ -->
+    <div class="modal fade" id="rbcModal" tabindex="-1" aria-labelledby="rbcModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content cert-request-modal">
+                <div class="modal-header cert-modal-header">
+                    <div class="cert-modal-title-wrap">
+                        <i class="fas fa-baby cert-modal-icon"></i>
+                        <h5 class="modal-title" id="rbcModalLabel">Registration of Birth Certificate Request</h5>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body cert-modal-body">
+                    <div class="cert-field-group">
+                        <label class="cert-field-label">RESIDENT FULL NAME <span class="required-star">*</span></label>
+                        <div class="resident-search-wrap">
+                            <div class="resident-input-group">
+                                <input type="text" id="rbcResidentName" class="form-control cert-input" placeholder="Select resident" autocomplete="off">
+                                <input type="hidden" id="rbcResidentId">
+                                <button type="button" class="btn btn-primary btn-resident" id="rbcResidentBtn"><i class="fas fa-user"></i> RESIDENT</button>
+                            </div>
+                            <div class="resident-dropdown" id="rbcResidentDropdown" style="display:none;"></div>
+                        </div>
+                    </div>
+                    <div class="cert-field-group">
+                        <label class="cert-field-label">DATE <span class="required-star">*</span></label>
+                        <input type="date" id="rbcDate" class="form-control cert-input" value="<?php echo date('Y-m-d'); ?>" required>
+                    </div>
+                    <div class="cert-field-group">
+                        <label class="cert-field-label">PURPOSE</label>
+                        <input type="text" id="rbcPurpose" class="form-control cert-input" value="Birth Certificate Registration" placeholder="e.g., Late Registration">
+                    </div>
+                </div>
+                <div class="modal-footer cert-modal-footer">
+                    <button type="button" class="btn btn-cancel" data-bs-dismiss="modal"><i class="fas fa-times"></i> Cancel</button>
+                    <button type="button" class="btn btn-print-cert" id="rbcPrintBtn"><i class="fas fa-print"></i> Print Certificate</button>
                 </div>
             </div>
         </div>

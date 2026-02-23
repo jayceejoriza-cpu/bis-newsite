@@ -38,7 +38,6 @@ try {
             id,
             title,
             description,
-            fee,
             fields
         FROM certificates
         WHERE status = 'Published'

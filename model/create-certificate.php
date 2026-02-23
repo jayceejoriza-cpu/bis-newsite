@@ -37,7 +37,6 @@ if (isset($_GET['id']) && !empty($_GET['id'])) {
                 id,
                 title,
                 description,
-                fee,
                 status,
                 pdf_path,
                 fields,
@@ -145,12 +144,6 @@ if (isset($_GET['id']) && !empty($_GET['id'])) {
                         <div class="form-group">
                             <label for="certificateName">Name</label>
                             <input type="text" id="certificateName" name="certificateName" class="form-control" placeholder="Certificate Name" required>
-                        </div>
-                        
-                        <!-- Certificate Fee -->
-                        <div class="form-group">
-                            <label for="certificateFee">Certificate Fee</label>
-                            <input type="number" id="certificateFee" name="certificateFee" class="form-control" placeholder="0.00" step="0.01" min="0" value="0.00">
                         </div>
                         
                         <!-- Date Issued -->

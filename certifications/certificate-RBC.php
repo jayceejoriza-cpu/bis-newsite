@@ -438,7 +438,7 @@ $birthdateFmt = !empty($resident['birthdate'])
 
         <!-- Print Action Bar -->
         <div class="print-action-bar">
-            <button class="btn btn-info btn-sm" onclick="window.print()">
+            <button class="btn btn-info btn-sm" onclick="saveAndPrint()">
                 <i class="fa fa-print"></i>
                 Print Certificate
             </button>
@@ -576,6 +576,31 @@ $birthdateFmt = !empty($resident['birthdate'])
                 }
             });
         });
+
+        function saveAndPrint() {
+            const formData = new FormData();
+            formData.append('resident_id', '<?php echo $resident_id; ?>');
+            formData.append('certificate_type', 'Registration of Birth Certificate');
+            formData.append('purpose', 'Birth Certificate Registration');
+
+            fetch('../model/save_print_log.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    window.print();
+                } else {
+                    console.error('Failed to save print log:', data.message);
+                    window.print();
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                window.print();
+            });
+        }
             
     </script>
 </body>

@@ -40,7 +40,6 @@ try {
     // Get form data
     $certificateId = isset($_POST['certificateId']) ? intval($_POST['certificateId']) : null;
     $certificateName = isset($_POST['certificateName']) ? trim($_POST['certificateName']) : '';
-    $certificateFee = isset($_POST['certificateFee']) ? floatval($_POST['certificateFee']) : 0.00;
     $dateIssued = isset($_POST['dateIssued']) ? $_POST['dateIssued'] : null;
     $dateExpired = isset($_POST['dateExpired']) ? $_POST['dateExpired'] : null;
     $published = isset($_POST['published']) && $_POST['published'] == '1' ? 'Published' : 'Unpublished';
@@ -125,7 +124,6 @@ try {
             UPDATE certificates SET
                 title = :title,
                 description = :description,
-                fee = :fee,
                 status = :status,
                 template_content = :template_content,
                 fields = :fields,
@@ -137,7 +135,6 @@ try {
             ':id' => $certificateId,
             ':title' => $certificateName,
             ':description' => $description,
-            ':fee' => $certificateFee,
             ':status' => $published,
             ':template_content' => $pdfPath,
             ':fields' => $fields
@@ -160,7 +157,6 @@ try {
             INSERT INTO certificates (
                 title,
                 description,
-                fee,
                 status,
                 template_content,
                 fields,
@@ -169,7 +165,6 @@ try {
             ) VALUES (
                 :title,
                 :description,
-                :fee,
                 :status,
                 :template_content,
                 :fields,
@@ -181,7 +176,6 @@ try {
         $stmt->execute([
             ':title' => $certificateName,
             ':description' => $description,
-            ':fee' => $certificateFee,
             ':status' => $published,
             ':template_content' => $pdfPath,
             ':fields' => $fields
