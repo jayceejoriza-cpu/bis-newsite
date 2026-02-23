@@ -34,6 +34,27 @@
     --color-transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
 }
 
+/* ===================================
+   No-Transition Utility (page load)
+   Prevents light→dark flash animation
+   =================================== */
+.no-transition *,
+.no-transition *::before,
+.no-transition *::after {
+    transition: none !important;
+    animation-duration: 0.001ms !important;
+}
+
+/* ===================================
+   HTML-level Dark Mode
+   Applied immediately by dark-mode-init.js
+   before body renders, preventing FOUC
+   =================================== */
+html.dark-mode {
+    background-color: #111827;
+    color-scheme: dark;
+}
+
 /* Dark Mode Colors */
 body.dark-mode {
     --text-primary: #f9fafb;

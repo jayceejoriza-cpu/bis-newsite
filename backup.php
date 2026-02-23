@@ -462,6 +462,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['backup'])) {
             background-color: #4b5563;
         }
     </style>
+    <!-- Dark Mode Init: must be in <head> to prevent flash of light mode -->
+    <script src="assets/js/dark-mode-init.js"></script>
 </head>
 <body>
     <!-- Sidebar -->

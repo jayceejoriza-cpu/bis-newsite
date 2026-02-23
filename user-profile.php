@@ -1023,6 +1023,8 @@ $stmt->close();
             }
         }
     </style>
+    <!-- Dark Mode Init: must be in <head> to prevent flash of light mode -->
+    <script src="assets/js/dark-mode-init.js"></script>
 </head>
 <body>
     <?php include 'components/sidebar.php'; ?>
