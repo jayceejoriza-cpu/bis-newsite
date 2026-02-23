@@ -1,9 +1,7 @@
-# Blotter Archive on Delete - TODO
+# Restore SQL Feature - TODO
 
 ## Steps
 
-- [x] Gather information and plan
-- [x] Create `model/delete_blotter_record.php` - Archives blotter then deletes from active table
-- [x] Create `model/archive_blotter_record.php` - Archives blotter then deletes from active table
-- [x] Fix `model/restore_archive.php` - Update `restoreBlotter()` to use new `blotter_records` schema
-- [x] Update `archive.php` - Show richer blotter data in `viewDetails()` JS function
+- [x] Gather understanding of existing files (backup.php, sidebar.php, config.php)
+- [x] Create `restore.php` - SQL restore page with password confirmation modal
+- [x] Edit `components/sidebar.php` - Add "Restore" to Settings submenu and $settings_pages array
