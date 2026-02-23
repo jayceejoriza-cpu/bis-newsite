@@ -12,6 +12,7 @@ $counts = [
     'resident' => 0, 
     'official' => 0, 
     'blotter' => 0,
+    'household' => 0,
     'total' => 0
 ];
 
@@ -55,7 +56,7 @@ if (isset($conn)) {
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="stylesheet" href="assets/css/style.css?v=<?php echo filemtime('assets/css/style.css'); ?>">
     
 </head>
 <body>
@@ -117,6 +118,16 @@ if (isset($conn)) {
                 
                 <div class="stat-card">
                     <div class="stat-content">
+                        <h3 class="stat-value"><?php echo number_format($counts['household']); ?></h3>
+                        <p class="stat-label">Archived Households</p>
+                    </div>
+                    <div class="stat-icon teal">
+                        <i class="fas fa-home"></i>
+                    </div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-content">
                         <h3 class="stat-value"><?php echo number_format($counts['total']); ?></h3>
                         <p class="stat-label">Total Archives</p>
                     </div>
@@ -136,6 +147,7 @@ if (isset($conn)) {
                             <option value="resident">Residents</option>
                             <option value="official">Officials</option>
                             <option value="blotter">Blotters</option>
+                            <option value="household">Households</option>
                             <option value="permit">Business Permits</option>
                             <option value="user">Users</option>
                         </select>
@@ -157,14 +169,17 @@ if (isset($conn)) {
                         <?php if(!empty($archives)): ?>
                             <?php foreach($archives as $archive): 
                                 $badgeClass = 'badge-default';
-                                if($archive['archive_type'] == 'resident') $badgeClass = 'badge-resident';
-                                elseif($archive['archive_type'] == 'official') $badgeClass = 'badge-official';
-                                elseif($archive['archive_type'] == 'blotter') $badgeClass = 'badge-blotter';
-                                elseif($archive['archive_type'] == 'permit') $badgeClass = 'badge-permit';
+                                $badgeIcon = 'fa-archive';
+                                if($archive['archive_type'] == 'resident') { $badgeClass = 'badge-resident'; $badgeIcon = 'fa-user'; }
+                                elseif($archive['archive_type'] == 'official') { $badgeClass = 'badge-official'; $badgeIcon = 'fa-user-tie'; }
+                                elseif($archive['archive_type'] == 'blotter') { $badgeClass = 'badge-blotter'; $badgeIcon = 'fa-file-alt'; }
+                                elseif($archive['archive_type'] == 'household') { $badgeClass = 'badge-household'; $badgeIcon = 'fa-home'; }
+                                elseif($archive['archive_type'] == 'permit') { $badgeClass = 'badge-permit'; $badgeIcon = 'fa-file-contract'; }
                             ?>
                             <tr data-type="<?php echo htmlspecialchars($archive['archive_type']); ?>">
                                 <td>
                                     <span class="archive-type-badge <?php echo $badgeClass; ?>">
+                                        <i class="fas <?php echo $badgeIcon; ?>"></i>
                                         <?php echo ucfirst($archive['archive_type']); ?>
                                     </span>
                                 </td>
@@ -287,11 +302,49 @@ if (isset($conn)) {
                 html += createRow('Email', data.email || 'N/A');
                 html += createRow('Resident ID', data.resident_id || 'N/A');
             } else if (type === 'blotter') {
-                html += createRow('Complainant', data.complainant || 'N/A');
-                html += createRow('Respondent', data.respondent || 'N/A');
-                html += createRow('Complaint', data.complaint || 'N/A');
+                html += createRow('Record Number', data.record_number || 'N/A');
+                html += createRow('Incident Type', data.incident_type || data.complaint || 'N/A');
                 html += createRow('Status', data.status || 'N/A');
-                html += createRow('Date', data.date || 'N/A');
+                html += createRow('Date Reported', data.date_reported || data.date || 'N/A');
+                html += createRow('Incident Date', data.incident_date || 'N/A');
+                html += createRow('Incident Location', data.incident_location || 'N/A');
+
+                // Complainants list
+                if (data.complainants && data.complainants.length > 0) {
+                    var cNames = data.complainants.map(function(c){ return c.name; }).join(', ');
+                    html += createRow('Complainant(s)', cNames);
+                } else {
+                    html += createRow('Complainant', data.complainant || 'N/A');
+                }
+
+                // Victims list
+                if (data.victims && data.victims.length > 0) {
+                    var vNames = data.victims.map(function(v){ return v.name; }).join(', ');
+                    html += createRow('Victim(s)', vNames);
+                }
+
+                // Respondents list
+                if (data.respondents && data.respondents.length > 0) {
+                    var rNames = data.respondents.map(function(r){ return r.name; }).join(', ');
+                    html += createRow('Respondent(s)', rNames);
+                } else {
+                    html += createRow('Respondent', data.respondent || 'N/A');
+                }
+
+                // Witnesses list
+                if (data.witnesses && data.witnesses.length > 0) {
+                    var wNames = data.witnesses.map(function(w){ return w.name; }).join(', ');
+                    html += createRow('Witness(es)', wNames);
+                }
+
+                html += createRow('Incident Details', data.incident_description || 'N/A');
+                html += createRow('Resolution', data.resolution || 'N/A');
+            } else if (type === 'household') {
+                html += createRow('Household No.', data.household_number || 'N/A');
+                html += createRow('Head', data.head_name || 'N/A');
+                html += createRow('Address', data.address || 'N/A');
+                html += createRow('Contact', data.household_contact || 'N/A');
+                html += createRow('Members Count', (data.members ? data.members.length : 0));
             } else if (type === 'permit') {
                 html += createRow('Business Name', data.business_name || 'N/A');
                 html += createRow('Owner', data.owner_name || 'N/A');

@@ -137,7 +137,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     <div class="logo-section">
         <img src="<?php echo htmlspecialchars($barangay_logo); ?>" alt="Logo">
         <div>
-            <h3>BARANGGAY WAWANDUE, TARIMA NI MIMON</h3>
+            <h3>BARANGGAY WAWANDUE</h3>
             <p class="text-muted">Barangay Information System</p>
         </div>
     </div>

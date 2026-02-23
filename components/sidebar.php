@@ -1,7 +1,7 @@
 <?php
 // Get current page for active state
 $current_page = basename($_SERVER['PHP_SELF']);
-$settings_pages = ['activity-logs.php', 'archive.php', 'backup.php', 'barangay-info.php'];
+$settings_pages = ['activity-logs.php', 'archive.php', 'backup.php', 'barangay-info.php', 'restore.php'];
 $is_settings_active = in_array($current_page, $settings_pages);
 
 $user_mgmt_pages = ['official-user.php', 'roles.php'];
@@ -158,6 +158,12 @@ $show_user_mgmt = $can_view_users || $can_view_roles;
                         <a href="backup.php" class="submenu-link">
                             <i class="fas fa-database"></i>
                             <span>Backup</span>
+                        </a>
+                    </li>
+                    <li class="submenu-item <?php echo $current_page === 'restore.php' ? 'active' : ''; ?>">
+                        <a href="restore.php" class="submenu-link">
+                            <i class="fas fa-upload"></i>
+                            <span>Restore</span>
                         </a>
                     </li>
                 </ul>

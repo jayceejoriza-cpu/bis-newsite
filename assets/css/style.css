@@ -666,6 +666,10 @@ body.modal-open .main-content.expanded {
     background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
 }
 
+.stat-icon.teal {
+    background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%);
+}
+
 /* Chart Containers */
 .chart-container {
     background-color: var(--bg-secondary);
@@ -1334,6 +1338,9 @@ body.dark-mode .btn-danger:hover {
 
 /* Badge Styles - Dark Mode */
 .archive-type-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
     font-size: 0.75rem;
     padding: 0.25rem 0.5rem;
     border-radius: 4px;
@@ -1362,6 +1369,11 @@ body.dark-mode .btn-danger:hover {
     color: #075985;
 }
 
+.badge-household {
+    background-color: #ccfbf1;
+    color: #0f766e;
+}
+
 .badge-default {
     background-color: #f3f4f6;
     color: #374151;
@@ -1386,6 +1398,11 @@ body.dark-mode .badge-blotter {
 body.dark-mode .badge-permit {
     background-color: #0c4a6e;
     color: #7dd3fc;
+}
+
+body.dark-mode .badge-household {
+    background-color: #134e4a;
+    color: #5eead4;
 }
 
 body.dark-mode .badge-default {
