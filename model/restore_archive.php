@@ -62,6 +62,11 @@ try {
             $message = "Blotter record restored successfully";
             break;
             
+        case 'household':
+            restoreHousehold($conn, $recordData);
+            $message = "Household record restored successfully";
+            break;
+            
         case 'permit':
             restorePermit($conn, $recordData);
             $message = "Business permit restored successfully";
@@ -262,41 +267,191 @@ function restoreOfficial($conn, $data) {
 }
 
 function restoreBlotter($conn, $data) {
-    // Check if blotter table exists
-    $checkTable = $conn->query("SHOW TABLES LIKE 'tblblotter'");
+    // Check if blotter_records table exists
+    $checkTable = $conn->query("SHOW TABLES LIKE 'blotter_records'");
     if ($checkTable->num_rows == 0) {
-        throw new Exception("Blotter table does not exist");
+        throw new Exception("Blotter records table does not exist");
     }
-    
-    $stmt = $conn->prepare("INSERT INTO tblblotter (complainant, respondent, victim, type, location, date, time, details, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
-    
-    // Assign variables for bind_param
-    $complainant = $data['complainant'];
-    $respondent = $data['respondent'] ?? null;
-    $victim = $data['victim'] ?? null;
-    $type = $data['type'] ?? null;
-    $location = $data['location'] ?? null;
-    $date = $data['date'];
-    $time = $data['time'] ?? null;
-    $details = $data['details'] ?? null;
-    $status = $data['status'] ?? 'Pending';
 
-    $stmt->bind_param("sssssssss",
-        $complainant,
-        $respondent,
-        $victim,
-        $type,
-        $location,
-        $date,
-        $time,
-        $details,
-        $status
+    // Generate a new unique record number to avoid conflicts
+    $year = date('Y');
+    $maxResult = $conn->query("SELECT MAX(CAST(SUBSTRING(record_number, 9) AS UNSIGNED)) as max_num FROM blotter_records WHERE record_number LIKE 'BR-{$year}-%'");
+    $maxRow = $maxResult ? $maxResult->fetch_assoc() : null;
+    $nextNum = (($maxRow['max_num'] ?? 0)) + 1;
+    $recordNumber = sprintf("BR-%s-%06d", $year, $nextNum);
+
+    // Use original record number if it doesn't conflict, otherwise use new one
+    if (!empty($data['record_number'])) {
+        $checkDup = $conn->prepare("SELECT id FROM blotter_records WHERE record_number = ?");
+        $checkDup->bind_param("s", $data['record_number']);
+        $checkDup->execute();
+        $dupResult = $checkDup->get_result();
+        if ($dupResult->num_rows === 0) {
+            $recordNumber = $data['record_number'];
+        }
+        $checkDup->close();
+    }
+
+    // Map archived data to blotter_records columns
+    $incidentType        = $data['incident_type']        ?? ($data['complaint'] ?? 'Unknown');
+    $incidentDescription = $data['incident_description'] ?? '';
+    $incidentDate        = $data['incident_date']        ?? ($data['date'] ?? date('Y-m-d H:i:s'));
+    $incidentLocation    = $data['incident_location']    ?? '';
+    $dateReported        = $data['date_reported']        ?? ($data['date'] ?? date('Y-m-d H:i:s'));
+    $reportedBy          = $data['reported_by']          ?? null;
+    $status              = $data['status']               ?? 'Pending';
+    $resolution          = $data['resolution']           ?? null;
+    $remarks             = $data['remarks']              ?? null;
+
+    // Insert main blotter record
+    $stmt = $conn->prepare("
+        INSERT INTO blotter_records
+            (record_number, incident_type, incident_description, incident_date,
+             incident_location, date_reported, reported_by, status, resolution, remarks)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ");
+    $stmt->bind_param("ssssssssss",
+        $recordNumber,
+        $incidentType,
+        $incidentDescription,
+        $incidentDate,
+        $incidentLocation,
+        $dateReported,
+        $reportedBy,
+        $status,
+        $resolution,
+        $remarks
     );
+    if (!$stmt->execute()) {
+        throw new Exception("Failed to restore blotter record: " . $stmt->error);
+    }
+    $blotterId = $conn->insert_id;
+    $stmt->close();
+
+    // Restore complainants
+    if (!empty($data['complainants']) && is_array($data['complainants'])) {
+        $cStmt = $conn->prepare("
+            INSERT INTO blotter_complainants (blotter_id, resident_id, name, address, contact_number, statement)
+            VALUES (?, ?, ?, ?, ?, ?)
+        ");
+        foreach ($data['complainants'] as $c) {
+            $resId     = $c['resident_id'] ?? null;
+            $cName     = $c['name']           ?? '';
+            $cAddr     = $c['address']        ?? null;
+            $cContact  = $c['contact_number'] ?? null;
+            $cStmt->bind_param("isssss", $blotterId, $resId, $cName, $cAddr, $cContact, $nullStmt);
+            $nullStmt = null;
+            $cStmt->execute();
+        }
+        $cStmt->close();
+    } elseif (!empty($data['complainant'])) {
+        // Fallback: single complainant stored as plain string
+        $cName = $data['complainant'];
+        $nullVal = null;
+        $stmt = $conn->prepare("
+            INSERT INTO blotter_complainants (blotter_id, name) VALUES (?, ?)
+        ");
+        $stmt->bind_param("is", $blotterId, $cName);
+        $stmt->execute();
+        $stmt->close();
+    }
+
+    // Restore victims
+    if (!empty($data['victims']) && is_array($data['victims'])) {
+        $vStmt = $conn->prepare("
+            INSERT INTO blotter_complainants (blotter_id, resident_id, name, address, contact_number, statement)
+            VALUES (?, ?, ?, ?, ?, 'VICTIM')
+        ");
+        foreach ($data['victims'] as $v) {
+            $resId    = $v['resident_id']    ?? null;
+            $vName    = $v['name']           ?? '';
+            $vAddr    = $v['address']        ?? null;
+            $vContact = $v['contact_number'] ?? null;
+            $vStmt->bind_param("issss", $blotterId, $resId, $vName, $vAddr, $vContact);
+            $vStmt->execute();
+        }
+        $vStmt->close();
+    }
+
+    // Restore witnesses
+    if (!empty($data['witnesses']) && is_array($data['witnesses'])) {
+        $wStmt = $conn->prepare("
+            INSERT INTO blotter_complainants (blotter_id, resident_id, name, address, contact_number, statement)
+            VALUES (?, ?, ?, ?, ?, 'WITNESS')
+        ");
+        foreach ($data['witnesses'] as $w) {
+            $resId    = $w['resident_id']    ?? null;
+            $wName    = $w['name']           ?? '';
+            $wAddr    = $w['address']        ?? null;
+            $wContact = $w['contact_number'] ?? null;
+            $wStmt->bind_param("issss", $blotterId, $resId, $wName, $wAddr, $wContact);
+            $wStmt->execute();
+        }
+        $wStmt->close();
+    }
+
+    // Restore respondents
+    if (!empty($data['respondents']) && is_array($data['respondents'])) {
+        $rStmt = $conn->prepare("
+            INSERT INTO blotter_respondents (blotter_id, resident_id, name, address, contact_number)
+            VALUES (?, ?, ?, ?, ?)
+        ");
+        foreach ($data['respondents'] as $r) {
+            $resId    = $r['resident_id']    ?? null;
+            $rName    = $r['name']           ?? '';
+            $rAddr    = $r['address']        ?? null;
+            $rContact = $r['contact_number'] ?? null;
+            $rStmt->bind_param("issss", $blotterId, $resId, $rName, $rAddr, $rContact);
+            $rStmt->execute();
+        }
+        $rStmt->close();
+    } elseif (!empty($data['respondent'])) {
+        // Fallback: single respondent stored as plain string
+        $rName = $data['respondent'];
+        $stmt = $conn->prepare("
+            INSERT INTO blotter_respondents (blotter_id, name) VALUES (?, ?)
+        ");
+        $stmt->bind_param("is", $blotterId, $rName);
+        $stmt->execute();
+        $stmt->close();
+    }
+}
+
+function restoreHousehold($conn, $data) {
+    // Insert household
+    $stmt = $conn->prepare("INSERT INTO households (household_number, household_head_id, household_contact, address, water_source_type, toilet_facility_type, notes, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    
+    $h_num = $data['household_number'];
+    $h_head = $data['household_head_id'];
+    $h_contact = $data['household_contact'] ?? null;
+    $h_addr = $data['address'] ?? null;
+    $h_water = $data['water_source_type'] ?? null;
+    $h_toilet = $data['toilet_facility_type'] ?? null;
+    $h_notes = $data['notes'] ?? null;
+    $h_created = $data['created_at'] ?? date('Y-m-d H:i:s');
+    $h_updated = $data['updated_at'] ?? date('Y-m-d H:i:s');
+
+    $stmt->bind_param("sisssssss", $h_num, $h_head, $h_contact, $h_addr, $h_water, $h_toilet, $h_notes, $h_created, $h_updated);
     
     if (!$stmt->execute()) {
-        throw new Exception("Failed to restore blotter: " . $stmt->error);
+        throw new Exception("Failed to restore household: " . $stmt->error);
     }
+    $householdId = $stmt->insert_id;
     $stmt->close();
+    
+    // Insert members
+    if (!empty($data['members']) && is_array($data['members'])) {
+        $mStmt = $conn->prepare("INSERT INTO household_members (household_id, resident_id, relationship_to_head, is_head) VALUES (?, ?, ?, ?)");
+        foreach ($data['members'] as $member) {
+            $m_res_id = $member['resident_id'];
+            $m_rel = $member['relationship_to_head'];
+            $m_is_head = $member['is_head'] ?? 0;
+            
+            $mStmt->bind_param("iisi", $householdId, $m_res_id, $m_rel, $m_is_head);
+            $mStmt->execute();
+        }
+        $mStmt->close();
+    }
 }
 
 function restorePermit($conn, $data) {

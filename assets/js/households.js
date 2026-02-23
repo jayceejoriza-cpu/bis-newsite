@@ -519,12 +519,30 @@ function handleAction(action, householdNumber, headName, memberCount, row) {
             
         case 'delete':
             if (confirm(`Are you sure you want to delete household ${householdNumber}?\n\nHead: ${headName}\nMembers: ${memberCount}\n\nThis action cannot be undone.`)) {
-                row.style.opacity = '0';
-                setTimeout(() => {
-                    row.remove();
-                    updateTotalCount();
-                    showNotification('Household deleted successfully', 'success');
-                }, 300);
+                const formData = new FormData();
+                formData.append('id', householdId);
+
+                fetch('model/delete_household.php', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        row.style.opacity = '0';
+                        setTimeout(() => {
+                            row.remove();
+                            updateTotalCount();
+                            showNotification('Household moved to archive successfully', 'success');
+                        }, 300);
+                    } else {
+                        showNotification(data.message || 'Error deleting household', 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showNotification('An error occurred while deleting', 'error');
+                });
             }
             break;
     }
