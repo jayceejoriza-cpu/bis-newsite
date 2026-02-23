@@ -284,28 +284,42 @@ function showActionMenu(row, button) {
     // Remove any existing action menus
     document.querySelectorAll('.action-menu').forEach(menu => menu.remove());
     
-    // Create action menu
-    const menu = document.createElement('div');
-    menu.className = 'action-menu';
-    menu.innerHTML = `
+    // Build menu items based on permissions
+    const perms = window.BIS_PERMS || {};
+    let menuHtml = '';
+
+    if (perms.resident_view) {
+        menuHtml += `
         <div class="action-menu-item" data-action="view">
             <i class="fas fa-eye"></i>
             <span>View Details</span>
-        </div>
+        </div>`;
+    }
+    if (perms.resident_edit) {
+        menuHtml += `
         <div class="action-menu-item" data-action="edit">
             <i class="fas fa-edit"></i>
             <span>Edit Resident</span>
-        </div>
+        </div>`;
+    }
+    menuHtml += `
         <div class="action-menu-item" data-action="print">
             <i class="fas fa-print"></i>
             <span>Print ID</span>
-        </div>
+        </div>`;
+    if (perms.resident_delete) {
+        menuHtml += `
         <div class="action-menu-divider"></div>
         <div class="action-menu-item danger" data-action="delete">
             <i class="fas fa-trash"></i>
             <span>Delete Resident</span>
-        </div>
-    `;
+        </div>`;
+    }
+
+    // Create action menu
+    const menu = document.createElement('div');
+    menu.className = 'action-menu';
+    menu.innerHTML = menuHtml;
     
     // Position menu
     const rect = button.getBoundingClientRect();

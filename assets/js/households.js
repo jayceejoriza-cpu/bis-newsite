@@ -456,30 +456,50 @@ function showActionMenu(row, button) {
     // Remove any existing action menus
     document.querySelectorAll('.action-menu').forEach(menu => menu.remove());
     
-    // Create action menu
-    const menu = document.createElement('div');
-    menu.className = 'action-menu';
-    menu.innerHTML = `
+    // Build menu items based on permissions
+    const perms = window.BIS_PERMS || {};
+    console.log('[Households] BIS_PERMS:', perms);
+    let menuHtml = '';
+
+    if (perms.household_view) {
+        menuHtml += `
         <div class="action-menu-item" data-action="view">
             <i class="fas fa-eye"></i>
             <span>View Details</span>
-        </div>
+        </div>`;
+    }
+    if (perms.household_edit) {
+        menuHtml += `
         <div class="action-menu-item" data-action="edit">
             <i class="fas fa-edit"></i>
             <span>Edit Household</span>
-        </div>
+        </div>`;
+    }
+    if (perms.household_delete) {
+        menuHtml += `
         <div class="action-menu-divider"></div>
         <div class="action-menu-item danger" data-action="delete">
             <i class="fas fa-trash"></i>
             <span>Delete Household</span>
-        </div>
-    `;
+        </div>`;
+    }
+
+    // If no menu items, do not show the menu at all
+    if (!menuHtml.trim()) {
+        return;
+    }
+
+    // Create action menu
+    const menu = document.createElement('div');
+    menu.className = 'action-menu';
+    menu.innerHTML = menuHtml;
     
-    // Position menu
+    // Position menu — keep within viewport
     const rect = button.getBoundingClientRect();
+    const menuLeft = Math.max(10, rect.right - 170);
     menu.style.position = 'fixed';
     menu.style.top = `${rect.bottom + 5}px`;
-    menu.style.left = `${rect.left - 150}px`;
+    menu.style.left = `${menuLeft}px`;
     
     document.body.appendChild(menu);
     

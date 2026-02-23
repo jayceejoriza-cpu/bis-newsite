@@ -5,6 +5,10 @@ require_once '../config.php';
 // Check authentication
 require_once '../auth_check.php';
 
+// Load permissions and enforce create access
+require_once '../permissions.php';
+requirePermission('perm_resident_create', '../index.php');
+
 // Fix sidebar menu links for subdirectory
 if (isset($menu_items)) {
     foreach ($menu_items as &$item) {

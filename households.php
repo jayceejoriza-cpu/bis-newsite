@@ -5,6 +5,12 @@ require_once 'config.php';
 // Check authentication
 require_once 'auth_check.php';
 
+// Load permissions
+require_once 'permissions.php';
+
+// Enforce: redirect if user lacks view permission
+requirePermission('perm_household_view');
+
 // Page title
 $pageTitle = 'Households';
 ?>
@@ -44,10 +50,12 @@ $pageTitle = 'Households';
                     <h1 class="page-title"><?php echo $pageTitle; ?></h1>
                     <p class="page-subtitle">View all household profiles, including heads and members. <i class="fas fa-info-circle info-icon"></i></p>
                 </div>
+                <?php if (hasPermission('perm_household_create')): ?>
                 <button class="btn btn-primary" id="createHouseholdBtn">
                     <i class="fas fa-plus"></i>
                     Create Household
                 </button>
+                <?php endif; ?>
             </div>
             
           
@@ -361,9 +369,19 @@ $pageTitle = 'Households';
     <!-- Bootstrap JS Bundle (includes Popper) -->
     <script src="assets/bootstrap/js/bootstrap.bundle.min.js"></script>
     
+    <!-- Permission flags for JS -->
+    <script>
+    window.BIS_PERMS = {
+        household_view:   <?php echo hasPermission('perm_household_view')   ? 'true' : 'false'; ?>,
+        household_create: <?php echo hasPermission('perm_household_create') ? 'true' : 'false'; ?>,
+        household_edit:   <?php echo hasPermission('perm_household_edit')   ? 'true' : 'false'; ?>,
+        household_delete: <?php echo hasPermission('perm_household_delete') ? 'true' : 'false'; ?>
+    };
+    </script>
+
     <!-- Custom JavaScript -->
     <script src="assets/js/script.js"></script>
     <script src="assets/js/table.js"></script>
-    <script src="assets/js/households.js"></script>
+    <script src="assets/js/households.js?v=<?php echo filemtime('assets/js/households.js'); ?>"></script>
 </body>
 </html>

@@ -1,5 +1,10 @@
 <?php
 require_once 'config.php';
+require_once 'auth_check.php';
+require_once 'permissions.php';
+
+// Enforce: redirect if user lacks view permission
+requirePermission('perm_officials_view');
 
 $pageTitle = 'Barangay Officials';
 
@@ -161,9 +166,11 @@ try {
                     <h1 class="page-title"><?php echo $pageTitle; ?></h1>
                     <p class="page-subtitle">View and manage barangay officials</p>
                 </div>
+                <?php if (hasPermission('perm_officials_create')): ?>
                 <button class="btn btn-primary" id="createOfficialBtn">
                     <i class="fas fa-plus"></i> Create Brgy Official
                 </button>
+                <?php endif; ?>
             </div>
 
             
@@ -310,15 +317,21 @@ try {
                                     <td>+63 <?php echo htmlspecialchars($official['contact_number'] ?? 'N/A'); ?></td>
                                     <td>
                                         <div class="action-buttons">
+                                            <?php if (hasPermission('perm_officials_view')): ?>
                                             <button class="btn-view" data-official-id="<?php echo $official['id']; ?>">
                                                 <i class="fas fa-eye"></i> View
                                             </button>
+                                            <?php endif; ?>
+                                            <?php if (hasPermission('perm_officials_edit')): ?>
                                             <button class="btn-edit" data-official-id="<?php echo $official['id']; ?>">
                                                 <i class="fas fa-edit"></i> Edit
                                             </button>
+                                            <?php endif; ?>
+                                            <?php if (hasPermission('perm_officials_delete')): ?>
                                             <button class="btn-delete" data-official-id="<?php echo $official['id']; ?>">
                                                 <i class="fas fa-trash"></i> Delete
                                             </button>
+                                            <?php endif; ?>
                                         </div>
                                     </td>
                                 </tr>
@@ -698,6 +711,17 @@ try {
 
     <!-- Bootstrap JS -->
     <script src="assets/bootstrap/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Permission flags for JS -->
+    <script>
+    window.BIS_PERMS = {
+        officials_view:   <?php echo hasPermission('perm_officials_view')   ? 'true' : 'false'; ?>,
+        officials_create: <?php echo hasPermission('perm_officials_create') ? 'true' : 'false'; ?>,
+        officials_edit:   <?php echo hasPermission('perm_officials_edit')   ? 'true' : 'false'; ?>,
+        officials_delete: <?php echo hasPermission('perm_officials_delete') ? 'true' : 'false'; ?>
+    };
+    </script>
+
     <!-- Custom JS -->
     <script src="assets/js/script.js"></script>
     <script src="assets/js/officials.js"></script>

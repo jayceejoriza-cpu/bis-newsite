@@ -5,6 +5,12 @@ require_once 'config.php';
 // Check authentication
 require_once 'auth_check.php';
 
+// Load permissions
+require_once 'permissions.php';
+
+// Enforce: redirect if user lacks view permission
+requirePermission('perm_resident_view');
+
 // Get resident ID from URL
 $residentId = isset($_GET['id']) ? intval($_GET['id']) : 0;
 
@@ -227,10 +233,12 @@ $age = calculateAge($resident['date_of_birth']);
                         <i class="fas fa-print"></i>
                         Print Profile
                     </button>
+                    <?php if (hasPermission('perm_resident_edit')): ?>
                     <button class="btn btn-primary" onclick="editResident()">
                         <i class="fas fa-edit"></i>
                         Edit Profile
                     </button>
+                    <?php endif; ?>
                 </div>
             </div>
             
