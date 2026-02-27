@@ -3,6 +3,8 @@
  * Handles search, filtering, modals, and dynamic form elements
  */
 
+let blotterTable;
+
 document.addEventListener('DOMContentLoaded', function() {
     // ============================================
     // DOM Elements
@@ -21,6 +23,17 @@ document.addEventListener('DOMContentLoaded', function() {
     
     let currentFilter = 'all';
     let searchTerm = '';
+
+    // ============================================
+    // Initialize EnhancedTable for Pagination
+    // ============================================
+    blotterTable = new EnhancedTable('blotterTable', {
+        sortable: false,
+        searchable: false,
+        paginated: true,
+        pageSize: 10,
+        responsive: true
+    });
     
     // ============================================
     // Initialize Bootstrap Modal
@@ -71,48 +84,23 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     // ============================================
-    // Filter Table Function
+    // Filter Table Function — uses EnhancedTable
     // ============================================
     function filterTable() {
-        const rows = tableBody.querySelectorAll('tr');
-        let visibleCount = 0;
-        
-        rows.forEach(row => {
-            // Skip empty state row
-            if (row.querySelector('td[colspan]')) {
-                return;
-            }
-            
+        if (!blotterTable) return;
+
+        blotterTable.filter(row => {
+            // Always exclude colspan/empty-state rows
+            if (row.querySelector('td[colspan]')) return false;
+
             const status = row.getAttribute('data-status');
-            const text = row.textContent.toLowerCase();
-            
-            // Check filter match
+            const text   = row.textContent.toLowerCase();
+
             const filterMatch = currentFilter === 'all' || status === currentFilter;
-            
-            // Check search match
             const searchMatch = !searchTerm || text.includes(searchTerm);
-            
-            // Show/hide row
-            if (filterMatch && searchMatch) {
-                row.style.display = '';
-                visibleCount++;
-            } else {
-                row.style.display = 'none';
-            }
+
+            return filterMatch && searchMatch;
         });
-        
-        // Update pagination info
-        updatePaginationInfo(visibleCount);
-    }
-    
-    // ============================================
-    // Update Pagination Info
-    // ============================================
-    function updatePaginationInfo(count) {
-        const paginationInfo = document.querySelector('.pagination-info strong');
-        if (paginationInfo) {
-            paginationInfo.textContent = count.toLocaleString();
-        }
     }
     
     // ============================================

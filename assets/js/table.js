@@ -41,6 +41,7 @@ class EnhancedTable {
         }
         
         if (this.options.paginated) {
+            this.updateDisplay();
             this.updatePagination();
         }
         

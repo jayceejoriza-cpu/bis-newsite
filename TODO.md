@@ -1,7 +1,10 @@
-# Restore SQL Feature - TODO
+# Pagination Fix - TODO
 
 ## Steps
 
-- [x] Gather understanding of existing files (backup.php, sidebar.php, config.php)
-- [x] Create `restore.php` - SQL restore page with password confirmation modal
-- [x] Edit `components/sidebar.php` - Add "Restore" to Settings submenu and $settings_pages array
+- [x] Read and analyze `residents.php`, `assets/js/residents.js`, `assets/js/table.js`, `assets/css/residents.css`
+- [x] Identify root causes of broken pagination
+- [x] Confirm plan with user
+- [x] Fix `assets/js/table.js` — add `this.updateDisplay()` in `init()` after `this.updatePagination()`
+- [x] Fix `residents.php` — repair broken `</button>` orphan tag in pagination HTML
+- [x] Verify fixes

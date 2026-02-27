@@ -4,6 +4,7 @@
  */
 
 // ── State ────────────────────────────────────────────────────────────────────
+let officialsTable;
 let currentStatusFilter = 'all';
 let currentSearchTerm   = '';
 
@@ -14,6 +15,15 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
 function initOfficials() {
+    // Initialize EnhancedTable for pagination
+    officialsTable = new EnhancedTable('officialsTable', {
+        sortable: false,
+        searchable: false,
+        paginated: true,
+        pageSize: 10,
+        responsive: true
+    });
+
     // Create Official Button
     const createBtn = document.getElementById('createOfficialBtn');
     if (createBtn) {
@@ -143,10 +153,12 @@ function clearSearch() {
 
 // ── Apply both filters ────────────────────────────────────────────────────────
 function applyFilters() {
-    const rows = document.querySelectorAll('#officialsTableBody tr[data-status]');
-    let visibleCount = 0;
+    if (!officialsTable) return;
 
-    rows.forEach(row => {
+    officialsTable.filter(row => {
+        // Exclude the empty-state row from pagination
+        if (row.id === 'officialsEmptyRow' || !row.getAttribute('data-status')) return false;
+
         const rowStatus = (row.getAttribute('data-status') || '').toLowerCase();
         const rowSearch = (row.getAttribute('data-search') || '').toLowerCase();
 
@@ -154,19 +166,8 @@ function applyFilters() {
                          rowStatus === currentStatusFilter.toLowerCase();
         const searchOk = !currentSearchTerm || rowSearch.includes(currentSearchTerm);
 
-        if (statusOk && searchOk) {
-            row.style.display = '';
-            visibleCount++;
-        } else {
-            row.style.display = 'none';
-        }
+        return statusOk && searchOk;
     });
-
-    // Show/hide empty state row
-    const emptyRow = document.getElementById('officialsEmptyRow');
-    if (emptyRow) {
-        emptyRow.style.display = visibleCount === 0 ? '' : 'none';
-    }
 }
 
 // ── Refresh ───────────────────────────────────────────────────────────────────
