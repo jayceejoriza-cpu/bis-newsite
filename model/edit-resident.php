@@ -41,32 +41,6 @@ $pageTitle = 'Edit Resident';
     <link rel="stylesheet" href="../assets/css/create-resident.css">
     
     <style>
-        /* Two-column layout for photo section */
-        .photo-section-wrapper {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 30px;
-            margin-bottom: 30px;
-        }
-        
-        .photo-upload-section {
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
-        
-        .status-fields-section {
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
-        
-        @media (max-width: 768px) {
-            .photo-section-wrapper {
-                grid-template-columns: 1fr;
-            }
-        }
-        
         .phone-input-group {
             display: flex;
             align-items: stretch;
@@ -140,19 +114,12 @@ $pageTitle = 'Edit Resident';
                 <div class="step-line"></div>
                 <div class="step" data-step="4">
                     <div class="step-circle">
-                        <i class="fas fa-phone-alt"></i>
-                    </div>
-                    <span class="step-label">Emergency Contact</span>
-                </div>
-                <div class="step-line"></div>
-                <div class="step" data-step="5">
-                    <div class="step-circle">
                         <i class="fas fa-graduation-cap"></i>
                     </div>
                     <span class="step-label">Education & Employment</span>
                 </div>
                 <div class="step-line"></div>
-                <div class="step" data-step="6">
+                <div class="step" data-step="5">
                     <div class="step-circle">
                         <i class="fas fa-info-circle"></i>
                     </div>
@@ -170,76 +137,36 @@ $pageTitle = 'Edit Resident';
                     <!-- Step 1: Personal Details -->
                     <div class="form-step active" data-step="1">
                         <div class="form-content">
-                            <!-- Two-column layout: Photo Upload + Status Fields -->
-                            <div class="photo-section-wrapper">
-                                <!-- Left Column: Photo Upload Section -->
-                                <div class="photo-upload-section">
-                                    <div class="photo-preview" id="photoPreviewContainer">
-                                        <img id="photoPreview" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Crect fill='%2393c5fd' width='200' height='200'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='Arial' font-size='80' fill='%23ffffff'%3E%F0%9F%91%A4%3C/text%3E%3C/svg%3E" alt="Photo Preview">
-                                        <div id="inlineWebcamPreview" style="display: none;"></div>
-                                    </div>
-                                    <div class="photo-upload-actions">
-                                        <input type="file" id="photoInput" name="photo" accept="image/jpeg,image/png,image/gif" style="display: none;">
-                                        <button type="button" class="btn btn-primary" onclick="document.getElementById('photoInput').click()">
-                                            <i class="fas fa-upload"></i>
-                                            Upload Photo
-                                        </button>
-                                        <button type="button" class="btn btn-primary" id="takePhotoBtn" onclick="toggleInlineWebcam()">
-                                            <i class="fas fa-camera"></i>
-                                            <span id="cameraButtonText">Start Camera</span>
-                                        </button>
-                                        <button type="button" class="btn btn-success" id="captureInlineBtn" onclick="captureInlinePhoto()" style="display: none;">
-                                            <i class="fas fa-camera"></i>
-                                            Capture
-                                        </button>
-                                        <button type="button" class="btn btn-secondary" id="resetPhotoBtn">
-                                            <i class="fas fa-redo"></i>
-                                            Reset
-                                        </button>
-                                        <p class="upload-hint">Allowed JPG, GIF or PNG. Max size of 1MB</p>
-                                    </div>
-                                    <div class="form-group">
-                                        <label>Resident ID</label>
-                                        <input type="text" id="displayResidentId" class="form-control" disabled>
-                                        <small class="form-text text-muted">Resident ID (Format: W-XXXXX)</small>
-                                    </div>
+                            <!-- Photo Upload Section -->
+                            <div class="photo-upload-section">
+                                <div class="photo-preview" id="photoPreviewContainer">
+                                    <img id="photoPreview" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Crect fill='%2393c5fd' width='200' height='200'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='Arial' font-size='80' fill='%23ffffff'%3E%F0%9F%91%A4%3C/text%3E%3C/svg%3E" alt="Photo Preview">
+                                    <div id="inlineWebcamPreview" style="display: none;"></div>
                                 </div>
-                                
-                                <!-- Right Column: Status Fields -->
-                                <div class="status-fields-section">
-                                    <div class="form-group">
-                                        <label for="verificationStatus">Verification Status <span class="required">*</span></label>
-                                        <select id="verificationStatus" name="verificationStatus" class="form-control" required>
-                                            <option value="">Select Status</option>
-                                            <option value="Pending">Pending</option>
-                                            <option value="Verified">Verified</option>
-                                            <option value="Rejected">Rejected</option>
-                                        </select>
-                                        <small class="form-hint">Current verification status of the resident</small>
-                                    </div>
-                                    
-                                    <div class="form-group" id="rejectionReasonGroup" style="display: none;">
-                                        <label for="rejectionReason">Rejection Reason</label>
-                                        <textarea id="rejectionReason" name="rejectionReason" class="form-control" rows="3" placeholder="Enter reason for rejection..."></textarea>
-                                        <small class="form-hint">Required if status is Rejected</small>
-                                    </div>
-                                    
-                                    <div class="form-group">
-                                        <label for="activityStatus">Activity Status <span class="required">*</span></label>
-                                        <select id="activityStatus" name="activityStatus" class="form-control" required>
-                                            <option value="">Select Status</option>
-                                            <option value="Active">Active</option>
-                                            <option value="Inactive">Inactive</option>
-                                            <option value="Deceased">Deceased</option>
-                                        </select>
-                                        <small class="form-hint">Current activity status of the resident</small>
-                                    </div>
-                                    
-                                    <div class="form-group">
-                                        <label for="statusRemarks">Status Remarks</label>
-                                        <textarea id="statusRemarks" name="statusRemarks" class="form-control" rows="3" placeholder="Additional notes about status changes..."></textarea>
-                                        <small class="form-hint">Optional remarks about status</small>
-                                    </div>
+                                <div class="photo-upload-actions">
+                                    <input type="file" id="photoInput" name="photo" accept="image/jpeg,image/png,image/gif" style="display: none;">
+                                    <button type="button" class="btn btn-primary" onclick="document.getElementById('photoInput').click()">
+                                        <i class="fas fa-upload"></i>
+                                        Upload Photo
+                                    </button>
+                                    <button type="button" class="btn btn-primary" id="takePhotoBtn" onclick="toggleInlineWebcam()">
+                                        <i class="fas fa-camera"></i>
+                                        <span id="cameraButtonText">Start Camera</span>
+                                    </button>
+                                    <button type="button" class="btn btn-success" id="captureInlineBtn" onclick="captureInlinePhoto()" style="display: none;">
+                                        <i class="fas fa-camera"></i>
+                                        Capture
+                                    </button>
+                                    <button type="button" class="btn btn-secondary" id="resetPhotoBtn">
+                                        <i class="fas fa-redo"></i>
+                                        Reset
+                                    </button>
+                                    <p class="upload-hint">Allowed JPG, GIF or PNG. Max size of 1MB</p>
+                                </div>
+                                <div class="form-group">
+                                    <label>Resident ID</label>
+                                    <input type="text" id="displayResidentId" class="form-control" disabled>
+                                    <small class="form-text text-muted">Resident ID (Format: W-XXXXX)</small>
                                 </div>
                             </div>
                             
@@ -367,25 +294,8 @@ $pageTitle = 'Edit Resident';
                         </div>
                     </div>
                     
-                    <!-- Step 4: Emergency Contact -->
+                    <!-- Step 4: Education & Employment -->
                     <div class="form-step" data-step="4">
-                        <div class="form-content">
-                            <div class="emergency-contacts-header" style="margin-bottom: 15px">
-                                <button type="button" class="btn btn-primary btn-sm" id="addContactBtn">
-                                    <i class="fas fa-plus"></i>
-                                    Add Contact
-                                </button>
-                            </div>
-                            
-                            <!-- Emergency Contacts Container -->
-                            <div id="emergencyContactsContainer">
-                                <!-- Contacts will be loaded dynamically -->
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Step 5: Education & Employment -->
-                    <div class="form-step" data-step="5">
                         <div class="form-content">
                             <div class="form-grid">
                                 <div class="form-group">
@@ -437,8 +347,8 @@ $pageTitle = 'Edit Resident';
                         </div>
                     </div>
                     
-                    <!-- Step 6: Additional Information -->
-                    <div class="form-step" data-step="6">
+                    <!-- Step 5: Additional Information -->
+                    <div class="form-step" data-step="5">
                         <div class="form-content">
                             <!-- Government Programs Section -->
                             <h5 style="margin: 0 0 15px 0; color: var(--primary-color);"><i class="fas fa-landmark"></i> Government Programs</h5>
@@ -455,7 +365,7 @@ $pageTitle = 'Edit Resident';
                                 
                                 <div class="form-group" id="fourpsIdGroup" style="display: none;">
                                     <label for="fourpsId">4Ps ID Number</label>
-                                    <input type="text" id="fourpsId" name="fourpsId" class="form-control" placeholder="Enter 4Ps ID Number">
+                                    <input type="text" id="fourpsId" name="fourpsId" class="form-control" placeholder="XX-YYYY-ZZZZ" maxlength="12">
                                 </div>
                             </div>
                             
@@ -482,7 +392,7 @@ $pageTitle = 'Edit Resident';
                             <div class="form-grid">
                                 <div class="form-group">
                                     <label for="philhealthId">Philhealth ID Number</label>
-                                    <input type="number" id="philhealthId" name="philhealthId" class="form-control" placeholder="Enter Philhealth ID">
+                                    <input type="text" id="philhealthId" name="philhealthId" class="form-control" placeholder="1234-5678-9012" maxlength="14">
                                 </div>
                                 
                                 <div class="form-group">
@@ -737,22 +647,6 @@ $pageTitle = 'Edit Resident';
                             </div>
                         </div>
                         <div class="review-section-content" id="reviewFamilyInfo">
-                            <!-- Will be populated by JavaScript -->
-                        </div>
-                    </div>
-                    
-                    <!-- Emergency Contact Section -->
-                    <div class="review-section">
-                        <div class="review-section-header">
-                            <div class="review-section-icon" style="background-color: #ef4444;">
-                                <i class="fas fa-phone-alt"></i>
-                            </div>
-                            <div class="review-section-title">
-                                <h4>Emergency Contact</h4>
-                                <p>Emergency contact persons</p>
-                            </div>
-                        </div>
-                        <div class="review-section-content" id="reviewEmergencyContact">
                             <!-- Will be populated by JavaScript -->
                         </div>
                     </div>

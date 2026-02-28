@@ -21,6 +21,16 @@ if (isset($menu_items)) {
 
 // Page title
 $pageTitle = 'Create Resident';
+
+// Calculate next Resident ID
+$nextResidentId = 'W-00001'; // Default fallback
+if (isset($conn)) {
+    $result = $conn->query("SHOW TABLE STATUS LIKE 'residents'");
+    if ($result && $row = $result->fetch_assoc()) {
+        $nextId = $row['Auto_increment'];
+        $nextResidentId = "W-" . str_pad($nextId % 100000, 5, '0', STR_PAD_LEFT);
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -180,7 +190,7 @@ $pageTitle = 'Create Resident';
                                 </div>
                                   <div class="form-group">
                                     <label>Resident ID</label>
-                                    <input type="text" class="form-control" value="Auto-generated" disabled>
+                                    <input type="text" class="form-control" value="<?php echo $nextResidentId; ?>" disabled>
                                     <small class="form-text text-muted">Resident ID will be automatically generated (Format: W-XXXXX)</small>
                                 </div>
                             </div>
@@ -285,10 +295,6 @@ $pageTitle = 'Create Resident';
                                     <input type="email" id="email" name="email" class="form-control" placeholder="example@email.com">
                                 </div>
                                 
-                                <div class="form-group">
-                                    <label for="houseNo">House No.</label>
-                                    <input type="text" id="houseNo" name="houseNo" class="form-control" placeholder="House No." >
-                                </div>
 
                                 <div class="form-group">
                                     <label for="purok">Purok <span class="required">*</span></label>
@@ -321,9 +327,9 @@ $pageTitle = 'Create Resident';
                                         <option value="">Select</option>
                                         <option value="Single">Single</option>
                                         <option value="Married">Married</option>
-                                        <option value="Widowed">Widowed</option>
+                                        <option value="Widow/er">Widow/er</option>
                                         <option value="Separated">Separated</option>
-                                        <option value="Divorced">Divorced</option>
+                                        <option value="Cohabitation">Cohabitation</option>
                                     </select>
                                 </div>
                                 
@@ -338,7 +344,7 @@ $pageTitle = 'Create Resident';
                                 </div>
                                 
                                 <div class="form-group">
-                                    <label for="motherName">Mother's Name</label>
+                                    <label for="motherName">Mother's Maiden Name</label>
                                     <input type="text" id="motherName" name="motherName" class="form-control">
                                 </div>
                                 
@@ -394,15 +400,14 @@ $pageTitle = 'Create Resident';
                                                     <img src="../assets/image/contactph.png" alt="PH" class="flag-icon">
                                                     +63
                                                 </span>
-                                                <input type="tel" id="householdContact" name="householdContact" class="form-control phone-input" placeholder="Auto-filled from contact" readonly style="background-color: var(--bg-secondary, #f8fafc);">
+                                                <input type="tel" id="householdContact" name="householdContact" class="form-control phone-input" placeholder="Enter household contact" maxlength="10">
                                             </div>
-                                            <small class="form-text text-muted">Auto-filled from your mobile number</small>
                                         </div>
 
                                         <div class="form-group full-width">
                                             <label for="householdAddress">Household Address</label>
-                                            <input type="text" id="householdAddress" name="householdAddress" class="form-control" placeholder="Auto-filled from address" readonly style="background-color: var(--bg-secondary, #f8fafc);">
-                                            <small class="form-text text-muted">Auto-filled from your address information</small>
+                                            <input type="text" id="householdAddress" name="householdAddress" class="form-control" placeholder="Enter household address">
+                                            
                                         </div>
 
                                         <div class="form-group">
@@ -525,18 +530,6 @@ $pageTitle = 'Create Resident';
                                     <input type="text" id="occupation" name="occupation" class="form-control">
                                 </div>
                                 
-                                <div class="form-group">
-                                    <label for="monthlyIncome">Monthly Income</label>
-                                    <select id="monthlyIncome" name="monthlyIncome" class="form-control">
-                                        <option value="">Select</option>
-                                        <option value="Below 5000">Below ₱5,000</option>
-                                        <option value="5000-10000">₱5,000 - ₱10,000</option>
-                                        <option value="10000-20000">₱10,000 - ₱20,000</option>
-                                        <option value="20000-30000">₱20,000 - ₱30,000</option>
-                                        <option value="30000-50000">₱30,000 - ₱50,000</option>
-                                        <option value="Above 50000">Above ₱50,000</option>
-                                    </select>
-                                </div>
                             </div>
                         </div>
                     </div>
@@ -559,7 +552,7 @@ $pageTitle = 'Create Resident';
                                 
                                 <div class="form-group" id="fourpsIdGroup" style="display: none;">
                                     <label for="fourpsId">4Ps ID Number</label>
-                                    <input type="text" id="fourpsId" name="fourpsId" class="form-control" placeholder="Enter 4Ps ID Number">
+                                    <input type="text" id="fourpsId" name="fourpsId" class="form-control" placeholder="XX-YYYY-ZZZZ" maxlength="12">
                                 </div>
                             </div>
                             
@@ -588,7 +581,7 @@ $pageTitle = 'Create Resident';
                             <div class="form-grid">
                                 <div class="form-group">
                                     <label for="philhealthId">Philhealth ID Number</label>
-                                    <input type="number" id="philhealthId" name="philhealthId" class="form-control" placeholder="Enter Philhealth ID">
+                                    <input type="text" id="philhealthId" name="philhealthId" class="form-control" placeholder="1234-5678-9012" maxlength="14">
                                 </div>
                                 
                                 <div class="form-group">

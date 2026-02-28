@@ -31,6 +31,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialize phone number formatting
     initializePhoneNumberFormatting();
     
+    // Initialize ID formatting
+    initializeIdFormatting();
+    
     // Initialize navigation guard
     initializeNavigationGuard();
     
@@ -502,21 +505,13 @@ function handleFormSubmit() {
 function showSuccessMessage(message = 'Resident Created Successfully!', data = null) {
     const formContainer = document.querySelector('.form-container');
     
-    let statusMessage = '';
-    if (data && data.verification_status) {
-        statusMessage = `<p style="color: #f59e0b; font-weight: 500; margin-top: 10px;">
-            <i class="fas fa-clock"></i> Status: ${data.verification_status}
-        </p>`;
-    }
-    
     formContainer.innerHTML = `
         <div class="success-message show">
             <div class="success-icon">
                 <i class="fas fa-check"></i>
             </div>
             <h2>${message}</h2>
-            <p>The resident record has been added to the system and is pending verification.</p>
-            ${statusMessage}
+            <p>The resident record has been successfully added to the system.</p>
             <div style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap; margin-top: 30px;">
                 <button class="btn btn-primary" onclick="localStorage.removeItem('createResidentCurrentStep'); localStorage.removeItem('createResidentFormData'); window.location.href='../residents.php'">
                     <i class="fas fa-list"></i>
@@ -671,6 +666,59 @@ function initializePhoneNumberFormatting() {
     // Apply to mobile number field
     const mobileNumberInput = document.getElementById('mobileNumber');
     applyPhoneNumberFormatting(mobileNumberInput);
+}
+
+// ===================================
+// ID Formatting (4Ps & Philhealth)
+// ===================================
+function formatFourPsId(input) {
+    // Remove non-alphanumeric characters and convert to uppercase
+    let value = input.value.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+    
+    // Limit to 10 characters (excluding dashes)
+    if (value.length > 10) value = value.substring(0, 10);
+    
+    // Format: XX-YYYY-ZZZZ
+    if (value.length > 6) {
+        value = value.substring(0, 2) + '-' + value.substring(2, 6) + '-' + value.substring(6);
+    } else if (value.length > 2) {
+        value = value.substring(0, 2) + '-' + value.substring(2);
+    }
+    
+    input.value = value;
+}
+
+function formatPhilhealthId(input) {
+    // Remove non-numeric characters
+    let value = input.value.replace(/\D/g, '');
+    
+    // Limit to 12 digits (excluding dashes)
+    if (value.length > 12) value = value.substring(0, 12);
+    
+    // Format: 1234-5678-9012
+    if (value.length > 8) {
+        value = value.substring(0, 4) + '-' + value.substring(4, 8) + '-' + value.substring(8);
+    } else if (value.length > 4) {
+        value = value.substring(0, 4) + '-' + value.substring(4);
+    }
+    
+    input.value = value;
+}
+
+function initializeIdFormatting() {
+    const fourpsIdInput = document.getElementById('fourpsId');
+    if (fourpsIdInput) {
+        fourpsIdInput.addEventListener('input', function() {
+            formatFourPsId(this);
+        });
+    }
+
+    const philhealthIdInput = document.getElementById('philhealthId');
+    if (philhealthIdInput) {
+        philhealthIdInput.addEventListener('input', function() {
+            formatPhilhealthId(this);
+        });
+    }
 }
 
 // ===================================

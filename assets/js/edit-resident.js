@@ -4,8 +4,7 @@
 
 // Global variables
 let currentStep = 1;
-const totalSteps = 6;
-let emergencyContactCount = 0;
+const totalSteps = 5;
 let residentData = null;
 
 // ============================================
@@ -27,11 +26,11 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize photo upload
     initializePhotoUpload();
     
-    // Initialize emergency contacts
-    initializeEmergencyContacts();
-    
     // Initialize phone number formatting
     initializePhoneNumberFormatting();
+
+    // Initialize ID formatting
+    initializeIdFormatting();
 });
 
 // ============================================
@@ -79,17 +78,6 @@ function populateForm(data) {
     document.getElementById('religion').value = data.religion || '';
     document.getElementById('ethnicity').value = data.ethnicity || '';
     
-    // Status fields
-    document.getElementById('verificationStatus').value = data.verification_status || 'Pending';
-    document.getElementById('activityStatus').value = data.activity_status || 'Active';
-    document.getElementById('rejectionReason').value = data.rejection_reason || '';
-    document.getElementById('statusRemarks').value = data.status_remarks || '';
-    
-    // Show/hide rejection reason based on verification status
-    if (data.verification_status === 'Rejected') {
-        document.getElementById('rejectionReasonGroup').style.display = 'block';
-    }
-    
     // Photo
     if (data.photo) {
         document.getElementById('photoPreview').src = data.photo;
@@ -108,21 +96,13 @@ function populateForm(data) {
     document.getElementById('motherName').value = data.mother_name || '';
     document.getElementById('numberOfChildren').value = data.number_of_children || 0;
     
-    // Step 4: Emergency Contacts
-    if (data.emergency_contacts_list && data.emergency_contacts_list.length > 0) {
-        populateEmergencyContacts(data.emergency_contacts_list);
-    } else {
-        // Add default empty contact
-        addEmergencyContact();
-    }
-    
-    // Step 5: Education & Employment
+    // Step 4: Education & Employment
     document.getElementById('educationalAttainment').value = data.educational_attainment || '';
     document.getElementById('employmentStatus').value = data.employment_status || '';
     document.getElementById('occupation').value = data.occupation || '';
     document.getElementById('monthlyIncome').value = data.monthly_income || '';
     
-    // Step 6: Additional Information
+    // Step 5: Additional Information
     document.getElementById('fourPs').value = data.fourps_member || 'No';
     document.getElementById('fourpsId').value = data.fourps_id || '';
     document.getElementById('voterStatus').value = data.voter_status || '';
@@ -160,59 +140,6 @@ function populateForm(data) {
     
     // Remarks
     document.getElementById('remarks').value = data.remarks || '';
-}
-
-// ============================================
-// Populate Emergency Contacts
-// ============================================
-function populateEmergencyContacts(contacts) {
-    const container = document.getElementById('emergencyContactsContainer');
-    container.innerHTML = '';
-    emergencyContactCount = 0;
-    
-    contacts.forEach((contact, index) => {
-        emergencyContactCount++;
-        const contactHtml = `
-            <div class="emergency-contact-item" data-contact-index="${emergencyContactCount}">
-                <div class="contact-item-header">
-                    <h6 style="margin: 0; color: var(--text-primary); font-size: 16px; font-weight: 600;">
-                        <i class="fas fa-user-circle"></i> Contact Person ${emergencyContactCount}
-                    </h6>
-                    ${emergencyContactCount > 1 ? `<button type="button" class="btn btn-danger btn-sm" onclick="removeEmergencyContact(${emergencyContactCount})">
-                        <i class="fas fa-trash"></i> Remove
-                    </button>` : ''}
-                </div>
-                <div class="form-grid" style="margin-top: 15px; margin-bottom: 15px">
-                    <div class="form-group">
-                        <label>Contact Person Name <span class="required">*</span></label>
-                        <input type="text" name="emergencyContactName_${emergencyContactCount}" class="form-control" required placeholder="Enter Contact Person Name" value="${contact.name || ''}">
-                        <small class="form-hint">Contact person name is required</small>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label>Relationship <span class="required">*</span></label>
-                        <input type="text" name="emergencyRelationship_${emergencyContactCount}" class="form-control" required placeholder="Enter Relationship" value="${contact.relationship || ''}">
-                        <small class="form-hint">Relationship is required</small>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label>Contact Number</label>
-                        <input type="tel" name="emergencyContactNumber_${emergencyContactCount}" class="form-control" placeholder="+63 XXX XXX XXXX" value="${contact.contact_number || ''}">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label>Address</label>
-                        <input type="text" name="emergencyAddress_${emergencyContactCount}" class="form-control" placeholder="Enter Address" value="${contact.address || ''}">
-                    </div>
-                </div>
-            </div>
-        `;
-        container.insertAdjacentHTML('beforeend', contactHtml);
-        
-        // Apply phone number formatting to the contact number field
-        const contactNumberInput = document.querySelector(`input[name="emergencyContactNumber_${emergencyContactCount}"]`);
-        applyPhoneNumberFormatting(contactNumberInput);
-    });
 }
 
 // ============================================
@@ -293,17 +220,6 @@ function validateStep(step) {
 // Initialize Conditional Fields
 // ============================================
 function initializeConditionalFields() {
-    // Verification Status - Show/hide rejection reason
-    document.getElementById('verificationStatus').addEventListener('change', function() {
-        const rejectionGroup = document.getElementById('rejectionReasonGroup');
-        if (this.value === 'Rejected') {
-            rejectionGroup.style.display = 'block';
-        } else {
-            rejectionGroup.style.display = 'none';
-            document.getElementById('rejectionReason').value = '';
-        }
-    });
-    
     // Sex - Show/hide WRA section
     document.getElementById('sex').addEventListener('change', function() {
         const wraSection = document.getElementById('wraSection');
@@ -450,77 +366,58 @@ function initializePhoneNumberFormatting() {
     // Apply to mobile number field
     const mobileNumberInput = document.getElementById('mobileNumber');
     applyPhoneNumberFormatting(mobileNumberInput);
-    
-    // Apply to existing emergency contact number fields
-    document.querySelectorAll('input[name^="emergencyContactNumber_"]').forEach(input => {
-        applyPhoneNumberFormatting(input);
-    });
 }
 
 // ============================================
-// Initialize Emergency Contacts
+// ID Formatting (4Ps & Philhealth)
 // ============================================
-function initializeEmergencyContacts() {
-    document.getElementById('addContactBtn').addEventListener('click', addEmergencyContact);
+function formatFourPsId(input) {
+    // Remove non-alphanumeric characters and convert to uppercase
+    let value = input.value.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+    
+    // Limit to 10 characters (excluding dashes)
+    if (value.length > 10) value = value.substring(0, 10);
+    
+    // Format: XX-YYYY-ZZZZ
+    if (value.length > 6) {
+        value = value.substring(0, 2) + '-' + value.substring(2, 6) + '-' + value.substring(6);
+    } else if (value.length > 2) {
+        value = value.substring(0, 2) + '-' + value.substring(2);
+    }
+    
+    input.value = value;
 }
 
-// ============================================
-// Add Emergency Contact
-// ============================================
-function addEmergencyContact() {
-    emergencyContactCount++;
-    const container = document.getElementById('emergencyContactsContainer');
+function formatPhilhealthId(input) {
+    // Remove non-numeric characters
+    let value = input.value.replace(/\D/g, '');
     
-    const contactHtml = `
-        <div class="emergency-contact-item" data-contact-index="${emergencyContactCount}">
-            <div class="contact-item-header">
-                <h6 style="margin: 0; color: var(--text-primary); font-size: 16px; font-weight: 600;">
-                    <i class="fas fa-user-circle"></i> Contact Person ${emergencyContactCount}
-                </h6>
-                ${emergencyContactCount > 1 ? `<button type="button" class="btn btn-danger btn-sm" onclick="removeEmergencyContact(${emergencyContactCount})">
-                    <i class="fas fa-trash"></i> Remove
-                </button>` : ''}
-            </div>
-            <div class="form-grid" style="margin-top: 15px; margin-bottom: 15px">
-                <div class="form-group">
-                    <label>Contact Person Name</label>
-                    <input type="text" name="emergencyContactName_${emergencyContactCount}" class="form-control"  placeholder="Enter Contact Person Name">
-                    
-                </div>
-                
-                <div class="form-group">
-                    <label>Relationship</label>
-                    <input type="text" name="emergencyRelationship_${emergencyContactCount}" class="form-control"  placeholder="Enter Relationship">
-
-                </div>
-                
-                <div class="form-group">
-                    <label>Contact Number</label>
-                    <input type="tel" name="emergencyContactNumber_${emergencyContactCount}" class="form-control" placeholder="+63 XXX XXX XXXX">
-                </div>
-                
-                <div class="form-group">
-                    <label>Address</label>
-                    <input type="text" name="emergencyAddress_${emergencyContactCount}" class="form-control" placeholder="Enter Address">
-                </div>
-            </div>
-        </div>
-    `;
+    // Limit to 12 digits (excluding dashes)
+    if (value.length > 12) value = value.substring(0, 12);
     
-    container.insertAdjacentHTML('beforeend', contactHtml);
+    // Format: 1234-5678-9012
+    if (value.length > 8) {
+        value = value.substring(0, 4) + '-' + value.substring(4, 8) + '-' + value.substring(8);
+    } else if (value.length > 4) {
+        value = value.substring(0, 4) + '-' + value.substring(4);
+    }
     
-    // Apply phone number formatting to the newly added contact number field
-    const newContactNumberInput = document.querySelector(`input[name="emergencyContactNumber_${emergencyContactCount}"]`);
-    applyPhoneNumberFormatting(newContactNumberInput);
+    input.value = value;
 }
 
-// ============================================
-// Remove Emergency Contact
-// ============================================
-function removeEmergencyContact(index) {
-    const contactItem = document.querySelector(`.emergency-contact-item[data-contact-index="${index}"]`);
-    if (contactItem) {
-        contactItem.remove();
+function initializeIdFormatting() {
+    const fourpsIdInput = document.getElementById('fourpsId');
+    if (fourpsIdInput) {
+        fourpsIdInput.addEventListener('input', function() {
+            formatFourPsId(this);
+        });
+    }
+
+    const philhealthIdInput = document.getElementById('philhealthId');
+    if (philhealthIdInput) {
+        philhealthIdInput.addEventListener('input', function() {
+            formatPhilhealthId(this);
+        });
     }
 }
 
@@ -563,8 +460,6 @@ function populateReviewModal() {
     personalHtml += `<div class="review-item"><span class="review-label">Name:</span><span class="review-value">${formData.get('firstName')} ${formData.get('middleName')} ${formData.get('lastName')} ${formData.get('suffix')}</span></div>`;
     personalHtml += `<div class="review-item"><span class="review-label">Sex:</span><span class="review-value">${formData.get('sex')}</span></div>`;
     personalHtml += `<div class="review-item"><span class="review-label">Date of Birth:</span><span class="review-value">${formData.get('dateOfBirth')}</span></div>`;
-    personalHtml += `<div class="review-item"><span class="review-label">Verification Status:</span><span class="review-value">${formData.get('verificationStatus')}</span></div>`;
-    personalHtml += `<div class="review-item"><span class="review-label">Activity Status:</span><span class="review-value">${formData.get('activityStatus')}</span></div>`;
     personalHtml += '</div>';
     document.getElementById('reviewPersonalInfo').innerHTML = personalHtml;
     

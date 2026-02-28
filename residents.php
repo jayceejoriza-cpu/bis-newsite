@@ -184,7 +184,6 @@ try {
             <!-- Filter Tabs -->
             <div class="filter-tabs">
                 <button class="tab-btn active" data-filter="all">All</button>
-                <button class="tab-btn" data-filter="verified">Verified</button>
                 <button class="tab-btn" data-filter="voters">Voters</button>
                 <button class="tab-btn" data-filter="active">Active</button>
             </div>
@@ -341,7 +340,6 @@ try {
                                     Full Name
                                 </span>
                             </th>
-                            <th>Verification Status</th>
                             <th>Voter Status</th>
                             <th>Date of Birth</th>
                             <th>Sex</th>
@@ -399,11 +397,6 @@ try {
                                     </a>
                                 </td>
                                 
-                                <td>
-                                    <span class="badge <?php echo htmlspecialchars($verificationBadge); ?>">
-                                        <?php echo htmlspecialchars($resident['verification_status']); ?>
-                                    </span>
-                                </td>
                                 <td>
                                     <span class="badge <?php echo htmlspecialchars($voterBadge); ?>">
                                         <?php echo htmlspecialchars($resident['voter_status'] ?: 'No'); ?>
