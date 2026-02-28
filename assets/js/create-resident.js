@@ -31,118 +31,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialize phone number formatting
     initializePhoneNumberFormatting();
     
+    // Initialize navigation guard
+    initializeNavigationGuard();
+    
     console.log('Create Resident page loaded successfully');
 });
-
-// ===================================
-// Save and Restore Step & Form Data
-// ===================================
-function restoreSavedStep() {
-    const savedStep = localStorage.getItem('createResidentCurrentStep');
-    if (savedStep) {
-        const stepNumber = parseInt(savedStep);
-        if (stepNumber >= 1 && stepNumber <= totalSteps) {
-            currentStep = stepNumber;
-            updateStep();
-            console.log(`Restored to step ${currentStep}`);
-        }
-    }
-    
-    // Restore form data
-    restoreFormData();
-}
-
-function saveCurrentStep() {
-    localStorage.setItem('createResidentCurrentStep', currentStep.toString());
-    // Also save form data whenever step changes
-    saveFormData();
-}
-
-function clearSavedStep() {
-    localStorage.removeItem('createResidentCurrentStep');
-    clearFormData();
-}
-
-function saveFormData() {
-    const form = document.getElementById('createResidentForm');
-    if (!form) return;
-    
-    const formData = {};
-    
-    // Get all input, select, and textarea elements
-    const inputs = form.querySelectorAll('input, select, textarea');
-    
-    inputs.forEach(input => {
-        if (input.name && input.type !== 'file') { // Skip file inputs
-            if (input.type === 'checkbox') {
-                formData[input.name] = input.checked;
-            } else if (input.type === 'radio') {
-                if (input.checked) {
-                    formData[input.name] = input.value;
-                }
-            } else {
-                formData[input.name] = input.value;
-            }
-        }
-    });
-    
-    // Save to localStorage
-    localStorage.setItem('createResidentFormData', JSON.stringify(formData));
-    console.log('Form data saved');
-}
-
-function restoreFormData() {
-    const savedData = localStorage.getItem('createResidentFormData');
-    if (!savedData) return;
-    
-    try {
-        const formData = JSON.parse(savedData);
-        const form = document.getElementById('createResidentForm');
-        if (!form) return;
-        
-        // Restore all saved values
-        Object.keys(formData).forEach(name => {
-            const elements = form.querySelectorAll(`[name="${name}"]`);
-            
-            elements.forEach(element => {
-                if (element.type === 'checkbox') {
-                    element.checked = formData[name];
-                } else if (element.type === 'radio') {
-                    if (element.value === formData[name]) {
-                        element.checked = true;
-                    }
-                } else {
-                    element.value = formData[name];
-                }
-            });
-        });
-        
-        console.log('Form data restored');
-    } catch (error) {
-        console.error('Error restoring form data:', error);
-    }
-}
-
-function clearFormData() {
-    localStorage.removeItem('createResidentFormData');
-    console.log('Form data cleared');
-}
-
-// Auto-save form data on input change
-function initializeAutoSave() {
-    const form = document.getElementById('createResidentForm');
-    if (!form) return;
-    
-    // Save data whenever any input changes
-    form.addEventListener('input', () => {
-        saveFormData();
-    });
-    
-    // Also save on change event (for selects)
-    form.addEventListener('change', () => {
-        saveFormData();
-    });
-}
 
 // ===================================
 // Navigation
@@ -1741,3 +1634,199 @@ style.textContent = `
     }
 `;
 document.head.appendChild(style);
+
+// ===================================
+// Save and Restore Step & Form Data
+// ===================================
+function restoreSavedStep() {
+    const savedStep = localStorage.getItem('createResidentCurrentStep');
+    if (savedStep) {
+        const stepNumber = parseInt(savedStep);
+        if (stepNumber >= 1 && stepNumber <= totalSteps) {
+            currentStep = stepNumber;
+            updateStep();
+            console.log(`Restored to step ${currentStep}`);
+        }
+    }
+    
+    // Restore form data
+    restoreFormData();
+}
+
+function saveCurrentStep() {
+    localStorage.setItem('createResidentCurrentStep', currentStep.toString());
+    // Also save form data whenever step changes
+    saveFormData();
+}
+
+function clearSavedStep() {
+    localStorage.removeItem('createResidentCurrentStep');
+    clearFormData();
+}
+
+function saveFormData() {
+    const form = document.getElementById('createResidentForm');
+    if (!form) return;
+    
+    const formData = {};
+    
+    // Get all input, select, and textarea elements
+    const inputs = form.querySelectorAll('input, select, textarea');
+    
+    inputs.forEach(input => {
+        if (input.name && input.type !== 'file') { // Skip file inputs
+            if (input.type === 'checkbox') {
+                formData[input.name] = input.checked;
+            } else if (input.type === 'radio') {
+                if (input.checked) {
+                    formData[input.name] = input.value;
+                }
+            } else {
+                formData[input.name] = input.value;
+            }
+        }
+    });
+    
+    // Save to localStorage
+    localStorage.setItem('createResidentFormData', JSON.stringify(formData));
+    console.log('Form data saved');
+}
+
+function restoreFormData() {
+    const savedData = localStorage.getItem('createResidentFormData');
+    if (!savedData) return;
+    
+    try {
+        const formData = JSON.parse(savedData);
+        const form = document.getElementById('createResidentForm');
+        if (!form) return;
+        
+        // Restore all saved values
+        Object.keys(formData).forEach(name => {
+            const elements = form.querySelectorAll(`[name="${name}"]`);
+            
+            elements.forEach(element => {
+                if (element.type === 'checkbox') {
+                    element.checked = formData[name];
+                } else if (element.type === 'radio') {
+                    if (element.value === formData[name]) {
+                        element.checked = true;
+                    }
+                } else {
+                    element.value = formData[name];
+                }
+            });
+        });
+        
+        console.log('Form data restored');
+    } catch (error) {
+        console.error('Error restoring form data:', error);
+    }
+}
+
+function clearFormData() {
+    localStorage.removeItem('createResidentFormData');
+    console.log('Form data cleared');
+}
+
+// Auto-save form data on input change
+function initializeAutoSave() {
+    const form = document.getElementById('createResidentForm');
+    if (!form) return;
+    
+    // Save data whenever any input changes
+    form.addEventListener('input', () => {
+        saveFormData();
+    });
+    
+    // Also save on change event (for selects)
+    form.addEventListener('change', () => {
+        saveFormData();
+    });
+}
+
+// ===================================
+// Navigation Guard
+// ===================================
+function initializeNavigationGuard() {
+    // 1. Handle Browser Back Button
+    // Push a dummy state so we can intercept the back button
+    if (window.history && window.history.pushState) {
+        // Prevent pushing duplicate state on refresh
+        if (window.history.state !== 'resident_form_guard') {
+            window.history.pushState('resident_form_guard', null, window.location.href);
+        }
+        
+        window.addEventListener('popstate', function(e) {
+            // Check if form has data
+            if (hasSavedData()) {
+                // Custom confirmation
+                if (confirm('Do you want to cancel your resident input? All entered data will be cleared.')) {
+                    clearSavedStep(); // Clear storage
+                    // Go back again to actually leave the page
+                    setTimeout(() => {
+                        window.history.back();
+                    }, 10);
+                } else {
+                    // User wants to stay, push state back to trap navigation again
+                    window.history.pushState('forward', null, window.location.href);
+                    window.history.pushState('resident_form_guard', null, window.location.href);
+                }
+            } else {
+                // No data, just go back
+                window.history.back();
+                setTimeout(() => {
+                    window.history.back();
+                }, 10);
+            }
+        });
+    }
+
+    // 2. Handle internal links (sidebar, back button, etc.)
+    document.addEventListener('click', function(e) {
+        const link = e.target.closest('a');
+        
+        // If clicked on a link that navigates away
+        if (link && link.href && !link.href.startsWith('javascript') && link.getAttribute('href') !== '#' && !link.hasAttribute('download') && !link.target) {
+            
+            // Check if form has data
+            if (hasSavedData()) {
+                // Check if the link is just a hash change or same page
+                const currentUrl = window.location.href.split('#')[0];
+                const targetUrl = link.href.split('#')[0];
+                
+                if (currentUrl !== targetUrl) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    // Custom confirmation
+                    if (confirm('Do you want to cancel your resident input? All entered data will be cleared.')) {
+                        clearSavedStep(); // Clear storage
+                        window.location.href = link.href; // Proceed
+                    }
+                }
+            }
+        }
+    });
+    
+    // 3. Handle Page Refresh / Close Tab
+    window.addEventListener('beforeunload', function(e) {
+        if (hasSavedData()) {
+            e.preventDefault();
+            e.returnValue = 'You have unsaved changes. Are you sure you want to leave?';
+            return 'You have unsaved changes. Are you sure you want to leave?';
+        }
+    });
+}
+
+function hasSavedData() {
+    const savedData = localStorage.getItem('createResidentFormData');
+    if (!savedData) return false;
+    try {
+        const parsed = JSON.parse(savedData);
+        // Check if any value is not empty/false/null
+        return Object.values(parsed).some(val => val !== '' && val !== false && val !== null);
+    } catch (e) {
+        return false;
+    }
+}
