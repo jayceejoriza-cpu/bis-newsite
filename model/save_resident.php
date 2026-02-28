@@ -145,7 +145,18 @@ try {
     // Contact Information
     $mobileNumber = $conn->real_escape_string(trim($_POST['mobileNumber'] ?? ''));
     $email = $conn->real_escape_string(trim($_POST['email'] ?? ''));
-    $currentAddress = $conn->real_escape_string(trim($_POST['currentAddress'] ?? ''));
+    
+    // Construct address from individual fields if present
+    if (isset($_POST['houseNo']) || isset($_POST['purok']) || isset($_POST['streetName'])) {
+        $houseNo = trim($_POST['houseNo'] ?? '');
+        $purok = trim($_POST['purok'] ?? '');
+        $streetName = trim($_POST['streetName'] ?? '');
+        
+        $addressParts = array_filter([$houseNo ? "House No. $houseNo" : "", $purok ? "Purok $purok" : "", $streetName]);
+        $currentAddress = $conn->real_escape_string(implode(', ', $addressParts));
+    } else {
+        $currentAddress = $conn->real_escape_string(trim($_POST['currentAddress'] ?? ''));
+    }
     
     // Family Information
     $civilStatus = $conn->real_escape_string($_POST['civilStatus'] ?? '');
@@ -484,27 +495,76 @@ try {
     }
 
     // ============================================
-    // Insert Emergency Contacts
+    // Handle Household Information
     // ============================================
-    
-    $contactIndex = 1;
-    while (isset($_POST["emergencyContactName_$contactIndex"])) {
-        $contactName = $conn->real_escape_string(trim($_POST["emergencyContactName_$contactIndex"]));
-        $relationship = $conn->real_escape_string(trim($_POST["emergencyRelationship_$contactIndex"]));
-        $contactNumber = $conn->real_escape_string(trim($_POST["emergencyContactNumber_$contactIndex"]));
-        $contactAddress = $conn->real_escape_string(trim($_POST["emergencyAddress_$contactIndex"] ?? ''));
-        
-        if (!empty($contactName) && !empty($relationship) && !empty($contactNumber)) {
-            $sql = "INSERT INTO emergency_contacts (resident_id, contact_name, relationship, contact_number, address, priority) 
-                    VALUES ($residentId, '$contactName', '$relationship', '$contactNumber', " . 
-                    ($contactAddress ? "'$contactAddress'" : "NULL") . ", $contactIndex)";
-            
-            if (!$conn->query($sql)) {
-                throw new Exception('Failed to save emergency contact: ' . $conn->error);
+
+    $householdHeadValue = trim($_POST['householdHeadValue'] ?? '');
+
+    if ($householdHeadValue === 'Yes') {
+        // Resident is a household head — create a new household
+        $householdNumber   = $conn->real_escape_string(trim($_POST['householdNumber'] ?? ''));
+        $householdContact  = $conn->real_escape_string(trim($_POST['householdContact'] ?? ''));
+        $householdAddress  = $conn->real_escape_string(trim($_POST['householdAddress'] ?? ''));
+        $waterSourceType   = $conn->real_escape_string(trim($_POST['waterSourceType'] ?? ''));
+        $toiletFacilityType = $conn->real_escape_string(trim($_POST['toiletFacilityType'] ?? ''));
+
+        if (!empty($householdNumber)) {
+            // Check if household number already exists
+            $checkHHSql = "SELECT id FROM households WHERE household_number = '$householdNumber'";
+            $checkHHResult = $conn->query($checkHHSql);
+            if ($checkHHResult && $checkHHResult->num_rows > 0) {
+                throw new Exception("Household number '$householdNumber' already exists. Please use a different number.");
+            }
+
+            $hhSql = "INSERT INTO households (
+                household_number,
+                household_head_id,
+                household_contact,
+                address,
+                water_source_type,
+                toilet_facility_type,
+                created_at
+            ) VALUES (
+                '$householdNumber',
+                $residentId,
+                " . ($householdContact ? "'$householdContact'" : "NULL") . ",
+                " . ($householdAddress ? "'$householdAddress'" : "''") . ",
+                " . ($waterSourceType ? "'$waterSourceType'" : "NULL") . ",
+                " . ($toiletFacilityType ? "'$toiletFacilityType'" : "NULL") . ",
+                NOW()
+            )";
+
+            if (!$conn->query($hhSql)) {
+                throw new Exception('Failed to create household: ' . $conn->error);
             }
         }
-        
-        $contactIndex++;
+
+    } elseif ($householdHeadValue === 'No') {
+        // Resident is a member — add to existing household
+        $selectedHouseholdId = intval($_POST['selectedHouseholdId'] ?? 0);
+
+        if ($selectedHouseholdId > 0) {
+            // Verify household exists
+            $checkHHSql = "SELECT id FROM households WHERE id = $selectedHouseholdId";
+            $checkHHResult = $conn->query($checkHHSql);
+            if (!$checkHHResult || $checkHHResult->num_rows === 0) {
+                throw new Exception('Selected household does not exist.');
+            }
+
+            // Get relationship to head
+            $householdRelationship = $conn->real_escape_string(trim($_POST['householdRelationship'] ?? ''));
+
+            // Check resident is not already a member
+            $checkMemberSql = "SELECT id FROM household_members WHERE household_id = $selectedHouseholdId AND resident_id = $residentId";
+            $checkMemberResult = $conn->query($checkMemberSql);
+            if (!$checkMemberResult || $checkMemberResult->num_rows === 0) {
+                $memberSql = "INSERT INTO household_members (household_id, resident_id, relationship_to_head, is_head)
+                              VALUES ($selectedHouseholdId, $residentId, " . ($householdRelationship ? "'$householdRelationship'" : "NULL") . ", 0)";
+                if (!$conn->query($memberSql)) {
+                    throw new Exception('Failed to add resident to household: ' . $conn->error);
+                }
+            }
+        }
     }
 
     // Log Activity

@@ -25,8 +25,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialize auto-save functionality
     initializeAutoSave();
     
-    // Initialize emergency contacts functionality
-    initializeEmergencyContacts();
+    // Initialize household info functionality
+    initializeHouseholdInfo();
     
     // Initialize phone number formatting
     initializePhoneNumberFormatting();
@@ -778,163 +778,269 @@ function initializePhoneNumberFormatting() {
     // Apply to mobile number field
     const mobileNumberInput = document.getElementById('mobileNumber');
     applyPhoneNumberFormatting(mobileNumberInput);
-    
-    // Apply to existing emergency contact number fields
-    document.querySelectorAll('input[name^="emergencyContactNumber_"]').forEach(input => {
-        applyPhoneNumberFormatting(input);
-    });
 }
 
 // ===================================
-// Emergency Contacts Management
+// Household Information Management
 // ===================================
-let contactCount = 1;
-const MAX_CONTACTS = 3;
 
-function initializeEmergencyContacts() {
-    const addContactBtn = document.getElementById('addContactBtn');
-    
-    if (addContactBtn) {
-        addContactBtn.addEventListener('click', addEmergencyContact);
-    }
-}
+// Store selected household data for review modal
+let selectedHouseholdData = null;
 
-function addEmergencyContact() {
-    if (contactCount >= MAX_CONTACTS) {
-        showNotification(`Maximum of ${MAX_CONTACTS} emergency contacts allowed`, 'warning');
-        return;
-    }
-    
-    contactCount++;
-    const container = document.getElementById('emergencyContactsContainer');
-    
-    const contactHTML = `
-        <div class="emergency-contact-item" data-contact-index="${contactCount}">
-            <div class="contact-item-header">
-                <h6 style="margin: 0; color: var(--text-primary); font-size: 16px; font-weight: 600;">
-                    <i class="fas fa-user-circle"></i> Contact Person ${contactCount}
-                </h6>
-                <button type="button" class="btn-remove-contact" onclick="removeEmergencyContact(${contactCount})">
-                    <i class="fas fa-trash"></i>
-                    Remove
-                </button>
-            </div>
-            <div class="form-grid" style="margin-top: 15px;">
-                <div class="form-group">
-                    <label>Contact Person Name <span class="required">*</span></label>
-                    <input type="text" name="emergencyContactName_${contactCount}" class="form-control" required placeholder="Enter Contact Person Name">
-                    <small class="form-hint">Contact person name is required</small>
-                </div>
-                
-                <div class="form-group">
-                    <label>Relationship <span class="required">*</span></label>
-                    <input type="text" name="emergencyRelationship_${contactCount}" class="form-control" required placeholder="Enter Relationship">
-                    <small class="form-hint">Relationship is required</small>
-                </div>
-                
-                <div class="form-group">
-                    <label>Contact Number <span class="required">*</span></label>
-                    <input type="tel" name="emergencyContactNumber_${contactCount}" class="form-control" required placeholder="+63 XXX XXX XXXX">
-                    <small class="form-hint">Contact number is required</small>
-                </div>
-                
-                <div class="form-group">
-                    <label>Address</label>
-                    <input type="text" name="emergencyAddress_${contactCount}" class="form-control" placeholder="Enter Address">
-                </div>
-            </div>
-        </div>
-    `;
-    
-    container.insertAdjacentHTML('beforeend', contactHTML);
-    
-    // Apply phone number formatting to the newly added contact number field
-    const newContactNumberInput = document.querySelector(`input[name="emergencyContactNumber_${contactCount}"]`);
-    applyPhoneNumberFormatting(newContactNumberInput);
-    
-    // Update button state
-    updateAddContactButton();
-    
-    // Save form data
-    saveFormData();
-    
-    showNotification(`Contact Person ${contactCount} added successfully`, 'success');
-}
+function initializeHouseholdInfo() {
+    const yesRadio = document.getElementById('householdHeadYes');
+    const noRadio = document.getElementById('householdHeadNo');
+    const searchBtn = document.getElementById('searchHouseholdBtn');
+    const clearBtn = document.getElementById('clearHouseholdBtn');
+    const householdSearch = document.getElementById('householdSearch');
 
-function removeEmergencyContact(index) {
-    const contactItem = document.querySelector(`.emergency-contact-item[data-contact-index="${index}"]`);
-    
-    if (contactItem) {
-        // Add fade out animation
-        contactItem.style.animation = 'fadeOut 0.3s ease';
-        
-        setTimeout(() => {
-            contactItem.remove();
-            contactCount--;
-            
-            // Renumber remaining contacts
-            renumberContacts();
-            
-            // Update button state
-            updateAddContactButton();
-            
-            // Save form data
-            saveFormData();
-            
-            showNotification('Contact removed successfully', 'info');
-        }, 300);
-    }
-}
-
-function renumberContacts() {
-    const contacts = document.querySelectorAll('.emergency-contact-item');
-    contactCount = 0;
-    
-    contacts.forEach((contact, index) => {
-        contactCount++;
-        const newIndex = index + 1;
-        
-        // Update data attribute
-        contact.setAttribute('data-contact-index', newIndex);
-        
-        // Update header
-        const header = contact.querySelector('.contact-item-header h6');
-        if (header) {
-            header.innerHTML = `<i class="fas fa-user-circle"></i> Contact Person ${newIndex}`;
-        }
-        
-        // Update remove button
-        const removeBtn = contact.querySelector('.btn-remove-contact');
-        if (removeBtn) {
-            removeBtn.setAttribute('onclick', `removeEmergencyContact(${newIndex})`);
-        }
-        
-        // Update input names
-        const inputs = contact.querySelectorAll('input');
-        inputs.forEach(input => {
-            const name = input.getAttribute('name');
-            if (name) {
-                const baseName = name.replace(/_\d+$/, '');
-                input.setAttribute('name', `${baseName}_${newIndex}`);
+    // Toggle panels on radio change
+    if (yesRadio) {
+        yesRadio.addEventListener('change', function () {
+            if (this.checked) {
+                document.getElementById('householdYesPanel').style.display = 'block';
+                document.getElementById('householdNoPanel').style.display = 'none';
+                document.getElementById('householdHeadValue').value = 'Yes';
+                // Auto-fill contact and address from Step 2
+                autoFillHouseholdContact();
+                autoFillHouseholdAddress();
+                saveFormData();
             }
         });
+    }
+
+    if (noRadio) {
+        noRadio.addEventListener('change', function () {
+            if (this.checked) {
+                document.getElementById('householdYesPanel').style.display = 'none';
+                document.getElementById('householdNoPanel').style.display = 'block';
+                document.getElementById('householdHeadValue').value = 'No';
+                saveFormData();
+            }
+        });
+    }
+
+    // Also auto-fill when mobileNumber or address fields change (in case user goes back)
+    const mobileInput = document.getElementById('mobileNumber');
+    if (mobileInput) {
+        mobileInput.addEventListener('input', function () {
+            if (document.getElementById('householdHeadYes') && document.getElementById('householdHeadYes').checked) {
+                autoFillHouseholdContact();
+            }
+        });
+    }
+
+    ['houseNo', 'purok', 'streetName'].forEach(fieldId => {
+        const field = document.getElementById(fieldId);
+        if (field) {
+            field.addEventListener('input', function () {
+                if (document.getElementById('householdHeadYes') && document.getElementById('householdHeadYes').checked) {
+                    autoFillHouseholdAddress();
+                }
+            });
+            field.addEventListener('change', function () {
+                if (document.getElementById('householdHeadYes') && document.getElementById('householdHeadYes').checked) {
+                    autoFillHouseholdAddress();
+                }
+            });
+        }
     });
+
+    // Search button
+    if (searchBtn) {
+        searchBtn.addEventListener('click', searchHouseholds);
+    }
+
+    // Search on Enter key
+    if (householdSearch) {
+        householdSearch.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                searchHouseholds();
+            }
+        });
+    }
+
+    // Clear selected household
+    if (clearBtn) {
+        clearBtn.addEventListener('click', clearSelectedHousehold);
+    }
 }
 
-function updateAddContactButton() {
-    const addContactBtn = document.getElementById('addContactBtn');
-    
-    if (addContactBtn) {
-        if (contactCount >= MAX_CONTACTS) {
-            addContactBtn.disabled = true;
-            addContactBtn.style.opacity = '0.5';
-            addContactBtn.style.cursor = 'not-allowed';
-        } else {
-            addContactBtn.disabled = false;
-            addContactBtn.style.opacity = '1';
-            addContactBtn.style.cursor = 'pointer';
+function autoFillHouseholdContact() {
+    const mobileInput = document.getElementById('mobileNumber');
+    const householdContact = document.getElementById('householdContact');
+    if (mobileInput && householdContact) {
+        householdContact.value = mobileInput.value;
+    }
+}
+
+function autoFillHouseholdAddress() {
+    const houseNo = document.getElementById('houseNo') ? document.getElementById('houseNo').value.trim() : '';
+    const purok = document.getElementById('purok') ? document.getElementById('purok').value.trim() : '';
+    const streetName = document.getElementById('streetName') ? document.getElementById('streetName').value.trim() : '';
+
+    const parts = [];
+    if (houseNo) parts.push('House No. ' + houseNo);
+    if (purok) parts.push('Purok ' + purok);
+    if (streetName) parts.push(streetName);
+
+    const householdAddress = document.getElementById('householdAddress');
+    if (householdAddress) {
+        householdAddress.value = parts.join(', ');
+    }
+}
+
+// Store search results for safe onclick reference
+let _householdSearchResults = [];
+
+function searchHouseholds() {
+    const searchInput = document.getElementById('householdSearch');
+    const resultsContainer = document.getElementById('householdSearchResults');
+    const resultsList = document.getElementById('householdResultsList');
+    const searchBtn = document.getElementById('searchHouseholdBtn');
+
+    if (!searchInput || !resultsContainer || !resultsList) return;
+
+    const query = searchInput.value.trim();
+
+    // Show loading state
+    searchBtn.disabled = true;
+    searchBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Searching...';
+
+    fetch(`search_households_for_resident.php?search=${encodeURIComponent(query)}`)
+        .then(response => response.json())
+        .then(data => {
+            searchBtn.disabled = false;
+            searchBtn.innerHTML = '<i class="fas fa-search"></i> Search';
+
+            resultsContainer.style.display = 'block';
+
+            if (!data.success || data.data.length === 0) {
+                resultsList.innerHTML = `
+                    <div style="text-align: center; padding: 20px; color: var(--text-secondary, #64748b);">
+                        <i class="fas fa-search" style="font-size: 24px; margin-bottom: 8px; display: block;"></i>
+                        No households found. Try a different search term.
+                    </div>`;
+                return;
+            }
+
+            // Store results in module-level variable to avoid JSON-in-onclick issues
+            _householdSearchResults = data.data;
+
+            let html = `<p style="font-size: 13px; color: var(--text-secondary, #64748b); margin-bottom: 10px;">
+                Found ${data.count} household(s). Click to select:</p>`;
+
+            data.data.forEach((hh, index) => {
+                html += `
+                    <div class="household-result-item" 
+                         onclick="selectHousehold(_householdSearchResults[${index}])"
+                         style="background: #fff; border: 1px solid var(--border-color, #e2e8f0); border-radius: 8px; 
+                                padding: 12px 15px; margin-bottom: 8px; cursor: pointer; transition: all 0.2s;"
+                         onmouseover="this.style.borderColor='var(--primary-color, #3b82f6)'; this.style.background='#f0f9ff';"
+                         onmouseout="this.style.borderColor='var(--border-color, #e2e8f0)'; this.style.background='#fff';">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <strong style="color: var(--primary-color, #3b82f6);">${hh.household_number}</strong>
+                                <span style="margin-left: 10px; color: var(--text-primary, #1e293b); font-weight: 500;">${hh.head_name || 'N/A'}</span>
+                            </div>
+                            <span style="font-size: 12px; color: var(--text-secondary, #64748b);">
+                                ${hh.member_count} member(s)
+                            </span>
+                        </div>
+                        <div style="font-size: 13px; color: var(--text-secondary, #64748b); margin-top: 4px;">
+                            <i class="fas fa-map-marker-alt"></i> ${hh.address || 'No address'}
+                            ${hh.household_contact ? `&nbsp;&nbsp;<i class="fas fa-phone"></i> ${hh.household_contact}` : ''}
+                        </div>
+                    </div>`;
+            });
+
+            resultsList.innerHTML = html;
+        })
+        .catch(error => {
+            searchBtn.disabled = false;
+            searchBtn.innerHTML = '<i class="fas fa-search"></i> Search';
+            resultsContainer.style.display = 'block';
+            resultsList.innerHTML = `<div style="color: #ef4444; padding: 10px;">Error searching households. Please try again.</div>`;
+            console.error('Search error:', error);
+        });
+}
+
+function selectHousehold(hh) {
+    selectedHouseholdData = hh;
+
+    // Set hidden input
+    const hiddenInput = document.getElementById('selectedHouseholdId');
+    if (hiddenInput) hiddenInput.value = hh.id;
+
+    // Hide search results
+    const resultsContainer = document.getElementById('householdSearchResults');
+    if (resultsContainer) resultsContainer.style.display = 'none';
+
+    // Show selected card
+    const selectedCard = document.getElementById('selectedHouseholdCard');
+    const selectedInfo = document.getElementById('selectedHouseholdInfo');
+
+    if (selectedCard && selectedInfo) {
+        selectedInfo.innerHTML = `
+            <div class="form-group">
+                <label style="font-size: 12px; color: var(--text-secondary, #64748b); margin-bottom: 4px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px;">Household Number</label>
+                <div style="font-weight: 700; color: var(--primary-color, #3b82f6); font-size: 15px;">${hh.household_number}</div>
+            </div>
+            <div class="form-group">
+                <label style="font-size: 12px; color: var(--text-secondary, #64748b); margin-bottom: 4px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px;">Household Head</label>
+                <div style="font-weight: 600; font-size: 14px;">${hh.head_name || 'N/A'}</div>
+            </div>
+            <div class="form-group full-width">
+                <label style="font-size: 12px; color: var(--text-secondary, #64748b); margin-bottom: 4px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px;">Address</label>
+                <div style="font-size: 13px;">${hh.address || 'N/A'}</div>
+            </div>
+            <div class="form-group full-width" style="margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border-color, #e2e8f0);">
+                <label for="relationshipToHead" style="font-size: 13px; font-weight: 600; margin-bottom: 6px; display: block;">
+                    Relationship to Household Head <span style="color: #ef4444;">*</span>
+                </label>
+                <input type="text" 
+                       id="relationshipToHead" 
+                       class="form-control" 
+                       placeholder="e.g. Son, Daughter, Spouse, Sibling..."
+                       oninput="document.getElementById('householdRelationship').value = this.value; saveFormData();"
+                       style="max-width: 400px;">
+                <small style="color: var(--text-secondary, #64748b); font-size: 12px; margin-top: 4px; display: block;">
+                    Enter your relationship to the household head
+                </small>
+            </div>
+        `;
+        selectedCard.style.display = 'block';
+
+        // Restore relationship value if previously saved
+        const savedRelationship = document.getElementById('householdRelationship');
+        if (savedRelationship && savedRelationship.value) {
+            const relInput = document.getElementById('relationshipToHead');
+            if (relInput) relInput.value = savedRelationship.value;
         }
     }
+
+    saveFormData();
+    showNotification(`Household ${hh.household_number} selected`, 'success');
+}
+
+function clearSelectedHousehold() {
+    selectedHouseholdData = null;
+
+    const hiddenInput = document.getElementById('selectedHouseholdId');
+    if (hiddenInput) hiddenInput.value = '';
+
+    const selectedCard = document.getElementById('selectedHouseholdCard');
+    if (selectedCard) selectedCard.style.display = 'none';
+
+    const searchInput = document.getElementById('householdSearch');
+    if (searchInput) searchInput.value = '';
+
+    const resultsContainer = document.getElementById('householdSearchResults');
+    if (resultsContainer) resultsContainer.style.display = 'none';
+
+    saveFormData();
+    showNotification('Household selection cleared', 'info');
 }
 
 // ===================================
@@ -1413,7 +1519,15 @@ function populateReviewModal() {
     let contactInfoHTML = '<div class="review-fields-grid">';
     contactInfoHTML += createField('Mobile Number', getValue('mobileNumber'));
     contactInfoHTML += createField('Email Address', getValue('email'));
-    contactInfoHTML += createField('Complete Address', getValue('currentAddress'));
+    
+    // Construct address for review
+    const houseNo = getValue('houseNo');
+    const purok = getValue('purok');
+    const streetName = getValue('streetName');
+    const addressParts = [houseNo ? `House No. ${houseNo}` : '', purok ? `Purok ${purok}` : '', streetName].filter(Boolean);
+    const fullAddress = addressParts.join(', ');
+
+    contactInfoHTML += createField('Complete Address', fullAddress);
     contactInfoHTML += '</div>';
     
     document.getElementById('reviewContactInfo').innerHTML = contactInfoHTML;
@@ -1429,38 +1543,36 @@ function populateReviewModal() {
     
     document.getElementById('reviewFamilyInfo').innerHTML = familyInfoHTML;
     
-    // 4. Emergency Contacts
-    let emergencyHTML = '';
-    const emergencyContacts = document.querySelectorAll('.emergency-contact-item');
-    
-    emergencyContacts.forEach((contact, index) => {
-        const contactIndex = index + 1;
-        const name = getValue(`emergencyContactName_${contactIndex}`);
-        const relationship = getValue(`emergencyRelationship_${contactIndex}`);
-        const number = getValue(`emergencyContactNumber_${contactIndex}`);
-        const address = getValue(`emergencyAddress_${contactIndex}`);
-        
-        if (name || relationship || number) {
-            emergencyHTML += `
-                <div class="review-emergency-contact">
-                    <h5><i class="fas fa-user-circle"></i> Contact Person ${contactIndex}</h5>
-                    <div class="review-fields-grid">
-                        ${createField('Name', name)}
-                        ${createField('Relationship', relationship)}
-                        ${createField('Contact Number', number)}
-                        ${createField('Address', address)}
-                    </div>
-                </div>
-            `;
+    // 4. Household Information
+    let householdHTML = '<div class="review-fields-grid">';
+    const householdHeadValue = getValue('householdHeadValue');
+    householdHTML += createField('Household Head?', householdHeadValue || 'Not specified');
+
+    if (householdHeadValue === 'Yes') {
+        householdHTML += createField('Household Number', getValue('householdNumber'));
+        householdHTML += createField('Household Contact', getValue('householdContact'));
+        householdHTML += createField('Household Address', getValue('householdAddress'));
+        householdHTML += createField('Water Source Type', getValue('waterSourceType'));
+        householdHTML += createField('Toilet Facility Type', getValue('toiletFacilityType'));
+    } else if (householdHeadValue === 'No' && selectedHouseholdData) {
+        householdHTML += createField('Selected Household', selectedHouseholdData.household_number);
+        householdHTML += createField('Household Head', selectedHouseholdData.head_name || 'N/A');
+        householdHTML += createField('Address', selectedHouseholdData.address || 'N/A');
+        householdHTML += createField('Contact', selectedHouseholdData.household_contact || 'N/A');
+        householdHTML += createField('Relationship to Head', getValue('householdRelationship'));
+        if (selectedHouseholdData.water_source_type) {
+            householdHTML += createField('Water Source', selectedHouseholdData.water_source_type);
         }
-    });
-    
-    if (!emergencyHTML) {
-        emergencyHTML = '<p class="review-no-data">No emergency contacts added</p>';
+        if (selectedHouseholdData.toilet_facility_type) {
+            householdHTML += createField('Toilet Facility', selectedHouseholdData.toilet_facility_type);
+        }
+    } else if (householdHeadValue === 'No') {
+        householdHTML += '<div class="review-field"><div class="review-field-value" style="color: #f59e0b;"><i class="fas fa-exclamation-triangle"></i> No household selected</div></div>';
     }
-    
-    document.getElementById('reviewEmergencyContact').innerHTML = emergencyHTML;
-    
+
+    householdHTML += '</div>';
+    document.getElementById('reviewHouseholdInfo').innerHTML = householdHTML;
+
     // 5. Education & Employment
     let educationHTML = '<div class="review-fields-grid">';
     educationHTML += createField('Educational Attainment', getValue('educationalAttainment'));

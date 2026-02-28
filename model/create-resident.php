@@ -125,9 +125,9 @@ $pageTitle = 'Create Resident';
                 <div class="step-line"></div>
                 <div class="step" data-step="4">
                     <div class="step-circle">
-                        <i class="fas fa-phone-alt"></i>
+                        <i class="fas fa-home"></i>
                     </div>
-                    <span class="step-label">Emergency Contact</span>
+                    <span class="step-label">Household Information</span>
                 </div>
                 <div class="step-line"></div>
                 <div class="step" data-step="5">
@@ -216,7 +216,6 @@ $pageTitle = 'Create Resident';
                                         <option value="">Select</option>
                                         <option value="Male">Male</option>
                                         <option value="Female">Female</option>
-                                        <option value="Other">Other</option>
                                     </select>
                                     <small class="form-hint">Sex is required</small>
                                 </div>
@@ -228,7 +227,27 @@ $pageTitle = 'Create Resident';
 
                                 <div class="form-group">
                                     <label for="religion">Religion<span class="required">*</span></label>
-                                    <input type="text" id="religion" name="religion" class="form-control" required>
+                                    <select type="form-control" id="religion" name="religion" class="form-control" required>
+                                         <option value="">Select Ethnicity</option>
+                                         <option value="Roman Catholic">Roman Catholic</option>
+                                         <option value="Christian">Christian</option>
+                                         <option value="Iglesia ni Cristo">Iglesia ni Cristo</option>
+                                         <option value="Catholic">Catholic</option>
+                                         <option value="Islam">Islam</option>
+                                         <option value="Baptist">Baptist</option>
+                                         <option value="Buddhism">Buddhism</option>
+                                         <option value="Born Again">Born Again</option>
+                                         <option value="Church of God">Church of God</option>
+                                         <option value="Jehovahs Witness">Jehovahs Witness</option>
+                                         <option value="Protestant">Protestant</option>
+                                         <option value="Seventh Day Adventist">Seventh Day Adventist</option>
+                                         <option value="LDS-Mormons">LDS-Mormons</option>
+                                         <option value="Envangelical">Envangelical</option>]
+                                         <option value="Pentecostal">Pentecostal</option>
+                                         <option value="Unknown">Unknown</option>
+                                         <option value="">Other (pls. Specify)</option>
+                                    </select>
+                                    <small class="form-hint">Religion is required</small>
                                 </div>
 
                                 <div class="form-group">
@@ -238,6 +257,7 @@ $pageTitle = 'Create Resident';
                                             <option value="IPS">IPS (Indigenous People)</option>
                                             <option value="Non-IPS">Non-IPS</option>
                                         </select>
+                                          <small class="form-hint">Ethnicity is required</small>
                                 </div>
 
                                  
@@ -265,9 +285,25 @@ $pageTitle = 'Create Resident';
                                     <input type="email" id="email" name="email" class="form-control" placeholder="example@email.com">
                                 </div>
                                 
-                                <div class="form-group full-width">
-                                    <label for="currentAddress">Current Address <span class="required">*</span></label>
-                                    <textarea id="currentAddress" name="currentAddress" class="form-control" rows="3" required></textarea>
+                                <div class="form-group">
+                                    <label for="houseNo">House No.</label>
+                                    <input type="text" id="houseNo" name="houseNo" class="form-control" placeholder="House No." >
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="purok">Purok <span class="required">*</span></label>
+                                    <select type="form-control" id="purok" name="purok" class="form-control" placeholder="Purok" required>
+                                        <option value="">Select</option>
+                                        <option value="1">1</option>
+                                        <option value="2">2</option>
+                                        <option value="3">3</option>  
+                                        <option value="4">4</option>
+                                    </select>       
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="streetName">Street Name</label>
+                                    <input type="text" id="streetName" name="streetName" class="form-control" placeholder="Street Name" >
                                 </div>
                                 
                                 
@@ -316,58 +352,139 @@ $pageTitle = 'Create Resident';
                         </div>
                     </div>
                     
-                    <!-- Step 4: Emergency Contact -->
+                    <!-- Step 4: Household Information -->
                     <div class="form-step" data-step="4">
                         <div class="form-content">
-                            <div class="emergency-contacts-header" style="margin-bottom: 15px">
-                                
-                                <button type="button" class="btn btn-primary btn-sm" id="addContactBtn">
-                                    <i class="fas fa-plus"></i>
-                                    Add Contact
-                                </button>
+
+                            <h5 style="margin: 0 0 15px 0; color: var(--primary-color);"><i class="fas fa-home"></i> Household Information</h5>
+                            <hr style="margin: 0 0 20px 0;">
+
+                            <!-- Household Head Question -->
+                            <div class="form-group" style="margin-bottom: 20px;">
+                                <label style="font-weight: 600; font-size: 15px;">Are you a Household Head? <span class="required">*</span></label>
+                                <div style="display: flex; gap: 20px; margin-top: 10px;">
+                                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-weight: 500;">
+                                        <input type="radio" name="householdHead" id="householdHeadYes" value="Yes" style="width: 18px; height: 18px; cursor: pointer;">
+                                        Yes
+                                    </label>
+                                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-weight: 500;">
+                                        <input type="radio" name="householdHead" id="householdHeadNo" value="No" style="width: 18px; height: 18px; cursor: pointer;">
+                                        No
+                                    </label>
+                                </div>
                             </div>
-                            
-                            
-                            <!-- Emergency Contacts Container -->
-                            <div id="emergencyContactsContainer">
-                                <!-- Contact 1 (Default) -->
-                                <div class="emergency-contact-item" data-contact-index="1">
-                                    <div class="contact-item-header">
-                                        <h6 style="margin: 0; color: var(--text-primary); font-size: 16px; font-weight: 600;">
-                                            <i class="fas fa-user-circle"></i> Contact Person 1
-                                        </h6>
-                                    </div>
-                                    <div class="form-grid" style="margin-top: 15px; margin-bottom: 15px">
+
+                            <!-- YES Panel: Create Household -->
+                            <div id="householdYesPanel" style="display: none;">
+                                <div style="background: var(--bg-secondary, #f8fafc); border: 1px solid var(--border-color, #e2e8f0); border-radius: 10px; padding: 20px; margin-bottom: 10px;">
+                                    <h6 style="margin: 0 0 15px 0; color: var(--primary-color); font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">
+                                        <i class="fas fa-plus-circle"></i> Create New Household
+                                    </h6>
+                                    <div class="form-grid">
                                         <div class="form-group">
-                                            <label>Contact Person Name</label>
-                                            <input type="text" name="emergencyContactName_1" class="form-control" placeholder="Enter Contact Person Name">
-                                          
+                                            <label for="householdNumber">Household Number <span class="required">*</span></label>
+                                            <input type="text" id="householdNumber" name="householdNumber" class="form-control" placeholder="e.g. HH-00001">
+                                            <small class="form-hint">Household number is required</small>
                                         </div>
-                                        
+
                                         <div class="form-group">
-                                            <label>Relationship</label>
-                                            <input type="text" name="emergencyRelationship_1" class="form-control" placeholder="Enter Relationship">
-                                           
-                                        </div>
-                                        
-                                        <div class="form-group">
-                                            <label>Contact Number </label>
+                                            <label for="householdContact">Household Contact</label>
                                             <div class="phone-input-group">
                                                 <span class="phone-prefix">
                                                     <img src="../assets/image/contactph.png" alt="PH" class="flag-icon">
                                                     +63
                                                 </span>
-                                                <input type="tel" name="emergencyContactNumber_1" class="form-control phone-input" placeholder="XXX XXX XXXX" pattern="[0-9 ]+" maxlength="12" oninput="let v=this.value.replace(/\D/g,'').substring(0,10);if(v.length>6)this.value=v.slice(0,3)+' '+v.slice(3,6)+' '+v.slice(6);else if(v.length>3)this.value=v.slice(0,3)+' '+v.slice(3);else this.value=v;">
+                                                <input type="tel" id="householdContact" name="householdContact" class="form-control phone-input" placeholder="Auto-filled from contact" readonly style="background-color: var(--bg-secondary, #f8fafc);">
                                             </div>
+                                            <small class="form-text text-muted">Auto-filled from your mobile number</small>
                                         </div>
-                                        
+
+                                        <div class="form-group full-width">
+                                            <label for="householdAddress">Household Address</label>
+                                            <input type="text" id="householdAddress" name="householdAddress" class="form-control" placeholder="Auto-filled from address" readonly style="background-color: var(--bg-secondary, #f8fafc);">
+                                            <small class="form-text text-muted">Auto-filled from your address information</small>
+                                        </div>
+
                                         <div class="form-group">
-                                            <label>Address</label>
-                                            <input type="text" name="emergencyAddress_1" class="form-control" placeholder="Enter Address">
+                                            <label for="waterSourceType">Water Source Type</label>
+                                            <select id="waterSourceType" name="waterSourceType" class="form-control">
+                                                <option value="">Select Water Source</option>
+                                                <option value="Level I (Protected Spring)">Level I (Protected Spring)</option>
+                                                <option value="Level II (Communal Faucet)">Level II (Communal Faucet)</option>
+                                                <option value="Level III (Individual Connection)">Level III (Individual Connection)</option>
+                                                <option value="Artesian Well">Artesian Well</option>
+                                                <option value="Dug Well">Dug Well</option>
+                                                <option value="Rainwater Collection">Rainwater Collection</option>
+                                                <option value="River/Stream">River/Stream</option>
+                                                <option value="Bottled Water">Bottled Water</option>
+                                                <option value="Others">Others</option>
+                                            </select>
+                                        </div>
+
+                                        <div class="form-group">
+                                            <label for="toiletFacilityType">Toilet Facility Type</label>
+                                            <select id="toiletFacilityType" name="toiletFacilityType" class="form-control">
+                                                <option value="">Select Toilet Facility</option>
+                                                <option value="Water Sealed">Water Sealed</option>
+                                                <option value="Closed Pit">Closed Pit</option>
+                                                <option value="Open Pit">Open Pit</option>
+                                                <option value="Antipolo Type">Antipolo Type</option>
+                                                <option value="None/No Toilet">None/No Toilet</option>
+                                                <option value="Others">Others</option>
+                                            </select>
                                         </div>
                                     </div>
                                 </div>
                             </div>
+
+                            <!-- NO Panel: Find Existing Household -->
+                            <div id="householdNoPanel" style="display: none;">
+                                <div style="background: var(--bg-secondary, #f8fafc); border: 1px solid var(--border-color, #e2e8f0); border-radius: 10px; padding: 20px; margin-bottom: 10px;">
+                                    <h6 style="margin: 0 0 15px 0; color: var(--primary-color); font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">
+                                        <i class="fas fa-search"></i> Find Existing Household
+                                    </h6>
+
+                                    <!-- Search Box -->
+                                    <div class="form-group">
+                                        <label for="householdSearch">Search Household</label>
+                                        <div style="display: flex; gap: 10px;">
+                                            <input type="text" id="householdSearch" class="form-control" placeholder="Search by household number, head name, or address...">
+                                            <button type="button" class="btn btn-primary" id="searchHouseholdBtn" style="white-space: nowrap;">
+                                                <i class="fas fa-search"></i> Search
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <!-- Search Results -->
+                                    <div id="householdSearchResults" style="display: none; margin-top: 15px;">
+                                        <div id="householdResultsList"></div>
+                                    </div>
+
+                                    <!-- Selected Household Display -->
+                                    <div id="selectedHouseholdCard" style="display: none; margin-top: 15px;">
+                                        <div style="background: #fff; border: 2px solid var(--primary-color, #3b82f6); border-radius: 10px; padding: 15px;">
+                                            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
+                                                <h6 style="margin: 0; color: var(--primary-color); font-weight: 600;">
+                                                    <i class="fas fa-check-circle" style="color: #10b981;"></i> Selected Household
+                                                </h6>
+                                                <button type="button" class="btn btn-sm btn-secondary" id="clearHouseholdBtn" style="padding: 3px 10px; font-size: 12px;">
+                                                    <i class="fas fa-times"></i> Clear
+                                                </button>
+                                            </div>
+                                            <div id="selectedHouseholdInfo" class="form-grid" style="margin: 0;"></div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Hidden input to store selected household ID -->
+                                    <input type="hidden" id="selectedHouseholdId" name="selectedHouseholdId" value="">
+                                    <!-- Hidden input to store relationship to head -->
+                                    <input type="hidden" id="householdRelationship" name="householdRelationship" value="">
+                                </div>
+                            </div>
+
+                            <!-- Hidden input to store household head answer -->
+                            <input type="hidden" id="householdHeadValue" name="householdHeadValue" value="">
+
                         </div>
                     </div>
                     
@@ -733,18 +850,18 @@ $pageTitle = 'Create Resident';
                         </div>
                     </div>
                     
-                    <!-- Emergency Contact Section -->
+                    <!-- Household Information Section -->
                     <div class="review-section">
                         <div class="review-section-header">
-                            <div class="review-section-icon" style="background-color: #ef4444;">
-                                <i class="fas fa-phone-alt"></i>
+                            <div class="review-section-icon" style="background-color: #0ea5e9;">
+                                <i class="fas fa-home"></i>
                             </div>
                             <div class="review-section-title">
-                                <h4>Emergency Contact</h4>
-                                <p>Emergency contact persons</p>
+                                <h4>Household Information</h4>
+                                <p>Household head status and household details</p>
                             </div>
                         </div>
-                        <div class="review-section-content" id="reviewEmergencyContact">
+                        <div class="review-section-content" id="reviewHouseholdInfo">
                             <!-- Will be populated by JavaScript -->
                         </div>
                     </div>
