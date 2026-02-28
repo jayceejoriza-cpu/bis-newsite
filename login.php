@@ -93,6 +93,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="assets/css/login-style.css">
+    <!-- Dark Mode Init: must be in <head> to prevent flash of light mode -->
+    <script src="assets/js/dark-mode-init.js"></script>
     <?php if ($login_bg_image): ?>
     <style>
         body::before {
@@ -177,14 +179,17 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 </div>
 
 <script>
+    // dark-mode-init.js already applied dark-mode to <html> in <head>.
+    // Here we sync <body> and the toggle icon, then wire up the toggle button.
     const toggleBtn = document.getElementById('darkModeToggle');
     const body = document.body;
     const icon = toggleBtn.querySelector('i');
 
-    // Check for saved user preference
-    const savedTheme = localStorage.getItem('theme');
-    if (savedTheme === 'dark') {
-        enableDarkMode();
+    // Sync body class and icon with html element (set by dark-mode-init.js)
+    if (document.documentElement.classList.contains('dark-mode')) {
+        body.classList.add('dark-mode');
+        icon.classList.remove('fa-moon');
+        icon.classList.add('fa-sun');
     }
 
     toggleBtn.addEventListener('click', () => {
@@ -196,6 +201,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     });
 
     function enableDarkMode() {
+        document.documentElement.classList.add('dark-mode');
         body.classList.add('dark-mode');
         icon.classList.remove('fa-moon');
         icon.classList.add('fa-sun');
@@ -203,6 +209,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     }
 
     function disableDarkMode() {
+        document.documentElement.classList.remove('dark-mode');
         body.classList.remove('dark-mode');
         icon.classList.remove('fa-sun');
         icon.classList.add('fa-moon');

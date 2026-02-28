@@ -111,15 +111,8 @@ try {
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="assets/css/style.css">
     <link rel="stylesheet" href="assets/css/blotter.css">
-    <script>
-        // Apply dark mode immediately to prevent flash
-        (function() {
-            const theme = localStorage.getItem('theme');
-            if (theme === 'dark') {
-                document.documentElement.classList.add('dark-mode');
-            }
-        })();
-    </script>
+    <!-- Dark Mode Init: must be in <head> to prevent flash of light mode -->
+    <script src="assets/js/dark-mode-init.js"></script>
     <style>
         /* View Modal Styles */
         .party-view-item {

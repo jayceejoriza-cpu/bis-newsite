@@ -191,35 +191,44 @@ window.addEventListener('resize', () => {
 // ===================================
 const themeToggle = document.getElementById('themeToggle');
 
-// Check for saved theme preference or default to light mode
-const currentTheme = localStorage.getItem('theme') || 'light';
+// Sync body class and icon with the html class already set by dark-mode-init.js
+// dark-mode-init.js runs in <head> and applies dark-mode to <html> immediately.
+// Here we just sync <body> and update the toggle icon — no flash, no re-animation.
+(function syncThemeOnLoad() {
+    const isDark = document.documentElement.classList.contains('dark-mode');
 
-// Apply the theme on page load (check both html and body for consistency)
-if (currentTheme === 'dark') {
-    document.documentElement.classList.add('dark-mode');
-    document.body.classList.add('dark-mode');
+    if (isDark) {
+        document.body.classList.add('dark-mode');
+    } else {
+        document.body.classList.remove('dark-mode');
+    }
+
     if (themeToggle) {
         const icon = themeToggle.querySelector('i');
         if (icon) {
-            icon.classList.remove('fa-sun');
-            icon.classList.add('fa-moon');
+            if (isDark) {
+                icon.classList.remove('fa-sun');
+                icon.classList.add('fa-moon');
+            } else {
+                icon.classList.remove('fa-moon');
+                icon.classList.add('fa-sun');
+            }
         }
     }
-}
+})();
 
-// Theme toggle functionality
+// Theme toggle click handler
 if (themeToggle) {
     themeToggle.addEventListener('click', () => {
         const icon = themeToggle.querySelector('i');
-        
-        // Toggle dark mode class on both html and body
+
+        // Toggle dark-mode on both <html> and <body>
         document.documentElement.classList.toggle('dark-mode');
         document.body.classList.toggle('dark-mode');
-        
-        // Check if dark mode is now active
+
         const isDarkMode = document.body.classList.contains('dark-mode');
-        
-        // Update icon
+
+        // Update toggle icon
         if (icon) {
             if (isDarkMode) {
                 icon.classList.remove('fa-sun');
@@ -229,8 +238,8 @@ if (themeToggle) {
                 icon.classList.add('fa-sun');
             }
         }
-        
-        // Save theme preference to localStorage
+
+        // Persist preference
         localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
     });
 }

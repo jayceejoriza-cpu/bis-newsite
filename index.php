@@ -26,6 +26,9 @@ require_once 'auth_check.php';
     
     <!-- Custom CSS -->
     <link rel="stylesheet" href="assets/css/style.css">
+    
+    <!-- Dark Mode Init: must be in <head> to prevent flash of light mode -->
+    <script src="assets/js/dark-mode-init.js"></script>
 </head>
 <body>
     <!-- Sidebar Component -->

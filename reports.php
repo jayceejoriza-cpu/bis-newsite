@@ -313,15 +313,8 @@ function pct($part, $total) {
     <link rel="stylesheet" href="assets/css/style.css">
     <link rel="stylesheet" href="assets/css/reports.css">
 
-    <script>
-        // Apply dark mode immediately to prevent flash
-        (function() {
-            if (localStorage.getItem('theme') === 'dark') {
-                document.documentElement.classList.add('dark-mode');
-                document.body && document.body.classList.add('dark-mode');
-            }
-        })();
-    </script>
+    <!-- Dark Mode Init: must be in <head> to prevent flash of light mode -->
+    <script src="assets/js/dark-mode-init.js"></script>
 </head>
 <body>
     <!-- Sidebar -->
