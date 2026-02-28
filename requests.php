@@ -159,15 +159,13 @@ try {
             <!-- Pagination -->
             <div class="pagination-container">
                 <div class="pagination-info">
-                    <span>TOTAL: <strong><?php echo number_format($totalRequests); ?></strong></span>
+                    <span>Showing <strong>1-10</strong> of <strong><?php echo number_format($totalRequests); ?></strong></span>
                 </div>
                 <div class="pagination">
                     <button class="page-btn" disabled>
                         <i class="fas fa-chevron-left"></i>
                     </button>
                     <button class="page-btn active">1</button>
-                    <button class="page-btn">2</button>
-                    <button class="page-btn">3</button>
                     <button class="page-btn">
                         <i class="fas fa-chevron-right"></i>
                     </button>
@@ -181,6 +179,7 @@ try {
     
     <!-- Custom JavaScript -->
     <script src="assets/js/script.js"></script>
+    <script src="assets/js/table.js"></script>
     <script src="assets/js/requests.js"></script>
 </body>
 </html>

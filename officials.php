@@ -233,7 +233,7 @@ try {
 
                 <!-- Table -->
                 <div class="table-container">
-                    <table class="data-table officials-table" id="officialsTable">
+                    <table class="data-table officials-table" id="officialsTable" style="width:100%;">
                         <thead>
                             <tr>
                                 <th>Official Name</th>
@@ -247,16 +247,7 @@ try {
                             </tr>
                         </thead>
                         <tbody id="officialsTableBody">
-                            <?php if (empty($officials)): ?>
-                                <tr id="officialsEmptyRow">
-                                    <td colspan="8" style="text-align:center; padding:40px;">
-                                        <i class="fas fa-users" style="font-size:48px; color:#d1d5db; display:block; margin-bottom:16px;"></i>
-                                        <p style="color:#6b7280; font-size:16px; margin:0;">No officials found for this term period</p>
-                                        <p style="color:#9ca3af; font-size:14px; margin-top:8px;">Try selecting a different term or create a new official</p>
-                                    </td>
-                                </tr>
-                            <?php else: ?>
-                                <?php foreach ($officials as $official):
+                            <?php foreach ($officials as $official):
                                     // Resolve display name
                                     if (!empty($official['fullname'])) {
                                         $fullName = $official['fullname'];
@@ -338,18 +329,25 @@ try {
                                     </td>
                                 </tr>
                                 <?php endforeach; ?>
-                                <!-- Empty state row (hidden by default, shown when filters yield no results) -->
-                                <tr id="officialsEmptyRow" style="display:none;">
-                                    <td colspan="8" style="text-align:center; padding:40px;">
-                                        <i class="fas fa-search" style="font-size:40px; color:#d1d5db; display:block; margin-bottom:12px;"></i>
-                                        <p style="color:#6b7280; font-size:15px; margin:0;">No officials match your filter</p>
-                                    </td>
-                                </tr>
-                            <?php endif; ?>
                         </tbody>
                     </table>
                 </div>
-            </div><!-- /table-section -->
+
+            <!-- Pagination -->
+            <div class="pagination-container">
+                <div class="pagination-info">
+                    <span>Showing <strong>1-10</strong> of <strong><?php echo count($officials); ?></strong></span>
+                </div>
+                <div class="pagination">
+                    <button class="page-btn" disabled>
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+                    <button class="page-btn active">1</button>
+                    <button class="page-btn">
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
 
         </div><!-- /dashboard-content -->
     </main>
@@ -726,6 +724,7 @@ try {
 
     <!-- Custom JS -->
     <script src="assets/js/script.js"></script>
+    <script src="assets/js/table.js"></script>
     <script src="assets/js/officials.js"></script>
 </body>
 </html>

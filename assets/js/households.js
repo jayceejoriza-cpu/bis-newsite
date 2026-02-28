@@ -148,7 +148,8 @@ function initializeTable() {
     householdsTable = new EnhancedTable('householdsTable', {
         sortable: true,
         searchable: true,
-        paginated: false, // We'll handle pagination manually for this page
+        paginated: true,
+        pageSize: 10,
         responsive: true
     });
     

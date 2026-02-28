@@ -705,6 +705,7 @@ try {
     
     <script src="assets/bootstrap/js/bootstrap.bundle.min.js"></script>
     <script src="assets/js/script.js"></script>
+    <script src="assets/js/table.js"></script>
     <script src="assets/js/blotter.js"></script>
     <script src="assets/js/edit-blotter.js"></script>
 </body>

@@ -334,13 +334,13 @@ try {
                 <table class="data-table residents-table" id="residentsTable">
                     <thead>
                         <tr>
-                            <th class="header-with-info">
+
+                            <th>Resident ID</th>
+                            <th>
                                 <span class="header-text">
                                     Full Name
-                                    <i class="fas fa-info-circle" title="Click on any resident name to view their profile"></i>
                                 </span>
                             </th>
-                            <th>Resident ID</th>
                             <th>Verification Status</th>
                             <th>Voter Status</th>
                             <th>Date of Birth</th>
@@ -387,8 +387,9 @@ try {
                                 data-employment="<?php echo htmlspecialchars($resident['employment_status'] ?? ''); ?>"
                                 data-fourps="<?php echo htmlspecialchars($resident['fourps_member'] ?? ''); ?>"
                                 data-age-health-group="<?php echo htmlspecialchars($resident['age_health_group'] ?? ''); ?>">
-                                <td>
-                                    <a href="resident_profile.php?id=<?php echo htmlspecialchars($resident['id']); ?>" class="resident-name-link">
+                               
+                                    <td><?php echo htmlspecialchars($residentId); ?></td>
+                                     <td><a href="resident_profile.php?id=<?php echo htmlspecialchars($resident['id']); ?>" class="resident-name-link">
                                         <div class="resident-name">
                                             <span class="avatar <?php echo htmlspecialchars($avatarColor); ?>">
                                                 <?php echo htmlspecialchars($initials); ?>
@@ -397,7 +398,7 @@ try {
                                         </div>
                                     </a>
                                 </td>
-                                <td><?php echo htmlspecialchars($residentId); ?></td>
+                                
                                 <td>
                                     <span class="badge <?php echo htmlspecialchars($verificationBadge); ?>">
                                         <?php echo htmlspecialchars($resident['verification_status']); ?>
@@ -430,19 +431,13 @@ try {
             <!-- Pagination -->
             <div class="pagination-container">
                 <div class="pagination-info">
-                    <span>TOTAL: <strong><?php echo number_format($totalResidents); ?></strong></span>
+                    <span>Showing <strong>1-10</strong> of <strong><?php echo number_format($totalResidents); ?></strong></span>
                 </div>
                 <div class="pagination">
                     <button class="page-btn" disabled>
                         <i class="fas fa-chevron-left"></i>
                     </button>
                     <button class="page-btn active">1</button>
-                    <button class="page-btn">2</button>
-                    <button class="page-btn">3</button>
-                    <button class="page-btn">4</button>
-                    <button class="page-btn">5</button>
-                    <span class="page-dots">...</span>
-                    <button class="page-btn">335</button>
                     <button class="page-btn">
                         <i class="fas fa-chevron-right"></i>
                     </button>
