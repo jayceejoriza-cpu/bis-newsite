@@ -47,6 +47,7 @@ document.addEventListener('DOMContentLoaded', function() {
         searchInput.addEventListener('input', function(e) {
             searchTerm = e.target.value.toLowerCase();
             filterTable();
+            window.reinitActionMenus();
             
             // Show/hide clear button
             if (clearSearchBtn) {
@@ -60,6 +61,7 @@ document.addEventListener('DOMContentLoaded', function() {
             searchInput.value = '';
             searchTerm = '';
             filterTable();
+            window.reinitActionMenus();
             clearSearchBtn.style.display = 'none';
         });
     }
@@ -80,6 +82,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Filter table
             filterTable();
+            window.reinitActionMenus();
         });
     });
     
@@ -436,45 +439,115 @@ document.addEventListener('DOMContentLoaded', function() {
     // ============================================
     // Action Button (Three Dots Menu)
     // ============================================
+    
+    // Function to re-initialize dropdowns (useful if switching to Bootstrap JS)
+    window.reinitActionMenus = function() {
+        if (currentOpenMenu) {
+            closeMenu(currentOpenMenu);
+        }
+        // Cleanup any orphaned menus in body
+        document.querySelectorAll('body > .action-menu').forEach(m => m.remove());
+    };
+
+    // Store reference to the currently open menu
+    let currentOpenMenu = null;
+
     document.addEventListener('click', function(e) {
         // Toggle action menu
-        if (e.target.closest('.btn-action')) {
+        const actionBtn = e.target.closest('.btn-action');
+        if (actionBtn) {
             e.stopPropagation();
-            const btn = e.target.closest('.btn-action');
-            const container = btn.closest('.action-menu-container');
-            const menu = container.querySelector('.action-menu');
+            e.preventDefault();
             
-            // Close all other menus
-            document.querySelectorAll('.action-menu.show').forEach(m => {
-                if (m !== menu) {
-                    m.classList.remove('show');
-                }
-            });
+            const container = actionBtn.closest('.action-menu-container');
+            const recordId = actionBtn.getAttribute('data-record-id');
+            
+            // Find the menu - it might be in the container or already moved to body
+            let menu = container.querySelector('.action-menu');
+            if (!menu) {
+                menu = document.querySelector(`body > .action-menu[data-record-id="${recordId}"]`);
+            }
+            
+            if (!menu) return;
+
+            // Toggle logic: if clicking the same menu, close it and stop
+            if (currentOpenMenu) {
+                const isSame = currentOpenMenu === menu;
+                closeMenu(currentOpenMenu);
+                if (isSame) return;
+            }
             
             // Position the menu relative to the button
-            const rect = btn.getBoundingClientRect();
-            const menuWidth = 200; // min-width of menu
+            const rect = actionBtn.getBoundingClientRect();
+            const windowHeight = window.innerHeight;
+            const windowWidth = window.innerWidth;
+
+            // Temporarily show menu to measure dimensions
+            const originalDisplay = menu.style.display;
+            menu.style.display = 'block';
             
-            // Position below the button
-            menu.style.top = (rect.bottom + 8) + 'px';
+            const menuHeight = menu.offsetHeight;
+            const menuWidth = menu.offsetWidth || 200;
             
-            // Align to the right edge of the button
-            menu.style.left = (rect.right - menuWidth) + 'px';
+            // Restore original display (hidden)
+            menu.style.display = originalDisplay;
             
-            // Toggle current menu
-            menu.classList.toggle('show');
+            // Set fixed positioning as requested
+            menu.style.position = 'fixed';
+
+            // Calculate vertical position: check if it fits below, otherwise show above
+            let topPosition;
+            if (rect.bottom + menuHeight + 5 > windowHeight) {
+                topPosition = rect.top - menuHeight - 5;
+            } else {
+                topPosition = rect.bottom + 5;
+            }
+            
+            // Ensure menu doesn't go above the viewport
+            if (topPosition < 5) {
+                topPosition = 5;
+            }
+            
+            menu.style.top = topPosition + 'px';
+            
+            // Calculate horizontal position: align left edge of menu with left edge of button
+            // but ensure it doesn't go off the right edge of the screen
+            let leftPosition = rect.left;
+            
+            // If menu would go off the right edge, align to right edge of viewport
+            if (leftPosition + menuWidth > windowWidth - 10) {
+                leftPosition = windowWidth - menuWidth - 10;
+            }
+            
+            // Ensure menu doesn't go off the left edge
+            if (leftPosition < 5) {
+                leftPosition = 5;
+            }
+            
+            menu.style.left = leftPosition + 'px';
+            
+            menu.classList.add('show');
+            
+            // Move to body to escape stacking contexts (like tr transform)
+            document.body.appendChild(menu);
+            
+            // Store reference to current open menu
+            currentOpenMenu = menu;
+            
             return;
         }
         
         // Handle action menu item clicks
-        if (e.target.closest('.action-menu-item')) {
-            const item = e.target.closest('.action-menu-item');
-            const action = item.getAttribute('data-action');
-            const menu = item.closest('.action-menu');
+        const menuItem = e.target.closest('.action-menu-item');
+        if (menuItem) {
+            const action = menuItem.getAttribute('data-action');
+            const menu = menuItem.closest('.action-menu');
             const recordId = menu.getAttribute('data-record-id');
             
             // Don't close menu if it's the status item (has submenu)
-            if (item.classList.contains('has-submenu')) {
+            if (menuItem.classList.contains('has-submenu')) {
+                e.stopPropagation();
+                menuItem.classList.toggle('show-submenu');
                 return;
             }
             
@@ -482,16 +555,54 @@ document.addEventListener('DOMContentLoaded', function() {
             handleAction(action, recordId);
             
             // Close menu
-            menu.classList.remove('show');
+            closeMenu(menu);
+            return;
         }
         
         // Close menu when clicking outside
-        if (!e.target.closest('.action-menu-container')) {
-            document.querySelectorAll('.action-menu.show').forEach(menu => {
-                menu.classList.remove('show');
-            });
+        if (!e.target.closest('.action-menu')) {
+            if (currentOpenMenu) {
+                closeMenu(currentOpenMenu);
+            }
         }
     });
+    
+    // Function to close the menu
+    function closeMenu(menu) {
+        if (!menu) return;
+        
+        menu.classList.remove('show');
+        
+        // Clear submenu states
+        menu.querySelectorAll('.action-menu-item').forEach(item => {
+            item.classList.remove('show-submenu');
+        });
+        
+        // Reset positioning styles
+        menu.style.position = '';
+        menu.style.top = '';
+        menu.style.left = '';
+        
+        // Move back to its original container if possible
+        const recordId = menu.getAttribute('data-record-id');
+        const actionBtn = document.querySelector(`.btn-action[data-record-id="${recordId}"]`);
+        if (actionBtn) {
+            const container = actionBtn.closest('.action-menu-container');
+            if (container && !container.contains(menu)) {
+                container.appendChild(menu);
+            }
+        } else {
+            // If button no longer exists (table updated), just remove from body
+            if (menu.parentNode === document.body) {
+                menu.remove();
+            }
+        }
+        
+        // Reset current open menu reference
+        if (currentOpenMenu === menu) {
+            currentOpenMenu = null;
+        }
+    }
     
     // Handle action menu actions
     function handleAction(action, recordId) {

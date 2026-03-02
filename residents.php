@@ -428,7 +428,7 @@ try {
                                 data-employment="<?php echo htmlspecialchars($resident['employment_status'] ?? ''); ?>"
                                 data-fourps="<?php echo htmlspecialchars($resident['fourps_member'] ?? ''); ?>"
                                 data-age-health-group="<?php echo htmlspecialchars($resident['age_health_group'] ?? ''); ?>"
-                                data-activity-status="<?php echo htmlspecialchars($resident['activity_status'] ?? ''); ?>">
+                                data-activity-status="<?php echo htmlspecialchars($resident['activity_status'] ?? ''); ?>"
                                 data-pwd-status="<?php echo htmlspecialchars($resident['pwd_status'] ?? 'No'); ?>">
                                
                                     <td><?php echo htmlspecialchars($residentId); ?></td>

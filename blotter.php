@@ -146,6 +146,62 @@ try {
             font-weight: 600;
             margin-bottom: 4px;
         }
+
+        .table-container {
+            overflow: visible !important;
+        }
+
+        /* Action Menu Fixes */
+        .action-menu {
+            display: none;
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            padding: 8px;
+            min-width: 200px;
+            animation: fadeIn 0.2s ease;
+            position: fixed;
+            z-index: 10000;
+        }
+        .action-menu.show { display: block; }
+        .btn-action {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+        .btn-action:hover {
+            background-color: #f3f4f6;
+            color: #111827;
+        }
+        .action-menu-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            width: 100%;
+            background: none;
+            border: none;
+            padding: 10px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            color: #374151;
+            text-align: left;
+        }
+        .action-menu-item:hover { background-color: #f3f4f6; }
+        .action-submenu { display: none; padding-left: 15px; background: #f9fafb; border-radius: 4px; margin-top: 5px; }
+        .action-menu-item.show-submenu + .action-submenu { display: block; }
+        .submenu-arrow { margin-left: auto; font-size: 10px; transition: transform 0.2s; }
+        .action-menu-item.show-submenu .submenu-arrow { transform: rotate(90deg); }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
     </style>
 </head>
 <body>
@@ -263,9 +319,9 @@ try {
                                 </td>
                                 <td><?php echo $incidentType; ?></td>
                                 <td><?php echo $incidentDate; ?></td>
-                                <td>
+                                <td style="text-align: center; vertical-align: middle;">
                                     <div class="action-menu-container">
-                                        <button class="btn-action" data-record-id="<?php echo $record['id']; ?>">
+                                        <button class="btn-action" data-record-id="<?php echo $record['id']; ?>" data-bs-strategy="fixed">
                                             <i class="fas fa-ellipsis-h"></i>
                                         </button>
                                         <div class="action-menu" data-record-id="<?php echo $record['id']; ?>">
