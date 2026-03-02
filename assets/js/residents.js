@@ -16,6 +16,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialize all event listeners
     initializeEventListeners();
     
+    // Apply saved view preference
+    applySavedView();
+    
     console.log('Residents page loaded successfully');
 });
 
@@ -240,23 +243,45 @@ function refreshData() {
 // ===================================
 function initializeViewToggle() {
     const viewButtons = document.querySelectorAll('.view-btn');
-    const tableContainer = document.querySelector('.table-container');
     
     viewButtons.forEach(btn => {
         btn.addEventListener('click', () => {
-            viewButtons.forEach(vBtn => vBtn.classList.remove('active'));
-            btn.classList.add('active');
-            
             const view = btn.getAttribute('data-view');
-            
-            if (view === 'grid') {
-                // TODO: Implement grid view
-                alert('Grid View\n\nThis will display residents in a card-based grid layout.');
-            } else {
-                tableContainer.style.display = '';
-            }
+            switchView(view);
         });
     });
+}
+
+function switchView(view) {
+    const viewButtons = document.querySelectorAll('.view-btn');
+    const tableContainer = document.querySelector('.table-container');
+    const gridContainer = document.getElementById('residentsGrid');
+    
+    if (!tableContainer || !gridContainer) return;
+
+    // Update toggle buttons active state
+    viewButtons.forEach(vBtn => {
+        vBtn.classList.toggle('active', vBtn.getAttribute('data-view') === view);
+    });
+
+    // Toggle visibility of containers
+    if (view === 'grid') {
+        tableContainer.style.display = 'none';
+        gridContainer.style.display = 'grid';
+    } else {
+        tableContainer.style.display = '';
+        gridContainer.style.display = 'none';
+    }
+    
+    // Save preference to localStorage
+    localStorage.setItem('residentsViewPreference', view);
+}
+
+function applySavedView() {
+    const savedView = localStorage.getItem('residentsViewPreference');
+    if (savedView) {
+        switchView(savedView);
+    }
 }
 
 // ===================================

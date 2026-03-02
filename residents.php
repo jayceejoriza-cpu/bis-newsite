@@ -154,6 +154,7 @@ try {
     <!-- Custom CSS -->
     <link rel="stylesheet" href="assets/css/style.css">
     <link rel="stylesheet" href="assets/css/residents.css">
+    <link rel="stylesheet" href="assets/css/residents-grid.css">
     
     <!-- Dark Mode Init: must be in <head> to prevent flash of light mode -->
     <script src="assets/js/dark-mode-init.js"></script>
@@ -421,6 +422,79 @@ try {
                     </tbody>
                 </table>
             </div>
+
+            <!-- Residents Grid -->
+            <div class="residents-grid" id="residentsGrid" style="display: none;">
+                <?php if (empty($residents)): ?>
+                    <div class="empty-state" style="text-align: center; grid-column: 1 / -1; padding: 40px;">
+                        <i class="fas fa-users" style="font-size: 48px; color: #d1d5db; margin-bottom: 16px;"></i>
+                        <p style="color: #6b7280; font-size: 16px; margin: 0;">No residents found</p>
+                        <p style="color: #9ca3af; font-size: 14px; margin-top: 8px;">Start by adding a new resident</p>
+                    </div>
+                <?php else: ?>
+                    <?php foreach ($residents as $index => $resident):
+                        // Prepare data (same as in table view)
+                        $fullName = formatFullName(
+                            $resident['first_name'],
+                            $resident['middle_name'],
+                            $resident['last_name'],
+                            $resident['suffix']
+                        );
+                        $initials = getInitials($resident['first_name'], $resident['last_name']);
+                        $avatarColor = getAvatarColor($index);
+                        $residentId = !empty($resident['resident_id']) ? $resident['resident_id'] : generateResidentId($resident['id']);
+                        $age = calculateAge($resident['date_of_birth']);
+                        $voterBadge = ($resident['voter_status'] === 'Yes') ? 'badge-yes' : 'badge-no';
+                        $activityBadge = 'badge-' . strtolower($resident['activity_status']);
+                    ?>
+                    <div class="resident-card" 
+                        data-religion="<?php echo htmlspecialchars($resident['religion'] ?? ''); ?>"
+                        data-ethnicity="<?php echo htmlspecialchars($resident['ethnicity'] ?? ''); ?>"
+                        data-civil-status="<?php echo htmlspecialchars($resident['civil_status'] ?? ''); ?>"
+                        data-education="<?php echo htmlspecialchars($resident['educational_attainment'] ?? ''); ?>"
+                        data-employment="<?php echo htmlspecialchars($resident['employment_status'] ?? ''); ?>"
+                        data-fourps="<?php echo htmlspecialchars($resident['fourps_member'] ?? ''); ?>"
+                        data-age-health-group="<?php echo htmlspecialchars($resident['age_health_group'] ?? ''); ?>">
+                        
+                        <span class="avatar <?php echo htmlspecialchars($avatarColor); ?>">
+                            <?php echo htmlspecialchars($initials); ?>
+                        </span>
+                        
+                        <div class="resident-name"><?php echo htmlspecialchars($fullName); ?></div>
+                        <div class="resident-id"><?php echo htmlspecialchars($residentId); ?></div>
+                        
+                        <div class="details">
+                            <div class="detail-item">
+                                <div class="label">Age</div>
+                                <div class="value"><?php echo $age; ?></div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="label">Sex</div>
+                                <div class="value"><?php echo htmlspecialchars($resident['sex']); ?></div>
+                            </div>
+                        </div>
+                        
+                        <div class="badges">
+                            <span class="badge <?php echo htmlspecialchars($voterBadge); ?>">
+                                <?php echo htmlspecialchars($resident['voter_status'] ?: 'No'); ?>
+                            </span>
+                            <span class="badge <?php echo htmlspecialchars($activityBadge); ?>">
+                                <?php echo htmlspecialchars($resident['activity_status']); ?>
+                            </span>
+                        </div>
+                        
+                        <div class="actions">
+                            <a href="resident_profile.php?id=<?php echo htmlspecialchars($resident['id']); ?>" class="btn-action" data-resident-id="<?php echo htmlspecialchars($resident['id']); ?>">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                            <button class="btn-action" data-resident-id="<?php echo htmlspecialchars($resident['id']); ?>">
+                                <i class="fas fa-ellipsis-h"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <?php endforeach; ?>
+                <?php endif; ?>
+            </div>
             
             <!-- Pagination -->
             <div class="pagination-container">
@@ -458,6 +532,7 @@ try {
     <!-- Custom JavaScript -->
     <script src="assets/js/script.js"></script>
     <script src="assets/js/table.js"></script>
+    <script src="assets/js/grid-pagination.js"></script>
     <script src="assets/js/residents.js"></script>
 </body>
 </html>
