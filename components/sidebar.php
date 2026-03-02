@@ -68,7 +68,7 @@ $show_user_mgmt = $can_view_users || $can_view_roles;
 
             <!-- ── Resident Records ── -->
             <?php if (hasPermission('perm_resident_view')): ?>
-            <li class="nav-item <?php echo $current_page === 'residents.php' ? 'active' : ''; ?>">
+            <li class="nav-item <?php echo ($current_page === 'residents.php' || $current_page === 'create-resident.php' || $current_page === 'edit-resident.php' || $current_page === 'resident_profile.php') ? 'active' : ''; ?>">
                 <a href="residents.php" class="nav-link">
                     <i class="fas fa-address-book"></i>
                     <span>Resident Records</span>

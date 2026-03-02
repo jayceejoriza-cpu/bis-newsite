@@ -280,6 +280,10 @@ function initializeActionMenus() {
 function showActionMenu(row, button) {
     const residentName = row.querySelector('.resident-name span:last-child')?.textContent;
     const residentId = row.querySelectorAll('td')[1]?.textContent;
+
+    // Get current activity status from the badge in column index 5
+    const activityBadge = row.querySelectorAll('td')[5]?.querySelector('.badge');
+    const currentStatus = activityBadge?.textContent.trim() || 'Active';
     
     // Remove any existing action menus
     document.querySelectorAll('.action-menu').forEach(menu => menu.remove());
@@ -300,6 +304,28 @@ function showActionMenu(row, button) {
         <div class="action-menu-item" data-action="edit">
             <i class="fas fa-edit"></i>
             <span>Edit Resident</span>
+        </div>
+        <div class="action-menu-item has-submenu" data-action="change-status">
+            <i class="fas fa-toggle-on"></i>
+            <span>Change Status</span>
+            <i class="fas fa-chevron-right submenu-arrow"></i>
+            <div class="action-submenu">
+                <div class="action-menu-item submenu-item ${currentStatus === 'Active' ? 'submenu-current' : ''}" data-status="Active">
+                    <i class="fas fa-circle status-dot status-dot-active"></i>
+                    <span>Active</span>
+                    ${currentStatus === 'Active' ? '<i class="fas fa-check submenu-check"></i>' : ''}
+                </div>
+                <div class="action-menu-item submenu-item ${currentStatus === 'Inactive' ? 'submenu-current' : ''}" data-status="Inactive">
+                    <i class="fas fa-circle status-dot status-dot-inactive"></i>
+                    <span>Inactive</span>
+                    ${currentStatus === 'Inactive' ? '<i class="fas fa-check submenu-check"></i>' : ''}
+                </div>
+                <div class="action-menu-item submenu-item ${currentStatus === 'Deceased' ? 'submenu-current' : ''}" data-status="Deceased">
+                    <i class="fas fa-circle status-dot status-dot-deceased"></i>
+                    <span>Deceased</span>
+                    ${currentStatus === 'Deceased' ? '<i class="fas fa-check submenu-check"></i>' : ''}
+                </div>
+            </div>
         </div>`;
     }
     menuHtml += `
@@ -329,11 +355,23 @@ function showActionMenu(row, button) {
     
     document.body.appendChild(menu);
     
-    // Add click handlers
-    menu.querySelectorAll('.action-menu-item').forEach(item => {
+    // Add click handlers for regular menu items (not submenu parents or submenu items)
+    menu.querySelectorAll('.action-menu-item:not(.has-submenu):not(.submenu-item)').forEach(item => {
         item.addEventListener('click', () => {
             const action = item.getAttribute('data-action');
             handleAction(action, residentName, residentId, row);
+            menu.remove();
+        });
+    });
+
+    // Handle submenu item clicks
+    menu.querySelectorAll('.submenu-item').forEach(item => {
+        item.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const newStatus = item.getAttribute('data-status');
+            const actionBtn = row.querySelector('.btn-action');
+            const dbResidentId = actionBtn ? actionBtn.getAttribute('data-resident-id') : null;
+            updateActivityStatus(dbResidentId, newStatus, row, currentStatus);
             menu.remove();
         });
     });
@@ -462,6 +500,61 @@ function handleAction(action, name, id, row) {
     }
 }
 
+
+// ===================================
+// Update Activity Status
+// ===================================
+function updateActivityStatus(residentId, newStatus, row, currentStatus) {
+    if (!residentId) {
+        showNotification('Error: Unable to identify resident', 'error');
+        return;
+    }
+
+    if (newStatus === currentStatus) {
+        showNotification(`Resident is already marked as ${newStatus}`, 'info');
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('id', residentId);
+    formData.append('status', newStatus);
+
+    fetch('model/update_activity_status.php', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => {
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+            throw new Error('Server did not return JSON response');
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+            // Update the badge in the table row (column index 5)
+            const statusCell = row.querySelectorAll('td')[5];
+            if (statusCell) {
+                const badge = statusCell.querySelector('.badge');
+                if (badge) {
+                    // Remove old badge class
+                    badge.classList.remove('badge-active', 'badge-inactive', 'badge-deceased');
+                    // Add new badge class
+                    badge.classList.add('badge-' + newStatus.toLowerCase());
+                    // Update text
+                    badge.textContent = newStatus;
+                }
+            }
+            showNotification(data.message, 'success');
+        } else {
+            showNotification('Error: ' + data.message, 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Update status error:', error);
+        showNotification('An error occurred: ' + error.message, 'error');
+    });
+}
 
 // ===================================
 // Advanced Filter Functions
@@ -720,6 +813,64 @@ style.textContent = `
             opacity: 1;
             transform: translateY(0);
         }
+    }
+
+    /* ── Change Status Submenu ── */
+    .action-menu-item.has-submenu {
+        position: relative;
+    }
+
+    .action-menu-item.has-submenu .submenu-arrow {
+        margin-left: auto;
+        font-size: 10px;
+        color: #9ca3af;
+        width: auto !important;
+    }
+
+    .action-submenu {
+        display: none;
+        position: absolute;
+        right: calc(100% + 6px);
+        top: 0;
+        background: white;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.12);
+        padding: 6px;
+        min-width: 160px;
+        z-index: 10000;
+        animation: fadeIn 0.15s ease;
+    }
+
+    .action-menu-item.has-submenu:hover .action-submenu {
+        display: block;
+    }
+
+    .submenu-item {
+        gap: 10px;
+        padding: 9px 12px;
+    }
+
+    .submenu-item.submenu-current {
+        background-color: #f0f9ff;
+        font-weight: 600;
+    }
+
+    .status-dot {
+        font-size: 8px !important;
+        width: 8px !important;
+        flex-shrink: 0;
+    }
+
+    .status-dot-active   { color: #22c55e; }
+    .status-dot-inactive { color: #f59e0b; }
+    .status-dot-deceased { color: #ef4444; }
+
+    .submenu-check {
+        margin-left: auto;
+        font-size: 11px !important;
+        width: auto !important;
+        color: #3b82f6;
     }
 `;
 document.head.appendChild(style);

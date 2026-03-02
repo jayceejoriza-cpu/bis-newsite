@@ -52,12 +52,6 @@ $pageTitle = 'Households';
                     <h1 class="page-title"><?php echo $pageTitle; ?></h1>
                     <p class="page-subtitle">View all household profiles, including heads and members. <i class="fas fa-info-circle info-icon"></i></p>
                 </div>
-                <?php if (hasPermission('perm_household_create')): ?>
-                <button class="btn btn-primary" id="createHouseholdBtn">
-                    <i class="fas fa-plus"></i>
-                    Create Household
-                </button>
-                <?php endif; ?>
             </div>
             
           
@@ -133,73 +127,7 @@ $pageTitle = 'Households';
             </div>
             <div class="household-modal-body">
                 <form id="createHouseholdForm">
-                    <!-- Information Section -->
-                    <div class="modal-section">
-                        <h5 class="section-title">Information</h5>
-                        
-                        <div class="form-row">
-                            <div class="form-group half-width">
-                                <label for="householdNumber">Household Number</label>
-                                <input type="text" id="householdNumber" name="householdNumber" class="form-control" placeholder="Enter Household Number" required>
-                            </div>
-                            
-                            <div class="form-group half-width">
-                                <label for="householdContact">Household Contact Number</label>
-                                <div class="phone-input-group">
-                                    <span class="phone-prefix">
-                                        <img src="assets\image\contactph.png" alt="PH" class="flag-icon">
-                                        +63
-                                    </span>
-                                    <input type="tel" id="householdContact" name="householdContact" class="form-control phone-input" placeholder="XXX XXX XXXX">
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="householdAddress">Address</label>
-                            <textarea id="householdAddress" name="householdAddress" class="form-control" rows="3" placeholder="Enter household address"></textarea>
-                        </div>
-                        
-                        <div class="form-row">
-                            <div class="form-group half-width">
-                                <label for="waterSource"><i class="fas fa-tint"></i> Type of Water Source</label>
-                                <select id="waterSource" name="waterSource" class="form-control">
-                                    <option value="">Select</option>
-                                    <option value="Level I (Point Source)">Level I (Point Source)</option>
-                                    <option value="Level II (Communal Faucet)">Level II (Communal Faucet)</option>
-                                    <option value="Level III (Individual Connection)">Level III (Individual Connection)</option>
-                                    <option value="Dug Well">Dug Well</option>
-                                    <option value="Spring">Spring</option>
-                                    <option value="Rainwater">Rainwater</option>
-                                    <option value="Others">Others</option>
-                                </select>
-                            </div>
-                            
-                            <div class="form-group half-width">
-                                <label for="toiletFacility"><i class="fas fa-toilet"></i> Type of Toilet Facility</label>
-                                <select id="toiletFacility" name="toiletFacility" class="form-control">
-                                    <option value="">Select</option>
-                                    <option value="Water Sealed">Water Sealed</option>
-                                    <option value="Closed Pit">Closed Pit</option>
-                                    <option value="Open Pit">Open Pit</option>
-                                    <option value="None">None</option>
-                                    <option value="Others">Others</option>
-                                </select>
-                            </div>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="householdNotes">Notes</label>
-                            <textarea id="householdNotes" name="householdNotes" class="form-control" rows="3" placeholder="Additional notes or remarks"></textarea>
-                        </div>
-                        
-                        <button type="button" class="btn btn-search" id="searchResidentBtn">
-                            <i class="fas fa-search"></i>
-                            Search Resident
-                        </button>
-                    </div>
-                    
-                    <!-- Household Head Section -->
+                       <!-- Household Head Section -->
                     <div class="modal-section">
                         <h5 class="section-title">Household Head</h5>
                         
@@ -217,10 +145,7 @@ $pageTitle = 'Households';
                                     <span class="head-info-label">Sex</span>
                                     <span class="head-info-value" id="headSex">N/A</span>
                                 </div>
-                                <div class="head-info-item">
-                                    <span class="head-info-label">Mobile Number</span>
-                                    <span class="head-info-value" id="headmobilenumber">N/A</span>
-                                </div>
+                               
                             </div>
                         </div>
                         
@@ -260,6 +185,74 @@ $pageTitle = 'Households';
                             </table>
                         </div>
                     </div>
+                    <!-- Information Section -->
+                    <div class="modal-section">
+                        <h5 class="section-title">Information</h5>
+                        
+                        <div class="form-row">
+                            <div class="form-group half-width">
+                                <label for="householdNumber">Household Number</label>
+                                <input type="text" id="householdNumber" name="householdNumber" class="form-control" placeholder="Enter Household Number" required>
+                            </div>
+                            
+                            <div class="form-group half-width">
+                                <label for="householdContact">Household Contact Number</label>
+                                <div class="phone-input-group">
+                                    <span class="phone-prefix">
+                                        <img src="assets\image\contactph.png" alt="PH" class="flag-icon">
+                                        +63
+                                    </span>
+                                    <input type="tel" id="householdContact" name="householdContact" class="form-control phone-input" placeholder="XXX XXX XXXX">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="householdAddress">Address</label>
+                            <textarea id="householdAddress" name="householdAddress" class="form-control" rows="3" placeholder="Enter household address"></textarea>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group half-width">
+                                <label for="waterSource"><i class="fas fa-tint"></i> Type of Water Source</label>
+                                <select id="waterSource" name="waterSource" class="form-control">
+                                    <option value="">Select</option>
+                                    <option value="Level I (Point Spring)">Level I (Point Spring)</option>
+                                    <option value="Level II (Communal Faucet system or stand post)">Level II (Communal Faucet system or stand post)</option>
+                                    <option value="Level III (Waterworks system or individual house connection)">Level III (Waterworks system or individual house connection)</option>
+                                    <option value="O (For doubtful sources, open dug well etc.)">O (For doubtful sources, open dug well etc.)</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group half-width">
+                                <label for="toiletFacility"><i class="fas fa-toilet"></i> Type of Toilet Facility</label>
+                                <select id="toiletFacility" name="toiletFacility" class="form-control">
+                                    <option value="">Select</option>
+                                     <option value="" readonly>----Sanitary Toilet----</option>
+                                     <option value="P - Pour/Flush toilet connected to septic tank)">P - (Pour/Flush toilet connected to septic tank)</option>
+                                     <option value="PF - Pour/Flush toilet connected to septic tank and sewerage system">PF - Pour/Flush toilet connected to septic tank and sewerage system</option>
+                                     <option value="VIP - Ventilated impoved pit latrine (VIP) or composting">VIP - Ventilated impoved pit latrine (VIP) or composting</option>
+                                     <option value="" readonly>----Unsanitary Toilet----</option>
+                                     <option value="WS - Water-sealed connected to open drain">WS - Water-sealed connected to open drain</option>
+                                     <option value="OH - Overhung Latrine">OH - Overhung Latrine</option>
+                                     <option value="OP - Overpit Latrine">OP - Overpit Latrine</option>
+                                     <option value="WO - Without Latrine">WO - Without Latrine</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="householdNotes">Notes</label>
+                            <textarea id="householdNotes" name="householdNotes" class="form-control" rows="3" placeholder="Additional notes or remarks"></textarea>
+                        </div>
+                        
+                        <button type="button" class="btn btn-search" id="searchResidentBtn">
+                            <i class="fas fa-search"></i>
+                            Search Resident
+                        </button>
+                    </div>
+                    
+                 
                 </form>
             </div>
             <div class="household-modal-footer">

@@ -263,10 +263,6 @@ $age = calculateAge($resident['date_of_birth']);
                             <i class="fas fa-phone-alt"></i>
                             <span>Emergency Contact</span>
                         </a>
-                        <a href="#education-employment" class="profile-nav-item">
-                            <i class="fas fa-graduation-cap"></i>
-                            <span>Education & Employment</span>
-                        </a>
                         <a href="#additional-info" class="profile-nav-item">
                             <i class="fas fa-info-circle"></i>
                             <span>Additional Information</span>
@@ -397,43 +393,7 @@ $age = calculateAge($resident['date_of_birth']);
                         </div>
                     </section>
                     
-                    <!-- Emergency Contact Section -->
-                    <section id="emergency-contact" class="profile-section">
-                        <div class="section-header">
-                            <h2><i class="fas fa-phone-alt"></i> Emergency Contact</h2>
-                            <p>Emergency contact persons</p>
-                        </div>
-                        <div class="section-content">
-                            <?php if (!empty($emergencyContacts)): ?>
-                                <?php foreach ($emergencyContacts as $index => $contact): ?>
-                                    <div class="emergency-contact-card">
-                                        <h4><i class="fas fa-user-circle"></i> Contact Person <?php echo $index + 1; ?></h4>
-                                        <div class="info-grid">
-                                            <div class="info-item">
-                                                <label>Name</label>
-                                                <p><?php echo htmlspecialchars($contact['contact_name']); ?></p>
-                                            </div>
-                                            <div class="info-item">
-                                                <label>Relationship</label>
-                                                <p><?php echo htmlspecialchars($contact['relationship']); ?></p>
-                                            </div>
-                                            <div class="info-item">
-                                                <label>Contact Number</label>
-                                                <p><?php echo htmlspecialchars($contact['contact_number']); ?></p>
-                                            </div>
-                                            <div class="info-item full-width">
-                                                <label>Address</label>
-                                                <p><?php echo htmlspecialchars($contact['address'] ?: 'N/A'); ?></p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                <?php endforeach; ?>
-                            <?php else: ?>
-                                <p class="no-data">No emergency contacts added</p>
-                            <?php endif; ?>
-                        </div>
-                    </section>
-                    
+                 
                     <!-- Education & Employment Section -->
                     <section id="education-employment" class="profile-section">
                         <div class="section-header">

@@ -297,14 +297,6 @@ function performSearch(searchTerm) {
 // Button Handlers
 // ===================================
 function initializeButtons() {
-    // Create Household button
-    const createHouseholdBtn = document.getElementById('createHouseholdBtn');
-    if (createHouseholdBtn) {
-        createHouseholdBtn.addEventListener('click', () => {
-            showCreateHouseholdModal();
-        });
-    }
-    
     // Refresh button
     const refreshBtn = document.getElementById('refreshBtn');
     if (refreshBtn) {
@@ -348,7 +340,6 @@ function resetHouseholdForm() {
     document.getElementById('headFullName').textContent = 'N/A';
     document.getElementById('headDateOfBirth').textContent = 'N/A';
     document.getElementById('headSex').textContent = 'N/A';
-    if(document.getElementById('headmobilenumber')) document.getElementById('headmobilenumber').textContent = 'N/A';
     document.getElementById('selectedResidentId').value = '';
     
     // Remove readonly attributes from inputs and reset styling
@@ -596,7 +587,7 @@ function viewHousehold(householdId) {
                 document.getElementById('headDateOfBirth').textContent = data.household.head_dob || 'N/A';
                 document.getElementById('headSex').textContent = data.household.head_sex || 'N/A';
                 document.getElementById('selectedResidentId').value = data.household.household_head_id;
-                document.getElementById('headmobilenumber').textContent = data.household.head_mobile || 'N/A';
+              
                 
                 document.getElementById('householdNumber').setAttribute('readonly', 'readonly');
                 document.getElementById('householdContact').setAttribute('readonly', 'readonly');
@@ -683,7 +674,7 @@ function editHousehold(householdId) {
                 document.getElementById('headDateOfBirth').textContent = data.household.head_dob || 'N/A';
                 document.getElementById('headSex').textContent = data.household.head_sex || 'N/A';
                 document.getElementById('selectedResidentId').value = data.household.household_head_id;
-                document.getElementById('headmobilenumber').textContent = data.household.head_mobile || 'N/A';
+             
                 
                 // Hide search resident button - household head cannot be changed during edit
                 document.getElementById('searchResidentBtn').style.display = 'none';
@@ -1054,7 +1045,7 @@ function setHouseholdHead(resident) {
     document.getElementById('headFullName').textContent = resident.fullName;
     document.getElementById('headDateOfBirth').textContent = resident.dateOfBirth;
     document.getElementById('headSex').textContent = resident.sex;
-    if(document.getElementById('headmobilenumber')) document.getElementById('headmobilenumber').textContent = resident.mobileNumber || 'N/A';
+   
     document.getElementById('selectedResidentId').value = resident.id;
     
     showNotification('Household head selected successfully', 'success');
