@@ -132,46 +132,7 @@
     border-radius: 12px;
     overflow: hidden;
     width: 100%;
-    table-layout: fixed;
-}
-
-/* Column widths — short-text columns are compact, Full Name takes remaining space */
-.residents-table th:nth-child(1),
-.residents-table td:nth-child(1) {
-    width: 120px;
-}
-
-.residents-table th:nth-child(2),
-.residents-table td:nth-child(2) {
-    /* Full Name: auto — takes all remaining space */
-  
-    width: 300px;
-}
-
-.residents-table th:nth-child(3),
-.residents-table td:nth-child(3) {
-    width: 100px;
-}
-
-.residents-table th:nth-child(4),
-.residents-table td:nth-child(4) {
-    width: 90px;
-}
-
-.residents-table th:nth-child(5),
-.residents-table td:nth-child(5) {
-    width: 70px;
-}
-
-.residents-table th:nth-child(6),
-.residents-table td:nth-child(6) {
-    width: 100px;
-}
-
-.residents-table th:nth-child(7),
-.residents-table td:nth-child(7) {
-    width: 70px;
-    text-align: center;
+    table-layout: auto;
 }
 
 .residents-table th {
@@ -181,8 +142,6 @@
     border-bottom: 2px solid var(--border-color);
     background-color: var(--bg-secondary);
     white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
 }
 
 .residents-table th.header-with-info .header-text {
@@ -219,18 +178,9 @@
 }
 
 .residents-table td {
-    padding: 14px 20px;
+    padding: 18px 20px;
     transition: background-color 0.2s ease;
     border-bottom: 1px solid var(--border-color);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-/* Full Name cell: allow wrapping so long names don't get clipped */
-.residents-table td:nth-child(2) {
-    white-space: normal;
-    overflow: visible;
 }
 
 .residents-table td:not(:last-child) {
@@ -641,5 +591,169 @@
         min-width: 32px;
         height: 32px;
         font-size: 13px;
+    }
+}
+
+/* ===================================
+   Page Header Actions (Print + Create)
+   =================================== */
+.page-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* ===================================
+   Print-Only Header (screen: hidden)
+   =================================== */
+.print-only {
+    display: none;
+}
+
+/* ===================================
+   @media print — Masterlist Print View
+   =================================== */
+@media print {
+
+    /* Hide all UI chrome */
+    .sidebar,
+    .main-header,
+    .page-header-section,
+    .filter-tabs,
+    .search-filter-bar,
+    .filter-panel,
+    .pagination-container,
+    .view-toggle,
+    .btn-action,
+    .btn,
+    button {
+        display: none !important;
+    }
+
+    /* Reset layout so table fills the page */
+    body,
+    .main-content,
+    .dashboard-content {
+        margin: 0 !important;
+        padding: 0 !important;
+        width: 100% !important;
+        background: white !important;
+        color: black !important;
+    }
+
+    /* Show the print-only header */
+    .print-only {
+        display: flex !important;
+        align-items: center;
+        gap: 20px;
+        padding: 16px 0 12px;
+        border-bottom: 2px solid #1e3a5f;
+        margin-bottom: 16px;
+    }
+
+    .print-logo {
+        width: 72px;
+        height: 72px;
+        object-fit: contain;
+    }
+
+    .print-header-info {
+        flex: 1;
+    }
+
+    .print-barangay-name {
+        font-size: 18px;
+        font-weight: 700;
+        color: #1e3a5f;
+        margin: 0 0 2px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .print-list-title {
+        font-size: 14px;
+        font-weight: 600;
+        color: #374151;
+        margin: 0 0 4px;
+    }
+
+    .print-meta {
+        font-size: 12px;
+        color: #6b7280;
+        margin: 0;
+    }
+
+    /* Table print styles */
+    .table-container {
+        overflow: visible !important;
+        border: none !important;
+        box-shadow: none !important;
+    }
+
+    .residents-table {
+        width: 100% !important;
+        font-size: 11px !important;
+        border-collapse: collapse !important;
+        border-radius: 0 !important;
+        min-width: unset !important;
+    }
+
+    .residents-table th,
+    .residents-table td {
+        padding: 8px 10px !important;
+        border: 1px solid #d1d5db !important;
+        color: black !important;
+        background: white !important;
+    }
+
+    .residents-table th {
+        background-color: #f3f4f6 !important;
+        font-weight: 700 !important;
+        font-size: 11px !important;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+    }
+
+    /* Hide the Action column when printing */
+    .residents-table th:last-child,
+    .residents-table td:last-child {
+        display: none !important;
+    }
+
+    /* Flatten avatar — show only text initials */
+    .resident-name {
+        gap: 6px;
+    }
+
+    .avatar {
+        width: 24px !important;
+        height: 24px !important;
+        font-size: 9px !important;
+        print-color-adjust: exact;
+        -webkit-print-color-adjust: exact;
+    }
+
+    /* Flatten badges */
+    .badge {
+        border: 1px solid #9ca3af !important;
+        background: white !important;
+        color: black !important;
+        font-size: 10px !important;
+        padding: 2px 6px !important;
+    }
+
+    /* Ensure links don't show URL */
+    a[href]::after {
+        content: none !important;
+    }
+
+    /* Page break settings */
+    @page {
+        margin: 15mm 12mm;
+        size: A4 landscape;
+    }
+
+    tr {
+        page-break-inside: avoid;
     }
 }
