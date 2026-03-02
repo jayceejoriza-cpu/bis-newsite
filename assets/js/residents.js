@@ -46,9 +46,17 @@ function initializeTable() {
         searchable: true,
         paginated: true,
         pageSize: 10,
-        responsive: true
+        responsive: true,
+        // Hide deceased residents from default view; they remain searchable
+        defaultFilter: (row) => {
+            const status = row.getAttribute('data-activity-status');
+            return status !== 'Deceased';
+        }
     });
-    
+
+    // Default sort: Full Name A-Z (column index 1)
+    residentsTable.sortByColumn(1);
+
     console.log(`Total residents: ${residentsTable.getTotalRows()}`);
 }
 
@@ -95,50 +103,33 @@ function initializeFilterTabs() {
 function applyFilter(filterType) {
     console.log('Filter applied:', filterType);
     
-    const gridCards = document.querySelectorAll('.resident-card');
-    
     if (filterType === 'all') {
         residentsTable.reset();
-        gridCards.forEach(card => card.style.display = '');
         return;
     }
     
     residentsTable.filter(row => {
         const cells = Array.from(row.cells);
-        
+
+        // Column layout: 0=Resident ID, 1=Full Name, 2=Voter Status,
+        //                3=Date of Birth, 4=Sex, 5=Activity Status, 6=Action
         switch(filterType) {
             case 'verified':
+                // Not a current tab but kept for safety
                 const verificationBadge = cells[2]?.querySelector('.badge');
                 return verificationBadge?.textContent.trim().toLowerCase() === 'verified';
-                
+
             case 'voters':
-                const voterBadge = cells[3]?.querySelector('.badge');
+                const voterBadge = cells[2]?.querySelector('.badge');
                 return voterBadge?.textContent.trim().toLowerCase() === 'yes';
-                
+
             case 'active':
-                const activityBadge = cells[6]?.querySelector('.badge');
+                const activityBadge = cells[5]?.querySelector('.badge');
                 return activityBadge?.textContent.trim().toLowerCase() === 'active';
-                
+
             default:
                 return true;
         }
-    });
-
-    // Filter grid cards
-    gridCards.forEach(card => {
-        const voterStatus = card.getAttribute('data-voter-status').toLowerCase();
-        const activityStatus = card.getAttribute('data-activity-status').toLowerCase();
-        
-        let show = true;
-        switch(filterType) {
-            case 'voters':
-                show = voterStatus === 'yes';
-                break;
-            case 'active':
-                show = activityStatus === 'active';
-                break;
-        }
-        card.style.display = show ? '' : 'none';
     });
 }
 
@@ -156,15 +147,6 @@ function initializeSearch() {
             clearTimeout(searchTimeout);
             searchTimeout = setTimeout(() => {
                 residentsTable.search(e.target.value);
-                
-                // Filter grid cards
-                const query = e.target.value.toLowerCase();
-                const gridCards = document.querySelectorAll('.resident-card');
-                gridCards.forEach(card => {
-                    const name = card.querySelector('.resident-name').textContent.toLowerCase();
-                    const id = card.querySelector('.resident-id').textContent.toLowerCase();
-                    card.style.display = (name.includes(query) || id.includes(query)) ? '' : 'none';
-                });
             }, 300);
         });
     }
@@ -173,10 +155,6 @@ function initializeSearch() {
         clearSearchBtn.addEventListener('click', () => {
             searchInput.value = '';
             residentsTable.search('');
-            
-            // Reset grid cards
-            const gridCards = document.querySelectorAll('.resident-card');
-            gridCards.forEach(card => card.style.display = '');
             searchInput.focus();
         });
     }
@@ -207,102 +185,6 @@ function initializeButtons() {
     if (refreshBtn) {
         refreshBtn.addEventListener('click', () => {
             refreshData();
-        });
-    }
-
-    // Print button
-    const printBtn = document.getElementById('printMasterlistBtn');
-    if (printBtn) {
-        printBtn.addEventListener('click', () => {
-            if (!residentsTable || !residentsTable.filteredRows) {
-                window.print();
-                return;
-            }
-
-            // Create a hidden iframe for printing to bypass pagination visibility issues
-            let printFrame = document.getElementById('residentPrintFrame');
-            if (!printFrame) {
-                printFrame = document.createElement('iframe');
-                printFrame.id = 'residentPrintFrame';
-                printFrame.style.position = 'fixed';
-                printFrame.style.bottom = '0';
-                printFrame.style.right = '0';
-                printFrame.style.width = '0';
-                printFrame.style.height = '0';
-                printFrame.style.border = 'none';
-                document.body.appendChild(printFrame);
-            }
-
-            const doc = printFrame.contentWindow.document;
-            doc.open();
-
-            // Clone the table header and remove the Action column
-            const tableHeader = document.querySelector('#residentsTable thead').cloneNode(true);
-            const headerActionCol = tableHeader.querySelector('th:last-child');
-            if (headerActionCol) headerActionCol.remove();
-
-            // Get only the filtered rows from the EnhancedTable instance
-            let rowsHtml = '';
-            residentsTable.filteredRows.forEach(row => {
-                const rowClone = row.cloneNode(true);
-                // Remove the Action column (last cell)
-                const actionCell = rowClone.querySelector('td:last-child');
-                if (actionCell) actionCell.remove();
-                
-                // Ensure row is visible in the print document
-                rowClone.style.display = 'table-row';
-                rowsHtml += rowClone.outerHTML;
-            });
-
-            // Get the print header and update the count
-            const printHeader = document.querySelector('.print-header').cloneNode(true);
-            const countBadge = printHeader.querySelector('#printTotalRecords');
-            if (countBadge) countBadge.textContent = residentsTable.filteredRows.length;
-
-            // Get the print footer
-            const printFooter = document.querySelector('.print-footer').cloneNode(true);
-
-            // Collect all styles to maintain layout
-            const styles = Array.from(document.querySelectorAll('link[rel="stylesheet"], style'))
-                .map(s => s.outerHTML).join('\n');
-
-            doc.write(`
-                <!DOCTYPE html>
-                <html>
-                <head>
-                    <title>Resident Masterlist</title>
-                    ${styles}
-                    <style>
-                        body { background: white !important; color: black !important; padding: 20px !important; }
-                        .main-content, .dashboard-content { margin: 0 !important; padding: 0 !important; width: 100% !important; }
-                        .print-only { display: flex !important; }
-                        .residents-table { width: 100% !important; border-collapse: collapse !important; margin-top: 20px; }
-                        .residents-table th, .residents-table td { border: 1px solid #333 !important; padding: 10px !important; font-size: 11px !important; text-align: left; }
-                        .residents-table th { background-color: #f3f4f6 !important; -webkit-print-color-adjust: exact; }
-                        .avatar { display: none !important; }
-                        .resident-name { gap: 5px !important; }
-                        @page { size: landscape; margin: 15mm; }
-                    </style>
-                </head>
-                <body>
-                    <div class="dashboard-content">
-                        ${printHeader.outerHTML}
-                        <table class="residents-table">
-                            ${tableHeader.outerHTML}
-                            <tbody>${rowsHtml}</tbody>
-                        </table>
-                        ${printFooter.outerHTML}
-                    </div>
-                </body>
-                </html>
-            `);
-            doc.close();
-
-            // Trigger print after a short delay to ensure styles/content are loaded
-            setTimeout(() => {
-                printFrame.contentWindow.focus();
-                printFrame.contentWindow.print();
-            }, 500);
         });
     }
     
@@ -422,8 +304,19 @@ function initializeActionMenus() {
     
     if (tableBody) {
         tableBody.addEventListener('click', (e) => {
+            // Handle clicks on the resident name link — navigate programmatically
+            const nameLink = e.target.closest('.resident-name-link');
+            if (nameLink) {
+                e.preventDefault();
+                const href = nameLink.getAttribute('href');
+                if (href) window.location.href = href;
+                return;
+            }
+
+            // Handle action button clicks
             const actionBtn = e.target.closest('.btn-action');
             if (actionBtn) {
+                e.preventDefault();
                 const row = actionBtn.closest('tr');
                 showActionMenu(row, actionBtn);
             }
@@ -619,25 +512,32 @@ function handleAction(action, name, id, row) {
                         setTimeout(() => {
                             // Remove the row from DOM
                             row.remove();
-                            
-                            // Update the EnhancedTable instance
-                            // This will refresh the internal arrays and recalculate pagination
-                            residentsTable.allRows = Array.from(residentsTable.tbody.querySelectorAll('tr'));
-                            residentsTable.filteredRows = [...residentsTable.allRows];
-                            
+
+                            // Rebuild allRows from remaining DOM rows (not in tbody since updateDisplay manages it)
+                            residentsTable.allRows = residentsTable.allRows.filter(r => r !== row);
+
+                            // Re-apply defaultFilter to filteredRows
+                            if (residentsTable.options.defaultFilter) {
+                                residentsTable.filteredRows = residentsTable.allRows.filter(
+                                    residentsTable.options.defaultFilter
+                                );
+                            } else {
+                                residentsTable.filteredRows = [...residentsTable.allRows];
+                            }
+
                             // Check if current page is now empty
                             const totalRows = residentsTable.filteredRows.length;
                             const totalPages = Math.ceil(totalRows / residentsTable.options.pageSize);
-                            
+
                             // If current page is beyond total pages, go to last page
                             if (residentsTable.currentPage > totalPages && totalPages > 0) {
                                 residentsTable.currentPage = totalPages;
                             }
-                            
+
                             // Update the display and pagination
                             residentsTable.updateDisplay();
                             residentsTable.updatePagination();
-                            
+
                             console.log(`Resident deleted. Remaining residents: ${totalRows}`);
                         }, 300);
                     } else {
@@ -691,14 +591,22 @@ function updateActivityStatus(residentId, newStatus, row, currentStatus) {
             if (statusCell) {
                 const badge = statusCell.querySelector('.badge');
                 if (badge) {
-                    // Remove old badge class
                     badge.classList.remove('badge-active', 'badge-inactive', 'badge-deceased');
-                    // Add new badge class
                     badge.classList.add('badge-' + newStatus.toLowerCase());
-                    // Update text
                     badge.textContent = newStatus;
                 }
             }
+
+            // Update data-activity-status so defaultFilter picks up the change
+            row.setAttribute('data-activity-status', newStatus);
+
+            // If the new status is Deceased, remove from filteredRows and refresh display
+            if (newStatus === 'Deceased' && residentsTable.options.defaultFilter) {
+                residentsTable.filteredRows = residentsTable.filteredRows.filter(r => r !== row);
+                residentsTable.updateDisplay();
+                residentsTable.updatePagination();
+            }
+
             showNotification(data.message, 'success');
         } else {
             showNotification('Error: ' + data.message, 'error');
@@ -808,40 +716,6 @@ function applyAdvancedFilters() {
         
         return true;
     });
-
-    // Filter grid cards
-    const gridCards = document.querySelectorAll('.resident-card');
-    gridCards.forEach(card => {
-        const age = parseInt(card.querySelector('.detail-item:first-child .value').textContent);
-        const rowData = {
-            religion: card.getAttribute('data-religion') || '',
-            ethnicity: card.getAttribute('data-ethnicity') || '',
-            civilStatus: card.getAttribute('data-civil-status') || '',
-            education: card.getAttribute('data-education') || '',
-            employment: card.getAttribute('data-employment') || '',
-            fourPs: card.getAttribute('data-fourps') || '',
-            ageHealthGroup: card.getAttribute('data-age-health-group') || ''
-        };
-
-        let show = true;
-        
-        if (filters.ageGroup) {
-            if (filters.ageGroup === '0-17' && (age < 0 || age > 17)) show = false;
-            if (filters.ageGroup === '18-35' && (age < 18 || age > 35)) show = false;
-            if (filters.ageGroup === '36-59' && (age < 36 || age > 59)) show = false;
-            if (filters.ageGroup === '60+' && age < 60) show = false;
-        }
-        
-        if (filters.religion && rowData.religion.toLowerCase() !== filters.religion.toLowerCase()) show = false;
-        if (filters.ethnicity && rowData.ethnicity.toLowerCase() !== filters.ethnicity.toLowerCase()) show = false;
-        if (filters.civilStatus && rowData.civilStatus.toLowerCase() !== filters.civilStatus.toLowerCase()) show = false;
-        if (filters.education && rowData.education.toLowerCase() !== filters.education.toLowerCase()) show = false;
-        if (filters.employmentStatus && rowData.employment.toLowerCase() !== filters.employmentStatus.toLowerCase()) show = false;
-        if (filters.fourPs && rowData.fourPs.toLowerCase() !== filters.fourPs.toLowerCase()) show = false;
-        if (filters.ageHealthGroup && rowData.ageHealthGroup.toLowerCase() !== filters.ageHealthGroup.toLowerCase()) show = false;
-        
-        card.style.display = show ? '' : 'none';
-    });
     
     // Count active filters
     const activeFiltersCount = Object.values(filters).filter(v => v !== '').length;
@@ -850,14 +724,6 @@ function applyAdvancedFilters() {
         showNotification(`${activeFiltersCount} filter(s) applied successfully`, 'success');
     } else {
         showNotification('No filters selected', 'info');
-    }
-
-    // Hide the filter panel after applying
-    const filterPanel = document.getElementById('filterPanel');
-    const filterBtn = document.getElementById('filterBtn');
-    if (filterPanel) {
-        filterPanel.style.display = 'none';
-        if (filterBtn) filterBtn.classList.remove('active');
     }
 }
 
@@ -882,10 +748,6 @@ function clearAdvancedFilters() {
     
     // Reset the table
     residentsTable.reset();
-    
-    // Reset grid cards
-    const gridCards = document.querySelectorAll('.resident-card');
-    gridCards.forEach(card => card.style.display = '');
     
     showNotification('Filters cleared', 'success');
 }

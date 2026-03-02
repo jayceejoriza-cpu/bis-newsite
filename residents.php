@@ -60,9 +60,8 @@ function generateResidentId($id) {
  * Get initials from name
  */
 function getInitials($firstName, $lastName) {
-    $first = !empty($firstName) ? strtoupper(substr($firstName, 0, 1)) : '';
     $last = !empty($lastName) ? strtoupper(substr($lastName, 0, 1)) : '';
-    return $first . $last;
+    return $last;
 }
 
 /**
@@ -77,11 +76,13 @@ function getAvatarColor($index) {
  * Format full name
  */
 function formatFullName($firstName, $middleName, $lastName, $suffix) {
-    $name = trim($firstName);
+    $name = trim($lastName);
+    if (!empty($firstName)) {
+        $name .= ', ' . trim($firstName);
+    }
     if (!empty($middleName)) {
         $name .= ' ' . trim($middleName);
     }
-    $name .= ' ' . trim($lastName);
     if (!empty($suffix)) {
         $name .= ' ' . trim($suffix);
     }
@@ -174,36 +175,14 @@ try {
                     <h1 class="page-title"><?php echo $pageTitle; ?></h1>
                     <p class="page-subtitle">View and manage resident records</p>
                 </div>
-                <div class="page-header-actions">
-                    <button class="btn btn-outline-secondary" id="printMasterlistBtn" title="Print Masterlist">
-                        <i class="fas fa-print"></i>
-                        Print Masterlist
-                    </button>
-                    <?php if (hasPermission('perm_resident_create')): ?>
-                    <button class="btn btn-primary" id="createResidentBtn">
-                        <i class="fas fa-plus"></i>
-                        Create Resident
-                    </button>
-                    <?php endif; ?>
-                </div>
+                <?php if (hasPermission('perm_resident_create')): ?>
+                <button class="btn btn-primary" id="createResidentBtn">
+                    <i class="fas fa-plus"></i>
+                    Create Resident
+                </button>
+                <?php endif; ?>
             </div>
             
-            <!-- Print-Only Header (hidden on screen, visible when printing) -->
-            <div class="print-only print-header">
-                <div class="print-header-logo">
-                    <img src="assets/image/brgylogo.jpg" alt="Barangay Logo" class="print-logo">
-                </div>
-                <div class="print-header-info">
-                    <h2 class="print-barangay-name"><?php echo defined('SITE_NAME') ? htmlspecialchars(SITE_NAME) : 'Barangay Information System'; ?></h2>
-                    <h3 class="print-list-title">Residents Masterlist</h3>
-                    <p class="print-meta">
-                        Date Printed: <strong><?php echo date('F d, Y'); ?></strong>
-                        &nbsp;&nbsp;|&nbsp;&nbsp;
-                        Total Records: <strong id="printTotalRecords"><?php echo number_format(count($residents)); ?></strong>
-                    </p>
-                </div>
-            </div>
-
             <!-- Filter Tabs -->
             <div class="filter-tabs">
                 <button class="tab-btn active" data-filter="all">All</button>
@@ -407,18 +386,20 @@ try {
                                 data-education="<?php echo htmlspecialchars($resident['educational_attainment'] ?? ''); ?>"
                                 data-employment="<?php echo htmlspecialchars($resident['employment_status'] ?? ''); ?>"
                                 data-fourps="<?php echo htmlspecialchars($resident['fourps_member'] ?? ''); ?>"
-                                data-age-health-group="<?php echo htmlspecialchars($resident['age_health_group'] ?? ''); ?>">
-                               
+                                data-age-health-group="<?php echo htmlspecialchars($resident['age_health_group'] ?? ''); ?>"
+                                data-activity-status="<?php echo htmlspecialchars($resident['activity_status']); ?>">
+
                                     <td><?php echo htmlspecialchars($residentId); ?></td>
-                                     <td><a href="resident_profile.php?id=<?php echo htmlspecialchars($resident['id']); ?>" class="resident-name-link">
-                                        <div class="resident-name">
-                                            <span class="avatar <?php echo htmlspecialchars($avatarColor); ?>">
-                                                <?php echo htmlspecialchars($initials); ?>
-                                            </span>
-                                            <span><?php echo htmlspecialchars($fullName); ?></span>
-                                        </div>
-                                    </a>
-                                </td>
+                                    <td data-sort="<?php echo htmlspecialchars($fullName); ?>">
+                                        <a href="resident_profile.php?id=<?php echo htmlspecialchars($resident['id']); ?>" class="resident-name-link">
+                                            <div class="resident-name">
+                                                <span class="avatar <?php echo htmlspecialchars($avatarColor); ?>">
+                                                    <?php echo htmlspecialchars($initials); ?>
+                                                </span>
+                                                <span><?php echo htmlspecialchars($fullName); ?></span>
+                                            </div>
+                                        </a>
+                                    </td>
                                 
                                 <td>
                                     <span class="badge <?php echo htmlspecialchars($voterBadge); ?>">
@@ -443,65 +424,80 @@ try {
                     </tbody>
                 </table>
             </div>
-            
-            <!-- Residents Grid View -->
-            <div id="residentsGrid" class="residents-grid" style="display: none;">
+
+            <!-- Residents Grid -->
+            <div class="residents-grid" id="residentsGrid" style="display: none;">
                 <?php if (empty($residents)): ?>
-                    <div class="empty-state" style="grid-column: 1/-1; text-align: center; padding: 40px;">
+                    <div class="empty-state" style="text-align: center; grid-column: 1 / -1; padding: 40px;">
                         <i class="fas fa-users" style="font-size: 48px; color: #d1d5db; margin-bottom: 16px;"></i>
                         <p style="color: #6b7280; font-size: 16px; margin: 0;">No residents found</p>
+                        <p style="color: #9ca3af; font-size: 14px; margin-top: 8px;">Start by adding a new resident</p>
                     </div>
                 <?php else: ?>
-                    <?php foreach ($residents as $index => $resident): 
+                    <?php foreach ($residents as $index => $resident):
+                        // Prepare data (same as in table view)
                         $fullName = formatFullName(
-                            $resident['first_name'], 
-                            $resident['middle_name'], 
-                            $resident['last_name'], 
+                            $resident['first_name'],
+                            $resident['middle_name'],
+                            $resident['last_name'],
                             $resident['suffix']
                         );
                         $initials = getInitials($resident['first_name'], $resident['last_name']);
                         $avatarColor = getAvatarColor($index);
                         $residentId = !empty($resident['resident_id']) ? $resident['resident_id'] : generateResidentId($resident['id']);
                         $age = calculateAge($resident['date_of_birth']);
+                        $voterBadge = ($resident['voter_status'] === 'Yes') ? 'badge-yes' : 'badge-no';
+                        $activityBadge = 'badge-' . strtolower($resident['activity_status']);
                     ?>
                     <div class="resident-card" 
-                         data-religion="<?php echo htmlspecialchars($resident['religion'] ?? ''); ?>"
-                         data-ethnicity="<?php echo htmlspecialchars($resident['ethnicity'] ?? ''); ?>"
-                         data-civil-status="<?php echo htmlspecialchars($resident['civil_status'] ?? ''); ?>"
-                         data-education="<?php echo htmlspecialchars($resident['educational_attainment'] ?? ''); ?>"
-                         data-employment="<?php echo htmlspecialchars($resident['employment_status'] ?? ''); ?>"
-                         data-fourps="<?php echo htmlspecialchars($resident['fourps_member'] ?? ''); ?>"
-                         data-age-health-group="<?php echo htmlspecialchars($resident['age_health_group'] ?? ''); ?>"
-                         data-voter-status="<?php echo htmlspecialchars($resident['voter_status'] ?: 'No'); ?>"
-                         data-activity-status="<?php echo htmlspecialchars($resident['activity_status'] ?? 'Active'); ?>">
-                        <div class="avatar <?php echo htmlspecialchars($avatarColor); ?>">
+                        data-religion="<?php echo htmlspecialchars($resident['religion'] ?? ''); ?>"
+                        data-ethnicity="<?php echo htmlspecialchars($resident['ethnicity'] ?? ''); ?>"
+                        data-civil-status="<?php echo htmlspecialchars($resident['civil_status'] ?? ''); ?>"
+                        data-education="<?php echo htmlspecialchars($resident['educational_attainment'] ?? ''); ?>"
+                        data-employment="<?php echo htmlspecialchars($resident['employment_status'] ?? ''); ?>"
+                        data-fourps="<?php echo htmlspecialchars($resident['fourps_member'] ?? ''); ?>"
+                        data-age-health-group="<?php echo htmlspecialchars($resident['age_health_group'] ?? ''); ?>">
+                        
+                        <span class="avatar <?php echo htmlspecialchars($avatarColor); ?>">
                             <?php echo htmlspecialchars($initials); ?>
-                        </div>
-                        <h3 class="resident-name"><?php echo htmlspecialchars($fullName); ?></h3>
-                        <p class="resident-id"><?php echo htmlspecialchars($residentId); ?></p>
+                        </span>
+                        
+                        <div class="resident-name"><?php echo htmlspecialchars($fullName); ?></div>
+                        <div class="resident-id"><?php echo htmlspecialchars($residentId); ?></div>
+                        
                         <div class="details">
                             <div class="detail-item">
-                                <span class="label">Age</span>
-                                <span class="value"><?php echo $age; ?></span>
+                                <div class="label">Age</div>
+                                <div class="value"><?php echo $age; ?></div>
                             </div>
                             <div class="detail-item">
-                                <span class="label">Sex</span>
-                                <span class="value"><?php echo htmlspecialchars($resident['sex']); ?></span>
+                                <div class="label">Sex</div>
+                                <div class="value"><?php echo htmlspecialchars($resident['sex']); ?></div>
                             </div>
                         </div>
+                        
                         <div class="badges">
-                            <span class="badge <?php echo ($resident['voter_status'] === 'Yes') ? 'badge-yes' : 'badge-no'; ?>">
-                                <?php echo htmlspecialchars($resident['voter_status'] ?: 'No'); ?> Voter
+                            <span class="badge <?php echo htmlspecialchars($voterBadge); ?>">
+                                <?php echo htmlspecialchars($resident['voter_status'] ?: 'No'); ?>
+                            </span>
+                            <span class="badge <?php echo htmlspecialchars($activityBadge); ?>">
+                                <?php echo htmlspecialchars($resident['activity_status']); ?>
                             </span>
                         </div>
+                        
                         <div class="actions">
-                            <a href="resident_profile.php?id=<?php echo htmlspecialchars($resident['id']); ?>" class="btn btn-sm btn-outline-primary">View Profile</a>
+                            <a href="resident_profile.php?id=<?php echo htmlspecialchars($resident['id']); ?>" class="btn-action" data-resident-id="<?php echo htmlspecialchars($resident['id']); ?>">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                            <button class="btn-action" data-resident-id="<?php echo htmlspecialchars($resident['id']); ?>">
+                                <i class="fas fa-ellipsis-h"></i>
+                            </button>
                         </div>
                     </div>
                     <?php endforeach; ?>
                 <?php endif; ?>
             </div>
-
+            
             <!-- Pagination -->
             <div class="pagination-container">
                 <div class="pagination-info">
@@ -515,22 +511,6 @@ try {
                     <button class="page-btn">
                         <i class="fas fa-chevron-right"></i>
                     </button>
-                </div>
-            </div>
-
-            <!-- Print-Only Footer (hidden on screen, visible when printing) -->
-            <div class="print-only print-footer" style="margin-top: 60px; width: 100%;">
-                <div style="display: flex; justify-content: space-between; padding: 0 50px; width: 100%;">
-                    <div style="text-align: center;">
-                        <div style="border-bottom: 1px solid #000; width: 220px; margin-bottom: 8px;"></div>
-                        <p style="margin: 0; font-size: 12px; font-weight: 600; text-transform: uppercase;">Prepared by:</p>
-                        <p style="margin: 0; font-size: 14px;"><?php echo htmlspecialchars($_SESSION['full_name'] ?? 'Authorized Staff'); ?></p>
-                    </div>
-                    <div style="text-align: center;">
-                        <div style="border-bottom: 1px solid #000; width: 220px; margin-bottom: 8px;"></div>
-                        <p style="margin: 0; font-size: 12px; font-weight: 600; text-transform: uppercase;">Certified Correct:</p>
-                        <p style="margin: 0; font-size: 14px;">Barangay Captain</p>
-                    </div>
                 </div>
             </div>
         </div>
@@ -554,6 +534,7 @@ try {
     <!-- Custom JavaScript -->
     <script src="assets/js/script.js"></script>
     <script src="assets/js/table.js"></script>
+    <script src="assets/js/grid-pagination.js"></script>
     <script src="assets/js/residents.js"></script>
 </body>
 </html>

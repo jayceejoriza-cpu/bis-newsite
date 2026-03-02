@@ -39,7 +39,7 @@ document.addEventListener('DOMContentLoaded', function() {
 // ============================================
 function loadResidentData(residentId) {
     showLoadingState();
-    fetch(`get_resident_details.php?id=${residentId}`)
+    fetch(`../model/get_resident_details.php?id=${residentId}`)
         .then(response => response.json())
         .then(result => {
             if (result.success) {
@@ -716,7 +716,7 @@ function searchHouseholds() {
     searchBtn.disabled = true;
     searchBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Searching...';
 
-    fetch('search_households_for_resident.php?search=' + encodeURIComponent(query))
+    fetch('../model/search_households_for_resident.php?search=' + encodeURIComponent(query))
         .then(response => response.json())
         .then(data => {
             searchBtn.disabled = false;
@@ -1074,7 +1074,7 @@ function submitFormFromReview() {
     submitBtn.disabled = true;
     submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Updating...';
 
-    fetch('save_resident.php', {
+    fetch('../model/save_resident.php', {
         method: 'POST',
         body: formData
     })
