@@ -382,7 +382,6 @@ try {
                                 </span>
                             </th>
                             <th>Purok</th>
-                            <th>Voter Status</th>
                             <th>Registered Voter</th>
                             <th>Date of Birth</th>
                             <th>Sex</th>
