@@ -93,6 +93,11 @@ function initTabs() {
 // ============================================
 function renderChartsForTab(tab) {
     switch (tab) {
+        case 'overview':
+            renderOverviewPopulationChart();
+            renderOverviewBlotterChart();
+            renderOverviewDemographicsChart();
+            break;
         case 'population':
             renderGenderChart();
             renderAgeGroupChart();
@@ -111,6 +116,110 @@ function renderChartsForTab(tab) {
             renderToiletChart();
             break;
     }
+}
+
+// ============================================
+// OVERVIEW CHARTS
+// ============================================
+function renderOverviewPopulationChart() {
+    destroyChart('overviewPopulationChart');
+    const canvas = document.getElementById('overviewPopulationChart');
+    if (!canvas) return;
+
+    const labels = JSON.parse(canvas.dataset.labels || '[]');
+    const values = JSON.parse(canvas.dataset.values || '[]');
+
+    reportCharts['overviewPopulationChart'] = new Chart(canvas, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Total Residents',
+                data: values,
+                borderColor: COLORS.blue,
+                backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                borderWidth: 3,
+                fill: true,
+                tension: 0.4,
+                pointRadius: 4,
+                pointBackgroundColor: COLORS.blue
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: { mode: 'index', intersect: false }
+            },
+            scales: {
+                x: { ticks: { color: getTextColor() }, grid: { display: false } },
+                y: { ticks: { color: getTextColor() }, grid: { color: getGridColor() } }
+            }
+        }
+    });
+}
+
+function renderOverviewBlotterChart() {
+    destroyChart('overviewBlotterChart');
+    const canvas = document.getElementById('overviewBlotterChart');
+    if (!canvas) return;
+
+    const labels = JSON.parse(canvas.dataset.labels || '[]');
+
+    reportCharts['overviewBlotterChart'] = new Chart(canvas, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [
+                { label: 'Pending', data: JSON.parse(canvas.dataset.pending || '[]'), backgroundColor: STATUS_COLORS['Pending'] },
+                { label: 'Under Investigation', data: JSON.parse(canvas.dataset.investigation || '[]'), backgroundColor: STATUS_COLORS['Under Investigation'] },
+                { label: 'Dismissed', data: JSON.parse(canvas.dataset.dismissed || '[]'), backgroundColor: STATUS_COLORS['Dismissed'] },
+                { label: 'Resolved', data: JSON.parse(canvas.dataset.resolved || '[]'), backgroundColor: STATUS_COLORS['Resolved'] }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                x: { stacked: true, ticks: { color: getTextColor() }, grid: { display: false } },
+                y: { stacked: true, ticks: { color: getTextColor() }, grid: { color: getGridColor() } }
+            },
+            plugins: {
+                legend: { position: 'bottom', labels: { color: getTextColor(), boxWidth: 12, font: { size: 11 } } }
+            }
+        }
+    });
+}
+
+function renderOverviewDemographicsChart() {
+    destroyChart('overviewDemographicsChart');
+    const canvas = document.getElementById('overviewDemographicsChart');
+    if (!canvas) return;
+
+    const labels = JSON.parse(canvas.dataset.labels || '[]');
+    const values = JSON.parse(canvas.dataset.values || '[]');
+
+    reportCharts['overviewDemographicsChart'] = new Chart(canvas, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                data: values,
+                backgroundColor: [COLORS.green, COLORS.blue, COLORS.orange, COLORS.red],
+                borderRadius: 6
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                x: { ticks: { color: getTextColor() }, grid: { display: false } },
+                y: { beginAtZero: true, ticks: { color: getTextColor() }, grid: { color: getGridColor() } }
+            }
+        }
+    });
 }
 
 // ============================================
@@ -261,6 +370,10 @@ function renderBlotterMonthlyChart() {
     const labels = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
     const values = JSON.parse(canvas.dataset.values || '[]');
 
+    // Compute suggestedMax with 30% headroom above peak
+    const maxVal = Math.max(...values.map(v => v || 0), 0);
+    const suggestedMax = maxVal > 0 ? Math.ceil(maxVal * 1.3) : 5;
+
     reportCharts['blotterMonthlyChart'] = new Chart(canvas, {
         type: 'line',
         data: {
@@ -296,6 +409,7 @@ function renderBlotterMonthlyChart() {
                 },
                 y: {
                     beginAtZero: true,
+                    suggestedMax: suggestedMax,
                     ticks: { color: getTextColor(), font: { family: 'Inter', size: 11 }, precision: 0 },
                     grid: { color: getGridColor() }
                 }
@@ -534,19 +648,42 @@ function initYearFilter() {
     const yearSelect = document.getElementById('blotterYearSelect');
     if (!yearSelect) return;
 
-    yearSelect.addEventListener('change', function () {
-        const year = this.value;
-        fetch(`model/get_report_data.php?type=blotter_monthly&year=${year}`)
+    // Shared fetch-and-render helper
+    function fetchBlotterMonthly(year) {
+        fetch(`model/get_dashboard_data.php?type=blotter&year=${year}`)
             .then(r => r.json())
-            .then(data => {
+            .then(result => {
+                if (!result.success || !result.data) return;
+                const data   = result.data;
                 const canvas = document.getElementById('blotterMonthlyChart');
-                if (canvas) {
-                    canvas.dataset.values = JSON.stringify(data.values || []);
-                    renderBlotterMonthlyChart();
-                }
+                if (!canvas) return;
+
+                // Sum all statuses per month to get total monthly blotter count
+                const pending            = data.pending            || [];
+                const underInvestigation = data.underInvestigation || [];
+                const dismissed          = data.dismissed          || [];
+                const resolved           = data.resolved           || [];
+
+                const totals = pending.map((v, i) =>
+                    (v || 0) +
+                    (underInvestigation[i] || 0) +
+                    (dismissed[i]          || 0) +
+                    (resolved[i]           || 0)
+                );
+
+                canvas.dataset.values = JSON.stringify(totals);
+                renderBlotterMonthlyChart();
             })
             .catch(() => {});
+    }
+
+    // Update on year change
+    yearSelect.addEventListener('change', function () {
+        fetchBlotterMonthly(this.value);
     });
+
+    // Also fetch on initial load for the currently selected year
+    fetchBlotterMonthly(yearSelect.value);
 }
 
 // ============================================
@@ -583,6 +720,9 @@ document.addEventListener('DOMContentLoaded', () => {
     initYearFilter();
     watchDarkMode();
 
-    // Render charts for the default active tab (population)
-    renderChartsForTab('population');
+    // Render charts for the default active tab (detect dynamically)
+    const activeTabBtn = document.querySelector('.report-tab-btn.active');
+    if (activeTabBtn) {
+        renderChartsForTab(activeTabBtn.dataset.tab);
+    }
 });
