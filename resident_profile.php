@@ -67,7 +67,7 @@ try {
     // Fetch household information where resident is the household head
     $householdStmt = $pdo->prepare("
         SELECT h.*, 
-               CONCAT(r.first_name, ' ', COALESCE(r.middle_name, ''), ' ', r.last_name, ' ', COALESCE(r.suffix, '')) as head_name,
+               CONCAT(r.last_name, ', ', r.first_name, ' ', COALESCE(r.middle_name, '')) as head_name,
                r.date_of_birth as head_dob,
                r.sex as head_sex
         FROM households h
@@ -137,11 +137,13 @@ try {
 
 // Helper function to format full name
 function formatFullName($firstName, $middleName, $lastName, $suffix) {
-    $name = trim($firstName);
+    $name = trim($lastName);
+    if (!empty($firstName)) {
+        $name .= ', ' . trim($firstName);
+    }
     if (!empty($middleName)) {
         $name .= ' ' . trim($middleName);
     }
-    $name .= ' ' . trim($lastName);
     if (!empty($suffix)) {
         $name .= ' ' . trim($suffix);
     }
