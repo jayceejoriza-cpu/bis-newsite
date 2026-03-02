@@ -4,7 +4,35 @@ document.addEventListener('DOMContentLoaded', function() {
     loadRequests();
     initializeSearch();
     initializeButtons();
+    initializeFilterPanelOutsideClick();
 });
+
+// ===================================
+// Close Filter Panel on Outside Click
+// ===================================
+function initializeFilterPanelOutsideClick() {
+    const filterPanel = document.getElementById('filterPanel');
+    const filterBtn = document.getElementById('filterBtn');
+    
+    if (!filterPanel || !filterBtn) return;
+    
+    document.addEventListener('click', function(e) {
+        // Check if filter panel is currently visible
+        const isFilterPanelVisible = filterPanel.style.display !== 'none';
+        
+        if (isFilterPanelVisible) {
+            // Check if the click was outside the filter panel AND outside the filter button
+            const clickedInsideFilterPanel = filterPanel.contains(e.target);
+            const clickedOnFilterBtn = filterBtn.contains(e.target);
+            
+            if (!clickedInsideFilterPanel && !clickedOnFilterBtn) {
+                // Close the filter panel
+                filterPanel.style.display = 'none';
+                filterBtn.classList.remove('active');
+            }
+        }
+    });
+}
 
 // ===================================
 // Load Requests Data
