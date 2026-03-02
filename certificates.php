@@ -45,6 +45,30 @@ $certificateTypes = [
         'icon'        => 'fa-baby',
         'modal'       => 'rbcModal',
     ],
+    [
+        'title'       => 'Fishing Clearance',
+        'description' => 'For residents who need fishing clearance',
+        'icon'        => 'fa-fish',
+        'modal'       => 'fishingClearanceModal',
+    ],
+    [
+        'title'       => 'First Time Jobseeker Assistance',
+        'description' => 'For residents availing RA 11261 benefits',
+        'icon'        => 'fa-briefcase',
+        'modal'       => 'ftJobseekerModal',
+    ],
+    [
+        'title'       => 'Certificate of Good Moral Character',
+        'description' => 'For residents who need proof of good moral character',
+        'icon'        => 'fa-id-card',
+        'modal'       => 'gmrcModal',
+    ],
+    [
+        'title'       => 'Oath of Undertaking',
+        'description' => 'For First-Time Jobseeker applicants',
+        'icon'        => 'fa-file-signature',
+        'modal'       => 'oathModal',
+    ],
 ];
 ?>
 <!DOCTYPE html>
@@ -421,6 +445,174 @@ $certificateTypes = [
                 <div class="modal-footer cert-modal-footer">
                     <button type="button" class="btn btn-cancel" data-bs-dismiss="modal"><i class="fas fa-times"></i> Cancel</button>
                     <button type="button" class="btn btn-print-cert" id="rbcPrintBtn"><i class="fas fa-print"></i> Print Certificate</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================
+         Fishing Clearance Modal
+         ============================================ -->
+    <div class="modal fade" id="fishingClearanceModal" tabindex="-1" aria-labelledby="fishingClearanceModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content cert-request-modal">
+                <div class="modal-header cert-modal-header">
+                    <div class="cert-modal-title-wrap">
+                        <i class="fas fa-fish cert-modal-icon"></i>
+                        <h5 class="modal-title" id="fishingClearanceModalLabel">Create Fishing Clearance Request</h5>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body cert-modal-body">
+                    <div class="cert-field-group">
+                        <label class="cert-field-label">RESIDENT FULL NAME <span class="required-star">*</span></label>
+                        <div class="resident-search-wrap">
+                            <div class="resident-input-group">
+                                <input type="text" id="fishingResidentName" class="form-control cert-input" placeholder="Select resident" autocomplete="off">
+                                <input type="hidden" id="fishingResidentId">
+                                <button type="button" class="btn btn-primary btn-resident" id="fishingResidentBtn"><i class="fas fa-user"></i> RESIDENT</button>
+                            </div>
+                            <div class="resident-dropdown" id="fishingResidentDropdown" style="display:none;"></div>
+                        </div>
+                    </div>
+                    <div class="cert-field-group">
+                        <label class="cert-field-label">DATE <span class="required-star">*</span></label>
+                        <input type="date" id="fishingDate" class="form-control cert-input" value="<?php echo date('Y-m-d'); ?>" required>
+                    </div>
+                    <div class="cert-field-group">
+                        <label class="cert-field-label">PURPOSE</label>
+                        <input type="text" id="fishingPurpose" class="form-control cert-input" value="Boat Registration" placeholder="e.g., Boat Registration">
+                    </div>
+                </div>
+                <div class="modal-footer cert-modal-footer">
+                    <button type="button" class="btn btn-cancel" data-bs-dismiss="modal"><i class="fas fa-times"></i> Cancel</button>
+                    <button type="button" class="btn btn-print-cert" id="fishingPrintBtn"><i class="fas fa-print"></i> Print Certificate</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================
+         First Time Jobseeker Assistance Modal
+         ============================================ -->
+    <div class="modal fade" id="ftJobseekerModal" tabindex="-1" aria-labelledby="ftJobseekerModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content cert-request-modal">
+                <div class="modal-header cert-modal-header">
+                    <div class="cert-modal-title-wrap">
+                        <i class="fas fa-briefcase cert-modal-icon"></i>
+                        <h5 class="modal-title" id="ftJobseekerModalLabel">First Time Jobseeker Assistance Request</h5>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body cert-modal-body">
+                    <div class="cert-field-group">
+                        <label class="cert-field-label">RESIDENT FULL NAME <span class="required-star">*</span></label>
+                        <div class="resident-search-wrap">
+                            <div class="resident-input-group">
+                                <input type="text" id="ftJobseekerResidentName" class="form-control cert-input" placeholder="Select resident" autocomplete="off">
+                                <input type="hidden" id="ftJobseekerResidentId">
+                                <button type="button" class="btn btn-primary btn-resident" id="ftJobseekerResidentBtn"><i class="fas fa-user"></i> RESIDENT</button>
+                            </div>
+                            <div class="resident-dropdown" id="ftJobseekerResidentDropdown" style="display:none;"></div>
+                        </div>
+                    </div>
+                    <div class="cert-field-group">
+                        <label class="cert-field-label">DATE <span class="required-star">*</span></label>
+                        <input type="date" id="ftJobseekerDate" class="form-control cert-input" value="<?php echo date('Y-m-d'); ?>" required>
+                    </div>
+                    <div class="cert-field-group">
+                        <label class="cert-field-label">PURPOSE</label>
+                        <input type="text" id="ftJobseekerPurpose" class="form-control cert-input" value="First Time Jobseeker Assistance (RA 11261)" placeholder="e.g., Employment">
+                    </div>
+                </div>
+                <div class="modal-footer cert-modal-footer">
+                    <button type="button" class="btn btn-cancel" data-bs-dismiss="modal"><i class="fas fa-times"></i> Cancel</button>
+                    <button type="button" class="btn btn-print-cert" id="ftJobseekerPrintBtn"><i class="fas fa-print"></i> Print Certificate</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================
+         Certificate of Good Moral Character Modal
+         ============================================ -->
+    <div class="modal fade" id="gmrcModal" tabindex="-1" aria-labelledby="gmrcModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content cert-request-modal">
+                <div class="modal-header cert-modal-header">
+                    <div class="cert-modal-title-wrap">
+                        <i class="fas fa-id-card cert-modal-icon"></i>
+                        <h5 class="modal-title" id="gmrcModalLabel">Create Certificate of Good Moral Character Request</h5>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body cert-modal-body">
+                    <div class="cert-field-group">
+                        <label class="cert-field-label">RESIDENT FULL NAME <span class="required-star">*</span></label>
+                        <div class="resident-search-wrap">
+                            <div class="resident-input-group">
+                                <input type="text" id="gmrcResidentName" class="form-control cert-input" placeholder="Select resident" autocomplete="off">
+                                <input type="hidden" id="gmrcResidentId">
+                                <button type="button" class="btn btn-primary btn-resident" id="gmrcResidentBtn"><i class="fas fa-user"></i> RESIDENT</button>
+                            </div>
+                            <div class="resident-dropdown" id="gmrcResidentDropdown" style="display:none;"></div>
+                        </div>
+                    </div>
+                    <div class="cert-field-group">
+                        <label class="cert-field-label">DATE <span class="required-star">*</span></label>
+                        <input type="date" id="gmrcDate" class="form-control cert-input" value="<?php echo date('Y-m-d'); ?>" required>
+                    </div>
+                    <div class="cert-field-group">
+                        <label class="cert-field-label">PURPOSE</label>
+                        <input type="text" id="gmrcPurpose" class="form-control cert-input" value="Good Moral Character Verification" placeholder="e.g., Employment, School Enrollment">
+                    </div>
+                </div>
+                <div class="modal-footer cert-modal-footer">
+                    <button type="button" class="btn btn-cancel" data-bs-dismiss="modal"><i class="fas fa-times"></i> Cancel</button>
+                    <button type="button" class="btn btn-print-cert" id="gmrcPrintBtn"><i class="fas fa-print"></i> Print Certificate</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================
+         Oath of Undertaking Modal
+         ============================================ -->
+    <div class="modal fade" id="oathModal" tabindex="-1" aria-labelledby="oathModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content cert-request-modal">
+                <div class="modal-header cert-modal-header">
+                    <div class="cert-modal-title-wrap">
+                        <i class="fas fa-file-signature cert-modal-icon"></i>
+                        <h5 class="modal-title" id="oathModalLabel">Oath of Undertaking Request</h5>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body cert-modal-body">
+                    <div class="cert-field-group">
+                        <label class="cert-field-label">RESIDENT FULL NAME <span class="required-star">*</span></label>
+                        <div class="resident-search-wrap">
+                            <div class="resident-input-group">
+                                <input type="text" id="oathResidentName" class="form-control cert-input" placeholder="Select resident" autocomplete="off">
+                                <input type="hidden" id="oathResidentId">
+                                <button type="button" class="btn btn-primary btn-resident" id="oathResidentBtn"><i class="fas fa-user"></i> RESIDENT</button>
+                            </div>
+                            <div class="resident-dropdown" id="oathResidentDropdown" style="display:none;"></div>
+                        </div>
+                    </div>
+                    <div class="cert-field-group">
+                        <label class="cert-field-label">DATE <span class="required-star">*</span></label>
+                        <input type="date" id="oathDate" class="form-control cert-input" value="<?php echo date('Y-m-d'); ?>" required>
+                    </div>
+                    <div class="cert-field-group">
+                        <label class="cert-field-label">PURPOSE</label>
+                        <input type="text" id="oathPurpose" class="form-control cert-input" value="Oath of Undertaking (RA 11261)" placeholder="First-Time Jobseeker">
+                    </div>
+                </div>
+                <div class="modal-footer cert-modal-footer">
+                    <button type="button" class="btn btn-cancel" data-bs-dismiss="modal"><i class="fas fa-times"></i> Cancel</button>
+                    <button type="button" class="btn btn-print-cert" id="oathPrintBtn"><i class="fas fa-print"></i> Print Certificate</button>
                 </div>
             </div>
         </div>

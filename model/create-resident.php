@@ -295,11 +295,6 @@ if (isset($conn)) {
                                     <label for="email">Email Address</label>
                                     <input type="email" id="email" name="email" class="form-control" placeholder="example@email.com" autocomplete="email">
                                 </div>
-                                
-                                <div class="form-group">
-                                    <label for="houseNo">House No.</label>
-                                    <input type="text" id="houseNo" name="houseNo" class="form-control" placeholder="House No." autocomplete="address-line3">
-                                </div>
 
                                 <div class="form-group">
                                     <label for="purok">Purok <span class="required">*</span></label>
