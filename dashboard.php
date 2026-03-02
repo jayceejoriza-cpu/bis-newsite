@@ -915,4 +915,31 @@
 
     </div><!-- end report-tabs-wrapper -->
 
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const cardLinks = {
+            'Total Residents': 'residents.php',
+            'Total Households': 'households.php',
+            'Blotter Records': 'blotter.php',
+            'Certificate Requests': 'certificates.php',
+            '4Ps Members': 'residents.php',
+            'Registered Voters': 'residents.php',
+            'PWD': 'residents.php',
+            'Senior Citizens': 'residents.php',
+            'Indigent': 'residents.php'
+        };
+
+        document.querySelectorAll('.report-stat-card, .special-group-card').forEach(card => {
+            card.addEventListener('dblclick', () => {
+                const label = card.querySelector('.report-stat-label, .special-group-label')?.textContent.trim();
+                if (label && cardLinks[label]) {
+                    window.location.href = cardLinks[label];
+                }
+            });
+            // Add visual cue
+            card.style.cursor = 'pointer';
+            card.setAttribute('title', 'Double-click to view details');
+        });
+    });
+    </script>
 </div>

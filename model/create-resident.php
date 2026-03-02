@@ -239,7 +239,7 @@ if (isset($conn)) {
                                 <div class="form-group">
                                     <label for="religion">Religion<span class="required">*</span></label>
                                     <select id="religion" name="religion" class="form-control" required>
-                                         <option value="">Select Ethnicity</option>
+                                         <option value="">Select Religion</option>
                                          <option value="Roman Catholic">Roman Catholic</option>
                                          <option value="Christian">Christian</option>
                                          <option value="Iglesia ni Cristo">Iglesia ni Cristo</option>
@@ -253,7 +253,7 @@ if (isset($conn)) {
                                          <option value="Protestant">Protestant</option>
                                          <option value="Seventh Day Adventist">Seventh Day Adventist</option>
                                          <option value="LDS-Mormons">LDS-Mormons</option>
-                                         <option value="Envangelical">Envangelical</option>]
+                                         <option value="Evangelical">Evangelical</option>
                                          <option value="Pentecostal">Pentecostal</option>
                                          <option value="Unknown">Unknown</option>
                                          <option value="">Other (pls. Specify)</option>

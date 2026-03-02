@@ -113,9 +113,19 @@ function getPopulationGrowthData($conn) {
         }
 
         // Build cumulative counts Jan → Dec
+        $currentYear = (int)date('Y');
+        $currentMonth = (int)date('m');
+
         $cumulativeCount = $basePopulation;
         foreach ($monthLabels as $ym => $label) {
             $cumulativeCount   += $monthData[$ym];
+
+            // Truncate future months for the current year
+            $monthNum = (int)substr($ym, 5, 2);
+            if ($yearFilter == $currentYear && $monthNum > $currentMonth) {
+                break;
+            }
+
             $data['months'][]   = $label;
             $data['counts'][]   = $cumulativeCount;
         }

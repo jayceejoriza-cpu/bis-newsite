@@ -259,6 +259,53 @@ function initializeButtons() {
             const countBadge = printHeader.querySelector('#printTotalRecords');
             if (countBadge) countBadge.textContent = residentsTable.filteredRows.length;
 
+            // Update the print title with active filter information
+            const printTitle = printHeader.querySelector('.print-list-title');
+            if (printTitle) {
+                const activeFilters = [];
+                
+                // Check tab filters (Voters, Active, etc.)
+                const activeTab = document.querySelector('.tab-btn.active');
+                if (activeTab && activeTab.getAttribute('data-filter') !== 'all') {
+                    activeFilters.push(activeTab.textContent.trim());
+                }
+
+                // Check advanced filters from the filter panel
+                const filterMappings = {
+                    'filterAgeGroup': 'Age Group',
+                    'filterDateOfBirth': 'DOB',
+                    'filterReligion': 'Religion',
+                    'filterEthnicity': 'Ethnicity',
+                    'filterCivilStatus': 'Civil Status',
+                    'filterEducation': 'Education',
+                    'filterEmploymentStatus': 'Employment',
+                    'filter4ps': '4Ps',
+                    'filterAgeHealthGroup': 'Health Group'
+                };
+
+                for (const [id, label] of Object.entries(filterMappings)) {
+                    const el = document.getElementById(id);
+                    if (el && el.value) {
+                        let val = el.value;
+                        if (id === 'filterDateOfBirth') {
+                            const d = new Date(val);
+                            val = d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+                        }
+                        activeFilters.push(`${label}: ${val}`);
+                    }
+                }
+
+                // Check search
+                const searchInput = document.getElementById('searchInput');
+                if (searchInput && searchInput.value.trim()) {
+                    activeFilters.push(`Search: "${searchInput.value.trim()}"`);
+                }
+
+                if (activeFilters.length > 0) {
+                    printTitle.textContent += " - " + activeFilters.join(', ');
+                }
+            }
+
             // Get the print footer
             const printFooter = document.querySelector('.print-footer').cloneNode(true);
 
