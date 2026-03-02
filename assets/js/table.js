@@ -18,6 +18,7 @@ class EnhancedTable {
             paginated: options.paginated !== false,
             pageSize: options.pageSize || 10,
             responsive: options.responsive !== false,
+            defaultFilter: options.defaultFilter || null,
             ...options
         };
         
@@ -33,7 +34,13 @@ class EnhancedTable {
     init() {
         // Store all rows
         this.allRows = Array.from(this.tbody.querySelectorAll('tr'));
-        this.filteredRows = [...this.allRows];
+
+        // Apply defaultFilter for initial display (e.g. hide deceased)
+        if (this.options.defaultFilter) {
+            this.filteredRows = this.allRows.filter(this.options.defaultFilter);
+        } else {
+            this.filteredRows = [...this.allRows];
+        }
         
         // Initialize features
         if (this.options.sortable) {
@@ -57,7 +64,12 @@ class EnhancedTable {
         headers.forEach((header, index) => {
             // Skip action column or non-sortable columns
             if (header.classList.contains('no-sort') || 
-                header.textContent.toLowerCase().includes('action')) {
+                header.textContent.trim().toLowerCase() === 'action') {
+                return;
+            }
+
+            // Guard: skip if sort icon already added (prevents duplicates on re-init)
+            if (header.querySelector('.sort-icon')) {
                 return;
             }
             
@@ -89,22 +101,24 @@ class EnhancedTable {
             this.sortDirection = 'asc';
             this.sortColumn = columnIndex;
         }
-        
-        // Update sort icons
-        headers.forEach((h, i) => {
+
+        // Reset ALL sort icons first, then set only the active one
+        headers.forEach(h => {
             const icon = h.querySelector('.sort-icon');
             if (icon) {
-                if (i === columnIndex) {
-                    icon.className = this.sortDirection === 'asc' 
-                        ? 'fas fa-sort-up sort-icon' 
-                        : 'fas fa-sort-down sort-icon';
-                    icon.style.color = '#3b82f6';
-                } else {
-                    icon.className = 'fas fa-sort sort-icon';
-                    icon.style.color = '#9ca3af';
-                }
+                icon.className = 'fas fa-sort sort-icon';
+                icon.style.color = '#9ca3af';
             }
         });
+
+        // Set active icon on the clicked column only
+        const activeIcon = headers[columnIndex]?.querySelector('.sort-icon');
+        if (activeIcon) {
+            activeIcon.className = this.sortDirection === 'asc'
+                ? 'fas fa-sort-up sort-icon'
+                : 'fas fa-sort-down sort-icon';
+            activeIcon.style.color = '#3b82f6';
+        }
         
         // Sort the filtered rows
         this.filteredRows.sort((a, b) => {
@@ -119,8 +133,8 @@ class EnhancedTable {
                 return this.sortDirection === 'asc' ? aNum - bNum : bNum - aNum;
             }
             
-            // String comparison
-            const comparison = aValue.localeCompare(bValue, undefined, { numeric: true });
+            // String comparison (locale-aware, case-insensitive)
+            const comparison = aValue.localeCompare(bValue, undefined, { numeric: true, sensitivity: 'base' });
             return this.sortDirection === 'asc' ? comparison : -comparison;
         });
         
@@ -128,18 +142,32 @@ class EnhancedTable {
         this.currentPage = 1;
         this.updateDisplay();
     }
+
+    /**
+     * Programmatically sort by a column index (used for default sort on init).
+     */
+    sortByColumn(columnIndex) {
+        const headers = this.thead.querySelectorAll('th');
+        if (headers[columnIndex]) {
+            this.sortTable(columnIndex, headers[columnIndex]);
+        }
+    }
     
     getCellValue(row, columnIndex) {
         const cell = row.cells[columnIndex];
         if (!cell) return '';
+
+        // 1. Prefer explicit data-sort attribute (most reliable)
+        const dataSortValue = cell.getAttribute('data-sort');
+        if (dataSortValue !== null) return dataSortValue.trim();
         
-        // Check for badge content
+        // 2. Badge content
         const badge = cell.querySelector('.badge');
         if (badge) return badge.textContent.trim();
         
-        // Check for nested spans (like resident names)
-        const span = cell.querySelector('span:last-child');
-        if (span) return span.textContent.trim();
+        // 3. Last span inside the cell (e.g. resident name span)
+        const spans = cell.querySelectorAll('span');
+        if (spans.length > 0) return spans[spans.length - 1].textContent.trim();
         
         return cell.textContent.trim();
     }
@@ -151,8 +179,15 @@ class EnhancedTable {
         searchTerm = searchTerm.toLowerCase().trim();
         
         if (!searchTerm) {
-            this.filteredRows = [...this.allRows];
+            // No search term — apply defaultFilter (e.g. hide deceased)
+            if (this.options.defaultFilter) {
+                this.filteredRows = this.allRows.filter(this.options.defaultFilter);
+            } else {
+                this.filteredRows = [...this.allRows];
+            }
         } else {
+            // Active search — search ALL rows including those hidden by defaultFilter
+            // so deceased residents are still findable by name
             this.filteredRows = this.allRows.filter(row => {
                 const cells = Array.from(row.cells);
                 return cells.some(cell => {
@@ -168,7 +203,12 @@ class EnhancedTable {
     }
     
     filter(filterFn) {
-        this.filteredRows = this.allRows.filter(filterFn);
+        // Apply custom filter, then also apply defaultFilter on top
+        let rows = this.allRows.filter(filterFn);
+        if (this.options.defaultFilter) {
+            rows = rows.filter(this.options.defaultFilter);
+        }
+        this.filteredRows = rows;
         this.currentPage = 1;
         this.updateDisplay();
         this.updatePagination();
@@ -393,14 +433,18 @@ class EnhancedTable {
     }
     
     reset() {
-        this.filteredRows = [...this.allRows];
+        // Apply defaultFilter when resetting (don't show deceased on reset)
+        if (this.options.defaultFilter) {
+            this.filteredRows = this.allRows.filter(this.options.defaultFilter);
+        } else {
+            this.filteredRows = [...this.allRows];
+        }
         this.currentPage = 1;
         this.sortColumn = null;
         this.sortDirection = 'asc';
         
         // Reset sort icons
-        const headers = this.thead.querySelectorAll('th .sort-icon');
-        headers.forEach(icon => {
+        this.thead.querySelectorAll('th .sort-icon').forEach(icon => {
             icon.className = 'fas fa-sort sort-icon';
             icon.style.color = '#9ca3af';
         });
