@@ -46,9 +46,14 @@ function initializeTable() {
         searchable: true,
         paginated: true,
         pageSize: 10,
-        responsive: true
+         responsive: true,
+        // Hide deceased residents from default view; they remain searchable
+        defaultFilter: (row) => {
+            const status = row.getAttribute('data-activity-status');
+            return status !== 'Deceased';
+        }
     });
-    
+    residentsTable.sortByColumn(1);
     console.log(`Total residents: ${residentsTable.getTotalRows()}`);
 }
 
@@ -108,8 +113,8 @@ function applyFilter(filterType) {
         
         switch(filterType) {
             case 'verified':
-                const verificationBadge = cells[2]?.querySelector('.badge');
-                return verificationBadge?.textContent.trim().toLowerCase() === 'verified';
+                // Verification status column is not available in the table
+                return true;
                 
             case 'voters':
                 const voterBadge = cells[3]?.querySelector('.badge');
@@ -359,7 +364,12 @@ function refreshData() {
     
     setTimeout(() => {
         icon.style.animation = '';
-        residentsTable.refresh();
+        
+        // Clear search input
+        const searchInput = document.getElementById('searchInput');
+        if (searchInput) searchInput.value = '';
+        
+        residentsTable.reset();
         
         // Show success message
         showNotification('Data refreshed successfully', 'success');
@@ -435,9 +445,12 @@ function showActionMenu(row, button) {
     const residentName = row.querySelector('.resident-name span:last-child')?.textContent;
     const residentId = row.querySelectorAll('td')[1]?.textContent;
 
-    // Get current activity status from the badge in column index 5
-    const activityBadge = row.querySelectorAll('td')[5]?.querySelector('.badge');
-    const currentStatus = activityBadge?.textContent.trim() || 'Active';
+    // Get current activity status
+    let currentStatus = row.getAttribute('data-activity-status');
+    if (!currentStatus) {
+        const activityBadge = row.querySelectorAll('td')[6]?.querySelector('.badge');
+        currentStatus = activityBadge?.textContent.trim() || 'Active';
+    }
     
     // Remove any existing action menus
     document.querySelectorAll('.action-menu').forEach(menu => menu.remove());
@@ -501,13 +514,38 @@ function showActionMenu(row, button) {
     menu.className = 'action-menu';
     menu.innerHTML = menuHtml;
     
+    // Append to body first to calculate height
+    document.body.appendChild(menu);
+    
     // Position menu
     const rect = button.getBoundingClientRect();
+    const menuHeight = menu.offsetHeight;
+    const windowHeight = window.innerHeight;
+
     menu.style.position = 'fixed';
-    menu.style.top = `${rect.bottom + 5}px`;
-    menu.style.left = `${rect.left - 150}px`;
+    // Align right edge of menu with right edge of button
+    menu.style.left = 'auto';
+    menu.style.right = `${window.innerWidth - rect.right}px`;
     
     document.body.appendChild(menu);
+    // Check if menu exceeds bottom of screen
+    if (rect.bottom + menuHeight + 5 > windowHeight) {
+        // Position above the button
+        menu.style.top = `${rect.top - menuHeight - 5}px`;
+        menu.style.transformOrigin = 'bottom right';
+    } else {
+        // Position below the button
+        menu.style.top = `${rect.bottom + 5}px`;
+        menu.style.transformOrigin = 'top right';
+    }
+
+    // Handle submenu toggle
+    menu.querySelectorAll('.has-submenu').forEach(item => {
+        item.addEventListener('click', (e) => {
+            e.stopPropagation();
+            item.classList.toggle('show-submenu');
+        });
+    });
     
     // Add click handlers for regular menu items (not submenu parents or submenu items)
     menu.querySelectorAll('.action-menu-item:not(.has-submenu):not(.submenu-item)').forEach(item => {
@@ -623,8 +661,19 @@ function handleAction(action, name, id, row) {
                             // Update the EnhancedTable instance
                             // This will refresh the internal arrays and recalculate pagination
                             residentsTable.allRows = Array.from(residentsTable.tbody.querySelectorAll('tr'));
-                            residentsTable.filteredRows = [...residentsTable.allRows];
+                            residentsTable.filteredRows = [...residentsTable.allRows]
                             
+                            // Rebuild allRows from remaining DOM rows (not in tbody since updateDisplay manages it)
+                            residentsTable.allRows = residentsTable.allRows.filter(r => r !== row);
+
+                            // Re-apply defaultFilter to filteredRows
+                            if (residentsTable.options.defaultFilter) {
+                                residentsTable.filteredRows = residentsTable.allRows.filter(
+                                    residentsTable.options.defaultFilter
+                                );
+                            } else {
+                                residentsTable.filteredRows = [...residentsTable.allRows];
+                            }
                             // Check if current page is now empty
                             const totalRows = residentsTable.filteredRows.length;
                             const totalPages = Math.ceil(totalRows / residentsTable.options.pageSize);
@@ -686,8 +735,8 @@ function updateActivityStatus(residentId, newStatus, row, currentStatus) {
     })
     .then(data => {
         if (data.success) {
-            // Update the badge in the table row (column index 5)
-            const statusCell = row.querySelectorAll('td')[5];
+            // Update the badge in the table row (column index 6)
+            const statusCell = row.querySelectorAll('td')[6];
             if (statusCell) {
                 const badge = statusCell.querySelector('.badge');
                 if (badge) {
@@ -698,6 +747,15 @@ function updateActivityStatus(residentId, newStatus, row, currentStatus) {
                     // Update text
                     badge.textContent = newStatus;
                 }
+            }
+              // Update data-activity-status so defaultFilter picks up the change
+            row.setAttribute('data-activity-status', newStatus);
+
+            // If the new status is Deceased, remove from filteredRows and refresh display
+            if (newStatus === 'Deceased' && residentsTable.options.defaultFilter) {
+                residentsTable.filteredRows = residentsTable.filteredRows.filter(r => r !== row);
+                residentsTable.updateDisplay();
+                residentsTable.updatePagination();
             }
             showNotification(data.message, 'success');
         } else {
@@ -1042,7 +1100,7 @@ style.textContent = `
         animation: fadeIn 0.15s ease;
     }
 
-    .action-menu-item.has-submenu:hover .action-submenu {
+    .action-menu-item.has-submenu.show-submenu .action-submenu {
         display: block;
     }
 

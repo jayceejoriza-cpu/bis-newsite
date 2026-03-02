@@ -60,9 +60,8 @@ function generateResidentId($id) {
  * Get initials from name
  */
 function getInitials($firstName, $lastName) {
-    $first = !empty($firstName) ? strtoupper(substr($firstName, 0, 1)) : '';
-    $last = !empty($lastName) ? strtoupper(substr($lastName, 0, 1)) : '';
-    return $first . $last;
+ $last = !empty($lastName) ? strtoupper(substr($lastName, 0, 1)) : '';
+  return $last;
 }
 
 /**
@@ -77,11 +76,10 @@ function getAvatarColor($index) {
  * Format full name
  */
 function formatFullName($firstName, $middleName, $lastName, $suffix) {
-    $name = trim($firstName);
-    if (!empty($middleName)) {
-        $name .= ' ' . trim($middleName);
+   $name = trim($lastName);
+    if (!empty($firstName)) {
+        $name .= ', ' . trim($firstName);
     }
-    $name .= ' ' . trim($lastName);
     if (!empty($suffix)) {
         $name .= ' ' . trim($suffix);
     }
@@ -120,7 +118,8 @@ try {
             age_health_group,
             verification_status,
             voter_status,
-            activity_status
+            activity_status,
+            purok
         FROM residents
         WHERE activity_status != 'Archived'
         ORDER BY created_at DESC
@@ -363,6 +362,7 @@ try {
                                     Full Name
                                 </span>
                             </th>
+                            <th>Purok</th>
                             <th>Voter Status</th>
                             <th>Date of Birth</th>
                             <th>Sex</th>
@@ -400,6 +400,7 @@ try {
                                 $verificationBadge = 'badge-' . strtolower($resident['verification_status']);
                                 $voterBadge = ($resident['voter_status'] === 'Yes') ? 'badge-yes' : 'badge-no';
                                 $activityBadge = 'badge-' . strtolower($resident['activity_status']);
+                                $sortName = $resident['last_name'] . ', ' . $resident['first_name'];
                             ?>
                             <tr data-religion="<?php echo htmlspecialchars($resident['religion'] ?? ''); ?>"
                                 data-ethnicity="<?php echo htmlspecialchars($resident['ethnicity'] ?? ''); ?>"
@@ -407,10 +408,11 @@ try {
                                 data-education="<?php echo htmlspecialchars($resident['educational_attainment'] ?? ''); ?>"
                                 data-employment="<?php echo htmlspecialchars($resident['employment_status'] ?? ''); ?>"
                                 data-fourps="<?php echo htmlspecialchars($resident['fourps_member'] ?? ''); ?>"
-                                data-age-health-group="<?php echo htmlspecialchars($resident['age_health_group'] ?? ''); ?>">
+                                data-age-health-group="<?php echo htmlspecialchars($resident['age_health_group'] ?? ''); ?>"
+                                data-activity-status="<?php echo htmlspecialchars($resident['activity_status'] ?? ''); ?>">
                                
                                     <td><?php echo htmlspecialchars($residentId); ?></td>
-                                     <td><a href="resident_profile.php?id=<?php echo htmlspecialchars($resident['id']); ?>" class="resident-name-link">
+                                     <td data-sort="<?php echo htmlspecialchars($sortName); ?>"><a href="resident_profile.php?id=<?php echo htmlspecialchars($resident['id']); ?>" class="resident-name-link">
                                         <div class="resident-name">
                                             <span class="avatar <?php echo htmlspecialchars($avatarColor); ?>">
                                                 <?php echo htmlspecialchars($initials); ?>
@@ -420,6 +422,7 @@ try {
                                     </a>
                                 </td>
                                 
+                                <td><?php echo htmlspecialchars($resident['purok'] ?? 'N/A'); ?></td>
                                 <td>
                                     <span class="badge <?php echo htmlspecialchars($voterBadge); ?>">
                                         <?php echo htmlspecialchars($resident['voter_status'] ?: 'No'); ?>
