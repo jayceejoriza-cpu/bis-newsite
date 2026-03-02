@@ -51,6 +51,7 @@ if (isset($conn)) {
     <!-- Custom CSS -->
     <link rel="stylesheet" href="../assets/css/style.css">
     <link rel="stylesheet" href="../assets/css/create-resident.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <style>
 /* Phone Input Group */
 .phone-input-group {
@@ -230,9 +231,9 @@ if (isset($conn)) {
                                     <small class="form-hint">Sex is required</small>
                                 </div>
                                 
-                                <div class="form-group">
+                               <div class="form-group">
                                     <label for="dateOfBirth">Date of Birth <span class="required">*</span></label>
-                                    <input type="date" id="dateOfBirth" name="dateOfBirth" class="form-control" required>
+                                    <input type="text" id="dateOfBirth" name="dateOfBirth" class="form-control" placeholder="Select Date" required>
                                 </div>
 
                                 <div class="form-group">
@@ -414,15 +415,10 @@ if (isset($conn)) {
                                             <label for="waterSourceType">Water Source Type</label>
                                             <select id="waterSourceType" name="waterSourceType" class="form-control">
                                                 <option value="">Select Water Source</option>
-                                                <option value="Level I (Protected Spring)">Level I (Protected Spring)</option>
-                                                <option value="Level II (Communal Faucet)">Level II (Communal Faucet)</option>
-                                                <option value="Level III (Individual Connection)">Level III (Individual Connection)</option>
-                                                <option value="Artesian Well">Artesian Well</option>
-                                                <option value="Dug Well">Dug Well</option>
-                                                <option value="Rainwater Collection">Rainwater Collection</option>
-                                                <option value="River/Stream">River/Stream</option>
-                                                <option value="Bottled Water">Bottled Water</option>
-                                                <option value="Others">Others</option>
+                                                <option value="Level I (Point Spring)">Level I (Point Spring)</option>
+                                                <option value="Level II (Communal Faucet system or stand post)">Level II (Communal Faucet system or stand post)</option>
+                                                <option value="Level III (Waterworks system or individual house connection)">Level III (Waterworks system or individual house connection)</option>
+                                                <option value="O (For doubtful sources, open dug well etc.)">O (For doubtful sources, open dug well etc.)</option>
                                             </select>
                                         </div>
 
@@ -430,12 +426,15 @@ if (isset($conn)) {
                                             <label for="toiletFacilityType">Toilet Facility Type</label>
                                             <select id="toiletFacilityType" name="toiletFacilityType" class="form-control">
                                                 <option value="">Select Toilet Facility</option>
-                                                <option value="Water Sealed">Water Sealed</option>
-                                                <option value="Closed Pit">Closed Pit</option>
-                                                <option value="Open Pit">Open Pit</option>
-                                                <option value="Antipolo Type">Antipolo Type</option>
-                                                <option value="None/No Toilet">None/No Toilet</option>
-                                                <option value="Others">Others</option>
+                                                <option value="" readonly>----Sanitary Toilet----</option>
+                                                <option value="P - Pour/Flush toilet connected to septic tank)">P - (Pour/Flush toilet connected to septic tank)</option>
+                                                <option value="PF - Pour/Flush toilet connected to septic tank and sewerage system">PF - Pour/Flush toilet connected to septic tank and sewerage system</option>
+                                                <option value="VIP - Ventilated impoved pit latrine (VIP) or composting">VIP - Ventilated impoved pit latrine (VIP) or composting</option>
+                                                <option value="" readonly>----Unsanitary Toilet----</option>
+                                                <option value="WS - Water-sealed connected to open drain">WS - Water-sealed connected to open drain</option>
+                                                <option value="OH - Overhung Latrine">OH - Overhung Latrine</option>
+                                                <option value="OP - Overpit Latrine">OP - Overpit Latrine</option>
+                                                <option value="WO - Without Latrine">WO - Without Latrine</option>
                                             </select>
                                         </div>
                                     </div>
@@ -713,6 +712,18 @@ if (isset($conn)) {
     <!-- Custom JavaScript -->
     <script src="../assets/js/script.js"></script>
     <script src="../assets/js/create-resident.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            flatpickr("#dateOfBirth", {
+                defaultDate: "2000-01-01", // The calendar opens to this date when clicked
+                maxDate: "today",          // Prevents them from picking a future birthdate
+                altInput: true,            // Makes the input UI look clean
+                altFormat: "F j, Y",       // How the user sees it (e.g., January 1, 2000)
+                dateFormat: "Y-m-d",       // How your PHP/Database receives it (e.g., 2000-01-01)
+            });
+        });
+    </script>
     <script>
         // Override phone number formatting to use spaces instead of hyphens
         function formatPhoneNumber(value) {

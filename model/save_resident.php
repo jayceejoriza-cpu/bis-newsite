@@ -146,17 +146,21 @@ try {
     $mobileNumber = $conn->real_escape_string(trim($_POST['mobileNumber'] ?? ''));
     $email = $conn->real_escape_string(trim($_POST['email'] ?? ''));
     
+    // Address Components
+    $houseNo = trim($_POST['houseNo'] ?? '');
+    $purok = trim($_POST['purok'] ?? '');
+    $streetName = trim($_POST['streetName'] ?? '');
+
     // Construct address from individual fields if present
     if (isset($_POST['houseNo']) || isset($_POST['purok']) || isset($_POST['streetName'])) {
-        $houseNo = trim($_POST['houseNo'] ?? '');
-        $purok = trim($_POST['purok'] ?? '');
-        $streetName = trim($_POST['streetName'] ?? '');
-        
         $addressParts = array_filter([$houseNo ? "House No. $houseNo" : "", $purok ? "Purok $purok" : "", $streetName]);
         $currentAddress = $conn->real_escape_string(implode(', ', $addressParts));
     } else {
         $currentAddress = $conn->real_escape_string(trim($_POST['currentAddress'] ?? ''));
     }
+    
+    $purok = $conn->real_escape_string($purok);
+    $streetName = $conn->real_escape_string($streetName);
     
     // Family Information
     $civilStatus = $conn->real_escape_string($_POST['civilStatus'] ?? '');
@@ -238,63 +242,6 @@ try {
     }
     $stmt->close();
     
-    // Check 2: Mobile Number
-    $duplicateCheckSql = "SELECT id, resident_id, CONCAT(first_name, ' ', last_name) as full_name
-                          FROM residents 
-                          WHERE mobile_number = ?
-                          AND activity_status != 'Deceased'";
-    
-    if ($mode === 'update' && $residentId) {
-        $duplicateCheckSql .= " AND id != ?";
-    }
-    
-    $stmt = $conn->prepare($duplicateCheckSql);
-    
-    if ($mode === 'update' && $residentId) {
-        $stmt->bind_param("si", $mobileNumber, $residentId);
-    } else {
-        $stmt->bind_param("s", $mobileNumber);
-    }
-    
-    $stmt->execute();
-    $result = $stmt->get_result();
-    
-    if ($result->num_rows > 0) {
-        $duplicate = $result->fetch_assoc();
-        $stmt->close();
-        throw new Exception("This mobile number is already registered to another resident: {$duplicate['full_name']} (ID: {$duplicate['resident_id']})");
-    }
-    $stmt->close();
-    
-    // Check 3: Email Address (if provided)
-    if (!empty($email)) {
-        $duplicateCheckSql = "SELECT id, resident_id, CONCAT(first_name, ' ', last_name) as full_name
-                              FROM residents 
-                              WHERE LOWER(email) = LOWER(?)
-                              AND activity_status != 'Deceased'";
-        
-        if ($mode === 'update' && $residentId) {
-            $duplicateCheckSql .= " AND id != ?";
-        }
-        
-        $stmt = $conn->prepare($duplicateCheckSql);
-        
-        if ($mode === 'update' && $residentId) {
-            $stmt->bind_param("si", $email, $residentId);
-        } else {
-            $stmt->bind_param("s", $email);
-        }
-        
-        $stmt->execute();
-        $result = $stmt->get_result();
-        
-        if ($result->num_rows > 0) {
-            $duplicate = $result->fetch_assoc();
-            $stmt->close();
-            throw new Exception("This email address is already registered to another resident: {$duplicate['full_name']} (ID: {$duplicate['resident_id']})");
-        }
-        $stmt->close();
-    }
     
     // Check 4: Philhealth ID (if provided)
     if (!empty($philhealthId)) {
@@ -352,6 +299,8 @@ try {
             mobile_number = '$mobileNumber',
             email = " . ($email ? "'$email'" : "NULL") . ",
             current_address = '$currentAddress',
+            purok = " . ($purok ? "'$purok'" : "NULL") . ",
+            street_name = " . ($streetName ? "'$streetName'" : "NULL") . ",
             civil_status = '$civilStatus',
             spouse_name = " . ($spouseName ? "'$spouseName'" : "NULL") . ",
             father_name = " . ($fatherName ? "'$fatherName'" : "NULL") . ",
@@ -448,7 +397,7 @@ try {
     
     $sql = "INSERT INTO residents (
         photo, first_name, middle_name, last_name, suffix, sex, date_of_birth, age, religion, ethnicity,
-        mobile_number, email, current_address,
+        mobile_number, email, current_address, purok, street_name,
         civil_status, spouse_name, father_name, mother_name, number_of_children,
         educational_attainment, employment_status, occupation, monthly_income,
         fourps_member, fourps_id, voter_status, precinct_number,
@@ -459,7 +408,7 @@ try {
         " . ($photoPath ? "'" . $conn->real_escape_string($photoPath) . "'" : "NULL") . ",
         '$firstName', " . ($middleName ? "'$middleName'" : "NULL") . ", '$lastName', " . ($suffix ? "'$suffix'" : "NULL") . ",
         '$sex', '$dateOfBirth', " . ($age !== null ? $age : "NULL") . ", " . ($religion ? "'$religion'" : "NULL") . ", " . ($ethnicity ? "'$ethnicity'" : "NULL") . ",
-        '$mobileNumber', " . ($email ? "'$email'" : "NULL") . ", '$currentAddress',
+        '$mobileNumber', " . ($email ? "'$email'" : "NULL") . ", '$currentAddress', " . ($purok ? "'$purok'" : "NULL") . ", " . ($streetName ? "'$streetName'" : "NULL") . ",
         '$civilStatus', " . ($spouseName ? "'$spouseName'" : "NULL") . ", " . ($fatherName ? "'$fatherName'" : "NULL") . ", 
         " . ($motherName ? "'$motherName'" : "NULL") . ", $numberOfChildren,
         " . ($educationalAttainment ? "'$educationalAttainment'" : "NULL") . ", " . ($employmentStatus ? "'$employmentStatus'" : "NULL") . ",

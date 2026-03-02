@@ -32,20 +32,38 @@ try {
         ]
     );
     
-    // Fetch resident details
+    // Fetch resident details with household information
     $stmt = $pdo->prepare("
         SELECT 
             r.*,
             GROUP_CONCAT(
-                CONCAT_WS('|', 
+                DISTINCT CONCAT_WS('|', 
                     ec.contact_name, 
                     ec.relationship, 
                     ec.contact_number, 
                     ec.address
                 ) SEPARATOR '||'
-            ) as emergency_contacts
+            ) as emergency_contacts,
+            hm.household_id       AS hm_household_id,
+            hm.relationship_to_head,
+            hm.is_head,
+            h.id                  AS household_id,
+            h.household_number,
+            h.household_contact   AS hh_contact,
+            h.address             AS hh_address,
+            h.water_source_type   AS hh_water_source_type,
+            h.toilet_facility_type AS hh_toilet_facility_type,
+            TRIM(CONCAT(
+                head_r.first_name, ' ',
+                IFNULL(CONCAT(head_r.middle_name, ' '), ''),
+                head_r.last_name,
+                IFNULL(CONCAT(' ', head_r.suffix), '')
+            )) AS hh_head_name
         FROM residents r
         LEFT JOIN emergency_contacts ec ON r.id = ec.resident_id
+        LEFT JOIN household_members hm ON hm.resident_id = r.id
+        LEFT JOIN households h ON hm.household_id = h.id
+        LEFT JOIN residents head_r ON h.household_head_id = head_r.id
         WHERE r.id = :id
         GROUP BY r.id
     ");
