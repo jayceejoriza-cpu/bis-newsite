@@ -132,6 +132,52 @@
     border-radius: 12px;
     overflow: hidden;
     width: 100%;
+    table-layout: fixed;
+}
+
+/* Column widths — short-text columns are compact, Full Name takes remaining space */
+.residents-table th:nth-child(1),
+.residents-table td:nth-child(1) {
+    width: 150px;
+}
+
+.residents-table th:nth-child(2),
+.residents-table td:nth-child(2) {
+    /* Full Name: auto — takes all remaining space */
+    width: 700px;
+}
+
+.residents-table th:nth-child(3),
+.residents-table td:nth-child(3) {
+    width: 110px;
+}
+
+.residents-table th:nth-child(4),
+.residents-table td:nth-child(4) {
+    width: 165px;
+    text-align: center;
+}
+
+.residents-table th:nth-child(5),
+.residents-table td:nth-child(5) {
+    width: 170px;
+}
+
+.residents-table th:nth-child(6),
+.residents-table td:nth-child(6) {
+    width: 95px;
+}
+
+.residents-table th:nth-child(7),
+.residents-table td:nth-child(7) {
+    width: 185px;
+    text-align: center;
+}
+
+.residents-table th:nth-child(8),
+.residents-table td:nth-child(8) {
+    width: 100px;
+    text-align: center;
     table-layout: auto;
 }
 
@@ -142,6 +188,8 @@
     border-bottom: 2px solid var(--border-color);
     background-color: var(--bg-secondary);
     white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .residents-table th.header-with-info .header-text {
@@ -178,9 +226,17 @@
 }
 
 .residents-table td {
-    padding: 18px 20px;
+    padding: 14px 20px;
     transition: background-color 0.2s ease;
     border-bottom: 1px solid var(--border-color);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.residents-table td:nth-child(2) {
+    white-space: normal;
+    overflow: visible;
 }
 
 .residents-table td:not(:last-child) {
