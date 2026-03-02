@@ -60,9 +60,8 @@ function generateResidentId($id) {
  * Get initials from name
  */
 function getInitials($firstName, $lastName) {
-    $first = !empty($firstName) ? strtoupper(substr($firstName, 0, 1)) : '';
     $last = !empty($lastName) ? strtoupper(substr($lastName, 0, 1)) : '';
-    return $first . $last;
+    return $last;
 }
 
 /**
@@ -77,11 +76,13 @@ function getAvatarColor($index) {
  * Format full name
  */
 function formatFullName($firstName, $middleName, $lastName, $suffix) {
-    $name = trim($firstName);
+    $name = trim($lastName);
+    if (!empty($firstName)) {
+        $name .= ', ' . trim($firstName);
+    }
     if (!empty($middleName)) {
         $name .= ' ' . trim($middleName);
     }
-    $name .= ' ' . trim($lastName);
     if (!empty($suffix)) {
         $name .= ' ' . trim($suffix);
     }

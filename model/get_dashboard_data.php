@@ -53,73 +53,130 @@ try {
 echo json_encode($response);
 
 /**
- * Get population growth data - Rolling 12-month view
+ * Get population growth data
+ * - If ?year=YYYY is provided: returns Jan–Dec for that year with short labels ("Jan", "Feb", …)
+ * - Otherwise: rolling 12-month view with "M Y" labels
  */
 function getPopulationGrowthData($conn) {
     $data = [
         'months' => [],
         'counts' => []
     ];
-    
-    // Get data for the last 12 months
-    $query = "
-        SELECT 
-            DATE_FORMAT(created_at, '%Y-%m') as ym,
-            COUNT(*) as new_residents
-        FROM residents
-        WHERE created_at >= DATE_SUB(CURDATE(), INTERVAL 12 MONTH)
-            AND activity_status = 'Active'
-        GROUP BY ym
-        ORDER BY ym ASC
-    ";
-    
-    $result = $conn->query($query);
-    
-    // Get base population (before the 12-month window)
-    $baseQuery = "
-        SELECT COUNT(*) as base_count
-        FROM residents
-        WHERE created_at < DATE_SUB(CURDATE(), INTERVAL 12 MONTH)
-            AND activity_status = 'Active'
-    ";
-    
-    $baseResult = $conn->query($baseQuery);
-    $basePopulation = 0;
-    
-    if ($baseResult) {
-        $baseRow = $baseResult->fetch_assoc();
-        $basePopulation = (int)$baseRow['base_count'];
-    }
-    
-    // Build month labels for last 12 months
-    $monthLabels = [];
-    $monthData = [];
-    
-    for ($i = 11; $i >= 0; $i--) {
-        $date = date('Y-m', strtotime("-$i months"));
-        $label = date('M Y', strtotime("-$i months"));
-        $monthLabels[$date] = $label;
-        $monthData[$date] = 0;
-    }
-    
-    // Fill in actual data
-    if ($result) {
-        while ($row = $result->fetch_assoc()) {
-            $yearMonth = $row['ym'];
-            if (isset($monthData[$yearMonth])) {
-                $monthData[$yearMonth] = (int)$row['new_residents'];
+
+    $yearFilter = isset($_GET['year']) ? (int)$_GET['year'] : null;
+
+    if ($yearFilter) {
+        // ── Specific year: Jan–Dec ──────────────────────────────────────
+        $monthLabels = [];
+        $monthData   = [];
+
+        for ($month = 1; $month <= 12; $month++) {
+            $date  = sprintf('%04d-%02d', $yearFilter, $month);
+            $label = date('M', mktime(0, 0, 0, $month, 1)); // "Jan", "Feb", …
+            $monthLabels[$date] = $label;
+            $monthData[$date]   = 0;
+        }
+
+        // Base population: all active residents created BEFORE this year
+        $baseQuery = "
+            SELECT COUNT(*) as base_count
+            FROM residents
+            WHERE YEAR(created_at) < $yearFilter
+              AND activity_status != 'Archived'
+        ";
+        $baseResult    = $conn->query($baseQuery);
+        $basePopulation = 0;
+        if ($baseResult) {
+            $baseRow        = $baseResult->fetch_assoc();
+            $basePopulation = (int)$baseRow['base_count'];
+        }
+
+        // Monthly new residents for the selected year
+        $query = "
+            SELECT
+                DATE_FORMAT(created_at, '%Y-%m') as ym,
+                COUNT(*) as new_residents
+            FROM residents
+            WHERE YEAR(created_at) = $yearFilter
+              AND activity_status != 'Archived'
+            GROUP BY ym
+            ORDER BY ym ASC
+        ";
+        $result = $conn->query($query);
+        if ($result) {
+            while ($row = $result->fetch_assoc()) {
+                $ym = $row['ym'];
+                if (isset($monthData[$ym])) {
+                    $monthData[$ym] = (int)$row['new_residents'];
+                }
             }
         }
+
+        // Build cumulative counts Jan → Dec
+        $cumulativeCount = $basePopulation;
+        foreach ($monthLabels as $ym => $label) {
+            $cumulativeCount   += $monthData[$ym];
+            $data['months'][]   = $label;
+            $data['counts'][]   = $cumulativeCount;
+        }
+
+    } else {
+        // ── Rolling 12-month view ───────────────────────────────────────
+        $query = "
+            SELECT
+                DATE_FORMAT(created_at, '%Y-%m') as ym,
+                COUNT(*) as new_residents
+            FROM residents
+            WHERE created_at >= DATE_SUB(CURDATE(), INTERVAL 12 MONTH)
+              AND activity_status != 'Archived'
+            GROUP BY ym
+            ORDER BY ym ASC
+        ";
+        $result = $conn->query($query);
+
+        // Base population before the 12-month window
+        $baseQuery = "
+            SELECT COUNT(*) as base_count
+            FROM residents
+            WHERE created_at < DATE_SUB(CURDATE(), INTERVAL 12 MONTH)
+              AND activity_status != 'Archived'
+        ";
+        $baseResult    = $conn->query($baseQuery);
+        $basePopulation = 0;
+        if ($baseResult) {
+            $baseRow        = $baseResult->fetch_assoc();
+            $basePopulation = (int)$baseRow['base_count'];
+        }
+
+        // Build month labels for last 12 months
+        $monthLabels = [];
+        $monthData   = [];
+        for ($i = 11; $i >= 0; $i--) {
+            $date  = date('Y-m', strtotime("-$i months"));
+            $label = date('M Y', strtotime("-$i months")); // "Jun 2024"
+            $monthLabels[$date] = $label;
+            $monthData[$date]   = 0;
+        }
+
+        // Fill in actual data
+        if ($result) {
+            while ($row = $result->fetch_assoc()) {
+                $ym = $row['ym'];
+                if (isset($monthData[$ym])) {
+                    $monthData[$ym] = (int)$row['new_residents'];
+                }
+            }
+        }
+
+        // Calculate cumulative counts
+        $cumulativeCount = $basePopulation;
+        foreach ($monthLabels as $ym => $label) {
+            $cumulativeCount  += $monthData[$ym];
+            $data['months'][]  = $label;
+            $data['counts'][]  = $cumulativeCount;
+        }
     }
-    
-    // Calculate cumulative counts
-    $cumulativeCount = $basePopulation;
-    foreach ($monthLabels as $yearMonth => $label) {
-        $cumulativeCount += $monthData[$yearMonth];
-        $data['months'][] = $label;
-        $data['counts'][] = $cumulativeCount;
-    }
-    
+
     return $data;
 }
 

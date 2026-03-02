@@ -120,13 +120,13 @@ $show_user_mgmt = $can_view_users || $can_view_roles;
             </li>
             <?php endif; ?>
 
-            <!-- ── Reports ── -->
+            <!-- ── Reports 
             <li class="nav-item <?php echo $current_page === 'reports.php' ? 'active' : ''; ?>">
                 <a href="reports.php" class="nav-link">
                     <i class="fas fa-file-invoice"></i>
                     <span>Reports</span>
                 </a>
-            </li>
+            </li>── -->
 
             <!-- ── Settings ── -->
             <li class="nav-item has-submenu <?php echo $is_settings_active ? 'open active' : ''; ?>">

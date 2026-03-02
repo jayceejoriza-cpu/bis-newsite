@@ -311,12 +311,14 @@ if (populationChartEl) {
                 },
                 y: {
                     beginAtZero: true,
+                    grace: '20%',
                     grid: {
                         color: 'rgba(0, 0, 0, 0.05)',
                         drawBorder: false
                     },
                     ticks: {
                         color: '#6b7280',
+                        precision: 0,
                         callback: function(value) {
                             return value;
                         }
@@ -332,7 +334,8 @@ if (populationChartEl) {
     });
     
     // Fetch real data from API
-    fetchPopulationData();
+    const popYearSelect = document.getElementById('populationYearSelect');
+    fetchPopulationData(popYearSelect ? popYearSelect.value : new Date().getFullYear());
 }
 
 // ===================================
@@ -422,14 +425,14 @@ if (blotterChartEl) {
                 y: {
                     beginAtZero: true,
                     stacked: false,
-                    max: 100,
+                    grace: '20%',
                     grid: {
                         color: 'rgba(0, 0, 0, 0.05)',
                         drawBorder: false
                     },
                     ticks: {
                         color: '#6b7280',
-                        stepSize: 10,
+                        precision: 0,
                         callback: function(value) {
                             return value;
                         }
@@ -648,20 +651,28 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
 
 /**
  * Fetch population growth data from API
+ * @param {number|string} year - The year to fetch data for (e.g. 2025)
  */
-function fetchPopulationData() {
-    fetch('model/get_dashboard_data.php?type=population')
+function fetchPopulationData(year) {
+    const selectedYear = year || new Date().getFullYear();
+    fetch(`model/get_dashboard_data.php?type=population&year=${selectedYear}`)
         .then(response => response.json())
         .then(result => {
             if (result.success && result.data) {
                 const data = result.data;
-                
-                // Update chart with real data (now using months)
+
+                // Update chart labels and data
                 if (populationChart && data.months && data.counts) {
                     populationChart.data.labels = data.months;
                     populationChart.data.datasets[0].data = data.counts;
+                    // Dynamically set suggestedMax with 30% headroom above the peak value
+                    const maxVal = Math.max(...data.counts.map(v => v || 0), 0);
+                    populationChart.options.scales.y.suggestedMax = maxVal > 0 ? Math.ceil(maxVal * 1.3) : 10;
                     populationChart.update();
                 }
+
+                // Update the Monthly Data Breakdown table
+                updatePopulationTrendTable(data);
             } else {
                 console.error('Failed to fetch population data:', result.error);
             }
@@ -669,6 +680,50 @@ function fetchPopulationData() {
         .catch(error => {
             console.error('Error fetching population data:', error);
         });
+}
+
+/**
+ * Populate the Monthly Data Breakdown table under the Population Growth chart
+ * @param {object} data - { months: string[], counts: number[] }
+ */
+function updatePopulationTrendTable(data) {
+    const tbody = document.getElementById('populationTrendTableBody');
+    if (!tbody) return;
+
+    const months = data.months || [];
+    const counts = data.counts || [];
+
+    if (months.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;color:var(--text-secondary);padding:16px;">No data available</td></tr>';
+        return;
+    }
+
+    let html = '';
+    for (let i = 0; i < months.length; i++) {
+        const current  = counts[i] || 0;
+        const previous = i > 0 ? (counts[i - 1] || 0) : current;
+        const growth   = current - previous;
+
+        let growthHtml;
+        if (i === 0) {
+            growthHtml = '<span style="color:var(--text-secondary);">—</span>';
+        } else if (growth > 0) {
+            growthHtml = `<span style="color:#10b981;">▲ ${growth.toLocaleString()}</span>`;
+        } else if (growth < 0) {
+            growthHtml = `<span style="color:#ef4444;">▼ ${Math.abs(growth).toLocaleString()}</span>`;
+        } else {
+            growthHtml = '<span style="color:var(--text-secondary);">— 0</span>';
+        }
+
+        html += `
+            <tr>
+                <td style="padding:4px 8px;">${months[i]}</td>
+                <td class="text-right" style="padding:4px 8px;"><strong>${current.toLocaleString()}</strong></td>
+                <td class="text-right" style="padding:4px 8px;">${growthHtml}</td>
+            </tr>`;
+    }
+
+    tbody.innerHTML = html;
 }
 
 /**
@@ -702,6 +757,20 @@ function fetchBlotterData(year = 'all') {
 }
 
 /**
+ * Initialize population year filter
+ */
+function initializePopulationYearFilter() {
+    const yearFilter = document.getElementById('populationYearSelect');
+    
+    if (yearFilter) {
+        yearFilter.addEventListener('change', function() {
+            const selectedYear = this.value;
+            fetchPopulationData(selectedYear);
+        });
+    }
+}
+
+/**
  * Initialize blotter year filter
  */
 function initializeBlotterYearFilter() {
@@ -717,9 +786,13 @@ function initializeBlotterYearFilter() {
 
 // Initialize year filter when DOM is ready
 if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initializeBlotterYearFilter);
+    document.addEventListener('DOMContentLoaded', () => {
+        initializeBlotterYearFilter();
+        initializePopulationYearFilter();
+    });
 } else {
     initializeBlotterYearFilter();
+    initializePopulationYearFilter();
 }
 
 /**
