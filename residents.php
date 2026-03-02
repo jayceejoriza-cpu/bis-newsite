@@ -265,11 +265,20 @@ try {
                             <select id="filterReligion" class="filter-select">
                                 <option value="">All</option>
                                 <option value="Roman Catholic">Roman Catholic</option>
-                                <option value="Islam">Islam</option>
+                                <option value="Christian">Christian</option>
                                 <option value="Iglesia ni Cristo">Iglesia ni Cristo</option>
-                                <option value="Protestant">Protestant</option>
+                                <option value="Catholic">Catholic</option>
+                                <option value="Islam">Islam</option>
+                                <option value="Baptist">Baptist</option>
+                                <option value="Buddhism">Buddhism</option>
                                 <option value="Born Again">Born Again</option>
-                                <option value="Others">Others</option>
+                                <option value="Church of God">Church of God</option>
+                                <option value="Jehovahs Witness">Jehovahs Witness</option>
+                                <option value="Protestant">Protestant</option>
+                                <option value="Seventh Day Adventist">Seventh Day Adventist</option>
+                                <option value="LDS-Mormons">LDS-Mormons</option>
+                                <option value="Evangelical">Evangelical</option>
+                                <option value="Pentecostal">Pentecostal</option>
                             </select>
                         </div>
                         
