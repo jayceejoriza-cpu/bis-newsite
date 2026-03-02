@@ -135,7 +135,7 @@ function restoreResident($conn, $data) {
     $allowedColumns = [
         'resident_id', 'photo', 'first_name', 'middle_name', 'last_name', 'suffix',
         'sex', 'date_of_birth', 'age', 'place_of_birth', 'religion', 'ethnicity',
-        'mobile_number', 'email', 'current_address', 'household_no', 'household_contact', 'purok',
+        'mobile_number', 'email', 'house_no', 'current_address', 'household_no', 'household_contact', 'purok', 'street_name',
         'civil_status', 'spouse_name', 'father_name', 'mother_name', 'number_of_children', 'household_head',
         'educational_attainment', 'employment_status', 'occupation', 'monthly_income',
         'fourps_member', 'fourps_id', 'voter_status', 'precinct_number', 'pwd_status', 'senior_citizen', 'indigent',

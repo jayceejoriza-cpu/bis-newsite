@@ -161,6 +161,8 @@ function prepareResidentData($resident) {
         'email' => $resident['email'] ?? 'N/A',
         'resident_id' => $resident['resident_id'] ?? 'N/A',
         'purok' => $resident['purok'] ?? 'N/A',
+        'house_no' => $resident['house_no'] ?? 'N/A',
+        'street_name' => $resident['street_name'] ?? 'N/A',
         'household_no' => $resident['household_no'] ?? 'N/A',
         'occupation' => $resident['occupation'] ?? 'N/A',
         'place_of_birth' => $resident['place_of_birth'] ?? 'N/A',

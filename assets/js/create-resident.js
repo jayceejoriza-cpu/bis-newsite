@@ -525,6 +525,12 @@ function showSuccessMessage(message = 'Resident Created Successfully!', data = n
         </div>
     `;
     
+    // Hide the progress steps
+    const progressSteps = document.querySelector('.progress-steps');
+    if (progressSteps) {
+        progressSteps.style.display = 'none';
+    }
+
     // Hide the review button and navigation buttons
     const reviewBtn = document.getElementById('reviewBtn');
     if (reviewBtn) {
@@ -1359,54 +1365,25 @@ function closeReviewModal() {
 // ===================================
 // Confirmation Checkbox Functions
 // ===================================
+let confirmationListenerAttached = false;
+
 function resetConfirmationCheckbox() {
     const checkbox = document.getElementById('confirmDetailsCheckbox');
     const submitBtn = document.getElementById('finalSubmitBtn');
-    
-    if (checkbox) {
-        checkbox.checked = false;
-    }
-    
-    if (submitBtn) {
-        submitBtn.disabled = true;
-    }
+    if (checkbox) checkbox.checked = false;
+    if (submitBtn) submitBtn.disabled = true;
 }
 
 function initializeConfirmationCheckbox() {
-    // Use setTimeout to ensure DOM is fully ready
-    setTimeout(() => {
-        const checkbox = document.getElementById('confirmDetailsCheckbox');
-        const submitBtn = document.getElementById('finalSubmitBtn');
-        
-        console.log('=== CHECKBOX INITIALIZATION ===');
-        console.log('Checkbox found:', !!checkbox);
-        console.log('Submit button found:', !!submitBtn);
-        
-        if (checkbox && submitBtn) {
-            // Add event listener directly to checkbox
-            checkbox.addEventListener('change', function(e) {
-                console.log('=== CHECKBOX CHANGED ===');
-                console.log('Checked:', this.checked);
-                console.log('Button disabled before:', submitBtn.disabled);
-                
-                if (this.checked) {
-                    submitBtn.disabled = false;
-                    submitBtn.removeAttribute('disabled');
-                    console.log('Button disabled after enable:', submitBtn.disabled);
-                    console.log('Button should now be ENABLED');
-                } else {
-                    submitBtn.disabled = true;
-                    submitBtn.setAttribute('disabled', 'disabled');
-                    console.log('Button disabled after disable:', submitBtn.disabled);
-                    console.log('Button should now be DISABLED');
-                }
-            });
-            
-            console.log('Event listener attached successfully!');
-        } else {
-            console.error('FAILED: Elements not found!');
-        }
-    }, 100);
+    if (confirmationListenerAttached) return;
+    const checkbox = document.getElementById('confirmDetailsCheckbox');
+    const submitBtn = document.getElementById('finalSubmitBtn');
+    if (checkbox && submitBtn) {
+        checkbox.addEventListener('change', function() {
+            submitBtn.disabled = !this.checked;
+        });
+        confirmationListenerAttached = true;
+    }
 }
 
 function populateReviewModal() {
@@ -1421,11 +1398,11 @@ function populateReviewModal() {
     
     // Helper function to create field display
     const createField = (label, value) => {
-        if (!value || value.trim() === '') return '';
+        const displayValue = (value && String(value).trim() !== '') ? value : 'N/A';
         return `
             <div class="review-field">
                 <div class="review-field-label">${label}</div>
-                <div class="review-field-value">${value}</div>
+                <div class="review-field-value">${displayValue}</div>
             </div>
         `;
     };
@@ -1439,6 +1416,12 @@ function populateReviewModal() {
         personalInfoHTML += `
             <div class="review-photo">
                 <img src="${photoPreview.src}" alt="Resident Photo">
+            </div>
+        `;
+    } else {
+        personalInfoHTML += `
+            <div class="review-photo">
+                <div style="width: 100px; height: 100px; background: var(--bg-primary); border: 1px dashed var(--border-color); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: var(--text-secondary); font-size: 14px;">N/A</div>
             </div>
         `;
     }
@@ -1487,7 +1470,7 @@ function populateReviewModal() {
     // 4. Household Information
     let householdHTML = '<div class="review-fields-grid">';
     const householdHeadValue = getValue('householdHeadValue');
-    householdHTML += createField('Household Head?', householdHeadValue || 'Not specified');
+    householdHTML += createField('Household Head?', householdHeadValue);
 
     if (householdHeadValue === 'Yes') {
         householdHTML += createField('Household Number', getValue('householdNumber'));
@@ -1501,12 +1484,8 @@ function populateReviewModal() {
         householdHTML += createField('Address', selectedHouseholdData.address || 'N/A');
         householdHTML += createField('Contact', selectedHouseholdData.household_contact || 'N/A');
         householdHTML += createField('Relationship to Head', getValue('householdRelationship'));
-        if (selectedHouseholdData.water_source_type) {
-            householdHTML += createField('Water Source', selectedHouseholdData.water_source_type);
-        }
-        if (selectedHouseholdData.toilet_facility_type) {
-            householdHTML += createField('Toilet Facility', selectedHouseholdData.toilet_facility_type);
-        }
+        householdHTML += createField('Water Source', selectedHouseholdData.water_source_type);
+        householdHTML += createField('Toilet Facility', selectedHouseholdData.toilet_facility_type);
     } else if (householdHeadValue === 'No') {
         householdHTML += '<div class="review-field"><div class="review-field-value" style="color: #f59e0b;"><i class="fas fa-exclamation-triangle"></i> No household selected</div></div>';
     }
@@ -1549,30 +1528,20 @@ function populateReviewModal() {
     // Women's Reproductive Health (if applicable)
     const sex = getValue('sex');
     if (sex === 'Female') {
-        const lmpDate = getValue('lmpDate');
-        const usingFpMethod = getValue('usingFpMethod');
-        const fpMethodsUsed = getValue('fpMethodsUsed');
-        const fpStatus = getValue('fpStatus');
-        
-        if (lmpDate || usingFpMethod || fpMethodsUsed || fpStatus) {
-            additionalHTML += '<h5 style="margin: 20px 0 15px 0; color: var(--primary-color);"><i class="fas fa-female"></i> Women\'s Reproductive Health</h5>';
-            additionalHTML += '<div class="review-fields-grid">';
-            additionalHTML += createField('Last Menstrual Period', lmpDate);
-            additionalHTML += createField('Using FP Method', usingFpMethod);
-            additionalHTML += createField('FP Methods Used', fpMethodsUsed);
-            additionalHTML += createField('FP Status', fpStatus);
-            additionalHTML += '</div>';
-        }
+        additionalHTML += '<h5 style="margin: 20px 0 15px 0; color: var(--primary-color);"><i class="fas fa-female"></i> Women\'s Reproductive Health</h5>';
+        additionalHTML += '<div class="review-fields-grid">';
+        additionalHTML += createField('Last Menstrual Period', getValue('lmpDate'));
+        additionalHTML += createField('Using FP Method', getValue('usingFpMethod'));
+        additionalHTML += createField('FP Methods Used', getValue('fpMethodsUsed'));
+        additionalHTML += createField('FP Status', getValue('fpStatus'));
+        additionalHTML += '</div>';
     }
     
     // Remarks
-    const remarks = getValue('remarks');
-    if (remarks) {
-        additionalHTML += '<h5 style="margin: 20px 0 15px 0; color: var(--primary-color);"><i class="fas fa-sticky-note"></i> Additional Notes</h5>';
-        additionalHTML += '<div class="review-fields-grid">';
-        additionalHTML += createField('Remarks', remarks);
-        additionalHTML += '</div>';
-    }
+    additionalHTML += '<h5 style="margin: 20px 0 15px 0; color: var(--primary-color);"><i class="fas fa-sticky-note"></i> Additional Notes</h5>';
+    additionalHTML += '<div class="review-fields-grid">';
+    additionalHTML += createField('Remarks', getValue('remarks'));
+    additionalHTML += '</div>';
     
     document.getElementById('reviewAdditionalInfo').innerHTML = additionalHTML;
 }

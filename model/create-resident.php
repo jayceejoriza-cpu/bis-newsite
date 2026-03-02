@@ -201,24 +201,24 @@ if (isset($conn)) {
                                 
                                 <div class="form-group">
                                     <label for="firstName">First Name <span class="required">*</span></label>
-                                    <input type="text" id="firstName" name="firstName" class="form-control" required>
+                                    <input type="text" id="firstName" name="firstName" class="form-control" autocomplete="given-name" required>
                                     <small class="form-hint">First name is required</small>
                                 </div>
                                 
                                 <div class="form-group">
                                     <label for="middleName">Middle Name (Optional)</label>
-                                    <input type="text" id="middleName" name="middleName" class="form-control">
+                                    <input type="text" id="middleName" name="middleName" class="form-control" autocomplete="additional-name">
                                 </div>
                                 
                                 <div class="form-group">
                                     <label for="lastName">Last Name <span class="required">*</span></label>
-                                    <input type="text" id="lastName" name="lastName" class="form-control" required>
+                                    <input type="text" id="lastName" name="lastName" class="form-control" autocomplete="family-name" required>
                                     <small class="form-hint">Last name is required</small>
                                 </div>
                                 
                                 <div class="form-group">
                                     <label for="suffix">Suffix (Optional)</label>
-                                    <input type="text" id="suffix" name="suffix" class="form-control" placeholder="Jr., Sr., III, etc.">
+                                    <input type="text" id="suffix" name="suffix" class="form-control" placeholder="Jr., Sr., III, etc." autocomplete="honorific-suffix">
                                 </div>
                                 
                                 <div class="form-group">
@@ -233,12 +233,12 @@ if (isset($conn)) {
                                 
                                <div class="form-group">
                                     <label for="dateOfBirth">Date of Birth <span class="required">*</span></label>
-                                    <input type="text" id="dateOfBirth" name="dateOfBirth" class="form-control" placeholder="Select Date" required>
+                                    <input type="text" id="dateOfBirth" name="dateOfBirth" class="form-control" placeholder="Select Date" autocomplete="bday" required>
                                 </div>
 
                                 <div class="form-group">
                                     <label for="religion">Religion<span class="required">*</span></label>
-                                    <select type="form-control" id="religion" name="religion" class="form-control" required>
+                                    <select id="religion" name="religion" class="form-control" required>
                                          <option value="">Select Ethnicity</option>
                                          <option value="Roman Catholic">Roman Catholic</option>
                                          <option value="Christian">Christian</option>
@@ -263,7 +263,7 @@ if (isset($conn)) {
 
                                 <div class="form-group">
                                     <label for="ethnicity">Ethnicity<span class="required">*</span></label>
-                                     <select class="form-control" name="ethnicity" required>
+                                     <select id="ethnicity" class="form-control" name="ethnicity" required>
                                             <option value="">Select Ethnicity</option>
                                             <option value="IPS">IPS (Indigenous People)</option>
                                             <option value="Non-IPS">Non-IPS</option>
@@ -287,19 +287,23 @@ if (isset($conn)) {
                                             <img src="../assets/image/contactph.png" alt="PH" class="flag-icon">
                                             +63
                                         </span>
-                                        <input type="tel" id="mobileNumber" name="mobileNumber" class="form-control phone-input" placeholder="XXX XXX XXXX" pattern="[0-9 ]+" maxlength="12" oninput="let v=this.value.replace(/\D/g,'').substring(0,10);if(v.length>6)this.value=v.slice(0,3)+' '+v.slice(3,6)+' '+v.slice(6);else if(v.length>3)this.value=v.slice(0,3)+' '+v.slice(3);else this.value=v;" required>
+                                        <input type="tel" id="mobileNumber" name="mobileNumber" class="form-control phone-input" placeholder="XXX XXX XXXX" pattern="[0-9 ]+" maxlength="12" oninput="let v=this.value.replace(/\D/g,'').substring(0,10);if(v.length>6)this.value=v.slice(0,3)+' '+v.slice(3,6)+' '+v.slice(6);else if(v.length>3)this.value=v.slice(0,3)+' '+v.slice(3);else this.value=v;" autocomplete="tel" required>
                                     </div>
                                 </div>
                                 
                                 <div class="form-group">
                                     <label for="email">Email Address</label>
-                                    <input type="email" id="email" name="email" class="form-control" placeholder="example@email.com">
+                                    <input type="email" id="email" name="email" class="form-control" placeholder="example@email.com" autocomplete="email">
                                 </div>
                                 
+                                <div class="form-group">
+                                    <label for="houseNo">House No.</label>
+                                    <input type="text" id="houseNo" name="houseNo" class="form-control" placeholder="House No." autocomplete="address-line3">
+                                </div>
 
                                 <div class="form-group">
                                     <label for="purok">Purok <span class="required">*</span></label>
-                                    <select type="form-control" id="purok" name="purok" class="form-control" placeholder="Purok" required>
+                                    <select id="purok" name="purok" class="form-control" required>
                                         <option value="">Select</option>
                                         <option value="1">1</option>
                                         <option value="2">2</option>
@@ -310,7 +314,7 @@ if (isset($conn)) {
 
                                 <div class="form-group">
                                     <label for="streetName">Street Name</label>
-                                    <input type="text" id="streetName" name="streetName" class="form-control" placeholder="Street Name" >
+                                    <input type="text" id="streetName" name="streetName" class="form-control" placeholder="Street Name" autocomplete="address-line1">
                                 </div>
                                 
                                 
@@ -529,6 +533,18 @@ if (isset($conn)) {
                                     <input type="text" id="occupation" name="occupation" class="form-control">
                                 </div>
                                 
+                                <div class="form-group">
+                                    <label for="monthlyIncome">Monthly Income</label>
+                                    <select id="monthlyIncome" name="monthlyIncome" class="form-control">
+                                        <option value="">Select</option>
+                                        <option value="Below 5000">Below ₱5,000</option>
+                                        <option value="5000-10000">₱5,000 - ₱10,000</option>
+                                        <option value="10000-20000">₱10,000 - ₱20,000</option>
+                                        <option value="20000-30000">₱20,000 - ₱30,000</option>
+                                        <option value="30000-50000">₱30,000 - ₱50,000</option>
+                                        <option value="Above 50000">Above ₱50,000</option>
+                                    </select>
+                                </div>
                             </div>
                         </div>
                     </div>
