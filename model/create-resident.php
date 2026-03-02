@@ -573,7 +573,7 @@ if (isset($conn)) {
                             
                             <div class="form-grid" style="margin-top: 20px;">
                                 <div class="form-group">
-                                    <label for="voterStatus">Voter Status</label>
+                                    <label for="voterStatus">Registered Voter</label>
                                     <select id="voterStatus" name="voterStatus" class="form-control">
                                         <option value="">Select</option>
                                         <option value="Yes">Yes</option>
@@ -631,6 +631,22 @@ if (isset($conn)) {
                                         <option value="Adult (20-59 years)">Adult (20-59 years)</option>
                                         <option value="Senior Citizen (60+ years)">Senior Citizen (60+ years)</option>
                                     </select>
+                                </div>
+                                
+                                <div class="form-group" style="margin-bottom: 20px;">
+                                    <label style="font-weight: 600; font-size: 15px;">Are you a Person with Disability (PWD)? <span class="required">*</span></label>
+                                    <div style="display: flex; gap: 20px; margin-top: 10px;">
+                                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-weight: 500;">
+                                            <input type="radio" name="pwdStatusRadio" id="pwdStatusYes" value="Yes" style="width: 18px; height: 18px; cursor: pointer;">
+                                            Yes
+                                        </label>
+                                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-weight: 500;">
+                                            <input type="radio" name="pwdStatusRadio" id="pwdStatusNo" value="No" style="width: 18px; height: 18px; cursor: pointer;">
+                                            No
+                                        </label>
+                                    </div>
+                                    <input type="hidden" id="pwdStatus" name="pwdStatus" value="" required>
+                                    <small class="form-hint">Disability status is required</small>
                                 </div>
                                 
                                 <div class="form-group full-width">
@@ -812,7 +828,7 @@ if (isset($conn)) {
     </div>
     
     <!-- Review Modal -->
-    <div id="reviewModal" class="review-modal">
+    <div id="reviewModal" class="review-modal" style="z-index: 4000;">
         <div class="review-modal-content">
             <div class="review-modal-header">
                 <h3><i class="fas fa-clipboard-check"></i> Review Before Submit</h3>
@@ -922,12 +938,13 @@ if (isset($conn)) {
             <div class="review-modal-footer">
                 <!-- Confirmation Checkbox -->
                 <div class="confirmation-checkbox-container">
-                    <label class="confirmation-checkbox-label">
-                        <input type="checkbox" id="confirmDetailsCheckbox" class="confirmation-checkbox">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <input type="checkbox" id="confirmDetailsCheckbox" class="confirmation-checkbox" style="width: 18px; height: 18px; cursor: pointer;">
                         <span class="checkbox-text">
-                            I confirm that all the details provided above are correct
+                            I confirm and consent to the processing of my data as stated in the 
+                            <button type="button" id="viewPrivacyLink" style="background: none; border: none; color: var(--primary-color); text-decoration: underline; padding: 0; font: inherit; cursor: pointer;">Privacy Notice</button>
                         </span>
-                    </label>
+                    </div>
                 </div>
                 
                 <!-- Action Buttons -->
@@ -937,10 +954,56 @@ if (isset($conn)) {
                         Edit Information
                     </button>
                     <button type="button" class="btn btn-success" id="finalSubmitBtn" onclick="submitFormFromReview()" disabled>
-                        <i class="fas fa-check"></i>
-                        Confirm & Submit
+                        <i class="fas fa-check-circle"></i>
+                        Confirm & Consent
                     </button>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Privacy Notice Modal -->
+    <div id="privacyNoticeModal" class="review-modal" style="z-index: 5000;">
+        <div class="review-modal-content" style="max-width: 600px;">
+            <div class="review-modal-header">
+                <h3><i class="fas fa-shield-alt"></i> Barangay Privacy Notice</h3>
+                <button type="button" class="btn-close-modal" onclick="closePrivacyNoticeModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="review-modal-body" id="privacyNoticeBody" style="max-height: 400px; overflow-y: auto; padding: 20px; line-height: 1.6;">
+                <div class="policy-content">
+                    <h4 style="color: var(--primary-color); margin-bottom: 10px;">English</h4>
+                    <p>In compliance with the <strong>Data Privacy Act of 2012 (RA 10173)</strong>, this Barangay collects and processes your personal and sensitive personal information, including but not limited to <strong>Health Data, Disability (PWD) Status, and Voter Registration</strong>.</p>
+                    <p>This information is collected solely for the purpose of:</p>
+                    <ul style="margin-bottom: 15px; padding-left: 20px;">
+                        <li>Facilitating the delivery of government services and social protection programs.</li>
+                        <li>Mandatory administrative reporting to the Department of the Interior and Local Government (DILG).</li>
+                        <li>Maintaining an accurate registry of barangay inhabitants.</li>
+                    </ul>
+                    <p>Your data is stored securely and will not be shared with unauthorized third parties. As a data subject, you have the <strong>right to access, review, and request corrections</strong> to your personal data at any time by visiting the Barangay Office.</p>
+                    
+                    <hr style="margin: 20px 0; border-color: var(--border-color);">
+                    
+                    <h4 style="color: var(--primary-color); margin-bottom: 10px;">Tagalog</h4>
+                    <p>Alinsunod sa <strong>Data Privacy Act of 2012 (RA 10173)</strong>, ang Barangay na ito ay nangongolekta at nagpoproseso ng inyong personal at sensitibong personal na impormasyon, kabilang ang <strong>Datos sa Kalusugan, Katayuan ng Kapansanan (PWD), at Rehistrasyon ng Botante</strong>.</p>
+                    <p>Ang impormasyong ito ay kinokolekta para sa mga sumusunod na layunin:</p>
+                    <ul style="margin-bottom: 15px; padding-left: 20px;">
+                        <li>Pagpapadali ng paghahatid ng mga serbisyo ng gobyerno at mga programa sa proteksyong panlipunan.</li>
+                        <li>Mandatoryong pag-uulat sa Department of the Interior and Local Government (DILG).</li>
+                        <li>Pagpapanatili ng tumpak na listahan ng mga residente ng barangay.</li>
+                    </ul>
+                    <p>Ang inyong datos ay itatago nang ligtas at hindi ibabahagi sa mga hindi awtorisadong partido. Bilang "data subject," kayo ay may <strong>karapatang i-access, suriin, at hilingin ang pagtatama</strong> ng inyong personal na datos anumang oras sa pamamagitan ng pagbisita sa Opisina ng Barangay.</p>
+                    
+                    <div id="scrollIndicator" style="text-align: center; color: #ef4444; font-weight: 600; margin-top: 20px; font-size: 0.85rem;">
+                        <i class="fas fa-arrow-down"></i> Please scroll to the bottom to acknowledge
+                    </div>
+                </div>
+            </div>
+            <div class="review-modal-footer">
+                <button type="button" class="btn btn-primary" id="acknowledgePrivacyBtn" disabled onclick="closePrivacyNoticeModal()">
+                    I have read and understood
+                </button>
             </div>
         </div>
     </div>

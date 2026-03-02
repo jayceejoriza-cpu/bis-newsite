@@ -118,6 +118,7 @@ try {
             employment_status,
             fourps_member,
             age_health_group,
+            pwd_status,
             verification_status,
             voter_status,
             activity_status
@@ -207,7 +208,7 @@ try {
             <!-- Filter Tabs -->
             <div class="filter-tabs">
                 <button class="tab-btn active" data-filter="all">All</button>
-                <button class="tab-btn" data-filter="voters">Voters</button>
+                <button class="tab-btn" data-filter="voters">Registered Voters</button>
                 <button class="tab-btn" data-filter="active">Active</button>
             </div>
             
@@ -257,6 +258,15 @@ try {
                                 <option value="Adolescent (10-19 years)">Adolescent (10-19 years)</option>
                                 <option value="Adult (20-59 years)">Adult (20-59 years)</option>
                                 <option value="Senior Citizen (60+ years)">Senior Citizen (60+ years)</option>
+                            </select>
+                        </div>
+                        
+                        <div class="filter-item">
+                            <label for="filterPwdStatus">Disability Status</label>
+                            <select id="filterPwdStatus" class="filter-select">
+                                <option value="">All</option>
+                                <option value="Yes">Yes</option>
+                                <option value="No">No</option>
                             </select>
                         </div>
                         
@@ -372,7 +382,7 @@ try {
                                     Full Name
                                 </span>
                             </th>
-                            <th>Voter Status</th>
+                            <th>Registered Voter</th>
                             <th>Date of Birth</th>
                             <th>Sex</th>
                             <th>Activity Status</th>
@@ -416,7 +426,8 @@ try {
                                 data-education="<?php echo htmlspecialchars($resident['educational_attainment'] ?? ''); ?>"
                                 data-employment="<?php echo htmlspecialchars($resident['employment_status'] ?? ''); ?>"
                                 data-fourps="<?php echo htmlspecialchars($resident['fourps_member'] ?? ''); ?>"
-                                data-age-health-group="<?php echo htmlspecialchars($resident['age_health_group'] ?? ''); ?>">
+                                data-age-health-group="<?php echo htmlspecialchars($resident['age_health_group'] ?? ''); ?>"
+                                data-pwd-status="<?php echo htmlspecialchars($resident['pwd_status'] ?? 'No'); ?>">
                                
                                     <td><?php echo htmlspecialchars($residentId); ?></td>
                                      <td><a href="resident_profile.php?id=<?php echo htmlspecialchars($resident['id']); ?>" class="resident-name-link">
@@ -481,6 +492,7 @@ try {
                          data-employment="<?php echo htmlspecialchars($resident['employment_status'] ?? ''); ?>"
                          data-fourps="<?php echo htmlspecialchars($resident['fourps_member'] ?? ''); ?>"
                          data-age-health-group="<?php echo htmlspecialchars($resident['age_health_group'] ?? ''); ?>"
+                         data-pwd-status="<?php echo htmlspecialchars($resident['pwd_status'] ?? 'No'); ?>"
                          data-voter-status="<?php echo htmlspecialchars($resident['voter_status'] ?: 'No'); ?>"
                          data-activity-status="<?php echo htmlspecialchars($resident['activity_status'] ?? 'Active'); ?>">
                         <div class="avatar <?php echo htmlspecialchars($avatarColor); ?>">
@@ -500,7 +512,7 @@ try {
                         </div>
                         <div class="badges">
                             <span class="badge <?php echo ($resident['voter_status'] === 'Yes') ? 'badge-yes' : 'badge-no'; ?>">
-                                <?php echo htmlspecialchars($resident['voter_status'] ?: 'No'); ?> Voter
+                                Registered Voter: <?php echo htmlspecialchars($resident['voter_status'] ?: 'No'); ?>
                             </span>
                         </div>
                         <div class="actions">

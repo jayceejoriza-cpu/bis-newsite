@@ -31,6 +31,7 @@ document.addEventListener('DOMContentLoaded', function() {
     initializePhoneNumberFormatting();
     initializeIdFormatting();
     initializeHouseholdInfo();
+    initializePwdStatus();
     console.log('Edit Resident page loaded successfully');
 });
 
@@ -39,7 +40,7 @@ document.addEventListener('DOMContentLoaded', function() {
 // ============================================
 function loadResidentData(residentId) {
     showLoadingState();
-    fetch(`../model/get_resident_details.php?id=${residentId}`)
+    fetch(`get_resident_details.php?id=${residentId}`)
         .then(response => response.json())
         .then(result => {
             if (result.success) {
@@ -134,6 +135,15 @@ function populateForm(data) {
     setVal('membershipType', data.membership_type);
     setVal('philhealthCategory', data.philhealth_category);
     setVal('ageHealthGroup', data.age_health_group);
+    
+    // PWD Status
+    setVal('pwdStatus', data.pwd_status);
+    if (data.pwd_status === 'Yes') {
+        if (document.getElementById('pwdStatusYes')) document.getElementById('pwdStatusYes').checked = true;
+    } else if (data.pwd_status === 'No') {
+        if (document.getElementById('pwdStatusNo')) document.getElementById('pwdStatusNo').checked = true;
+    }
+
     setVal('medicalHistory', data.medical_history);
 
     // Women's Reproductive Health (WRA)
@@ -716,7 +726,7 @@ function searchHouseholds() {
     searchBtn.disabled = true;
     searchBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Searching...';
 
-    fetch('../model/search_households_for_resident.php?search=' + encodeURIComponent(query))
+    fetch('search_households_for_resident.php?search=' + encodeURIComponent(query))
         .then(response => response.json())
         .then(data => {
             searchBtn.disabled = false;
@@ -802,6 +812,31 @@ function clearSelectedHousehold() {
     const resultsContainer = document.getElementById('householdSearchResults');
     if (resultsContainer) resultsContainer.style.display = 'none';
     showNotification('Household selection cleared', 'info');
+}
+
+// ============================================
+// PWD Status Management
+// ============================================
+function initializePwdStatus() {
+    const yesRadio = document.getElementById('pwdStatusYes');
+    const noRadio = document.getElementById('pwdStatusNo');
+    const hiddenInput = document.getElementById('pwdStatus');
+
+    if (yesRadio && hiddenInput) {
+        yesRadio.addEventListener('change', function() {
+            if (this.checked) {
+                hiddenInput.value = 'Yes';
+            }
+        });
+    }
+
+    if (noRadio && hiddenInput) {
+        noRadio.addEventListener('change', function() {
+            if (this.checked) {
+                hiddenInput.value = 'No';
+            }
+        });
+    }
 }
 
 // ============================================
@@ -902,30 +937,68 @@ function closeReviewModal() {
 // ============================================
 // Confirmation Checkbox
 // ============================================
+let privacyNoticeViewed = false;
+let confirmationListenerAttached = false;
+
 function resetConfirmationCheckbox() {
     const checkbox = document.getElementById('confirmDetailsCheckbox');
     const submitBtn = document.getElementById('finalSubmitBtn');
+    const acknowledgeBtn = document.getElementById('acknowledgePrivacyBtn');
+    const scrollIndicator = document.getElementById('scrollIndicator');
+
     if (checkbox) checkbox.checked = false;
     if (submitBtn) submitBtn.disabled = true;
+    if (acknowledgeBtn) acknowledgeBtn.disabled = true;
+    if (scrollIndicator) scrollIndicator.style.display = 'block';
+    privacyNoticeViewed = false;
 }
 
 function initializeConfirmationCheckbox() {
-    setTimeout(() => {
-        const checkbox = document.getElementById('confirmDetailsCheckbox');
-        const submitBtn = document.getElementById('finalSubmitBtn');
-        if (checkbox && submitBtn) {
-            checkbox.addEventListener('change', function() {
-                if (this.checked) {
-                    submitBtn.disabled = false;
-                    submitBtn.removeAttribute('disabled');
-                } else {
-                    submitBtn.disabled = true;
-                    submitBtn.setAttribute('disabled', 'disabled');
-                }
-            });
-        }
-    }, 100);
+    if (confirmationListenerAttached) return;
+
+    const checkbox = document.getElementById('confirmDetailsCheckbox');
+    const submitBtn = document.getElementById('finalSubmitBtn');
+    const viewPrivacyLink = document.getElementById('viewPrivacyLink');
+    const privacyNoticeBody = document.getElementById('privacyNoticeBody');
+    const acknowledgeBtn = document.getElementById('acknowledgePrivacyBtn');
+    const scrollIndicator = document.getElementById('scrollIndicator');
+
+    if (viewPrivacyLink) {
+        viewPrivacyLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            document.getElementById('privacyNoticeModal').style.display = 'flex';
+        });
+    }
+
+    if (privacyNoticeBody) {
+        privacyNoticeBody.addEventListener('scroll', function() {
+            const isAtBottom = privacyNoticeBody.scrollHeight - privacyNoticeBody.scrollTop <= privacyNoticeBody.clientHeight + 5;
+            if (isAtBottom) {
+                privacyNoticeViewed = true;
+                if (acknowledgeBtn) acknowledgeBtn.disabled = false;
+                if (scrollIndicator) scrollIndicator.style.display = 'none';
+            }
+        });
+    }
+
+    if (checkbox) {
+        checkbox.addEventListener('change', function() {
+            if (this.checked && !privacyNoticeViewed) {
+                this.checked = false;
+                showNotification('Please read the Privacy Notice first', 'warning');
+                document.getElementById('privacyNoticeModal').style.display = 'flex';
+            } else {
+                submitBtn.disabled = !(this.checked && privacyNoticeViewed);
+            }
+        });
+    }
+
+    confirmationListenerAttached = true;
 }
+
+window.closePrivacyNoticeModal = function() {
+    document.getElementById('privacyNoticeModal').style.display = 'none';
+};
 
 // ============================================
 // Populate Review Modal
@@ -1021,7 +1094,6 @@ function populateReviewModal() {
     additionalHTML += '<div class="review-fields-grid">';
     additionalHTML += createField('4Ps Member', getValue('fourPs'));
     additionalHTML += createField('4Ps ID Number', getValue('fourpsId'));
-    additionalHTML += createField('Voter Status', getValue('voterStatus'));
     additionalHTML += createField('Precinct Number', getValue('precinctNumber'));
     additionalHTML += '</div>';
 
@@ -1031,6 +1103,7 @@ function populateReviewModal() {
     additionalHTML += createField('Membership Type', getValue('membershipType'));
     additionalHTML += createField('Philhealth Category', getValue('philhealthCategory'));
     additionalHTML += createField('Age/Health Group', getValue('ageHealthGroup'));
+    additionalHTML += createField('Disability Status', getValue('pwdStatus'));
     additionalHTML += createField('Medical History', getValue('medicalHistory'));
     additionalHTML += '</div>';
 
@@ -1074,7 +1147,7 @@ function submitFormFromReview() {
     submitBtn.disabled = true;
     submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Updating...';
 
-    fetch('../model/save_resident.php', {
+    fetch('save_resident.php', {
         method: 'POST',
         body: formData
     })

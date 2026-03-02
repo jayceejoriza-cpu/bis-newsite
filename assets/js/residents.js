@@ -272,14 +272,16 @@ function initializeButtons() {
 
                 // Check advanced filters from the filter panel
                 const filterMappings = {
-                    'filterAgeHealthGroup': 'Health Group',
-                    'filterReligion': 'Religion',
-                    'filterCivilStatus': 'Civil Status',
+                    'filterAgeGroup': 'Age Group',
                     'filterDateOfBirth': 'DOB',
+                    'filterReligion': 'Religion',
                     'filterEthnicity': 'Ethnicity',
+                    'filterCivilStatus': 'Civil Status',
                     'filterEducation': 'Education',
                     'filterEmploymentStatus': 'Employment',
-                    'filter4ps': '4Ps'
+                    'filter4ps': '4Ps',
+                    'filterAgeHealthGroup': 'Health Group',
+                    'filterPwdStatus': 'Disability Status'
                 };
 
                 for (const [id, label] of Object.entries(filterMappings)) {
@@ -776,7 +778,8 @@ function applyAdvancedFilters() {
         education: getFilterValue('filterEducation'),
         employmentStatus: getFilterValue('filterEmploymentStatus'),
         fourPs: getFilterValue('filter4ps'),
-        ageHealthGroup: getFilterValue('filterAgeHealthGroup')
+        ageHealthGroup: getFilterValue('filterAgeHealthGroup'),
+        pwdStatus: getFilterValue('filterPwdStatus')
     };
     
     console.log('Applying filters:', filters);
@@ -798,7 +801,8 @@ function applyAdvancedFilters() {
             education: row.getAttribute('data-education') || '',
             employment: row.getAttribute('data-employment') || '',
             fourPs: row.getAttribute('data-fourps') || '',
-            ageHealthGroup: row.getAttribute('data-age-health-group') || ''
+            ageHealthGroup: row.getAttribute('data-age-health-group') || '',
+            pwdStatus: row.getAttribute('data-pwd-status') || ''
         };
         
         // Age Group filter
@@ -852,6 +856,11 @@ function applyAdvancedFilters() {
             return false;
         }
         
+        // PWD Status filter
+        if (filters.pwdStatus && rowData.pwdStatus.toLowerCase() !== filters.pwdStatus.toLowerCase()) {
+            return false;
+        }
+        
         return true;
     });
 
@@ -866,7 +875,8 @@ function applyAdvancedFilters() {
             education: card.getAttribute('data-education') || '',
             employment: card.getAttribute('data-employment') || '',
             fourPs: card.getAttribute('data-fourps') || '',
-            ageHealthGroup: card.getAttribute('data-age-health-group') || ''
+            ageHealthGroup: card.getAttribute('data-age-health-group') || '',
+            pwdStatus: card.getAttribute('data-pwd-status') || ''
         };
 
         let show = true;
@@ -885,6 +895,7 @@ function applyAdvancedFilters() {
         if (filters.employmentStatus && rowData.employment.toLowerCase() !== filters.employmentStatus.toLowerCase()) show = false;
         if (filters.fourPs && rowData.fourPs.toLowerCase() !== filters.fourPs.toLowerCase()) show = false;
         if (filters.ageHealthGroup && rowData.ageHealthGroup.toLowerCase() !== filters.ageHealthGroup.toLowerCase()) show = false;
+        if (filters.pwdStatus && rowData.pwdStatus.toLowerCase() !== filters.pwdStatus.toLowerCase()) show = false;
         
         card.style.display = show ? '' : 'none';
     });
@@ -925,6 +936,7 @@ function clearAdvancedFilters() {
     setFilterValue('filterEmploymentStatus', '');
     setFilterValue('filter4ps', '');
     setFilterValue('filterAgeHealthGroup', '');
+    setFilterValue('filterPwdStatus', '');
     
     // Reset the table
     residentsTable.reset();

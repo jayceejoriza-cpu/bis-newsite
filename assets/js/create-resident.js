@@ -16,6 +16,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialize form functionality
     initializeForm();
     
+    // Initialize PWD status functionality
+    initializePwdStatus();
+    
     // Initialize photo upload
     initializePhotoUpload();
     
@@ -121,6 +124,33 @@ function initializeForm() {
     const usingFpMethodSelect = document.getElementById('usingFpMethod');
     if (usingFpMethodSelect) {
         usingFpMethodSelect.addEventListener('change', handleFpMethodChange);
+    }
+}
+
+// ===================================
+// PWD Status Management
+// ===================================
+function initializePwdStatus() {
+    const yesRadio = document.getElementById('pwdStatusYes');
+    const noRadio = document.getElementById('pwdStatusNo');
+    const hiddenInput = document.getElementById('pwdStatus');
+
+    if (yesRadio && hiddenInput) {
+        yesRadio.addEventListener('change', function() {
+            if (this.checked) {
+                hiddenInput.value = 'Yes';
+                saveFormData();
+            }
+        });
+    }
+
+    if (noRadio && hiddenInput) {
+        noRadio.addEventListener('change', function() {
+            if (this.checked) {
+                hiddenInput.value = 'No';
+                saveFormData();
+            }
+        });
     }
 }
 
@@ -1366,25 +1396,68 @@ function closeReviewModal() {
 // Confirmation Checkbox Functions
 // ===================================
 let confirmationListenerAttached = false;
+let privacyNoticeViewed = false;
 
 function resetConfirmationCheckbox() {
     const checkbox = document.getElementById('confirmDetailsCheckbox');
     const submitBtn = document.getElementById('finalSubmitBtn');
+    const acknowledgeBtn = document.getElementById('acknowledgePrivacyBtn');
+    const scrollIndicator = document.getElementById('scrollIndicator');
+    
     if (checkbox) checkbox.checked = false;
     if (submitBtn) submitBtn.disabled = true;
+    if (acknowledgeBtn) acknowledgeBtn.disabled = true;
+    if (scrollIndicator) scrollIndicator.style.display = 'block';
+    privacyNoticeViewed = false;
 }
 
 function initializeConfirmationCheckbox() {
     if (confirmationListenerAttached) return;
+    
     const checkbox = document.getElementById('confirmDetailsCheckbox');
     const submitBtn = document.getElementById('finalSubmitBtn');
-    if (checkbox && submitBtn) {
-        checkbox.addEventListener('change', function() {
-            submitBtn.disabled = !this.checked;
+    const viewPrivacyLink = document.getElementById('viewPrivacyLink');
+    const privacyNoticeBody = document.getElementById('privacyNoticeBody');
+    const acknowledgeBtn = document.getElementById('acknowledgePrivacyBtn');
+    const scrollIndicator = document.getElementById('scrollIndicator');
+
+    if (viewPrivacyLink) {
+        viewPrivacyLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            document.getElementById('privacyNoticeModal').style.display = 'flex';
         });
-        confirmationListenerAttached = true;
     }
+
+    if (privacyNoticeBody) {
+        privacyNoticeBody.addEventListener('scroll', function() {
+            // Check if user reached the bottom
+            const isAtBottom = privacyNoticeBody.scrollHeight - privacyNoticeBody.scrollTop <= privacyNoticeBody.clientHeight + 5;
+            if (isAtBottom) {
+                privacyNoticeViewed = true;
+                if (acknowledgeBtn) acknowledgeBtn.disabled = false;
+                if (scrollIndicator) scrollIndicator.style.display = 'none';
+            }
+        });
+    }
+
+    if (checkbox) {
+        checkbox.addEventListener('change', function() {
+            if (this.checked && !privacyNoticeViewed) {
+                this.checked = false;
+                showNotification('Please read the Privacy Notice first', 'warning');
+                document.getElementById('privacyNoticeModal').style.display = 'flex';
+            } else {
+                submitBtn.disabled = !(this.checked && privacyNoticeViewed);
+            }
+        });
+    }
+
+    confirmationListenerAttached = true;
 }
+
+window.closePrivacyNoticeModal = function() {
+    document.getElementById('privacyNoticeModal').style.display = 'none';
+};
 
 function populateReviewModal() {
     const form = document.getElementById('createResidentForm');
@@ -1511,7 +1584,7 @@ function populateReviewModal() {
     additionalHTML += '<div class="review-fields-grid">';
     additionalHTML += createField('4Ps Member', getValue('fourPs'));
     additionalHTML += createField('4Ps ID Number', getValue('fourpsId'));
-    additionalHTML += createField('Voter Status', getValue('voterStatus'));
+    additionalHTML += createField('Registered Voter', getValue('voterStatus'));
     additionalHTML += createField('Precinct Number', getValue('precinctNumber'));
     additionalHTML += '</div>';
     
@@ -1522,6 +1595,7 @@ function populateReviewModal() {
     additionalHTML += createField('Membership Type', getValue('membershipType'));
     additionalHTML += createField('Philhealth Category', getValue('philhealthCategory'));
     additionalHTML += createField('Age/Health Group', getValue('ageHealthGroup'));
+    additionalHTML += createField('Disability Status', getValue('pwdStatus'));
     additionalHTML += createField('Medical History', getValue('medicalHistory'));
     additionalHTML += '</div>';
     
