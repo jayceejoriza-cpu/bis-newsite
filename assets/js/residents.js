@@ -264,6 +264,54 @@ function initializeButtons() {
             const countBadge = printHeader.querySelector('#printTotalRecords');
             if (countBadge) countBadge.textContent = residentsTable.filteredRows.length;
 
+            // Update the print title with active filter information
+            const printTitle = printHeader.querySelector('.print-list-title');
+            if (printTitle) {
+                const activeFilters = [];
+                
+                // Check tab filters (Voters, Active, etc.)
+                const activeTab = document.querySelector('.tab-btn.active');
+                if (activeTab && activeTab.getAttribute('data-filter') !== 'all') {
+                    activeFilters.push(activeTab.textContent.trim());
+                }
+
+                // Check advanced filters from the filter panel
+                const filterMappings = {
+                    'filterAgeGroup': 'Age Group',
+                    'filterDateOfBirth': 'DOB',
+                    'filterReligion': 'Religion',
+                    'filterEthnicity': 'Ethnicity',
+                    'filterCivilStatus': 'Civil Status',
+                    'filterEducation': 'Education',
+                    'filterEmploymentStatus': 'Employment',
+                    'filter4ps': '4Ps',
+                    'filterAgeHealthGroup': 'Health Group',
+                    'filterPwdStatus': 'Disability Status'
+                };
+
+                for (const [id, label] of Object.entries(filterMappings)) {
+                    const el = document.getElementById(id);
+                    if (el && el.value) {
+                        let val = el.value;
+                        if (id === 'filterDateOfBirth') {
+                            const d = new Date(val);
+                            val = d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+                        }
+                        activeFilters.push(`${label}: ${val}`);
+                    }
+                }
+
+                // Check search
+                const searchInput = document.getElementById('searchInput');
+                if (searchInput && searchInput.value.trim()) {
+                    activeFilters.push(`Search: "${searchInput.value.trim()}"`);
+                }
+
+                if (activeFilters.length > 0) {
+                    printTitle.textContent += " - " + activeFilters.join(', ');
+                }
+            }
+
             // Get the print footer
             const printFooter = document.querySelector('.print-footer').cloneNode(true);
 
@@ -788,7 +836,8 @@ function applyAdvancedFilters() {
         education: getFilterValue('filterEducation'),
         employmentStatus: getFilterValue('filterEmploymentStatus'),
         fourPs: getFilterValue('filter4ps'),
-        ageHealthGroup: getFilterValue('filterAgeHealthGroup')
+        ageHealthGroup: getFilterValue('filterAgeHealthGroup'),
+        pwdStatus: getFilterValue('filterPwdStatus')
     };
     
     console.log('Applying filters:', filters);
@@ -810,7 +859,8 @@ function applyAdvancedFilters() {
             education: row.getAttribute('data-education') || '',
             employment: row.getAttribute('data-employment') || '',
             fourPs: row.getAttribute('data-fourps') || '',
-            ageHealthGroup: row.getAttribute('data-age-health-group') || ''
+            ageHealthGroup: row.getAttribute('data-age-health-group') || '',
+            pwdStatus: row.getAttribute('data-pwd-status') || ''
         };
         
         // Age Group filter
@@ -864,6 +914,11 @@ function applyAdvancedFilters() {
             return false;
         }
         
+        // PWD Status filter
+        if (filters.pwdStatus && rowData.pwdStatus.toLowerCase() !== filters.pwdStatus.toLowerCase()) {
+            return false;
+        }
+        
         return true;
     });
 
@@ -878,7 +933,8 @@ function applyAdvancedFilters() {
             education: card.getAttribute('data-education') || '',
             employment: card.getAttribute('data-employment') || '',
             fourPs: card.getAttribute('data-fourps') || '',
-            ageHealthGroup: card.getAttribute('data-age-health-group') || ''
+            ageHealthGroup: card.getAttribute('data-age-health-group') || '',
+            pwdStatus: card.getAttribute('data-pwd-status') || ''
         };
 
         let show = true;
@@ -897,6 +953,7 @@ function applyAdvancedFilters() {
         if (filters.employmentStatus && rowData.employment.toLowerCase() !== filters.employmentStatus.toLowerCase()) show = false;
         if (filters.fourPs && rowData.fourPs.toLowerCase() !== filters.fourPs.toLowerCase()) show = false;
         if (filters.ageHealthGroup && rowData.ageHealthGroup.toLowerCase() !== filters.ageHealthGroup.toLowerCase()) show = false;
+        if (filters.pwdStatus && rowData.pwdStatus.toLowerCase() !== filters.pwdStatus.toLowerCase()) show = false;
         
         card.style.display = show ? '' : 'none';
     });
@@ -937,6 +994,7 @@ function clearAdvancedFilters() {
     setFilterValue('filterEmploymentStatus', '');
     setFilterValue('filter4ps', '');
     setFilterValue('filterAgeHealthGroup', '');
+    setFilterValue('filterPwdStatus', '');
     
     // Reset the table
     residentsTable.reset();

@@ -116,6 +116,7 @@ try {
             employment_status,
             fourps_member,
             age_health_group,
+            pwd_status,
             verification_status,
             voter_status,
             activity_status,
@@ -206,7 +207,7 @@ try {
             <!-- Filter Tabs -->
             <div class="filter-tabs">
                 <button class="tab-btn active" data-filter="all">All</button>
-                <button class="tab-btn" data-filter="voters">Voters</button>
+                <button class="tab-btn" data-filter="voters">Registered Voters</button>
                 <button class="tab-btn" data-filter="active">Active</button>
             </div>
             
@@ -260,15 +261,33 @@ try {
                         </div>
                         
                         <div class="filter-item">
+                            <label for="filterPwdStatus">Disability Status</label>
+                            <select id="filterPwdStatus" class="filter-select">
+                                <option value="">All</option>
+                                <option value="Yes">Yes</option>
+                                <option value="No">No</option>
+                            </select>
+                        </div>
+                        
+                        <div class="filter-item">
                             <label for="filterReligion">Religion</label>
                             <select id="filterReligion" class="filter-select">
                                 <option value="">All</option>
                                 <option value="Roman Catholic">Roman Catholic</option>
-                                <option value="Islam">Islam</option>
+                                <option value="Christian">Christian</option>
                                 <option value="Iglesia ni Cristo">Iglesia ni Cristo</option>
-                                <option value="Protestant">Protestant</option>
+                                <option value="Catholic">Catholic</option>
+                                <option value="Islam">Islam</option>
+                                <option value="Baptist">Baptist</option>
+                                <option value="Buddhism">Buddhism</option>
                                 <option value="Born Again">Born Again</option>
-                                <option value="Others">Others</option>
+                                <option value="Church of God">Church of God</option>
+                                <option value="Jehovahs Witness">Jehovahs Witness</option>
+                                <option value="Protestant">Protestant</option>
+                                <option value="Seventh Day Adventist">Seventh Day Adventist</option>
+                                <option value="LDS-Mormons">LDS-Mormons</option>
+                                <option value="Evangelical">Evangelical</option>
+                                <option value="Pentecostal">Pentecostal</option>
                             </select>
                         </div>
                         
@@ -364,6 +383,7 @@ try {
                             </th>
                             <th>Purok</th>
                             <th>Voter Status</th>
+                            <th>Registered Voter</th>
                             <th>Date of Birth</th>
                             <th>Sex</th>
                             <th>Activity Status</th>
@@ -410,6 +430,7 @@ try {
                                 data-fourps="<?php echo htmlspecialchars($resident['fourps_member'] ?? ''); ?>"
                                 data-age-health-group="<?php echo htmlspecialchars($resident['age_health_group'] ?? ''); ?>"
                                 data-activity-status="<?php echo htmlspecialchars($resident['activity_status'] ?? ''); ?>">
+                                data-pwd-status="<?php echo htmlspecialchars($resident['pwd_status'] ?? 'No'); ?>">
                                
                                     <td><?php echo htmlspecialchars($residentId); ?></td>
                                      <td data-sort="<?php echo htmlspecialchars($sortName); ?>"><a href="resident_profile.php?id=<?php echo htmlspecialchars($resident['id']); ?>" class="resident-name-link">
@@ -475,6 +496,7 @@ try {
                          data-employment="<?php echo htmlspecialchars($resident['employment_status'] ?? ''); ?>"
                          data-fourps="<?php echo htmlspecialchars($resident['fourps_member'] ?? ''); ?>"
                          data-age-health-group="<?php echo htmlspecialchars($resident['age_health_group'] ?? ''); ?>"
+                         data-pwd-status="<?php echo htmlspecialchars($resident['pwd_status'] ?? 'No'); ?>"
                          data-voter-status="<?php echo htmlspecialchars($resident['voter_status'] ?: 'No'); ?>"
                          data-activity-status="<?php echo htmlspecialchars($resident['activity_status'] ?? 'Active'); ?>">
                         <div class="avatar <?php echo htmlspecialchars($avatarColor); ?>">
@@ -494,7 +516,7 @@ try {
                         </div>
                         <div class="badges">
                             <span class="badge <?php echo ($resident['voter_status'] === 'Yes') ? 'badge-yes' : 'badge-no'; ?>">
-                                <?php echo htmlspecialchars($resident['voter_status'] ?: 'No'); ?> Voter
+                                Registered Voter: <?php echo htmlspecialchars($resident['voter_status'] ?: 'No'); ?>
                             </span>
                         </div>
                         <div class="actions">

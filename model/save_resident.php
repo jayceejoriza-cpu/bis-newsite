@@ -177,6 +177,7 @@ try {
     $membershipType = $conn->real_escape_string($_POST['membershipType'] ?? '');
     $philhealthCategory = $conn->real_escape_string($_POST['philhealthCategory'] ?? '');
     $ageHealthGroup = $conn->real_escape_string($_POST['ageHealthGroup'] ?? '');
+    $pwdStatus = $conn->real_escape_string($_POST['pwdStatus'] ?? 'No');
     $medicalHistory = $conn->real_escape_string(trim($_POST['medicalHistory'] ?? ''));
     
     // Women's Reproductive Health (WRA)
@@ -196,7 +197,7 @@ try {
     
     // Validation
     if (empty($firstName) || empty($lastName) || empty($sex) || empty($dateOfBirth) || 
-        empty($mobileNumber) || empty($currentAddress) || empty($civilStatus)) {
+        empty($mobileNumber) || empty($currentAddress) || empty($civilStatus) || empty($pwdStatus)) {
         throw new Exception('Please fill in all required fields.');
     }
 
@@ -367,6 +368,7 @@ try {
             membership_type = " . ($membershipType ? "'$membershipType'" : "NULL") . ",
             philhealth_category = " . ($philhealthCategory ? "'$philhealthCategory'" : "NULL") . ",
             age_health_group = " . ($ageHealthGroup ? "'$ageHealthGroup'" : "NULL") . ",
+            pwd_status = '$pwdStatus',
             medical_history = " . ($medicalHistory ? "'$medicalHistory'" : "NULL") . ",
             lmp_date = " . ($lmpDate ? "'$lmpDate'" : "NULL") . ",
             using_fp_method = " . ($usingFpMethod ? "'$usingFpMethod'" : "NULL") . ",
@@ -448,7 +450,7 @@ try {
         photo, first_name, middle_name, last_name, suffix, sex, date_of_birth, age, religion, ethnicity,
         mobile_number, email, house_no, purok, street_name, current_address,
         civil_status, spouse_name, father_name, mother_name, number_of_children,
-        educational_attainment, employment_status, occupation, monthly_income,
+        educational_attainment, employment_status, occupation, monthly_income, pwd_status,
         fourps_member, fourps_id, voter_status, precinct_number,
         philhealth_id, membership_type, philhealth_category, age_health_group, medical_history,
         lmp_date, using_fp_method, fp_methods_used, fp_status,
@@ -462,7 +464,7 @@ try {
         '$civilStatus', " . ($spouseName ? "'$spouseName'" : "NULL") . ", " . ($fatherName ? "'$fatherName'" : "NULL") . ", 
         " . ($motherName ? "'$motherName'" : "NULL") . ", $numberOfChildren,
         " . ($educationalAttainment ? "'$educationalAttainment'" : "NULL") . ", " . ($employmentStatus ? "'$employmentStatus'" : "NULL") . ",
-        " . ($occupation ? "'$occupation'" : "NULL") . ", " . ($monthlyIncome ? "'$monthlyIncome'" : "NULL") . ",
+        " . ($occupation ? "'$occupation'" : "NULL") . ", " . ($monthlyIncome ? "'$monthlyIncome'" : "NULL") . ", '$pwdStatus',
         '$fourPs', " . ($fourpsId ? "'$fourpsId'" : "NULL") . ", " . ($voterStatus ? "'$voterStatus'" : "NULL") . ", 
         " . ($precinctNumber ? "'$precinctNumber'" : "NULL") . ",
         " . ($philhealthId ? "'$philhealthId'" : "NULL") . ", " . ($membershipType ? "'$membershipType'" : "NULL") . ",
