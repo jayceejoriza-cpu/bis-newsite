@@ -144,17 +144,18 @@
 .residents-table th:nth-child(2),
 .residents-table td:nth-child(2) {
     /* Full Name: auto — takes all remaining space */
-    width: 700px;
+    width: 680px;
 }
 
 .residents-table th:nth-child(3),
 .residents-table td:nth-child(3) {
     width: 110px;
+     text-align: center;
 }
 
 .residents-table th:nth-child(4),
 .residents-table td:nth-child(4) {
-    width: 165px;
+    width: 196px;
     text-align: center;
 }
 

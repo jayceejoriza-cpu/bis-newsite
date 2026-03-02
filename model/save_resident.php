@@ -234,63 +234,6 @@ try {
     }
     $stmt->close();
     
-    // Check 2: Mobile Number
-    $duplicateCheckSql = "SELECT id, resident_id, CONCAT(first_name, ' ', last_name) as full_name
-                          FROM residents 
-                          WHERE mobile_number = ?
-                          AND activity_status != 'Deceased'";
-    
-    if ($mode === 'update' && $residentId) {
-        $duplicateCheckSql .= " AND id != ?";
-    }
-    
-    $stmt = $conn->prepare($duplicateCheckSql);
-    
-    if ($mode === 'update' && $residentId) {
-        $stmt->bind_param("si", $mobileNumber, $residentId);
-    } else {
-        $stmt->bind_param("s", $mobileNumber);
-    }
-    
-    $stmt->execute();
-    $result = $stmt->get_result();
-    
-    if ($result->num_rows > 0) {
-        $duplicate = $result->fetch_assoc();
-        $stmt->close();
-        throw new Exception("This mobile number is already registered to another resident: {$duplicate['full_name']} (ID: {$duplicate['resident_id']})");
-    }
-    $stmt->close();
-    
-    // Check 3: Email Address (if provided)
-    if (!empty($email)) {
-        $duplicateCheckSql = "SELECT id, resident_id, CONCAT(first_name, ' ', last_name) as full_name
-                              FROM residents 
-                              WHERE LOWER(email) = LOWER(?)
-                              AND activity_status != 'Deceased'";
-        
-        if ($mode === 'update' && $residentId) {
-            $duplicateCheckSql .= " AND id != ?";
-        }
-        
-        $stmt = $conn->prepare($duplicateCheckSql);
-        
-        if ($mode === 'update' && $residentId) {
-            $stmt->bind_param("si", $email, $residentId);
-        } else {
-            $stmt->bind_param("s", $email);
-        }
-        
-        $stmt->execute();
-        $result = $stmt->get_result();
-        
-        if ($result->num_rows > 0) {
-            $duplicate = $result->fetch_assoc();
-            $stmt->close();
-            throw new Exception("This email address is already registered to another resident: {$duplicate['full_name']} (ID: {$duplicate['resident_id']})");
-        }
-        $stmt->close();
-    }
     
     // Check 4: Philhealth ID (if provided)
     if (!empty($philhealthId)) {

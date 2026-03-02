@@ -476,6 +476,501 @@ document.addEventListener('DOMContentLoaded', function () {
         return div.innerHTML;
     }
 
+    // ============================================
+    // Fishing Clearance Modal Logic
+    // ============================================
+    const fishingNameInput    = document.getElementById('fishingResidentName');
+    const fishingIdInput     = document.getElementById('fishingResidentId');
+    const fishingDropdown    = document.getElementById('fishingResidentDropdown');
+    const fishingResidentBtn = document.getElementById('fishingResidentBtn');
+    const fishingDateInput   = document.getElementById('fishingDate');
+    const fishingPurposeInput = document.getElementById('fishingPurpose');
+    const fishingPrintBtn    = document.getElementById('fishingPrintBtn');
+    const fishingModalEl     = document.getElementById('fishingClearanceModal');
+
+    let fishingSearchTimeout = null;
+
+    if (fishingModalEl) {
+        fishingModalEl.addEventListener('show.bs.modal', function () {
+            if (fishingNameInput)    fishingNameInput.value    = '';
+            if (fishingIdInput)      fishingIdInput.value      = '';
+            if (fishingDropdown)     { fishingDropdown.innerHTML = ''; fishingDropdown.style.display = 'none'; }
+            if (fishingDateInput)    fishingDateInput.value    = getTodayDate();
+            if (fishingPurposeInput)  fishingPurposeInput.value = 'Boat Registration';
+            clearFishingError();
+        });
+    }
+
+    if (fishingNameInput) {
+        fishingNameInput.addEventListener('input', function () {
+            if (fishingIdInput) fishingIdInput.value = '';
+            clearFishingError();
+            const term = this.value.trim();
+            clearTimeout(fishingSearchTimeout);
+            if (term.length < 1) {
+                hideFishingDropdown();
+                return;
+            }
+            fishingSearchTimeout = setTimeout(function () {
+                searchFishingResidents(term);
+            }, 250);
+        });
+        fishingNameInput.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') hideFishingDropdown();
+        });
+    }
+
+    if (fishingResidentBtn) {
+        fishingResidentBtn.addEventListener('click', function (e) {
+            e.stopPropagation();
+            if (fishingNameInput) {
+                fishingNameInput.value = '';
+                fishingNameInput.focus();
+            }
+            if (fishingIdInput) fishingIdInput.value = '';
+            hideFishingDropdown();
+        });
+    }
+
+    document.addEventListener('click', function (e) {
+        if (fishingDropdown && !e.target.closest('#fishingClearanceModal .resident-search-wrap')) {
+            hideFishingDropdown();
+        }
+    });
+
+    function searchFishingResidents(term) {
+        fetch('model/search_residents.php?search=' + encodeURIComponent(term))
+            .then(function (res) { return res.json(); })
+            .then(function (data) {
+                const results = data.residents || data.data;
+                if (data.success && results) {
+                    renderFishingDropdown(results);
+                } else {
+                    hideFishingDropdown();
+                }
+            })
+            .catch(function () { hideFishingDropdown(); });
+    }
+
+    function renderFishingDropdown(residents) {
+        if (!fishingDropdown) return;
+        if (residents.length === 0) {
+            fishingDropdown.innerHTML = '<div class="resident-dropdown-empty">No residents found</div>';
+            fishingDropdown.style.display = 'block';
+            return;
+        }
+        fishingDropdown.innerHTML = '';
+        residents.forEach(function (r) {
+            const item = document.createElement('div');
+            item.className = 'resident-dropdown-item';
+            item.innerHTML = '<span class="resident-dropdown-name">' + escapeHtml(r.full_name.trim()) + '</span><span class="resident-dropdown-id">' + escapeHtml(r.resident_id || '') + '</span>';
+            item.addEventListener('mousedown', function (e) { e.preventDefault(); selectFishingResident(r); });
+            fishingDropdown.appendChild(item);
+        });
+        fishingDropdown.style.display = 'block';
+    }
+
+    function selectFishingResident(resident) {
+        if (fishingNameInput) fishingNameInput.value = resident.full_name.trim();
+        if (fishingIdInput)   fishingIdInput.value   = resident.id;
+        hideFishingDropdown();
+        clearFishingError();
+    }
+
+    function hideFishingDropdown() {
+        if (fishingDropdown) { fishingDropdown.style.display = 'none'; fishingDropdown.innerHTML = ''; }
+    }
+
+    function clearFishingError() {
+        if (fishingNameInput) fishingNameInput.classList.remove('is-invalid');
+        var existing = document.querySelector('.fishing-error-msg');
+        if (existing) existing.remove();
+    }
+
+    function showFishingError(msg) {
+        clearFishingError();
+        if (!fishingNameInput) return;
+        fishingNameInput.classList.add('is-invalid');
+        var err = document.createElement('div');
+        err.className = 'invalid-feedback fishing-error-msg';
+        err.textContent = msg;
+        fishingNameInput.closest('.resident-input-group').after(err);
+    }
+
+    if (fishingPrintBtn) {
+        fishingPrintBtn.addEventListener('click', function () {
+            var residentId = fishingIdInput      ? fishingIdInput.value.trim()      : '';
+            var date       = fishingDateInput    ? fishingDateInput.value.trim()    : '';
+            var purpose    = fishingPurposeInput ? fishingPurposeInput.value.trim() : '';
+
+            if (!residentId) {
+                showFishingError('Please select a resident from the list.');
+                if (fishingNameInput) fishingNameInput.focus();
+                return;
+            }
+            if (!date) {
+                if (fishingDateInput) { fishingDateInput.classList.add('is-invalid'); fishingDateInput.focus(); }
+                return;
+            } else {
+                if (fishingDateInput) fishingDateInput.classList.remove('is-invalid');
+            }
+
+            var params = new URLSearchParams({ resident_id: residentId, date: date, purpose: purpose });
+            window.location.href = 'certifications/certificate-fishingclearance.php?' + params.toString();
+        });
+    }
+
+    // ============================================
+    // First Time Jobseeker Modal Logic
+    // ============================================
+    var ftJobseekerNameInput    = document.getElementById('ftJobseekerResidentName');
+    var ftJobseekerIdInput      = document.getElementById('ftJobseekerResidentId');
+    var ftJobseekerDropdown     = document.getElementById('ftJobseekerResidentDropdown');
+    var ftJobseekerResidentBtn  = document.getElementById('ftJobseekerResidentBtn');
+    var ftJobseekerDateInput    = document.getElementById('ftJobseekerDate');
+    var ftJobseekerPurposeInput = document.getElementById('ftJobseekerPurpose');
+    var ftJobseekerPrintBtn     = document.getElementById('ftJobseekerPrintBtn');
+    var ftJobseekerModalEl      = document.getElementById('ftJobseekerModal');
+
+    var ftJobseekerSearchTimeout = null;
+
+    if (ftJobseekerModalEl) {
+        ftJobseekerModalEl.addEventListener('show.bs.modal', function () {
+            if (ftJobseekerNameInput)    ftJobseekerNameInput.value    = '';
+            if (ftJobseekerIdInput)       ftJobseekerIdInput.value      = '';
+            if (ftJobseekerDropdown)      { ftJobseekerDropdown.innerHTML = ''; ftJobseekerDropdown.style.display = 'none'; }
+            if (ftJobseekerDateInput)     ftJobseekerDateInput.value    = getTodayDate();
+            if (ftJobseekerPurposeInput)  ftJobseekerPurposeInput.value = 'First Time Jobseeker Assistance (RA 11261)';
+            clearFtJobseekerError();
+        });
+    }
+
+    if (ftJobseekerNameInput) {
+        ftJobseekerNameInput.addEventListener('input', function () {
+            if (ftJobseekerIdInput) ftJobseekerIdInput.value = '';
+            clearFtJobseekerError();
+            var term = this.value.trim();
+            clearTimeout(ftJobseekerSearchTimeout);
+            if (term.length < 1) { hideFtJobseekerDropdown(); return; }
+            ftJobseekerSearchTimeout = setTimeout(function () { searchFtJobseekerResidents(term); }, 250);
+        });
+        ftJobseekerNameInput.addEventListener('keydown', function (e) { if (e.key === 'Escape') hideFtJobseekerDropdown(); });
+    }
+
+    if (ftJobseekerResidentBtn) {
+        ftJobseekerResidentBtn.addEventListener('click', function (e) {
+            e.stopPropagation();
+            if (ftJobseekerNameInput) { ftJobseekerNameInput.value = ''; ftJobseekerNameInput.focus(); }
+            if (ftJobseekerIdInput) ftJobseekerIdInput.value = '';
+            hideFtJobseekerDropdown();
+        });
+    }
+
+    document.addEventListener('click', function (e) {
+        if (ftJobseekerDropdown && !e.target.closest('#ftJobseekerModal .resident-search-wrap')) { hideFtJobseekerDropdown(); }
+    });
+
+    function searchFtJobseekerResidents(term) {
+        fetch('model/search_residents.php?search=' + encodeURIComponent(term))
+            .then(function (res) { return res.json(); })
+            .then(function (data) {
+                var results = data.residents || data.data;
+                if (data.success && results) { renderFtJobseekerDropdown(results); }
+                else { hideFtJobseekerDropdown(); }
+            })
+            .catch(function () { hideFtJobseekerDropdown(); });
+    }
+
+    function renderFtJobseekerDropdown(residents) {
+        if (!ftJobseekerDropdown) return;
+        if (residents.length === 0) { ftJobseekerDropdown.innerHTML = '<div class="resident-dropdown-empty">No residents found</div>'; ftJobseekerDropdown.style.display = 'block'; return; }
+        ftJobseekerDropdown.innerHTML = '';
+        residents.forEach(function (r) {
+            var item = document.createElement('div');
+            item.className = 'resident-dropdown-item';
+            item.innerHTML = '<span class="resident-dropdown-name">' + escapeHtml(r.full_name.trim()) + '</span><span class="resident-dropdown-id">' + escapeHtml(r.resident_id || '') + '</span>';
+            item.addEventListener('mousedown', function (e) { e.preventDefault(); selectFtJobseekerResident(r); });
+            ftJobseekerDropdown.appendChild(item);
+        });
+        ftJobseekerDropdown.style.display = 'block';
+    }
+
+    function selectFtJobseekerResident(resident) {
+        if (ftJobseekerNameInput) ftJobseekerNameInput.value = resident.full_name.trim();
+        if (ftJobseekerIdInput)   ftJobseekerIdInput.value   = resident.id;
+        hideFtJobseekerDropdown();
+        clearFtJobseekerError();
+    }
+
+    function hideFtJobseekerDropdown() {
+        if (ftJobseekerDropdown) { ftJobseekerDropdown.style.display = 'none'; ftJobseekerDropdown.innerHTML = ''; }
+    }
+
+    function clearFtJobseekerError() {
+        if (ftJobseekerNameInput) ftJobseekerNameInput.classList.remove('is-invalid');
+        var existing = document.querySelector('.ftjobseeker-error-msg');
+        if (existing) existing.remove();
+    }
+
+    function showFtJobseekerError(msg) {
+        clearFtJobseekerError();
+        if (!ftJobseekerNameInput) return;
+        ftJobseekerNameInput.classList.add('is-invalid');
+        var err = document.createElement('div');
+        err.className = 'invalid-feedback ftjobseeker-error-msg';
+        err.textContent = msg;
+        ftJobseekerNameInput.closest('.resident-input-group').after(err);
+    }
+
+    if (ftJobseekerPrintBtn) {
+        ftJobseekerPrintBtn.addEventListener('click', function () {
+            var residentId = ftJobseekerIdInput      ? ftJobseekerIdInput.value.trim()      : '';
+            var date       = ftJobseekerDateInput    ? ftJobseekerDateInput.value.trim()    : '';
+            var purpose    = ftJobseekerPurposeInput ? ftJobseekerPurposeInput.value.trim() : '';
+
+            if (!residentId) { showFtJobseekerError('Please select a resident from the list.'); if (ftJobseekerNameInput) ftJobseekerNameInput.focus(); return; }
+            if (!date) { if (ftJobseekerDateInput) { ftJobseekerDateInput.classList.add('is-invalid'); ftJobseekerDateInput.focus(); } return; }
+            else { if (ftJobseekerDateInput) ftJobseekerDateInput.classList.remove('is-invalid'); }
+
+            var params = new URLSearchParams({ resident_id: residentId, date: date, purpose: purpose });
+            window.location.href = 'certifications/certificate-ft-jobseeker-assistance.php?' + params.toString();
+        });
+    }
+
+    // ============================================
+    // Good Moral Character (GMRC) Modal Logic
+    // ============================================
+    var gmrcNameInput    = document.getElementById('gmrcResidentName');
+    var gmrcIdInput     = document.getElementById('gmrcResidentId');
+    var gmrcDropdown    = document.getElementById('gmrcResidentDropdown');
+    var gmrcResidentBtn = document.getElementById('gmrcResidentBtn');
+    var gmrcDateInput   = document.getElementById('gmrcDate');
+    var gmrcPurposeInput = document.getElementById('gmrcPurpose');
+    var gmrcPrintBtn    = document.getElementById('gmrcPrintBtn');
+    var gmrcModalEl     = document.getElementById('gmrcModal');
+
+    var gmrcSearchTimeout = null;
+
+    if (gmrcModalEl) {
+        gmrcModalEl.addEventListener('show.bs.modal', function () {
+            if (gmrcNameInput)    gmrcNameInput.value    = '';
+            if (gmrcIdInput)      gmrcIdInput.value      = '';
+            if (gmrcDropdown)     { gmrcDropdown.innerHTML = ''; gmrcDropdown.style.display = 'none'; }
+            if (gmrcDateInput)    gmrcDateInput.value    = getTodayDate();
+            if (gmrcPurposeInput)  gmrcPurposeInput.value = 'Good Moral Character Verification';
+            clearGmrcError();
+        });
+    }
+
+    if (gmrcNameInput) {
+        gmrcNameInput.addEventListener('input', function () {
+            if (gmrcIdInput) gmrcIdInput.value = '';
+            clearGmrcError();
+            var term = this.value.trim();
+            clearTimeout(gmrcSearchTimeout);
+            if (term.length < 1) { hideGmrcDropdown(); return; }
+            gmrcSearchTimeout = setTimeout(function () { searchGmrcResidents(term); }, 250);
+        });
+        gmrcNameInput.addEventListener('keydown', function (e) { if (e.key === 'Escape') hideGmrcDropdown(); });
+    }
+
+    if (gmrcResidentBtn) {
+        gmrcResidentBtn.addEventListener('click', function (e) {
+            e.stopPropagation();
+            if (gmrcNameInput) { gmrcNameInput.value = ''; gmrcNameInput.focus(); }
+            if (gmrcIdInput) gmrcIdInput.value = '';
+            hideGmrcDropdown();
+        });
+    }
+
+    document.addEventListener('click', function (e) {
+        if (gmrcDropdown && !e.target.closest('#gmrcModal .resident-search-wrap')) { hideGmrcDropdown(); }
+    });
+
+    function searchGmrcResidents(term) {
+        fetch('model/search_residents.php?search=' + encodeURIComponent(term))
+            .then(function (res) { return res.json(); })
+            .then(function (data) {
+                var results = data.residents || data.data;
+                if (data.success && results) { renderGmrcDropdown(results); }
+                else { hideGmrcDropdown(); }
+            })
+            .catch(function () { hideGmrcDropdown(); });
+    }
+
+    function renderGmrcDropdown(residents) {
+        if (!gmrcDropdown) return;
+        if (residents.length === 0) { gmrcDropdown.innerHTML = '<div class="resident-dropdown-empty">No residents found</div>'; gmrcDropdown.style.display = 'block'; return; }
+        gmrcDropdown.innerHTML = '';
+        residents.forEach(function (r) {
+            var item = document.createElement('div');
+            item.className = 'resident-dropdown-item';
+            item.innerHTML = '<span class="resident-dropdown-name">' + escapeHtml(r.full_name.trim()) + '</span><span class="resident-dropdown-id">' + escapeHtml(r.resident_id || '') + '</span>';
+            item.addEventListener('mousedown', function (e) { e.preventDefault(); selectGmrcResident(r); });
+            gmrcDropdown.appendChild(item);
+        });
+        gmrcDropdown.style.display = 'block';
+    }
+
+    function selectGmrcResident(resident) {
+        if (gmrcNameInput) gmrcNameInput.value = resident.full_name.trim();
+        if (gmrcIdInput)   gmrcIdInput.value   = resident.id;
+        hideGmrcDropdown();
+        clearGmrcError();
+    }
+
+    function hideGmrcDropdown() {
+        if (gmrcDropdown) { gmrcDropdown.style.display = 'none'; gmrcDropdown.innerHTML = ''; }
+    }
+
+    function clearGmrcError() {
+        if (gmrcNameInput) gmrcNameInput.classList.remove('is-invalid');
+        var existing = document.querySelector('.gmrc-error-msg');
+        if (existing) existing.remove();
+    }
+
+    function showGmrcError(msg) {
+        clearGmrcError();
+        if (!gmrcNameInput) return;
+        gmrcNameInput.classList.add('is-invalid');
+        var err = document.createElement('div');
+        err.className = 'invalid-feedback gmrc-error-msg';
+        err.textContent = msg;
+        gmrcNameInput.closest('.resident-input-group').after(err);
+    }
+
+    if (gmrcPrintBtn) {
+        gmrcPrintBtn.addEventListener('click', function () {
+            var residentId = gmrcIdInput      ? gmrcIdInput.value.trim()      : '';
+            var date       = gmrcDateInput    ? gmrcDateInput.value.trim()    : '';
+            var purpose    = gmrcPurposeInput ? gmrcPurposeInput.value.trim() : '';
+
+            if (!residentId) { showGmrcError('Please select a resident from the list.'); if (gmrcNameInput) gmrcNameInput.focus(); return; }
+            if (!date) { if (gmrcDateInput) { gmrcDateInput.classList.add('is-invalid'); gmrcDateInput.focus(); } return; }
+            else { if (gmrcDateInput) gmrcDateInput.classList.remove('is-invalid'); }
+
+            var params = new URLSearchParams({ resident_id: residentId, date: date, purpose: purpose });
+            window.location.href = 'certifications/certificate-gmrc.php?' + params.toString();
+        });
+    }
+
+    // ============================================
+    // Oath of Undertaking Modal Logic
+    // ============================================
+    var oathNameInput    = document.getElementById('oathResidentName');
+    var oathIdInput      = document.getElementById('oathResidentId');
+    var oathDropdown     = document.getElementById('oathResidentDropdown');
+    var oathResidentBtn  = document.getElementById('oathResidentBtn');
+    var oathDateInput    = document.getElementById('oathDate');
+    var oathPurposeInput = document.getElementById('oathPurpose');
+    var oathPrintBtn     = document.getElementById('oathPrintBtn');
+    var oathModalEl      = document.getElementById('oathModal');
+
+    var oathSearchTimeout = null;
+
+    if (oathModalEl) {
+        oathModalEl.addEventListener('show.bs.modal', function () {
+            if (oathNameInput)    oathNameInput.value    = '';
+            if (oathIdInput)      oathIdInput.value      = '';
+            if (oathDropdown)     { oathDropdown.innerHTML = ''; oathDropdown.style.display = 'none'; }
+            if (oathDateInput)    oathDateInput.value    = getTodayDate();
+            if (oathPurposeInput) oathPurposeInput.value = 'Oath of Undertaking (RA 11261)';
+            clearOathError();
+        });
+    }
+
+    if (oathNameInput) {
+        oathNameInput.addEventListener('input', function () {
+            if (oathIdInput) oathIdInput.value = '';
+            clearOathError();
+            var term = this.value.trim();
+            clearTimeout(oathSearchTimeout);
+            if (term.length < 1) { hideOathDropdown(); return; }
+            oathSearchTimeout = setTimeout(function () { searchOathResidents(term); }, 250);
+        });
+        oathNameInput.addEventListener('keydown', function (e) { if (e.key === 'Escape') hideOathDropdown(); });
+    }
+
+    if (oathResidentBtn) {
+        oathResidentBtn.addEventListener('click', function (e) {
+            e.stopPropagation();
+            if (oathNameInput) { oathNameInput.value = ''; oathNameInput.focus(); }
+            if (oathIdInput) oathIdInput.value = '';
+            hideOathDropdown();
+        });
+    }
+
+    document.addEventListener('click', function (e) {
+        if (oathDropdown && !e.target.closest('#oathModal .resident-search-wrap')) { hideOathDropdown(); }
+    });
+
+    function searchOathResidents(term) {
+        fetch('model/search_residents.php?search=' + encodeURIComponent(term))
+            .then(function (res) { return res.json(); })
+            .then(function (data) {
+                var results = data.residents || data.data;
+                if (data.success && results) { renderOathDropdown(results); }
+                else { hideOathDropdown(); }
+            })
+            .catch(function () { hideOathDropdown(); });
+    }
+
+    function renderOathDropdown(residents) {
+        if (!oathDropdown) return;
+        if (residents.length === 0) { oathDropdown.innerHTML = '<div class="resident-dropdown-empty">No residents found</div>'; oathDropdown.style.display = 'block'; return; }
+        oathDropdown.innerHTML = '';
+        residents.forEach(function (r) {
+            var item = document.createElement('div');
+            item.className = 'resident-dropdown-item';
+            item.innerHTML = '<span class="resident-dropdown-name">' + escapeHtml(r.full_name.trim()) + '</span><span class="resident-dropdown-id">' + escapeHtml(r.resident_id || '') + '</span>';
+            item.addEventListener('mousedown', function (e) { e.preventDefault(); selectOathResident(r); });
+            oathDropdown.appendChild(item);
+        });
+        oathDropdown.style.display = 'block';
+    }
+
+    function selectOathResident(resident) {
+        if (oathNameInput) oathNameInput.value = resident.full_name.trim();
+        if (oathIdInput)   oathIdInput.value   = resident.id;
+        hideOathDropdown();
+        clearOathError();
+    }
+
+    function hideOathDropdown() {
+        if (oathDropdown) { oathDropdown.style.display = 'none'; oathDropdown.innerHTML = ''; }
+    }
+
+    function clearOathError() {
+        if (oathNameInput) oathNameInput.classList.remove('is-invalid');
+        var existing = document.querySelector('.oath-error-msg');
+        if (existing) existing.remove();
+    }
+
+    function showOathError(msg) {
+        clearOathError();
+        if (!oathNameInput) return;
+        oathNameInput.classList.add('is-invalid');
+        var err = document.createElement('div');
+        err.className = 'invalid-feedback oath-error-msg';
+        err.textContent = msg;
+        oathNameInput.closest('.resident-input-group').after(err);
+    }
+
+    if (oathPrintBtn) {
+        oathPrintBtn.addEventListener('click', function () {
+            var residentId = oathIdInput      ? oathIdInput.value.trim()      : '';
+            var date       = oathDateInput    ? oathDateInput.value.trim()    : '';
+            var purpose    = oathPurposeInput ? oathPurposeInput.value.trim() : '';
+
+            if (!residentId) { showOathError('Please select a resident from the list.'); if (oathNameInput) oathNameInput.focus(); return; }
+            if (!date) { if (oathDateInput) { oathDateInput.classList.add('is-invalid'); oathDateInput.focus(); } return; }
+            else { if (oathDateInput) oathDateInput.classList.remove('is-invalid'); }
+
+            var params = new URLSearchParams({ resident_id: residentId, date: date, purpose: purpose });
+            window.location.href = 'certifications/certificate-oathofundertaking.php?' + params.toString();
+        });
+    }
+
 });
 
 // ============================================
