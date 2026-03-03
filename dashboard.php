@@ -1,6 +1,20 @@
 <!-- Dashboard Content Component -->
 <div class="dashboard-content">
 
+    <!-- Official Print Header -->
+    <div class="print-only print-header">
+        <div class="header-logos">
+            <img src="<?php echo !empty($barangayInfo['barangay_logo']) ? $barangayInfo['barangay_logo'] : 'assets/image/brgylogo.jpg'; ?>" class="logo-placeholder" alt="Barangay Logo">
+            <div class="header-text">
+                <p>Republic of the Philippines</p>
+                <p>Province of <?php echo htmlspecialchars($barangayInfo['province_name'] ?? '[Province Name]'); ?>, City/Municipality of <?php echo htmlspecialchars($barangayInfo['town_name'] ?? '[City Name]'); ?></p>
+                <p class="office-name">OFFICE OF THE SANGGUNIANG BARANGAY OF <?php echo strtoupper(htmlspecialchars($barangayInfo['barangay_name'] ?? '[BARANGAY NAME]')); ?></p>
+            </div>
+            <img src="<?php echo !empty($barangayInfo['municipal_logo']) ? $barangayInfo['municipal_logo'] : 'assets/image/citylogo.png'; ?>" class="logo-placeholder" alt="City Logo">
+        </div>
+        <h2 class="report-title">MONTHLY SUMMARY REPORT</h2>
+    </div>
+
     <!-- Page Header -->
     <div class="reports-header">
         <div class="reports-header-left">
@@ -913,6 +927,27 @@
 
         </div><!-- end tab-households -->
 
+        <!-- Official Print Footer -->
+        <div class="print-only print-footer">
+            <div class="signatories">
+                <div class="signatory-item">
+                    <p>Prepared by:</p>
+                    <div class="sig-line"></div>
+                    <p class="sig-name"><?php echo htmlspecialchars($_SESSION['full_name'] ?? 'Authorized Staff'); ?></p>
+                    <p class="sig-title">Barangay Secretary / Staff</p>
+                </div>
+                <div class="signatory-item">
+                    <p>Attested by:</p>
+                    <div class="sig-line"></div>
+                    <p class="sig-name"><?php echo htmlspecialchars($captainName); ?></p>
+                    <p class="sig-title">Barangay Captain</p>
+                </div>
+            </div>
+            <div class="print-metadata">
+                <p>Generated on: <?php echo date('F d, Y h:i A'); ?> | <span class="page-number"></span></p>
+            </div>
+        </div>
+
     </div><!-- end report-tabs-wrapper -->
 
     <script>
@@ -940,6 +975,9 @@
             card.style.cursor = 'pointer';
             card.setAttribute('title', 'Double-click to view details');
         });
+
+        // Print Button Handler
+        document.getElementById('printReportBtn')?.addEventListener('click', () => window.print());
     });
     </script>
 </div>

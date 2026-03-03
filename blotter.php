@@ -96,6 +96,18 @@ $residents = [];
 try {
     $residentStmt = $pdo->query("SELECT id, first_name, middle_name, last_name, suffix FROM residents WHERE activity_status = 'Active' ORDER BY last_name, first_name");
     $residents = $residentStmt->fetchAll();
+
+    // Fetch Barangay Info and Captain for Official Header/Footer
+    $barangayInfo = null;
+    $captainName = 'BARANGAY CAPTAIN';
+    
+    $infoStmt = $pdo->query("SELECT * FROM barangay_info WHERE id = 1 LIMIT 1");
+    $barangayInfo = $infoStmt->fetch();
+    
+    $capStmt = $pdo->query("SELECT fullname FROM barangay_officials WHERE position = 'Barangay Captain' AND status = 'Active' LIMIT 1");
+    $cap = $capStmt->fetch();
+    if ($cap) $captainName = $cap['fullname'];
+
 } catch (PDOException $e) {
     error_log("Error fetching residents: " . $e->getMessage());
 }
@@ -202,6 +214,73 @@ try {
             from { opacity: 0; transform: translateY(-10px); }
             to { opacity: 1; transform: translateY(0); }
         }
+
+        /* Official Philippine Government Print Format */
+        .print-only { display: none; }
+
+        @media print {
+            @page {
+                size: A4;
+                margin: 1in;
+            }
+            body {
+                background: white !important;
+                color: #000 !important;
+                font-family: "Times New Roman", Georgia, serif !important;
+                font-size: 12pt;
+            }
+            .main-content { margin: 0 !important; padding: 0 !important; width: 100% !important; }
+            .sidebar, .header, .filter-tabs, .search-filter-bar, .pagination-container, .no-print, .btn-primary, .btn-icon, .btn-action, .action-menu-container {
+                display: none !important;
+            }
+            .print-only { display: block !important; }
+            .table-container { overflow: visible !important; }
+            .data-table {
+                width: 100% !important;
+                border-collapse: collapse !important;
+                border: 1px solid #000 !important;
+                margin-top: 20px;
+            }
+            .data-table th, .data-table td {
+                border: 1px solid #000 !important;
+                padding: 8px !important;
+                text-align: left;
+                page-break-inside: avoid;
+            }
+            .data-table th {
+                background-color: #f3f4f6 !important;
+                font-weight: bold;
+                -webkit-print-color-adjust: exact;
+            }
+            
+            /* Header Styles */
+            .print-header { text-align: center; margin-bottom: 30px; position: relative; }
+            .header-logos { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+            .logo-placeholder { width: 80px; height: 80px; object-fit: contain; }
+            .header-text p { margin: 0; line-height: 1.4; }
+            .office-name { font-weight: bold; font-size: 14pt; margin-top: 5px !important; }
+            .report-title { font-weight: bold; text-decoration: underline; margin-top: 25px; font-size: 16pt; }
+
+            /* Signatory Section */
+            .print-footer { margin-top: 60px; }
+            .signatories { display: flex; justify-content: space-between; margin-bottom: 40px; }
+            .signatory-item { width: 40%; text-align: center; }
+            .sig-line { border-bottom: 1px solid #000; margin: 50px auto 5px; width: 100%; }
+            .sig-name { font-weight: bold; text-transform: uppercase; margin-bottom: 0; }
+            .sig-title { font-size: 10pt; margin-top: 0; }
+
+            /* Metadata */
+            .print-metadata {
+                position: fixed;
+                bottom: 0;
+                right: 0;
+                font-size: 8pt;
+                color: #333;
+                text-align: right;
+                width: 100%;
+            }
+            .page-number:after { content: "Page " counter(page); }
+        }
     </style>
 </head>
 <body>
@@ -211,11 +290,29 @@ try {
         <?php include 'components/header.php'; ?>
         
         <div class="dashboard-content">
+            <!-- Official Print Header -->
+            <div class="print-only print-header">
+                <div class="header-logos">
+                    <img src="<?php echo !empty($barangayInfo['barangay_logo']) ? $barangayInfo['barangay_logo'] : 'assets/image/brgylogo.jpg'; ?>" class="logo-placeholder" alt="Barangay Logo">
+                    <div class="header-text">
+                        <p>Republic of the Philippines</p>
+                        <p>Province of <?php echo htmlspecialchars($barangayInfo['province_name'] ?? '[Province Name]'); ?>, City/Municipality of <?php echo htmlspecialchars($barangayInfo['town_name'] ?? '[City Name]'); ?></p>
+                        <p class="office-name">OFFICE OF THE SANGGUNIANG BARANGAY OF <?php echo strtoupper(htmlspecialchars($barangayInfo['barangay_name'] ?? '[BARANGAY NAME]')); ?></p>
+                    </div>
+                    <img src="<?php echo !empty($barangayInfo['municipal_logo']) ? $barangayInfo['municipal_logo'] : 'assets/image/citylogo.png'; ?>" class="logo-placeholder" alt="City Logo">
+                </div>
+                <h2 class="report-title">BLOTTER SUMMARY REPORT</h2>
+            </div>
+
             <div class="page-header-section">
                 <div>
                     <h1 class="page-title"><?php echo $pageTitle; ?></h1>
                     <p class="page-subtitle">View and manage official barangay blotter entries, including complaints, incidents, and case statuses.</p>
                 </div>
+                <button class="btn btn-outline-secondary no-print" onclick="window.print()">
+                    <i class="fas fa-print"></i>
+                    Print Report
+                </button>
                 <button class="btn btn-primary" id="createRecordBtn">
                     <i class="fas fa-plus"></i>
                     Create Record
@@ -373,6 +470,27 @@ try {
                         <?php endif; ?>
                     </tbody>
                 </table>
+            </div>
+
+            <!-- Official Print Footer -->
+            <div class="print-only print-footer">
+                <div class="signatories">
+                    <div class="signatory-item">
+                        <p>Prepared by:</p>
+                        <div class="sig-line"></div>
+                        <p class="sig-name"><?php echo htmlspecialchars($_SESSION['full_name'] ?? 'Authorized Staff'); ?></p>
+                        <p class="sig-title">Barangay Secretary / Staff</p>
+                    </div>
+                    <div class="signatory-item">
+                        <p>Attested by:</p>
+                        <div class="sig-line"></div>
+                        <p class="sig-name"><?php echo htmlspecialchars($captainName); ?></p>
+                        <p class="sig-title">Barangay Captain</p>
+                    </div>
+                </div>
+                <div class="print-metadata">
+                    <p>Generated on: <?php echo date('F d, Y h:i A'); ?> | <span class="page-number"></span></p>
+                </div>
             </div>
             
             <div class="pagination-container">

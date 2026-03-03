@@ -341,6 +341,20 @@ try {
         }
     }
 } catch (PDOException $e) { error_log($e->getMessage()); }
+
+// Fetch Barangay Info and Captain for Official Header/Footer
+$barangayInfo = null;
+$captainName = 'BARANGAY CAPTAIN';
+try {
+    $infoStmt = $pdo->query("SELECT * FROM barangay_info WHERE id = 1 LIMIT 1");
+    $barangayInfo = $infoStmt->fetch();
+    
+    $capStmt = $pdo->query("SELECT fullname FROM barangay_officials WHERE position = 'Barangay Captain' AND status = 'Active' LIMIT 1");
+    $cap = $capStmt->fetch();
+    if ($cap) $captainName = $cap['fullname'];
+} catch (PDOException $e) {
+    error_log("Error fetching barangay info: " . $e->getMessage());
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -367,6 +381,84 @@ try {
     
     <!-- Dark Mode Init: must be in <head> to prevent flash of light mode -->
     <script src="assets/js/dark-mode-init.js"></script>
+
+    <style>
+        /* Official Philippine Government Print Format */
+        .print-only { display: none; }
+
+        @media print {
+            @page {
+                size: A4;
+                margin: 1in;
+            }
+            body {
+                background: white !important;
+                color: #000 !important;
+                font-family: "Times New Roman", Georgia, serif !important;
+                font-size: 12pt;
+            }
+            .main-content { margin: 0 !important; padding: 0 !important; width: 100% !important; }
+            .sidebar, .header, .report-tabs-nav, .no-print, .btn-print, .year-select {
+                display: none !important;
+            }
+            .print-only { display: block !important; }
+            
+            /* Force charts to be visible */
+            canvas { max-width: 100% !important; height: auto !important; }
+            
+            .report-section { page-break-inside: avoid; margin-bottom: 30px; }
+            .report-table {
+                width: 100% !important;
+                border-collapse: collapse !important;
+                border: 1px solid #000 !important;
+            }
+            .report-table th, .report-table td {
+                border: 1px solid #000 !important;
+                padding: 6px !important;
+                page-break-inside: avoid;
+            }
+            .report-table th {
+                background-color: #f3f4f6 !important;
+                -webkit-print-color-adjust: exact;
+            }
+
+            /* Header Styles */
+            .print-header { text-align: center; margin-bottom: 30px; }
+            .header-logos { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+            .logo-placeholder { width: 80px; height: 80px; object-fit: contain; }
+            .header-text p { margin: 0; line-height: 1.4; }
+            .office-name { font-weight: bold; font-size: 14pt; margin-top: 5px !important; }
+            .report-title { font-weight: bold; text-decoration: underline; margin-top: 25px; font-size: 16pt; }
+
+            /* Signatory Section */
+            .print-footer { margin-top: 60px; }
+            .signatories { display: flex; justify-content: space-between; margin-bottom: 40px; }
+            .signatory-item { width: 40%; text-align: center; }
+            .sig-line { border-bottom: 1px solid #000; margin: 50px auto 5px; width: 100%; }
+            .sig-name { font-weight: bold; text-transform: uppercase; margin-bottom: 0; }
+            .sig-title { font-size: 10pt; margin-top: 0; }
+
+            /* Metadata */
+            .print-metadata {
+                position: fixed;
+                bottom: 0;
+                right: 0;
+                font-size: 8pt;
+                color: #333;
+                text-align: right;
+                width: 100%;
+            }
+            .page-number:after { content: "Page " counter(page); }
+            
+            /* Only print active tab */
+            .report-tab-content:not(.active) { display: none !important; }
+            .report-tab-content.active { display: block !important; }
+            
+            /* Adjust grid for print */
+            .reports-stats-grid, .report-two-col { display: block !important; }
+            .report-stat-card, .report-chart-box { margin-bottom: 20px; border: 1px solid #eee; }
+        }
+    </style>
 </head>
 <body>
     <!-- Sidebar Component -->
