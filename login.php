@@ -87,14 +87,15 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Dark Mode Init: must be at the very top of <head> to prevent flash of light mode -->
+    <script src="assets/js/dark-mode-init.js"></script>
+
     <title>Login - <?php echo SITE_NAME; ?></title>
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="assets/css/login-style.css">
-    <!-- Dark Mode Init: must be in <head> to prevent flash of light mode -->
-    <script src="assets/js/dark-mode-init.js"></script>
     <?php if ($login_bg_image): ?>
     <style>
         body::before {
@@ -122,7 +123,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             z-index: -1;
         }
         
-        body.dark-mode::after {
+        html.dark-mode body::after {
             background-color: rgba(0, 0, 0, 0.7);
         }
     </style>

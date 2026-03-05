@@ -208,7 +208,7 @@ try {
             <div class="filter-tabs">
                 <button class="tab-btn active" data-filter="all">All</button>
                 <button class="tab-btn" data-filter="voters">Registered Voters</button>
-                <button class="tab-btn" data-filter="active">Active</button>
+               <!-- <button class="tab-btn" data-filter="active">Active</button>-->
             </div>
             
             <!-- Search and Filter Bar -->
@@ -495,7 +495,9 @@ try {
                          data-employment="<?php echo htmlspecialchars($resident['employment_status'] ?? ''); ?>"
                          data-fourps="<?php echo htmlspecialchars($resident['fourps_member'] ?? ''); ?>"
                          data-age-health-group="<?php echo htmlspecialchars($resident['age_health_group'] ?? ''); ?>"
+                         data-date-of-birth="<?php echo htmlspecialchars($resident['date_of_birth'] ?? ''); ?>"
                          data-pwd-status="<?php echo htmlspecialchars($resident['pwd_status'] ?? 'No'); ?>"
+                                data-date-of-birth="<?php echo htmlspecialchars($resident['date_of_birth'] ?? ''); ?>"
                          data-voter-status="<?php echo htmlspecialchars($resident['voter_status'] ?: 'No'); ?>"
                          data-activity-status="<?php echo htmlspecialchars($resident['activity_status'] ?? 'Active'); ?>">
                         <div class="avatar <?php echo htmlspecialchars($avatarColor); ?>">

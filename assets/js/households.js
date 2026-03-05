@@ -106,7 +106,8 @@ function displayHouseholds(households) {
         const avatarColor = avatarColors[index % avatarColors.length];
         
         // Create clickable link for household head name
-        const headNameHtml = household.household_head_id 
+        // Ensure that 'household.head_name' is formatted as 'Last Name, First Name Middle Name' from the backend (model/get_households.php)
+        const headNameHtml = household.household_head_id
             ? `<a href="resident_profile.php?id=${household.household_head_id}" style="color: var(--text-primary); text-decoration: none; transition: color 0.2s;" onmouseover="this.style.color='var(--primary-color)'" onmouseout="this.style.color='var(--text-primary)'">${household.head_name || 'N/A'}</a>`
             : `<span>${household.head_name || 'N/A'}</span>`;
         

@@ -149,8 +149,6 @@ class GridPagination {
         this.currentPage = page;
         this.updateDisplay();
         this.updatePagination();
-        
-        window.scrollTo({ top: 0, behavior: 'smooth' });
     }
     
     getStartItem() {

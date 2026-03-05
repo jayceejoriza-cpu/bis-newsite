@@ -5,6 +5,31 @@
 let currentStep = 1;
 const totalSteps = 6;
 
+// New DOM elements for Guardian Section
+const guardianSection = document.getElementById('guardianSection');
+const guardianNameInput = document.getElementById('guardianName');
+const guardianRelationshipSelect = document.getElementById('guardianRelationship');
+
+// Reference to the main mobile number label
+const mobileNumberLabel = document.querySelector('label[for="mobileNumber"]');
+const minorConsentNote = document.getElementById('minorConsentNote');
+
+// New DOM elements for adult-only fields
+const civilStatusSelect = document.getElementById('civilStatus');
+const spouseNameInput = document.getElementById('spouseName');
+const spouseNameGroup = document.getElementById('spouseNameGroup');
+const voterStatusSelect = document.getElementById('voterStatus');
+const employmentStatusSelect = document.getElementById('employmentStatus');
+const occupationInput = document.getElementById('occupation');
+const monthlyIncomeSelect = document.getElementById('monthlyIncome');
+const educationalAttainmentSelect = document.getElementById('educationalAttainment');
+const philhealthIdInput = document.getElementById('philhealthId');
+const membershipTypeSelect = document.getElementById('membershipType');
+const philhealthCategorySelect = document.getElementById('philhealthCategory');
+
+// Global flag to track if the resident is a minor
+let isMinor = false;
+
 // Initialize on DOM load
 document.addEventListener('DOMContentLoaded', () => {
     // Set active navigation
@@ -94,11 +119,15 @@ function initializeForm() {
     const dobInput = document.getElementById('dateOfBirth');
     if (dobInput) {
         dobInput.addEventListener('change', calculateAge);
+        // Call calculateAge once on load to set initial state
+        calculateAge();
     }
     
     // Civil status change handler
     const civilStatusSelect = document.getElementById('civilStatus');
     if (civilStatusSelect) {
+        // Call once on load to set initial state
+        handleCivilStatusChange();
         civilStatusSelect.addEventListener('change', handleCivilStatusChange);
     }
     
@@ -165,6 +194,11 @@ function nextStep() {
             currentStepElement.classList.add('completed');
         }
         
+        // Skip step 5 (Education & Employment) for minors when moving from step 4
+        if (currentStep === 4 && isMinor) {
+            currentStep++; // This increments to 5, the next line will make it 6
+        }
+
         currentStep++;
         updateStep();
         saveCurrentStep(); // Save step to localStorage
@@ -280,8 +314,25 @@ function validateStep(step) {
         }
     });
     
+    // Specific validation for minors in Step 3 (Family Information)
+    if (step === 3 && isMinor) {
+        // Check if guardian fields are required and empty
+        if (guardianNameInput && guardianNameInput.hasAttribute('required') && !guardianNameInput.value.trim()) {
+            showNotification('Guardian\'s Full Name is required for minors.', 'error');
+            guardianNameInput.focus();
+            isValid = false;
+        } else if (guardianRelationshipSelect && guardianRelationshipSelect.hasAttribute('required') && !guardianRelationshipSelect.value) {
+            showNotification('Guardian\'s Relationship is required for minors.', 'error');
+            guardianRelationshipSelect.focus();
+            isValid = false;
+        }
+    }
+
     if (!isValid) {
-        showNotification('Please fill in all required fields', 'error');
+        // Only show generic notification if it's not a specific minor validation error
+        if (!(step === 3 && isMinor && (!guardianNameInput.value.trim() || !guardianRelationshipSelect.value))) {
+             showNotification('Please fill in all required fields', 'error');
+        }
         
         // Focus on first invalid field
         const firstInvalid = formStep.querySelector('.error');
@@ -355,37 +406,169 @@ function initializePhotoUpload() {
 // ===================================
 function calculateAge() {
     const dobInput = document.getElementById('dateOfBirth');
-    if (!dobInput || !dobInput.value) return;
-    
+    const minorAlert = document.getElementById('minorAlert');
+    const adultOnlyElements = document.querySelectorAll('.adult-only');
+    const minorOnlyElements = document.querySelectorAll('.minor-only');
+
+    // If DOB is empty, hide guardian section and reset mobile label
+    if (!dobInput.value) {
+        isMinor = false;
+        // Reset guardian fields
+        if (guardianSection) guardianSection.style.display = 'none';
+        if (guardianNameInput) guardianNameInput.removeAttribute('required');
+        if (guardianRelationshipSelect) guardianRelationshipSelect.removeAttribute('required');
+        if (mobileNumberLabel) mobileNumberLabel.innerHTML = 'Mobile Number <span class="required">*</span>';
+        if (minorConsentNote) minorConsentNote.style.display = 'none';
+        if (minorAlert) minorAlert.style.display = 'none';
+        
+        // Show adult fields, hide minor fields
+        minorOnlyElements.forEach(el => el.style.display = 'none');
+        adultOnlyElements.forEach(el => el.style.display = 'block');
+        if (civilStatusSelect) {
+            civilStatusSelect.removeAttribute('disabled');
+            civilStatusSelect.setAttribute('required', 'required');
+        }
+        if (spouseNameInput) {
+            spouseNameInput.removeAttribute('disabled');
+            // Re-run this to show/hide spouse field based on civil status
+            handleCivilStatusChange();
+        }
+        if (voterStatusSelect) voterStatusSelect.removeAttribute('disabled');
+        if (employmentStatusSelect) employmentStatusSelect.removeAttribute('disabled');
+        if (occupationInput) occupationInput.removeAttribute('disabled');
+        if (monthlyIncomeSelect) monthlyIncomeSelect.removeAttribute('disabled');
+        if (educationalAttainmentSelect) educationalAttainmentSelect.removeAttribute('disabled');
+        if (philhealthIdInput) philhealthIdInput.removeAttribute('disabled');
+        if (membershipTypeSelect) membershipTypeSelect.removeAttribute('disabled');
+        if (philhealthCategorySelect) philhealthCategorySelect.removeAttribute('disabled');
+
+        return;
+    }
+
     const dob = new Date(dobInput.value);
     const today = new Date();
     let age = today.getFullYear() - dob.getFullYear();
     const monthDiff = today.getMonth() - dob.getMonth();
-    
+
     if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
         age--;
     }
-    
+
     console.log(`Calculated age: ${age} years`);
-    
-    // Auto-check senior citizen if age >= 60
-    const seniorCitizenSelect = document.getElementById('seniorCitizen');
-    if (seniorCitizenSelect && age >= 60) {
-        seniorCitizenSelect.value = 'Yes';
+    isMinor = (age < 18);
+
+    if (isMinor) {
+        // --- MINOR LOGIC ---
+        // Show minor-only fields, hide adult-only fields
+        minorOnlyElements.forEach(el => el.style.display = 'block');
+        adultOnlyElements.forEach(el => el.style.display = 'none');
+
+        // Set guardian fields as required
+        if (guardianNameInput) guardianNameInput.setAttribute('required', 'required');
+        if (guardianRelationshipSelect) guardianRelationshipSelect.setAttribute('required', 'required');
+
+        // Change Mobile Number label
+        if (mobileNumberLabel) mobileNumberLabel.innerHTML = 'Guardian\'s Mobile Number <span class="required">*</span>';
+
+        // Show minor-related UI elements
+        if (minorConsentNote) minorConsentNote.style.display = 'block';
+        if (minorAlert) minorAlert.style.display = 'block';
+
+        // Set defaults and disable fields so they are not submitted
+        if (civilStatusSelect) {
+            civilStatusSelect.value = 'Single';
+            civilStatusSelect.setAttribute('disabled', 'disabled');
+            civilStatusSelect.removeAttribute('required');
+        }
+        if (spouseNameInput) {
+            spouseNameInput.value = '';
+            spouseNameInput.setAttribute('disabled', 'disabled');
+            // Also hide the group
+            if (spouseNameGroup) spouseNameGroup.style.display = 'none';
+            spouseNameInput.required = false;
+        }
+        if (voterStatusSelect) {
+            voterStatusSelect.value = 'No';
+            voterStatusSelect.setAttribute('disabled', 'disabled');
+            voterStatusSelect.dispatchEvent(new Event('change'));
+        }
+        if (employmentStatusSelect) {
+            employmentStatusSelect.value = 'Student'; // Set default for minors
+            employmentStatusSelect.removeAttribute('disabled'); // Ensure it's enabled
+        }
+        if (educationalAttainmentSelect) {
+            // Let user select, just ensure it's enabled
+            educationalAttainmentSelect.removeAttribute('disabled');
+        }
+        if (occupationInput) {
+            occupationInput.value = '';
+            occupationInput.setAttribute('disabled', 'disabled');
+        }
+        if (monthlyIncomeSelect) {
+            monthlyIncomeSelect.value = '';
+            monthlyIncomeSelect.setAttribute('disabled', 'disabled');
+        }
+        if (philhealthIdInput) {
+            philhealthIdInput.value = '';
+            philhealthIdInput.setAttribute('disabled', 'disabled');
+        }
+        if (membershipTypeSelect) {
+            membershipTypeSelect.value = '';
+            membershipTypeSelect.setAttribute('disabled', 'disabled');
+        }
+        if (philhealthCategorySelect) {
+            philhealthCategorySelect.value = '';
+            philhealthCategorySelect.setAttribute('disabled', 'disabled');
+        }
+
+    } else { // --- ADULT LOGIC ---
+        // Hide minor-only fields, show adult-only fields
+        minorOnlyElements.forEach(el => el.style.display = 'none');
+        adultOnlyElements.forEach(el => el.style.display = 'block');
+
+        // Unset guardian fields as required
+        if (guardianNameInput) guardianNameInput.removeAttribute('required');
+        if (guardianRelationshipSelect) guardianRelationshipSelect.removeAttribute('required');
+        if (mobileNumberLabel) mobileNumberLabel.innerHTML = 'Mobile Number <span class="required">*</span>';
+        if (minorConsentNote) minorConsentNote.style.display = 'none';
+        if (minorAlert) minorAlert.style.display = 'none';
+
+        // Enable fields and restore required attributes
+        if (civilStatusSelect) {
+            civilStatusSelect.removeAttribute('disabled');
+            civilStatusSelect.setAttribute('required', 'required');
+        }
+        if (spouseNameInput) {
+            spouseNameInput.removeAttribute('disabled');
+            // Re-run this to show/hide spouse field based on civil status
+            handleCivilStatusChange();
+        }
+        if (voterStatusSelect) voterStatusSelect.removeAttribute('disabled');
+        if (employmentStatusSelect) employmentStatusSelect.removeAttribute('disabled');
+        if (educationalAttainmentSelect) educationalAttainmentSelect.removeAttribute('disabled');
+        if (occupationInput) occupationInput.removeAttribute('disabled');
+        if (monthlyIncomeSelect) monthlyIncomeSelect.removeAttribute('disabled');
+        if (philhealthIdInput) philhealthIdInput.removeAttribute('disabled');
+        if (membershipTypeSelect) membershipTypeSelect.removeAttribute('disabled');
+        if (philhealthCategorySelect) philhealthCategorySelect.removeAttribute('disabled');
     }
 }
 
 function handleCivilStatusChange() {
     const civilStatus = document.getElementById('civilStatus').value;
-    const spouseNameInput = document.getElementById('spouseName');
-    
-    if (spouseNameInput) {
+    const spouseGroup = document.getElementById('spouseNameGroup'); // Target the group
+    const spouseInput = document.getElementById('spouseName');
+
+    if (spouseGroup && spouseInput) {
         if (civilStatus === 'Married') {
-            spouseNameInput.required = true;
-            spouseNameInput.parentElement.querySelector('label').innerHTML = 'Spouse Name <span class="required">*</span>';
+            spouseGroup.style.display = 'block';
+            spouseInput.required = true;
+            spouseGroup.querySelector('label').innerHTML = 'Spouse Name <span class="required">*</span>';
         } else {
-            spouseNameInput.required = false;
-            spouseNameInput.parentElement.querySelector('label').innerHTML = 'Spouse Name';
+            spouseGroup.style.display = 'none';
+            spouseInput.required = false;
+            spouseInput.value = ''; // Clear value when hidden
+            spouseGroup.querySelector('label').innerHTML = 'Spouse Name';
         }
     }
 }
@@ -1514,7 +1697,10 @@ function populateReviewModal() {
     
     // 2. Contact Information
     let contactInfoHTML = '<div class="review-fields-grid">';
-    contactInfoHTML += createField('Mobile Number', getValue('mobileNumber'));
+    // Only show mobile number here for adults to avoid duplication
+    if (!isMinor) {
+        contactInfoHTML += createField('Mobile Number', getValue('mobileNumber'));
+    }
     contactInfoHTML += createField('Email Address', getValue('email'));
     
     // Construct address for review
@@ -1536,6 +1722,17 @@ function populateReviewModal() {
     familyInfoHTML += createField("Father's Name", getValue('fatherName'));
     familyInfoHTML += createField("Mother's Name", getValue('motherName'));
     familyInfoHTML += createField('Number of Children', getValue('numberOfChildren'));
+    familyInfoHTML += '</div>';
+
+    // Add Guardian Information if minor
+    // Use the global isMinor flag set by calculateAge
+    if (isMinor) {
+        familyInfoHTML += '<h5 style="margin: 20px 0 15px 0; color: var(--primary-color);"><i class="fas fa-user-shield"></i> Guardian Information</h5>';
+        familyInfoHTML += '<div class="review-fields-grid">';
+        familyInfoHTML += createField('Guardian\'s Full Name', getValue('guardianName'));
+        familyInfoHTML += createField('Relationship to Guardian', getValue('guardianRelationship'));
+        familyInfoHTML += createField('Guardian\'s Mobile Number', getValue('mobileNumber'));
+    }
     familyInfoHTML += '</div>';
     
     document.getElementById('reviewFamilyInfo').innerHTML = familyInfoHTML;
@@ -1618,6 +1815,11 @@ function populateReviewModal() {
     additionalHTML += '</div>';
     
     document.getElementById('reviewAdditionalInfo').innerHTML = additionalHTML;
+
+    // Show/hide minor consent note in the privacy modal
+    if (minorConsentNote) {
+        minorConsentNote.style.display = isMinor ? 'block' : 'none';
+    }
 }
 
 function submitFormFromReview() {
