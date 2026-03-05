@@ -208,8 +208,15 @@ function nextStep() {
 function prevStep() {
     if (currentStep > 1) {
         currentStep--;
+        // If we are on step 6 (Additional Info) and it's a minor, skip back to step 4
+        if (currentStep === 6 && isMinor) {
+            currentStep = 4;
+        } else {
+            currentStep--;
+        }
         updateStep();
         saveCurrentStep(); // Save step to localStorage
+        saveCurrentStep();
     }
 }
 
@@ -286,6 +293,16 @@ function validateStep(step) {
     let isValid = true;
     
     requiredFields.forEach(field => {
+        // If a required field is disabled (e.g., for minors), it shouldn't be validated.
+        const isVisible = !!(field.offsetWidth || field.offsetHeight || field.getClientRects().length);
+
+        // If a required field is disabled OR not visible, it shouldn't be validated.
+        // This is the key fix for the minor registration validation error.
+        if (field.disabled || !isVisible) {
+            field.classList.remove('error'); // Clean up any previous error state
+            return; // Skip validation for this field.
+        }
+
         const formGroup = field.closest('.form-group');
         const hint = formGroup ? formGroup.querySelector('.form-hint') : null;
         
@@ -671,7 +688,15 @@ function handleFormSubmit() {
     }
     
     const form = document.getElementById('createResidentForm');
+    
+    // Temporarily enable disabled fields so they are included in FormData
+    const disabledElements = Array.from(form.querySelectorAll(':disabled'));
+    disabledElements.forEach(el => el.disabled = false);
+    
     const formData = new FormData(form);
+    
+    // Re-disable them
+    disabledElements.forEach(el => el.disabled = true);
     
     // Add webcam photo if captured
     if (capturedPhotoData && !formData.get('photo')) {
@@ -1717,8 +1742,10 @@ function populateReviewModal() {
     
     // 3. Family Information
     let familyInfoHTML = '<div class="review-fields-grid">';
-    familyInfoHTML += createField('Civil Status', getValue('civilStatus'));
-    familyInfoHTML += createField('Spouse Name', getValue('spouseName'));
+    if (!isMinor) {
+        familyInfoHTML += createField('Civil Status', getValue('civilStatus'));
+        familyInfoHTML += createField('Spouse Name', getValue('spouseName'));
+    }
     familyInfoHTML += createField("Father's Name", getValue('fatherName'));
     familyInfoHTML += createField("Mother's Name", getValue('motherName'));
     familyInfoHTML += createField('Number of Children', getValue('numberOfChildren'));
@@ -1767,8 +1794,10 @@ function populateReviewModal() {
     let educationHTML = '<div class="review-fields-grid">';
     educationHTML += createField('Educational Attainment', getValue('educationalAttainment'));
     educationHTML += createField('Employment Status', getValue('employmentStatus'));
-    educationHTML += createField('Occupation', getValue('occupation'));
-    educationHTML += createField('Monthly Income', getValue('monthlyIncome'));
+    if (!isMinor) {
+        educationHTML += createField('Occupation', getValue('occupation'));
+        educationHTML += createField('Monthly Income', getValue('monthlyIncome'));
+    }
     educationHTML += '</div>';
     
     document.getElementById('reviewEducationEmployment').innerHTML = educationHTML;
@@ -1776,21 +1805,25 @@ function populateReviewModal() {
     // 6. Additional Information
     let additionalHTML = '';
     
-    // Government Programs
-    additionalHTML += '<h5 style="margin: 0 0 15px 0; color: var(--primary-color);"><i class="fas fa-landmark"></i> Government Programs</h5>';
-    additionalHTML += '<div class="review-fields-grid">';
-    additionalHTML += createField('4Ps Member', getValue('fourPs'));
-    additionalHTML += createField('4Ps ID Number', getValue('fourpsId'));
-    additionalHTML += createField('Registered Voter', getValue('voterStatus'));
-    additionalHTML += createField('Precinct Number', getValue('precinctNumber'));
-    additionalHTML += '</div>';
+    // Government Programs (Adults only)
+    if (!isMinor) {
+        additionalHTML += '<h5 style="margin: 0 0 15px 0; color: var(--primary-color);"><i class="fas fa-landmark"></i> Government Programs</h5>';
+        additionalHTML += '<div class="review-fields-grid">';
+        additionalHTML += createField('4Ps Member', getValue('fourPs'));
+        additionalHTML += createField('4Ps ID Number', getValue('fourpsId'));
+        additionalHTML += createField('Registered Voter', getValue('voterStatus'));
+        additionalHTML += createField('Precinct Number', getValue('precinctNumber'));
+        additionalHTML += '</div>';
+    }
     
     // Health Information
     additionalHTML += '<h5 style="margin: 20px 0 15px 0; color: var(--primary-color);"><i class="fas fa-heartbeat"></i> Health Information</h5>';
     additionalHTML += '<div class="review-fields-grid">';
-    additionalHTML += createField('Philhealth ID', getValue('philhealthId'));
-    additionalHTML += createField('Membership Type', getValue('membershipType'));
-    additionalHTML += createField('Philhealth Category', getValue('philhealthCategory'));
+    if (!isMinor) {
+        additionalHTML += createField('Philhealth ID', getValue('philhealthId'));
+        additionalHTML += createField('Membership Type', getValue('membershipType'));
+        additionalHTML += createField('Philhealth Category', getValue('philhealthCategory'));
+    }
     additionalHTML += createField('Age/Health Group', getValue('ageHealthGroup'));
     additionalHTML += createField('Disability Status', getValue('pwdStatus'));
     additionalHTML += createField('Medical History', getValue('medicalHistory'));
@@ -1831,7 +1864,15 @@ function submitFormFromReview() {
     finalSubmitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting...';
     
     const form = document.getElementById('createResidentForm');
+    
+    // Temporarily enable disabled fields so they are included in FormData
+    const disabledElements = Array.from(form.querySelectorAll(':disabled'));
+    disabledElements.forEach(el => el.disabled = false);
+    
     const formData = new FormData(form);
+    
+    // Re-disable them
+    disabledElements.forEach(el => el.disabled = true);
     
     // Add webcam photo if captured
     if (capturedPhotoData && !formData.get('photo')) {

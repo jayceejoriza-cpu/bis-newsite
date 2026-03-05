@@ -195,6 +195,11 @@ try {
     $rejectionReason = $conn->real_escape_string(trim($_POST['rejectionReason'] ?? ''));
     $statusRemarks = $conn->real_escape_string(trim($_POST['statusRemarks'] ?? ''));
     
+    // If minor, default civil status to Single if not provided (since it's disabled in UI)
+    if ($age !== null && $age < 18 && empty($civilStatus)) {
+        $civilStatus = 'Single';
+    }
+
     // Validation
     if (empty($firstName) || empty($lastName) || empty($sex) || empty($dateOfBirth) || 
         empty($mobileNumber) || empty($currentAddress) || empty($civilStatus) || empty($pwdStatus)) {
