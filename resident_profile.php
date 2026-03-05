@@ -67,7 +67,7 @@ try {
     // Fetch household information where resident is the household head
     $householdStmt = $pdo->prepare("
         SELECT h.*, 
-               CONCAT(r.last_name, ', ', r.first_name, ' ', COALESCE(r.middle_name, '')) as head_name,
+               CONCAT(r.last_name, ', ', r.first_name, ' ', COALESCE(r.middle_name, '')) as head_name, -- Already in desired format
                r.date_of_birth as head_dob,
                r.sex as head_sex
         FROM households h
@@ -81,7 +81,7 @@ try {
     if ($householdInfo) {
         $membersStmt = $pdo->prepare("
             SELECT hm.*,
-                   CONCAT(r.first_name, ' ', COALESCE(r.middle_name, ''), ' ', r.last_name, ' ', COALESCE(r.suffix, '')) as full_name,
+                   CONCAT(r.last_name, ', ', r.first_name, ' ', COALESCE(r.middle_name, '')) as full_name,
                    r.date_of_birth,
                    r.sex,
                    r.mobile_number,
@@ -97,7 +97,7 @@ try {
         // Check if resident is a member of any household
         $memberStmt = $pdo->prepare("
             SELECT h.*, 
-                   CONCAT(r.first_name, ' ', COALESCE(r.middle_name, ''), ' ', r.last_name, ' ', COALESCE(r.suffix, '')) as head_name,
+                   CONCAT(r.last_name, ', ', r.first_name, ' ', COALESCE(r.middle_name, '')) as head_name,
                    r.date_of_birth as head_dob,
                    r.sex as head_sex,
                    r.id as head_resident_id,
@@ -113,8 +113,8 @@ try {
         // If resident is a member, fetch all other members
         if ($householdInfo) {
             $membersStmt = $pdo->prepare("
-                SELECT hm.*,
-                       CONCAT(r.first_name, ' ', COALESCE(r.middle_name, ''), ' ', r.last_name, ' ', COALESCE(r.suffix, '')) as full_name,
+                SELECT hm.*, -- This is for other members, not the current resident
+                       CONCAT(r.last_name, ', ', r.first_name, ' ', COALESCE(r.middle_name, '')) as full_name,
                        r.date_of_birth,
                        r.sex,
                        r.mobile_number,
@@ -136,17 +136,13 @@ try {
 }
 
 // Helper function to format full name
+// This function is for the main resident's name display, not directly for household names in the table.
+// The request is specifically for "the house hold name", so this function remains as is.
 function formatFullName($firstName, $middleName, $lastName, $suffix) {
     $name = trim($lastName);
-    if (!empty($firstName)) {
-        $name .= ', ' . trim($firstName);
-    }
-    if (!empty($middleName)) {
-        $name .= ' ' . trim($middleName);
-    }
-    if (!empty($suffix)) {
-        $name .= ' ' . trim($suffix);
-    }
+    if (!empty($firstName)) { $name .= ', ' . trim($firstName); }
+    if (!empty($middleName)) { $name .= ' ' . trim($middleName); }
+    if (!empty($suffix)) { $name .= ' ' . trim($suffix); }
     return $name;
 }
 
@@ -739,6 +735,15 @@ $age = calculateAge($resident['date_of_birth']);
                     }
                 });
             });
+
+            // NEW: Check URL hash on page load and trigger click
+            if (window.location.hash === '#household-details') {
+                const householdDetailsNavItem = document.querySelector('.profile-nav-item[href="#household-details"]');
+                if (householdDetailsNavItem) {
+                    // Programmatically click the nav item to trigger its event listener
+                    householdDetailsNavItem.click();
+                }
+            }
         });
         
         function editResident() {

@@ -86,6 +86,19 @@ if (isset($conn)) {
     border-radius: 0 8px 8px 0 !important;
     flex: 1;
 }
+
+.form-card {
+    border: 1px solid var(--border-color, #e2e8f0);
+    border-radius: 10px;
+    padding: 20px;
+    margin-top: 20px;
+    margin-bottom: 20px;
+    background-color: var(--bg-secondary, #f8fafc);
+}
+
+.minor-only, .adult-only {
+    transition: all 0.3s ease-in-out;
+}
     </style>
 </head>
 <body>
@@ -189,89 +202,103 @@ if (isset($conn)) {
                                     </button>
                                     <p class="upload-hint">Allowed JPG, GIF or PNG. Max size of 1MB</p>
                                 </div>
-                                  <div class="form-group">
-                                    <label>Resident ID</label>
-                                    <input type="text" class="form-control" value="<?php echo $nextResidentId; ?>" disabled>
-                                    <small class="form-text text-muted">Resident ID will be automatically generated (Format: W-XXXXX)</small>
-                                </div>
+                            </div>
+
+                            <!-- Minor Alert (hidden by default) -->
+                            <div id="minorAlert" class="alert alert-warning" style="display: none; margin-top: 15px; animation: fadeIn 0.3s;">
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                <strong>Minor Detected:</strong> Guardian Information will be required in Step 3.
                             </div>
                             
                             <!-- Personal Information Fields -->
-                            <div class="form-grid">
-                                
-                                <div class="form-group">
-                                    <label for="firstName">First Name <span class="required">*</span></label>
-                                    <input type="text" id="firstName" name="firstName" class="form-control" autocomplete="given-name" required>
-                                    <small class="form-hint">First name is required</small>
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label>Resident ID</label>
+                                        <input type="text" class="form-control" value="<?php echo $nextResidentId; ?>" disabled>
+                                        <small class="form-text text-muted">Auto-generated (Format: W-XXXXX)</small>
+                                    </div>
                                 </div>
-                                
-                                <div class="form-group">
-                                    <label for="middleName">Middle Name (Optional)</label>
-                                    <input type="text" id="middleName" name="middleName" class="form-control" autocomplete="additional-name">
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label for="firstName">First Name <span class="required">*</span></label>
+                                        <input type="text" id="firstName" name="firstName" class="form-control" autocomplete="given-name" required>
+                                        <small class="form-hint">First name is required</small>
+                                    </div>
                                 </div>
-                                
-                                <div class="form-group">
-                                    <label for="lastName">Last Name <span class="required">*</span></label>
-                                    <input type="text" id="lastName" name="lastName" class="form-control" autocomplete="family-name" required>
-                                    <small class="form-hint">Last name is required</small>
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label for="middleName">Middle Name (Optional)</label>
+                                        <input type="text" id="middleName" name="middleName" class="form-control" autocomplete="additional-name">
+                                    </div>
                                 </div>
-                                
-                                <div class="form-group">
-                                    <label for="suffix">Suffix (Optional)</label>
-                                    <input type="text" id="suffix" name="suffix" class="form-control" placeholder="Jr., Sr., III, etc." autocomplete="honorific-suffix">
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label for="lastName">Last Name <span class="required">*</span></label>
+                                        <input type="text" id="lastName" name="lastName" class="form-control" autocomplete="family-name" required>
+                                        <small class="form-hint">Last name is required</small>
+                                    </div>
                                 </div>
-                                
-                                <div class="form-group">
-                                    <label for="sex">Sex <span class="required">*</span></label>
-                                    <select id="sex" name="sex" class="form-control" required>
-                                        <option value="">Select</option>
-                                        <option value="Male">Male</option>
-                                        <option value="Female">Female</option>
-                                    </select>
-                                    <small class="form-hint">Sex is required</small>
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label for="suffix">Suffix (Optional)</label>
+                                        <input type="text" id="suffix" name="suffix" class="form-control" placeholder="Jr., Sr., III, etc." autocomplete="honorific-suffix">
+                                    </div>
                                 </div>
-                                
-                               <div class="form-group">
-                                    <label for="dateOfBirth">Date of Birth <span class="required">*</span></label>
-                                    <input type="text" id="dateOfBirth" name="dateOfBirth" class="form-control" placeholder="Select Date" autocomplete="bday" required>
-                                </div>
-
-                                <div class="form-group">
-                                    <label for="religion">Religion<span class="required">*</span></label>
-                                    <select id="religion" name="religion" class="form-control" required>
-                                         <option value="">Select Religion</option>
-                                         <option value="Roman Catholic">Roman Catholic</option>
-                                         <option value="Christian">Christian</option>
-                                         <option value="Iglesia ni Cristo">Iglesia ni Cristo</option>
-                                         <option value="Catholic">Catholic</option>
-                                         <option value="Islam">Islam</option>
-                                         <option value="Baptist">Baptist</option>
-                                         <option value="Buddhism">Buddhism</option>
-                                         <option value="Born Again">Born Again</option>
-                                         <option value="Church of God">Church of God</option>
-                                         <option value="Jehovahs Witness">Jehovahs Witness</option>
-                                         <option value="Protestant">Protestant</option>
-                                         <option value="Seventh Day Adventist">Seventh Day Adventist</option>
-                                         <option value="LDS-Mormons">LDS-Mormons</option>
-                                         <option value="Evangelical">Evangelical</option>
-                                         <option value="Pentecostal">Pentecostal</option>
-                                         <option value="Unknown">Unknown</option>
-                                         <option value="">Other (pls. Specify)</option>
-                                    </select>
-                                    <small class="form-hint">Religion is required</small>
-                                </div>
-
-                                <div class="form-group">
-                                    <label for="ethnicity">Ethnicity<span class="required">*</span></label>
-                                     <select id="ethnicity" class="form-control" name="ethnicity" required>
-                                            <option value="">Select Ethnicity</option>
-                                            <option value="IPS">IPS (Indigenous People)</option>
-                                            <option value="Non-IPS">Non-IPS</option>
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label for="sex">Sex <span class="required">*</span></label>
+                                        <select id="sex" name="sex" class="form-control" required>
+                                            <option value="">Select</option>
+                                            <option value="Male">Male</option>
+                                            <option value="Female">Female</option>
                                         </select>
-                                          <small class="form-hint">Ethnicity is required</small>
+                                        <small class="form-hint">Sex is required</small>
+                                    </div>
                                 </div>
-
-                                 
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label for="dateOfBirth">Date of Birth <span class="required">*</span></label>
+                                        <input type="text" id="dateOfBirth" name="dateOfBirth" class="form-control" placeholder="Select Date" autocomplete="bday" required>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label for="religion">Religion<span class="required">*</span></label>
+                                        <select id="religion" name="religion" class="form-control" required>
+                                            <option value="">Select Religion</option>
+                                            <option value="Roman Catholic">Roman Catholic</option>
+                                            <option value="Christian">Christian</option>
+                                            <option value="Iglesia ni Cristo">Iglesia ni Cristo</option>
+                                            <option value="Catholic">Catholic</option>
+                                            <option value="Islam">Islam</option>
+                                            <option value="Baptist">Baptist</option>
+                                            <option value="Buddhism">Buddhism</option>
+                                            <option value="Born Again">Born Again</option>
+                                            <option value="Church of God">Church of God</option>
+                                            <option value="Jehovahs Witness">Jehovahs Witness</option>
+                                            <option value="Protestant">Protestant</option>
+                                            <option value="Seventh Day Adventist">Seventh Day Adventist</option>
+                                            <option value="LDS-Mormons">LDS-Mormons</option>
+                                            <option value="Evangelical">Evangelical</option>
+                                            <option value="Pentecostal">Pentecostal</option>
+                                            <option value="Unknown">Unknown</option>
+                                            <option value="">Other (pls. Specify)</option>
+                                        </select>
+                                        <small class="form-hint">Religion is required</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label for="ethnicity">Ethnicity<span class="required">*</span></label>
+                                        <select id="ethnicity" class="form-control" name="ethnicity" required>
+                                                <option value="">Select Ethnicity</option>
+                                                <option value="IPS">IPS (Indigenous People)</option>
+                                                <option value="Non-IPS">Non-IPS</option>
+                                            </select>
+                                            <small class="form-hint">Ethnicity is required</small>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -279,40 +306,43 @@ if (isset($conn)) {
                     <!-- Step 2: Contact Information -->
                     <div class="form-step" data-step="2">
                         <div class="form-content">
-                            <div class="form-grid">
-                                <div class="form-group">
-                                    <label for="mobileNumber">Mobile Number <span class="required">*</span></label>
-                                    <div class="phone-input-group">
-                                        <span class="phone-prefix">
-                                            <img src="../assets/image/contactph.png" alt="PH" class="flag-icon">
-                                            +63
-                                        </span>
-                                        <input type="tel" id="mobileNumber" name="mobileNumber" class="form-control phone-input" placeholder="XXX XXX XXXX" pattern="[0-9 ]+" maxlength="12" oninput="let v=this.value.replace(/\D/g,'').substring(0,10);if(v.length>6)this.value=v.slice(0,3)+' '+v.slice(3,6)+' '+v.slice(6);else if(v.length>3)this.value=v.slice(0,3)+' '+v.slice(3);else this.value=v;" autocomplete="tel" required>
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label for="mobileNumber">Mobile Number <span class="required">*</span></label>
+                                        <div class="phone-input-group">
+                                            <span class="phone-prefix">
+                                                <img src="../assets/image/contactph.png" alt="PH" class="flag-icon">
+                                                +63
+                                            </span>
+                                            <input type="tel" id="mobileNumber" name="mobileNumber" class="form-control phone-input" placeholder="XXX XXX XXXX" pattern="[0-9 ]+" maxlength="12" oninput="let v=this.value.replace(/\D/g,'').substring(0,10);if(v.length>6)this.value=v.slice(0,3)+' '+v.slice(3,6)+' '+v.slice(6);else if(v.length>3)this.value=v.slice(0,3)+' '+v.slice(3);else this.value=v;" autocomplete="tel" required>
+                                        </div>
                                     </div>
                                 </div>
-                                
-                                <div class="form-group">
-                                    <label for="email">Email Address</label>
-                                    <input type="email" id="email" name="email" class="form-control" placeholder="example@email.com" autocomplete="email">
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label for="email">Email Address</label>
+                                        <input type="email" id="email" name="email" class="form-control" placeholder="example@email.com" autocomplete="email">
+                                    </div>
                                 </div>
-
-                                <div class="form-group">
-                                    <label for="purok">Purok <span class="required">*</span></label>
-                                    <select id="purok" name="purok" class="form-control" required>
-                                        <option value="">Select</option>
-                                        <option value="1">1</option>
-                                        <option value="2">2</option>
-                                        <option value="3">3</option>  
-                                        <option value="4">4</option>
-                                    </select>       
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label for="purok">Purok <span class="required">*</span></label>
+                                        <select id="purok" name="purok" class="form-control" required>
+                                            <option value="">Select</option>
+                                            <option value="1">1</option>
+                                            <option value="2">2</option>
+                                            <option value="3">3</option>  
+                                            <option value="4">4</option>
+                                        </select>       
+                                    </div>
                                 </div>
-
-                                <div class="form-group">
-                                    <label for="streetName">Street Name</label>
-                                    <input type="text" id="streetName" name="streetName" class="form-control" placeholder="Street Name" autocomplete="address-line1">
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label for="streetName">Street Name</label>
+                                        <input type="text" id="streetName" name="streetName" class="form-control" placeholder="Street Name" autocomplete="address-line1">
+                                    </div>
                                 </div>
-                                
-                                
                             </div>
                         </div>
                     </div>
@@ -320,40 +350,73 @@ if (isset($conn)) {
                     <!-- Step 3: Family Information -->
                     <div class="form-step" data-step="3">
                         <div class="form-content">
-                            <div class="form-grid">
-                                <div class="form-group">
-                                    <label for="civilStatus">Civil Status <span class="required">*</span></label>
-                                    <select id="civilStatus" name="civilStatus" class="form-control" required>
-                                        <option value="">Select</option>
-                                        <option value="Single">Single</option>
-                                        <option value="Married">Married</option>
-                                        <option value="Widow/er">Widow/er</option>
-                                        <option value="Separated">Separated</option>
-                                        <option value="Cohabitation">Cohabitation</option>
-                                    </select>
+                            <div class="row">
+                                <div class="col-md-4 adult-only">
+                                    <div class="form-group">
+                                        <label for="civilStatus">Civil Status <span class="required">*</span></label>
+                                        <select id="civilStatus" name="civilStatus" class="form-control" required>
+                                            <option value="">Select</option>
+                                            <option value="Single">Single</option>
+                                            <option value="Married">Married</option>
+                                            <option value="Widow/er">Widow/er</option>
+                                            <option value="Separated">Separated</option>
+                                            <option value="Cohabitation">Cohabitation</option>
+                                        </select>
+                                    </div>
                                 </div>
-                                
-                                <div class="form-group">
-                                    <label for="spouseName">Spouse Name</label>
-                                    <input type="text" id="spouseName" name="spouseName" class="form-control">
+                                <div class="col-md-4 adult-only" id="spouseNameGroup" style="display: none;">
+                                    <div class="form-group">
+                                        <label for="spouseName">Spouse Name</label>
+                                        <input type="text" id="spouseName" name="spouseName" class="form-control">
+                                    </div>
                                 </div>
-                                
-                                <div class="form-group">
-                                    <label for="fatherName">Father's Name</label>
-                                    <input type="text" id="fatherName" name="fatherName" class="form-control">
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label for="fatherName">Father's Name</label>
+                                        <input type="text" id="fatherName" name="fatherName" class="form-control">
+                                    </div>
                                 </div>
-                                
-                                <div class="form-group">
-                                    <label for="motherName">Mother's Maiden Name</label>
-                                    <input type="text" id="motherName" name="motherName" class="form-control">
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label for="motherName">Mother's Maiden Name</label>
+                                        <input type="text" id="motherName" name="motherName" class="form-control">
+                                    </div>
                                 </div>
-                                
-                                <div class="form-group">
-                                    <label for="numberOfChildren">Number of Children</label>
-                                    <input type="number" id="numberOfChildren" name="numberOfChildren" class="form-control" min="0" value="0">
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label for="numberOfChildren">Number of Children</label>
+                                        <input type="number" id="numberOfChildren" name="numberOfChildren" class="form-control" min="0" value="0">
+                                    </div>
                                 </div>
-                                
-                               
+                            </div>
+
+                            <!-- Guardian Section (Hidden by default) -->
+                            <div id="guardianSection" class="form-card minor-only" style="display: none;">
+                                <h5 style="margin: 0 0 15px 0; color: var(--primary-color);"><i class="fas fa-user-shield"></i> Guardian Information (for Minors)</h5>
+                                <hr style="margin: 0 0 20px 0;">
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="form-group">
+                                            <label for="guardianName">Guardian's Full Name <span class="required">*</span></label>
+                                            <input type="text" id="guardianName" name="guardianName" class="form-control">
+                                            <small class="form-hint">Required for minors</small>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-group">
+                                            <label for="guardianRelationship">Relationship to Guardian <span class="required">*</span></label>
+                                            <select id="guardianRelationship" name="guardianRelationship" class="form-control">
+                                                <option value="">Select Relationship</option>
+                                                <option value="Father">Father</option>
+                                                <option value="Mother">Mother</option>
+                                                <option value="Grandparent">Grandparent</option>
+                                                <option value="Legal Guardian">Legal Guardian</option>
+                                                <option value="Other">Other</option>
+                                            </select>
+                                            <small class="form-hint">Required for minors</small>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -494,159 +557,172 @@ if (isset($conn)) {
                     <!-- Step 5: Education & Employment -->
                     <div class="form-step" data-step="5">
                         <div class="form-content">
-                            <div class="form-grid">
-                                <div class="form-group">
-                                    <label for="educationalAttainment">Educational Attainment</label>
-                                    <select id="educationalAttainment" name="educationalAttainment" class="form-control">
-                                        <option value="">Select</option>
-                                        <option value="No Formal Education">No Formal Education</option>
-                                        <option value="Elementary Level">Elementary Level</option>
-                                        <option value="Elementary Graduate">Elementary Graduate</option>
-                                        <option value="High School Level">High School Level</option>
-                                        <option value="High School Graduate">High School Graduate</option>
-                                        <option value="College Level">College Level</option>
-                                        <option value="College Graduate">College Graduate</option>
-                                        <option value="Vocational">Vocational</option>
-                                        <option value="Post Graduate">Post Graduate</option>
-                                    </select>
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label for="educationalAttainment">Educational Attainment</label>
+                                        <select id="educationalAttainment" name="educationalAttainment" class="form-control">
+                                            <option value="">Select</option>
+                                            <option value="No Formal Education">No Formal Education</option>
+                                            <option value="Elementary Level">Elementary Level</option>
+                                            <option value="Elementary Graduate">Elementary Graduate</option>
+                                            <option value="High School Level">High School Level</option>
+                                            <option value="High School Graduate">High School Graduate</option>
+                                            <option value="College Level">College Level</option>
+                                            <option value="College Graduate">College Graduate</option>
+                                            <option value="Vocational">Vocational</option>
+                                            <option value="Post Graduate">Post Graduate</option>
+                                        </select>
+                                    </div>
                                 </div>
-                                
-                                <div class="form-group">
-                                    <label for="employmentStatus">Employment Status</label>
-                                    <select id="employmentStatus" name="employmentStatus" class="form-control">
-                                        <option value="">Select</option>
-                                        <option value="Employed">Employed</option>
-                                        <option value="Unemployed">Unemployed</option>
-                                        <option value="Self-Employed">Self-Employed</option>
-                                        <option value="Student">Student</option>
-                                        <option value="Retired">Retired</option>
-                                    </select>
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label for="employmentStatus">Employment Status</label>
+                                        <select id="employmentStatus" name="employmentStatus" class="form-control">
+                                            <option value="">Select</option>
+                                            <option value="Employed">Employed</option>
+                                            <option value="Unemployed">Unemployed</option>
+                                            <option value="Self-Employed">Self-Employed</option>
+                                            <option value="Student">Student</option>
+                                            <option value="Retired">Retired</option>
+                                        </select>
+                                    </div>
                                 </div>
-                                
-                                <div class="form-group">
-                                    <label for="occupation">Occupation</label>
-                                    <input type="text" id="occupation" name="occupation" class="form-control">
+                                <div class="col-md-4 adult-only">
+                                    <div class="form-group">
+                                        <label for="occupation">Occupation</label>
+                                        <input type="text" id="occupation" name="occupation" class="form-control">
+                                    </div>
                                 </div>
-                                
-                                <div class="form-group">
-                                    <label for="monthlyIncome">Monthly Income</label>
-                                    <select id="monthlyIncome" name="monthlyIncome" class="form-control">
-                                        <option value="">Select</option>
-                                        <option value="Below 5000">Below ₱5,000</option>
-                                        <option value="5000-10000">₱5,000 - ₱10,000</option>
-                                        <option value="10000-20000">₱10,000 - ₱20,000</option>
-                                        <option value="20000-30000">₱20,000 - ₱30,000</option>
-                                        <option value="30000-50000">₱30,000 - ₱50,000</option>
-                                        <option value="Above 50000">Above ₱50,000</option>
-                                    </select>
+                                <div class="col-md-4 adult-only">
+                                    <div class="form-group">
+                                        <label for="monthlyIncome">Monthly Income</label>
+                                        <select id="monthlyIncome" name="monthlyIncome" class="form-control">
+                                            <option value="">Select</option>
+                                            <option value="Below 5000">Below ₱5,000</option>
+                                            <option value="5000-10000">₱5,000 - ₱10,000</option>
+                                            <option value="10000-20000">₱10,000 - ₱20,000</option>
+                                            <option value="20000-30000">₱20,000 - ₱30,000</option>
+                                            <option value="30000-50000">₱30,000 - ₱50,000</option>
+                                            <option value="Above 50000">Above ₱50,000</option>
+                                        </select>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
                     
                     <!-- Step 6: Additional Information -->
-                    <div class="form-step" data-step="6">
+                    <div class="form-step" data-step="6"> 
                         <div class="form-content">
                             <!-- Government Programs Section -->
                             <h5 style="margin: 0 0 15px 0; color: var(--primary-color);"><i class="fas fa-landmark"></i> Government Programs</h5>
                             <hr style="margin: 0 0 20px 0;">
                             
-                            <div class="form-grid">
-                                <div class="form-group">
-                                    <label for="fourPs">4Ps Member</label>
-                                    <select id="fourPs" name="fourPs" class="form-control">
-                                        <option value="No">No</option>
-                                        <option value="Yes">Yes</option>
-                                    </select>
+                            <div class="row">
+                                <div class="col-md-4 adult-only">
+                                    <div class="form-group">
+                                        <label for="fourPs">4Ps Member</label>
+                                        <select id="fourPs" name="fourPs" class="form-control">
+                                            <option value="No">No</option>
+                                            <option value="Yes">Yes</option>
+                                        </select>
+                                    </div>
                                 </div>
-                                
-                                <div class="form-group" id="fourpsIdGroup" style="display: none;">
-                                    <label for="fourpsId">4Ps ID Number</label>
-                                    <input type="text" id="fourpsId" name="fourpsId" class="form-control" placeholder="XX-YYYY-ZZZZ" maxlength="12">
+                                <div class="col-md-4 adult-only" id="fourpsIdGroup" style="display: none;">
+                                    <div class="form-group">
+                                        <label for="fourpsId">4Ps ID Number</label>
+                                        <input type="text" id="fourpsId" name="fourpsId" class="form-control" placeholder="XX-YYYY-ZZZZ" maxlength="12">
+                                    </div>
                                 </div>
-                            </div>
-                            
-                            <div class="form-grid" style="margin-top: 20px;">
-                                <div class="form-group">
-                                    <label for="voterStatus">Registered Voter</label>
-                                    <select id="voterStatus" name="voterStatus" class="form-control">
-                                        <option value="">Select</option>
-                                        <option value="Yes">Yes</option>
-                                        <option value="No">No</option>
-                                    </select>
+                                <div class="col-md-4 adult-only">
+                                    <div class="form-group">
+                                        <label for="voterStatus">Registered Voter</label>
+                                        <select id="voterStatus" name="voterStatus" class="form-control">
+                                            <option value="">Select</option>
+                                            <option value="Yes">Yes</option>
+                                            <option value="No">No</option>
+                                        </select>
+                                    </div>
                                 </div>
-                                
-                                <div class="form-group" id="precinctNumberGroup" style="display: none;">
-                                    <label for="precinctNumber">Precinct Number</label>
-                                    <input type="text" id="precinctNumber" name="precinctNumber" class="form-control" placeholder="Enter Precinct Number">
+                                <div class="col-md-4 adult-only" id="precinctNumberGroup" style="display: none;">
+                                    <div class="form-group">
+                                        <label for="precinctNumber">Precinct Number</label>
+                                        <input type="text" id="precinctNumber" name="precinctNumber" class="form-control" placeholder="Enter Precinct Number">
+                                    </div>
                                 </div>
-                            </div>
-                            
                             </div>
                             
                             <!-- Health Information Section -->
                             <h5 style="margin: 30px 0 15px 0; color: var(--primary-color);"><i class="fas fa-heartbeat"></i> Health Information</h5>
                             <hr style="margin: 0 0 20px 0;">
                             
-                            <div class="form-grid">
-                                <div class="form-group">
-                                    <label for="philhealthId">Philhealth ID Number</label>
-                                    <input type="text" id="philhealthId" name="philhealthId" class="form-control" placeholder="1234-5678-9012" maxlength="14">
-                                </div>
-                                
-                                <div class="form-group">
-                                    <label for="membershipType">Membership Type</label>
-                                    <select id="membershipType" name="membershipType" class="form-control">
-                                        <option value="">Select</option>
-                                        <option value="Member">Member</option>
-                                        <option value="Dependent">Dependent</option>
-                                        <option value="None">None</option>
-                                    </select>
-                                </div>
-                                
-                                <div class="form-group">
-                                    <label for="philhealthCategory">Philhealth Category</label>
-                                    <select id="philhealthCategory" name="philhealthCategory" class="form-control">
-                                        <option value="">Select</option>
-                                        <option value="Direct Contributor">Direct Contributor</option>
-                                        <option value="Indirect Contributor">Indirect Contributor</option>
-                                        <option value="Sponsored">Sponsored</option>
-                                        <option value="None">None</option>
-                                    </select>
-                                </div>
-                                
-                                <div class="form-group">
-                                    <label for="ageHealthGroup">Classification by Age/Health Group</label>
-                                    <select id="ageHealthGroup" name="ageHealthGroup" class="form-control">
-                                        <option value="">Select</option>
-                                        <option value="Newborn (0-28 days)">Newborn (0-28 days)</option>
-                                        <option value="Infant (29 days - 1 year)">Infant (29 days - 1 year)</option>
-                                        <option value="Child (1-9 years)">Child (1-9 years)</option>
-                                        <option value="Adolescent (10-19 years)">Adolescent (10-19 years)</option>
-                                        <option value="Adult (20-59 years)">Adult (20-59 years)</option>
-                                        <option value="Senior Citizen (60+ years)">Senior Citizen (60+ years)</option>
-                                    </select>
-                                </div>
-                                
-                                <div class="form-group" style="margin-bottom: 20px;">
-                                    <label style="font-weight: 600; font-size: 15px;">Are you a Person with Disability (PWD)? <span class="required">*</span></label>
-                                    <div style="display: flex; gap: 20px; margin-top: 10px;">
-                                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-weight: 500;">
-                                            <input type="radio" name="pwdStatusRadio" id="pwdStatusYes" value="Yes" style="width: 18px; height: 18px; cursor: pointer;">
-                                            Yes
-                                        </label>
-                                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-weight: 500;">
-                                            <input type="radio" name="pwdStatusRadio" id="pwdStatusNo" value="No" style="width: 18px; height: 18px; cursor: pointer;">
-                                            No
-                                        </label>
+                            <div class="row">
+                                <div class="col-md-4 adult-only">
+                                    <div class="form-group">
+                                        <label for="philhealthId">Philhealth ID Number</label>
+                                        <input type="text" id="philhealthId" name="philhealthId" class="form-control" placeholder="1234-5678-9012" maxlength="14">
                                     </div>
-                                    <input type="hidden" id="pwdStatus" name="pwdStatus" value="" required>
-                                    <small class="form-hint">Disability status is required</small>
                                 </div>
-                                
-                                <div class="form-group full-width">
-                                    <label for="medicalHistory">Medical History</label>
-                                    <textarea id="medicalHistory" name="medicalHistory" class="form-control" rows="3" placeholder="Enter any medical conditions, allergies, or health concerns..."></textarea>
+                                <div class="col-md-4 adult-only">
+                                    <div class="form-group">
+                                        <label for="membershipType">Membership Type</label>
+                                        <select id="membershipType" name="membershipType" class="form-control">
+                                            <option value="">Select</option>
+                                            <option value="Member">Member</option>
+                                            <option value="Dependent">Dependent</option>
+                                            <option value="None">None</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-4 adult-only">
+                                    <div class="form-group">
+                                        <label for="philhealthCategory">Philhealth Category</label>
+                                        <select id="philhealthCategory" name="philhealthCategory" class="form-control">
+                                            <option value="">Select</option>
+                                            <option value="Direct Contributor">Direct Contributor</option>
+                                            <option value="Indirect Contributor">Indirect Contributor</option>
+                                            <option value="Sponsored">Sponsored</option>
+                                            <option value="None">None</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label for="ageHealthGroup">Classification by Age/Health Group</label>
+                                        <select id="ageHealthGroup" name="ageHealthGroup" class="form-control">
+                                            <option value="">Select</option>
+                                            <option value="Newborn (0-28 days)">Newborn (0-28 days)</option>
+                                            <option value="Infant (29 days - 1 year)">Infant (29 days - 1 year)</option>
+                                            <option value="Child (1-9 years)">Child (1-9 years)</option>
+                                            <option value="Adolescent (10-19 years)">Adolescent (10-19 years)</option>
+                                            <option value="Adult (20-59 years)">Adult (20-59 years)</option>
+                                            <option value="Senior Citizen (60+ years)">Senior Citizen (60+ years)</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-group" style="margin-bottom: 20px;">
+                                        <label style="font-weight: 600; font-size: 15px;">Are you a Person with Disability (PWD)? <span class="required">*</span></label>
+                                        <div style="display: flex; gap: 20px; margin-top: 10px;">
+                                            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-weight: 500;">
+                                                <input type="radio" name="pwdStatusRadio" id="pwdStatusYes" value="Yes" style="width: 18px; height: 18px; cursor: pointer;">
+                                                Yes
+                                            </label>
+                                            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-weight: 500;">
+                                                <input type="radio" name="pwdStatusRadio" id="pwdStatusNo" value="No" style="width: 18px; height: 18px; cursor: pointer;">
+                                                No
+                                            </label>
+                                        </div>
+                                        <input type="hidden" id="pwdStatus" name="pwdStatus" value="" required>
+                                        <small class="form-hint">Disability status is required</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-8">
+                                    <div class="form-group">
+                                        <label for="medicalHistory">Medical History</label>
+                                        <textarea id="medicalHistory" name="medicalHistory" class="form-control" rows="3" placeholder="Enter any medical conditions, allergies, or health concerns..."></textarea>
+                                    </div>
                                 </div>
                             </div>
                             
@@ -655,7 +731,7 @@ if (isset($conn)) {
                                 <h5 style="margin: 30px 0 15px 0; color: var(--primary-color);"><i class="fas fa-female"></i> Women's Reproductive Health (WRA)</h5>
                                 <hr style="margin: 0 0 20px 0;">
                                 
-                                <div class="form-grid">
+                                <div class="row">
                                     <div class="form-group">
                                         <label for="lmpDate">Last Menstrual Period (LMP)</label>
                                         <input type="date" id="lmpDate" name="lmpDate" class="form-control">
@@ -700,7 +776,7 @@ if (isset($conn)) {
                             <h5 style="margin: 30px 0 15px 0; color: var(--primary-color);"><i class="fas fa-sticky-note"></i> Additional Notes</h5>
                             <hr style="margin: 0 0 20px 0;">
                             
-                            <div class="form-grid">
+                            <div class="row">
                                 <div class="form-group full-width">
                                     <label for="remarks">Remarks/Notes</label>
                                     <textarea id="remarks" name="remarks" class="form-control" rows="4" placeholder="Additional information or notes..."></textarea>
@@ -991,6 +1067,10 @@ if (isset($conn)) {
                     <p>Ang inyong datos ay itatago nang ligtas at hindi ibabahagi sa mga hindi awtorisadong partido. Bilang "data subject," kayo ay may <strong>karapatang i-access, suriin, at hilingin ang pagtatama</strong> ng inyong personal na datos anumang oras sa pamamagitan ng pagbisita sa Opisina ng Barangay.</p>
                     
                     <div id="scrollIndicator" style="text-align: center; color: #ef4444; font-weight: 600; margin-top: 20px; font-size: 0.85rem;">
+                        <div id="minorConsentNote" style="display: none; margin-top: 20px; padding: 10px; border: 1px solid #3b82f6; background-color: #e0f2fe; border-radius: 5px; font-size: 0.9em; color: #1e40af;">
+                            <i class="fas fa-info-circle me-2"></i> Since the registrant is a minor, consent is provided by the undersigned Parent/Guardian.
+                        </div>
+
                         <i class="fas fa-arrow-down"></i> Please scroll to the bottom to acknowledge
                     </div>
                 </div>

@@ -94,6 +94,8 @@ $pageTitle = 'Households';
                     </thead>
                     <tbody id="householdsTableBody">
                         <!-- Data will be loaded from database via JavaScript -->
+                        <!-- When loading data, ensure Household Head's name is a link to resident_profile.php -->
+                        <!-- Example: <td><a href="resident_profile.php?id={head_resident_id}#household-details">{Household Head Name}</a></td> -->
                     </tbody>
                 </table>
             </div>
