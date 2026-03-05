@@ -35,6 +35,14 @@ $pageTitle = 'Households';
     <link rel="stylesheet" href="assets/css/households.css">
     <!-- Dark Mode Init: must be in <head> to prevent flash of light mode -->
     <script src="assets/js/dark-mode-init.js"></script>
+    <style>
+        /* Center align Action column header and cells */
+        .households-table th:last-child,
+        .households-table td:last-child {
+            text-align: center !important;
+            vertical-align: middle;
+        }
+    </style>
 </head>
 <body>
     <!-- Sidebar -->
@@ -89,7 +97,7 @@ $pageTitle = 'Households';
                             <th>Household Number </th>
                             <th>Household Head </th>
                             <th>Household Member</th>
-                            <th>Action</th>
+                            <th class="text-center">Action</th>
                         </tr>
                     </thead>
                     <tbody id="householdsTableBody">
