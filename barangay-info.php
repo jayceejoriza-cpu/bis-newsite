@@ -44,6 +44,9 @@ if (!$barangay_info) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Dark Mode Init: must be at the very top of <head> to prevent flash of light mode -->
+    <script src="assets/js/dark-mode-init.js"></script>
+
     <title>Barangay Info - <?php echo defined('SITE_NAME') ? SITE_NAME : 'BIS'; ?></title>
     
     <!-- Font Awesome Icons -->
@@ -296,71 +299,71 @@ if (!$barangay_info) {
         }
         
         /* Dark mode styles */
-        body.dark-mode .info-card {
+        html.dark-mode .info-card {
             background-color: #1f2937;
             border-color: #374151;
         }
         
-        body.dark-mode .card-title {
+        html.dark-mode .card-title {
             color: #f9fafb;
             border-bottom-color: #374151;
         }
         
-        body.dark-mode .form-label {
+        html.dark-mode .form-label {
             color: #f9fafb;
         }
         
-        body.dark-mode .form-input,
-        body.dark-mode .form-textarea {
+        html.dark-mode .form-input,
+        html.dark-mode .form-textarea {
             background-color: #111827;
             color: #f9fafb;
             border-color: #374151;
         }
         
-        body.dark-mode .form-input:focus,
-        body.dark-mode .form-textarea:focus {
+        html.dark-mode .form-input:focus,
+        html.dark-mode .form-textarea:focus {
             border-color: var(--primary-color);
             box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
         }
         
-        body.dark-mode .logo-preview-container,
-        body.dark-mode .dashboard-image-preview-container {
+        html.dark-mode .logo-preview-container,
+        html.dark-mode .dashboard-image-preview-container {
             background-color: #111827;
             border-color: #374151;
         }
         
-        body.dark-mode .logo-preview-container:hover,
-        body.dark-mode .dashboard-image-preview-container:hover {
+        html.dark-mode .logo-preview-container:hover,
+        html.dark-mode .dashboard-image-preview-container:hover {
             border-color: var(--primary-color);
         }
         
-        body.dark-mode .logo-placeholder {
+        html.dark-mode .logo-placeholder {
             color: #6b7280;
         }
         
-        body.dark-mode .file-input-label {
+        html.dark-mode .file-input-label {
             background-color: #111827;
             color: #f9fafb;
             border-color: #374151;
         }
         
-        body.dark-mode .file-input-label:hover {
+        html.dark-mode .file-input-label:hover {
             background-color: var(--primary-color);
             color: white;
             border-color: var(--primary-color);
         }
         
-        body.dark-mode .file-name {
+        html.dark-mode .file-name {
             color: #9ca3af;
         }
         
-        body.dark-mode .alert-success {
+        html.dark-mode .alert-success {
             background-color: #064e3b;
             color: #6ee7b7;
             border-color: #047857;
         }
         
-        body.dark-mode .alert-danger {
+        html.dark-mode .alert-danger {
             background-color: #7f1d1d;
             color: #fca5a5;
             border-color: #dc2626;
@@ -376,8 +379,6 @@ if (!$barangay_info) {
             }
         }
     </style>
-    <!-- Dark Mode Init: must be in <head> to prevent flash of light mode -->
-    <script src="assets/js/dark-mode-init.js"></script>
 </head>
 <body>
     <!-- Sidebar -->

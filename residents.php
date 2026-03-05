@@ -208,7 +208,7 @@ try {
             <div class="filter-tabs">
                 <button class="tab-btn active" data-filter="all">All</button>
                 <button class="tab-btn" data-filter="voters">Registered Voters</button>
-                <button class="tab-btn" data-filter="active">Active</button>
+               <!-- <button class="tab-btn" data-filter="active">Active</button>-->
             </div>
             
             <!-- Search and Filter Bar -->

@@ -56,7 +56,7 @@ html.dark-mode {
 }
 
 /* Dark Mode Colors */
-body.dark-mode {
+html.dark-mode {
     --text-primary: #f9fafb;
     --text-secondary: #9ca3af;
     --bg-primary: #111827;
@@ -769,13 +769,13 @@ body.modal-open .main-content.expanded {
     box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
-body.dark-mode .year-filter-select {
+html.dark-mode .year-filter-select {
     background-color: #1f2937;
     border-color: #374151;
     color: #f9fafb;
 }
 
-body.dark-mode .year-filter-select:focus {
+html.dark-mode .year-filter-select:focus {
     border-color: var(--primary-color);
     box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
 }
@@ -1128,6 +1128,27 @@ body.dark-mode .year-filter-select:focus {
     transition: var(--color-transition);
 }
 
+/* Table Loading State */
+.table-container {
+    position: relative;
+    min-height: 400px;
+}
+
+.table-loader {
+    display: none;
+    position: absolute;
+    inset: 0;
+    background-color: var(--bg-secondary);
+    z-index: 20;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+}
+
+.table-container.initializing .table-loader {
+    display: flex;
+}
+
 .data-table {
     width: 100%;
     background-color: var(--bg-secondary);
@@ -1170,21 +1191,21 @@ body.dark-mode .year-filter-select:focus {
 }
 
 /* Dark mode specific table improvements */
-body.dark-mode .data-table th {
+html.dark-mode .data-table th {
     color: #9ca3af;
     border-bottom-color: #374151;
 }
 
-body.dark-mode .data-table td {
+html.dark-mode .data-table td {
     color: #f9fafb;
     border-top-color: #374151;
 }
 
-body.dark-mode .data-table tbody tr {
+html.dark-mode .data-table tbody tr {
     background-color: #1f2937;
 }
 
-body.dark-mode .data-table tbody tr:hover {
+html.dark-mode .data-table tbody tr:hover {
     background-color: #374151;
 }
 
@@ -1282,15 +1303,15 @@ select.form-control:focus {
     box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
-body.dark-mode .form-control,
-body.dark-mode select.form-control {
+html.dark-mode .form-control,
+html.dark-mode select.form-control {
     background-color: #1f2937;
     color: #f9fafb;
     border-color: #374151;
 }
 
-body.dark-mode .form-control:focus,
-body.dark-mode select.form-control:focus {
+html.dark-mode .form-control:focus,
+html.dark-mode select.form-control:focus {
     border-color: var(--primary-color);
     box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
 }
@@ -1342,19 +1363,19 @@ body.dark-mode select.form-control:focus {
     background-color: #4b5563;
 }
 
-body.dark-mode .btn-success {
+html.dark-mode .btn-success {
     background-color: #10b981;
 }
 
-body.dark-mode .btn-success:hover {
+html.dark-mode .btn-success:hover {
     background-color: #059669;
 }
 
-body.dark-mode .btn-danger {
+html.dark-mode .btn-danger {
     background-color: #ef4444;
 }
 
-body.dark-mode .btn-danger:hover {
+html.dark-mode .btn-danger:hover {
     background-color: #dc2626;
 }
 
@@ -1402,32 +1423,32 @@ body.dark-mode .btn-danger:hover {
 }
 
 /* Dark mode badge colors */
-body.dark-mode .badge-resident {
+html.dark-mode .badge-resident {
     background-color: #1e3a8a;
     color: #93c5fd;
 }
 
-body.dark-mode .badge-official {
+html.dark-mode .badge-official {
     background-color: #064e3b;
     color: #6ee7b7;
 }
 
-body.dark-mode .badge-blotter {
+html.dark-mode .badge-blotter {
     background-color: #7f1d1d;
     color: #fca5a5;
 }
 
-body.dark-mode .badge-permit {
+html.dark-mode .badge-permit {
     background-color: #0c4a6e;
     color: #7dd3fc;
 }
 
-body.dark-mode .badge-household {
+html.dark-mode .badge-household {
     background-color: #134e4a;
     color: #5eead4;
 }
 
-body.dark-mode .badge-default {
+html.dark-mode .badge-default {
     background-color: #374151;
     color: #d1d5db;
 }
@@ -1472,23 +1493,23 @@ body.dark-mode .badge-default {
     transition: var(--color-transition);
 }
 
-body.dark-mode .record-data {
+html.dark-mode .record-data {
     background: #111827;
 }
 
-body.dark-mode .record-data-item {
+html.dark-mode .record-data-item {
     border-bottom-color: #374151;
 }
 
-body.dark-mode .record-data-item:hover {
+html.dark-mode .record-data-item:hover {
     background-color: #1f2937;
 }
 
-body.dark-mode .record-data-label {
+html.dark-mode .record-data-label {
     color: #9ca3af;
 }
 
-body.dark-mode .record-data-value {
+html.dark-mode .record-data-value {
     color: #f9fafb;
 }
 
@@ -1573,25 +1594,25 @@ body.dark-mode .record-data-value {
     color: var(--text-primary);
 }
 
-body.dark-mode .modal {
+html.dark-mode .modal {
     background-color: rgba(0, 0, 0, 0.7);
 }
 
-body.dark-mode .modal-content {
+html.dark-mode .modal-content {
     background-color: #1f2937;
     box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
 }
 
-body.dark-mode .modal-header {
+html.dark-mode .modal-header {
     background-color: #1f2937;
     border-bottom-color: #374151;
 }
 
-body.dark-mode .modal-body {
+html.dark-mode .modal-body {
     background-color: #111827;
 }
 
-body.dark-mode .modal-footer {
+html.dark-mode .modal-footer {
     background-color: #111827;
     border-top-color: #374151;
 }
@@ -1608,7 +1629,7 @@ body.dark-mode .modal-footer {
     transition: var(--color-transition);
 }
 
-body.dark-mode .page-subtitle {
+html.dark-mode .page-subtitle {
     color: #9ca3af;
 }
 
@@ -1636,13 +1657,13 @@ body.dark-mode .page-subtitle {
     border: 1px solid #fca5a5;
 }
 
-body.dark-mode .alert-success {
+html.dark-mode .alert-success {
     background-color: #064e3b;
     color: #6ee7b7;
     border-color: #047857;
 }
 
-body.dark-mode .alert-danger {
+html.dark-mode .alert-danger {
     background-color: #7f1d1d;
     color: #fca5a5;
     border-color: #dc2626;

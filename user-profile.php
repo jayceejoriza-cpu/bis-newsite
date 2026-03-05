@@ -101,6 +101,9 @@ $stmt->close();
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Dark Mode Init: must be at the very top of <head> to prevent flash of light mode -->
+    <script src="assets/js/dark-mode-init.js"></script>
+
     <title>User Profile - <?php echo defined('SITE_NAME') ? SITE_NAME : 'BIS'; ?></title>
     
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -269,7 +272,7 @@ $stmt->close();
             font-size: 0.7rem;
         }
 
-        body.dark-mode .status-badge {
+        html.dark-mode .status-badge {
             background-color: rgba(6, 78, 59, 0.3);
             color: #6ee7b7;
         }
@@ -574,16 +577,16 @@ $stmt->close();
             font-size: 0.9rem;
         }
 
-        body.dark-mode .info-box {
+        html.dark-mode .info-box {
             background-color: rgba(59, 130, 246, 0.1);
             border-left-color: #60a5fa;
         }
 
-        body.dark-mode .info-box p {
+        html.dark-mode .info-box p {
             color: #93c5fd;
         }
 
-        body.dark-mode .info-box i {
+        html.dark-mode .info-box i {
             color: #60a5fa;
         }
 
@@ -1023,8 +1026,6 @@ $stmt->close();
             }
         }
     </style>
-    <!-- Dark Mode Init: must be in <head> to prevent flash of light mode -->
-    <script src="assets/js/dark-mode-init.js"></script>
 </head>
 <body>
     <?php include 'components/sidebar.php'; ?>
