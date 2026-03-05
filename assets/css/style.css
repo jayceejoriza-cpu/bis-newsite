@@ -1316,6 +1316,36 @@ html.dark-mode select.form-control:focus {
     box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
 }
 
+/* Filter Panel Dark Mode */
+html.dark-mode .filter-panel {
+    background-color: var(--bg-secondary);
+    border-color: var(--border-color);
+    box-shadow: var(--shadow-lg);
+}
+
+html.dark-mode .filter-panel-header {
+    border-bottom-color: var(--border-color);
+}
+
+html.dark-mode .filter-panel-header h3 {
+    color: var(--text-primary);
+}
+
+html.dark-mode .filter-item label {
+    color: var(--text-secondary);
+}
+
+html.dark-mode .filter-select {
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    border-color: var(--border-color);
+}
+
+html.dark-mode .filter-panel-footer {
+    background-color: var(--bg-secondary);
+    border-top-color: var(--border-color);
+}
+
 /* Button Styles - Dark Mode */
 .btn {
     padding: 8px 16px;
