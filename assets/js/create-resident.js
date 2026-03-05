@@ -424,6 +424,7 @@ function initializePhotoUpload() {
 function calculateAge() {
     const dobInput = document.getElementById('dateOfBirth');
     const minorAlert = document.getElementById('minorAlert');
+    const ageHealthGroupSelect = document.getElementById('ageHealthGroup');
     const adultOnlyElements = document.querySelectorAll('.adult-only');
     const minorOnlyElements = document.querySelectorAll('.minor-only');
 
@@ -437,6 +438,7 @@ function calculateAge() {
         if (mobileNumberLabel) mobileNumberLabel.innerHTML = 'Mobile Number <span class="required">*</span>';
         if (minorConsentNote) minorConsentNote.style.display = 'none';
         if (minorAlert) minorAlert.style.display = 'none';
+        if (ageHealthGroupSelect) ageHealthGroupSelect.value = '';
         
         // Show adult fields, hide minor fields
         minorOnlyElements.forEach(el => el.style.display = 'none');
@@ -469,6 +471,30 @@ function calculateAge() {
 
     if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
         age--;
+    }
+
+    // Calculate age in days for precise classification (Newborn/Infant)
+    const diffTime = Math.abs(today - dob);
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+    let healthGroup = '';
+    if (diffDays <= 28) {
+        healthGroup = 'Newborn (0-28 days)';
+    } else if (age < 1) {
+        healthGroup = 'Infant (29 days - 1 year)';
+    } else if (age >= 1 && age <= 9) {
+        healthGroup = 'Child (1-9 years)';
+    } else if (age >= 10 && age <= 19) {
+        healthGroup = 'Adolescent (10-19 years)';
+    } else if (age >= 20 && age <= 59) {
+        healthGroup = 'Adult (20-59 years)';
+    } else if (age >= 60) {
+        healthGroup = 'Senior Citizen (60+ years)';
+    }
+
+    if (ageHealthGroupSelect) {
+        ageHealthGroupSelect.value = healthGroup;
+        saveFormData();
     }
 
     console.log(`Calculated age: ${age} years`);

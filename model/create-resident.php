@@ -690,7 +690,7 @@ if (isset($conn)) {
                                 <div class="col-md-4">
                                     <div class="form-group">
                                         <label for="ageHealthGroup">Classification by Age/Health Group</label>
-                                        <select id="ageHealthGroup" name="ageHealthGroup" class="form-control">
+                                        <select id="ageHealthGroup" name="ageHealthGroup" class="form-control" disabled>
                                             <option value="">Select</option>
                                             <option value="Newborn (0-28 days)">Newborn (0-28 days)</option>
                                             <option value="Infant (29 days - 1 year)">Infant (29 days - 1 year)</option>

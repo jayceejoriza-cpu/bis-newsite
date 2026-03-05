@@ -32,6 +32,12 @@ document.addEventListener('DOMContentLoaded', function() {
     initializeIdFormatting();
     initializeHouseholdInfo();
     initializePwdStatus();
+    
+    // Initialize age calculation and health group classification
+    const dobInput = document.getElementById('dateOfBirth');
+    if (dobInput) {
+        dobInput.addEventListener('change', updateAgeAndHealthGroup);
+    }
     console.log('Edit Resident page loaded successfully');
 });
 
@@ -46,6 +52,7 @@ function loadResidentData(residentId) {
             if (result.success) {
                 residentData = result.data;
                 populateForm(residentData);
+                updateAgeAndHealthGroup();
                 hideLoadingState();
             } else {
                 showError('Failed to load resident data: ' + result.message);
@@ -223,6 +230,47 @@ function populateForm(data) {
 
     // Remarks
     setVal('remarks', data.remarks);
+}
+
+// ============================================
+// Update Age and Health Group
+// ============================================
+function updateAgeAndHealthGroup() {
+    const dobInput = document.getElementById('dateOfBirth');
+    const ageHealthGroupSelect = document.getElementById('ageHealthGroup');
+    
+    if (!dobInput || !dobInput.value) return;
+
+    const dob = new Date(dobInput.value);
+    const today = new Date();
+    
+    let age = today.getFullYear() - dob.getFullYear();
+    const monthDiff = today.getMonth() - dob.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
+        age--;
+    }
+
+    const diffTime = Math.abs(today - dob);
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+    let healthGroup = '';
+    if (diffDays <= 28) {
+        healthGroup = 'Newborn (0-28 days)';
+    } else if (age < 1) {
+        healthGroup = 'Infant (29 days - 1 year)';
+    } else if (age >= 1 && age <= 9) {
+        healthGroup = 'Child (1-9 years)';
+    } else if (age >= 10 && age <= 19) {
+        healthGroup = 'Adolescent (10-19 years)';
+    } else if (age >= 20 && age <= 59) {
+        healthGroup = 'Adult (20-59 years)';
+    } else if (age >= 60) {
+        healthGroup = 'Senior Citizen (60+ years)';
+    }
+
+    if (ageHealthGroupSelect) {
+        ageHealthGroupSelect.value = healthGroup;
+    }
 }
 
 // ============================================
@@ -1140,7 +1188,16 @@ function populateReviewModal() {
 // ============================================
 function submitFormFromReview() {
     const form = document.getElementById('editResidentForm');
+    
+    // Temporarily enable disabled fields so they are included in FormData
+    const disabledElements = Array.from(form.querySelectorAll(':disabled'));
+    disabledElements.forEach(el => el.disabled = false);
+    
     const formData = new FormData(form);
+    
+    // Re-disable them
+    disabledElements.forEach(el => el.disabled = true);
+    
     formData.append('mode', 'update');
 
     const submitBtn = document.getElementById('finalSubmitBtn');
