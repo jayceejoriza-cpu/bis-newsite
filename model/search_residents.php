@@ -14,6 +14,9 @@ $searchTerm = isset($_GET['search']) ? trim($_GET['search']) : '';
 // Get optional parameter to filter available residents for households
 $filterHouseholds = isset($_GET['filter_households']) ? $_GET['filter_households'] === 'true' : false;
 
+// Get optional parameter to exclude a specific resident ID (for RBC child search)
+$excludeResidentId = isset($_GET['exclude_resident_id']) ? intval($_GET['exclude_resident_id']) : 0;
+
 try {
     // Prepare SQL query to search residents
     $sql = "SELECT 
@@ -42,6 +45,11 @@ try {
             SELECT resident_id 
             FROM household_members
         )";
+    }
+    
+    // Exclude specific resident ID (for RBC child search to exclude parent)
+    if ($excludeResidentId > 0) {
+        $sql .= " AND r.id != " . $excludeResidentId;
     }
     
     // Add search condition if search term is provided
@@ -73,7 +81,8 @@ try {
         'data' => $residents,
         'residents' => $residents,
         'count' => count($residents),
-        'filtered' => $filterHouseholds
+        'filtered' => $filterHouseholds,
+        'excluded' => $excludeResidentId
     ]);
     
     $stmt->close();

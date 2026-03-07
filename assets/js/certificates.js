@@ -1215,24 +1215,33 @@ document.addEventListener('DOMContentLoaded', function () {
     var rbcIdInput      = document.getElementById('rbcResidentId');
     var rbcDropdown     = document.getElementById('rbcResidentDropdown');
     var rbcResidentBtn  = document.getElementById('rbcResidentBtn');
+    var rbcChildNameInput = document.getElementById('rbcChildName');
+    var rbcChildIdInput   = document.getElementById('rbcChildId');
+    var rbcChildDropdown  = document.getElementById('rbcChildDropdown');
+    var rbcChildBtn       = document.getElementById('rbcChildBtn');
     var rbcDateInput    = document.getElementById('rbcDate');
     var rbcPurposeInput = document.getElementById('rbcPurpose');
     var rbcPrintBtn     = document.getElementById('rbcPrintBtn');
     var rbcModalEl      = document.getElementById('rbcModal');
 
     var rbcSearchTimeout = null;
+    var rbcChildSearchTimeout = null;
 
     if (rbcModalEl) {
         rbcModalEl.addEventListener('show.bs.modal', function () {
             if (rbcNameInput)    rbcNameInput.value    = '';
             if (rbcIdInput)      rbcIdInput.value      = '';
             if (rbcDropdown)     { rbcDropdown.innerHTML = ''; rbcDropdown.style.display = 'none'; }
+            if (rbcChildNameInput) rbcChildNameInput.value = '';
+            if (rbcChildIdInput)   rbcChildIdInput.value   = '';
+            if (rbcChildDropdown)  { rbcChildDropdown.innerHTML = ''; rbcChildDropdown.style.display = 'none'; }
             if (rbcDateInput)    rbcDateInput.value    = getTodayDate();
             if (rbcPurposeInput)  rbcPurposeInput.value = 'Birth Certificate Registration';
             clearRbcError();
         });
     }
 
+    // Parent/Applicant search
     if (rbcNameInput) {
         rbcNameInput.addEventListener('input', function () {
             if (rbcIdInput) rbcIdInput.value = '';
@@ -1245,6 +1254,19 @@ document.addEventListener('DOMContentLoaded', function () {
         rbcNameInput.addEventListener('keydown', function (e) { if (e.key === 'Escape') hideRbcDropdown(); });
     }
 
+    // Child search
+    if (rbcChildNameInput) {
+        rbcChildNameInput.addEventListener('input', function () {
+            if (rbcChildIdInput) rbcChildIdInput.value = '';
+            clearRbcError();
+            var term = this.value.trim();
+            clearTimeout(rbcChildSearchTimeout);
+            if (term.length < 1) { hideRbcChildDropdown(); return; }
+            rbcChildSearchTimeout = setTimeout(function () { searchRbcChildResidents(term); }, 250);
+        });
+        rbcChildNameInput.addEventListener('keydown', function (e) { if (e.key === 'Escape') hideRbcChildDropdown(); });
+    }
+
     if (rbcResidentBtn) {
         rbcResidentBtn.addEventListener('click', function (e) {
             e.stopPropagation();
@@ -1254,8 +1276,18 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
+    if (rbcChildBtn) {
+        rbcChildBtn.addEventListener('click', function (e) {
+            e.stopPropagation();
+            if (rbcChildNameInput) { rbcChildNameInput.value = ''; rbcChildNameInput.focus(); }
+            if (rbcChildIdInput) rbcChildIdInput.value = '';
+            hideRbcChildDropdown();
+        });
+    }
+
     document.addEventListener('click', function (e) {
         if (rbcDropdown && !e.target.closest('#rbcModal .resident-search-wrap')) { hideRbcDropdown(); }
+        if (rbcChildDropdown && !e.target.closest('#rbcModal .resident-search-wrap')) { hideRbcChildDropdown(); }
     });
 
     function searchRbcResidents(term) {
@@ -1267,6 +1299,22 @@ document.addEventListener('DOMContentLoaded', function () {
                 else { hideRbcDropdown(); }
             })
             .catch(function () { hideRbcDropdown(); });
+    }
+
+    function searchRbcChildResidents(term) {
+        var residentId = rbcIdInput ? rbcIdInput.value.trim() : '';
+        var url = 'model/search_residents.php?search=' + encodeURIComponent(term);
+        if (residentId) {
+            url += '&exclude_resident_id=' + encodeURIComponent(residentId);
+        }
+        fetch(url)
+            .then(function (res) { return res.json(); })
+            .then(function (data) {
+                var results = data.residents || data.data;
+                if (data.success && results) { renderRbcChildDropdown(results); }
+                else { hideRbcChildDropdown(); }
+            })
+            .catch(function () { hideRbcChildDropdown(); });
     }
 
     function renderRbcDropdown(residents) {
@@ -1283,6 +1331,20 @@ document.addEventListener('DOMContentLoaded', function () {
         rbcDropdown.style.display = 'block';
     }
 
+    function renderRbcChildDropdown(residents) {
+        if (!rbcChildDropdown) return;
+        if (residents.length === 0) { rbcChildDropdown.innerHTML = '<div class="resident-dropdown-empty">No residents found</div>'; rbcChildDropdown.style.display = 'block'; return; }
+        rbcChildDropdown.innerHTML = '';
+        residents.forEach(function (r) {
+            var item = document.createElement('div');
+            item.className = 'resident-dropdown-item';
+            item.innerHTML = '<span class="resident-dropdown-name">' + escapeHtml(r.full_name.trim()) + '</span><span class="resident-dropdown-id">' + escapeHtml(r.resident_id || '') + '</span>';
+            item.addEventListener('mousedown', function (e) { e.preventDefault(); selectRbcChildResident(r); });
+            rbcChildDropdown.appendChild(item);
+        });
+        rbcChildDropdown.style.display = 'block';
+    }
+
     function selectRbcResident(resident) {
         if (rbcNameInput) rbcNameInput.value = resident.full_name.trim();
         if (rbcIdInput)   rbcIdInput.value   = resident.id;
@@ -1290,37 +1352,56 @@ document.addEventListener('DOMContentLoaded', function () {
         clearRbcError();
     }
 
+    function selectRbcChildResident(resident) {
+        if (rbcChildNameInput) rbcChildNameInput.value = resident.full_name.trim();
+        if (rbcChildIdInput)   rbcChildIdInput.value   = resident.id;
+        hideRbcChildDropdown();
+        clearRbcError();
+    }
+
     function hideRbcDropdown() {
         if (rbcDropdown) { rbcDropdown.style.display = 'none'; rbcDropdown.innerHTML = ''; }
     }
 
+    function hideRbcChildDropdown() {
+        if (rbcChildDropdown) { rbcChildDropdown.style.display = 'none'; rbcChildDropdown.innerHTML = ''; }
+    }
+
     function clearRbcError() {
         if (rbcNameInput) rbcNameInput.classList.remove('is-invalid');
+        if (rbcChildNameInput) rbcChildNameInput.classList.remove('is-invalid');
         var existing = document.querySelector('.rbc-error-msg');
         if (existing) existing.remove();
     }
 
     function showRbcError(msg) {
         clearRbcError();
-        if (!rbcNameInput) return;
-        rbcNameInput.classList.add('is-invalid');
+        if (!rbcNameInput && !rbcChildNameInput) return;
         var err = document.createElement('div');
         err.className = 'invalid-feedback rbc-error-msg';
         err.textContent = msg;
-        rbcNameInput.closest('.resident-input-group').after(err);
+        if (rbcNameInput) {
+            rbcNameInput.classList.add('is-invalid');
+            rbcNameInput.closest('.resident-input-group').after(err);
+        } else if (rbcChildNameInput) {
+            rbcChildNameInput.classList.add('is-invalid');
+            rbcChildNameInput.closest('.resident-input-group').after(err);
+        }
     }
 
     if (rbcPrintBtn) {
         rbcPrintBtn.addEventListener('click', function () {
             var residentId = rbcIdInput      ? rbcIdInput.value.trim()      : '';
+            var childId    = rbcChildIdInput ? rbcChildIdInput.value.trim()  : '';
             var date       = rbcDateInput    ? rbcDateInput.value.trim()    : '';
             var purpose    = rbcPurposeInput ? rbcPurposeInput.value.trim() : '';
 
-            if (!residentId) { showRbcError('Please select a resident from the list.'); if (rbcNameInput) rbcNameInput.focus(); return; }
+            if (!residentId) { showRbcError('Please select a parent/applicant from the list.'); if (rbcNameInput) rbcNameInput.focus(); return; }
+            if (!childId) { showRbcError('Please select a child from the list.'); if (rbcChildNameInput) rbcChildNameInput.focus(); return; }
             if (!date) { if (rbcDateInput) { rbcDateInput.classList.add('is-invalid'); rbcDateInput.focus(); } return; }
             else { if (rbcDateInput) rbcDateInput.classList.remove('is-invalid'); }
 
-            var params = new URLSearchParams({ resident_id: residentId, date: date, purpose: purpose });
+            var params = new URLSearchParams({ resident_id: residentId, child_id: childId, date: date, purpose: purpose });
             window.location.href = 'certifications/certificate-RBC.php?' + params.toString();
         });
     }
@@ -1709,6 +1790,145 @@ document.addEventListener('DOMContentLoaded', function () {
                 date: date
             });
             window.location.href = 'certifications/certificate-businesspermit.php?' + params.toString();
+        });
+    }
+
+    // ============================================
+    // Vessel Docking Modal Logic
+    // ============================================
+    var vesselDockingNameInput    = document.getElementById('vesselDockingResidentName');
+    var vesselDockingIdInput      = document.getElementById('vesselDockingResidentId');
+    var vesselDockingDropdown     = document.getElementById('vesselDockingResidentDropdown');
+    var vesselDockingResidentBtn  = document.getElementById('vesselDockingResidentBtn');
+    var vesselDockingVesselNameInput = document.getElementById('vesselDockingVesselName');
+    var vesselDockingFromDateInput = document.getElementById('vesselDockingFromDate');
+    var vesselDockingToDateInput = document.getElementById('vesselDockingToDate');
+    var vesselDockingDateInput    = document.getElementById('vesselDockingDate');
+    var vesselDockingPrintBtn     = document.getElementById('vesselDockingPrintBtn');
+    var vesselDockingModalEl      = document.getElementById('vesselDockingModal');
+
+    var vesselDockingSearchTimeout = null;
+
+    if (vesselDockingModalEl) {
+        vesselDockingModalEl.addEventListener('show.bs.modal', function () {
+            if (vesselDockingNameInput)    vesselDockingNameInput.value    = '';
+            if (vesselDockingIdInput)      vesselDockingIdInput.value      = '';
+            if (vesselDockingDropdown)     { vesselDockingDropdown.innerHTML = ''; vesselDockingDropdown.style.display = 'none'; }
+            if (vesselDockingVesselNameInput) vesselDockingVesselNameInput.value = '';
+            if (vesselDockingFromDateInput) vesselDockingFromDateInput.value = getTodayDate();
+            if (vesselDockingToDateInput) vesselDockingToDateInput.value = getTodayDate();
+            if (vesselDockingDateInput)    vesselDockingDateInput.value    = getTodayDate();
+            clearVesselDockingError();
+        });
+    }
+
+    if (vesselDockingNameInput) {
+        vesselDockingNameInput.addEventListener('input', function () {
+            if (vesselDockingIdInput) vesselDockingIdInput.value = '';
+            clearVesselDockingError();
+            var term = this.value.trim();
+            clearTimeout(vesselDockingSearchTimeout);
+            if (term.length < 1) { hideVesselDockingDropdown(); return; }
+            vesselDockingSearchTimeout = setTimeout(function () { searchVesselDockingResidents(term); }, 250);
+        });
+        vesselDockingNameInput.addEventListener('keydown', function (e) { if (e.key === 'Escape') hideVesselDockingDropdown(); });
+    }
+
+    if (vesselDockingResidentBtn) {
+        vesselDockingResidentBtn.addEventListener('click', function (e) {
+            e.stopPropagation();
+            if (vesselDockingNameInput) { vesselDockingNameInput.value = ''; vesselDockingNameInput.focus(); }
+            if (vesselDockingIdInput) vesselDockingIdInput.value = '';
+            hideVesselDockingDropdown();
+        });
+    }
+
+    document.addEventListener('click', function (e) {
+        if (vesselDockingDropdown && !e.target.closest('#vesselDockingModal .resident-search-wrap')) { hideVesselDockingDropdown(); }
+    });
+
+    function searchVesselDockingResidents(term) {
+        fetch('model/search_residents.php?search=' + encodeURIComponent(term))
+            .then(function (res) { return res.json(); })
+            .then(function (data) {
+                var results = data.residents || data.data;
+                if (data.success && results) { renderVesselDockingDropdown(results); }
+                else { hideVesselDockingDropdown(); }
+            })
+            .catch(function () { hideVesselDockingDropdown(); });
+    }
+
+    function renderVesselDockingDropdown(residents) {
+        if (!vesselDockingDropdown) return;
+        if (residents.length === 0) { vesselDockingDropdown.innerHTML = '<div class="resident-dropdown-empty">No residents found</div>'; vesselDockingDropdown.style.display = 'block'; return; }
+        vesselDockingDropdown.innerHTML = '';
+        residents.forEach(function (r) {
+            var item = document.createElement('div');
+            item.className = 'resident-dropdown-item';
+            item.innerHTML = '<span class="resident-dropdown-name">' + escapeHtml(r.full_name.trim()) + '</span><span class="resident-dropdown-id">' + escapeHtml(r.resident_id || '') + '</span>';
+            item.addEventListener('mousedown', function (e) { e.preventDefault(); selectVesselDockingResident(r); });
+            vesselDockingDropdown.appendChild(item);
+        });
+        vesselDockingDropdown.style.display = 'block';
+    }
+
+    function selectVesselDockingResident(resident) {
+        if (vesselDockingNameInput) vesselDockingNameInput.value = resident.full_name.trim();
+        if (vesselDockingIdInput)   vesselDockingIdInput.value   = resident.id;
+        hideVesselDockingDropdown();
+        clearVesselDockingError();
+    }
+
+    function hideVesselDockingDropdown() {
+        if (vesselDockingDropdown) { vesselDockingDropdown.style.display = 'none'; vesselDockingDropdown.innerHTML = ''; }
+    }
+
+    function clearVesselDockingError() {
+        if (vesselDockingNameInput) vesselDockingNameInput.classList.remove('is-invalid');
+        var existing = document.querySelector('.vesseldocking-error-msg');
+        if (existing) existing.remove();
+    }
+
+    function showVesselDockingError(msg) {
+        clearVesselDockingError();
+        if (!vesselDockingNameInput) return;
+        vesselDockingNameInput.classList.add('is-invalid');
+        var err = document.createElement('div');
+        err.className = 'invalid-feedback vesseldocking-error-msg';
+        err.textContent = msg;
+        vesselDockingNameInput.closest('.resident-input-group').after(err);
+    }
+
+    if (vesselDockingPrintBtn) {
+        vesselDockingPrintBtn.addEventListener('click', function () {
+            var residentId = vesselDockingIdInput      ? vesselDockingIdInput.value.trim()      : '';
+            var vesselName = vesselDockingVesselNameInput ? vesselDockingVesselNameInput.value.trim() : '';
+            var fromDate   = vesselDockingFromDateInput ? vesselDockingFromDateInput.value.trim() : '';
+            var toDate     = vesselDockingToDateInput   ? vesselDockingToDateInput.value.trim()   : '';
+            var date       = vesselDockingDateInput    ? vesselDockingDateInput.value.trim()    : '';
+
+            if (!residentId) { showVesselDockingError('Please select a resident from the list.'); if (vesselDockingNameInput) vesselDockingNameInput.focus(); return; }
+            if (!vesselName) { 
+                if (vesselDockingVesselNameInput) { vesselDockingVesselNameInput.classList.add('is-invalid'); vesselDockingVesselNameInput.focus(); }
+                return;
+            }
+            if (!fromDate) { if (vesselDockingFromDateInput) { vesselDockingFromDateInput.classList.add('is-invalid'); vesselDockingFromDateInput.focus(); } return; }
+            if (!toDate) { if (vesselDockingToDateInput) { vesselDockingToDateInput.classList.add('is-invalid'); vesselDockingToDateInput.focus(); } return; }
+            if (!date) { if (vesselDockingDateInput) { vesselDockingDateInput.classList.add('is-invalid'); vesselDockingDateInput.focus(); } return; }
+            
+            if (vesselDockingVesselNameInput) vesselDockingVesselNameInput.classList.remove('is-invalid');
+            if (vesselDockingFromDateInput) vesselDockingFromDateInput.classList.remove('is-invalid');
+            if (vesselDockingToDateInput) vesselDockingToDateInput.classList.remove('is-invalid');
+            if (vesselDockingDateInput) vesselDockingDateInput.classList.remove('is-invalid');
+
+            var params = new URLSearchParams({ 
+                resident_id: residentId, 
+                vesselname: vesselName,
+                fromdate: fromDate,
+                todate: toDate,
+                date: date
+            });
+            window.location.href = 'certifications/certificate-vesseldocking.php?' + params.toString();
         });
     }
 

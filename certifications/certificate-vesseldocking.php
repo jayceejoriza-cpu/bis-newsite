@@ -27,8 +27,10 @@ try {
 // GET Parameters
 // ============================================
 $resident_id = isset($_GET['resident_id']) ? intval($_GET['resident_id']) : 0;
-$child_id   = isset($_GET['child_id'])   ? intval($_GET['child_id'])   : 0;
-$cert_date  = isset($_GET['date'])       ? $_GET['date']             : date('Y-m-d');
+$vesselName   = isset($_GET['vesselname'])   ? trim($_GET['vesselname'])     : '';
+$fromDate     = isset($_GET['fromdate']) && !empty(trim($_GET['fromdate'])) ? date('F d, Y', strtotime(trim($_GET['fromdate']))) : date('F d, Y');
+$toDate       = isset($_GET['todate']) && !empty(trim($_GET['todate']))     ? date('F d, Y', strtotime(trim($_GET['todate'])))   : date('F d, Y');
+$cert_date   = isset($_GET['date'])        ? $_GET['date']                : date('Y-m-d');
 
 if ($resident_id <= 0) {
     die("Invalid resident ID.");
@@ -66,67 +68,6 @@ try {
 if (!$resident) {
     die("Resident not found.");
 }
-
-// ============================================
-// Fetch Child Data (if child_id is provided)
-// ============================================
-$child = null;
-if ($child_id > 0) {
-    try {
-        $stmt = $pdo->prepare("
-            SELECT id, first_name, middle_name, last_name, suffix,
-                   date_of_birth, place_of_birth, sex,
-                   TIMESTAMPDIFF(YEAR, date_of_birth, CURDATE()) AS age
-            FROM residents
-            WHERE id = ?
-            LIMIT 1
-        ");
-        $stmt->execute([$child_id]);
-        $row = $stmt->fetch();
-        if ($row) {
-            $child = [
-                'firstname'   => $row['first_name'],
-                'middlename'  => $row['middle_name'],
-                'lastname'    => $row['last_name'],
-                'suffix'      => $row['suffix'],
-                'birthdate'   => $row['date_of_birth'],
-                'place_of_birth' => $row['place_of_birth'] ?? '',
-                'gender'      => $row['sex'] ?? '',
-                'age'         => $row['age'],
-            ];
-        }
-    } catch (PDOException $e) {
-        error_log("Error fetching child: " . $e->getMessage());
-    }
-}
-
-// Build child full name
-$childFullName = '';
-$childGender = '';
-$childAge = '';
-$childBirthdate = '';
-$childPlaceOfBirth = '';
-
-if ($child) {
-    $childFullName = ucwords(trim(
-        $child['firstname'] . ' ' .
-        ($child['middlename'] ? $child['middlename'] . ' ' : '') .
-        $child['lastname'] .
-        ($child['suffix'] ? ' ' . $child['suffix'] : '')
-    ));
-    $childGender = strtoupper($child['gender']);
-    $childAge = $child['age'] ?? '';
-    $childBirthdate = !empty($child['birthdate']) 
-        ? date('F d, Y', strtotime($child['birthdate'])) 
-        : '';
-    $childPlaceOfBirth = !empty($child['place_of_birth']) 
-        ? ucwords($child['place_of_birth']) 
-        : '';
-}
-
-// Determine son/daughter text
-$sonDaughter = ($childGender === 'MALE') ? 'SON' : 'DAUGHTER';
-$herHis = ($childGender === 'MALE') ? 'his' : 'her';
 
 // ============================================
 // Fetch Barangay Info
@@ -219,7 +160,7 @@ $birthdateFmt = !empty($resident['birthdate'])
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Certification Of Registration of Birth Certificate - <?= htmlspecialchars($brgy) ?></title>
+    <title>Certification for Vessel Docking - <?= htmlspecialchars($brgy) ?></title>
 
     <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="../assets/bootstrap/css/bootstrap.min.css">
@@ -261,7 +202,7 @@ $birthdateFmt = !empty($resident['birthdate'])
             display: flex;
             align-items: center;
             justify-content: space-between;
-            border-bottom: 2px solid #d81010;
+            border-bottom: 2px solid #2f009c;
             padding-bottom: 10px;
             margin-bottom: 12px;
             margin-top: 70px;
@@ -510,7 +451,7 @@ $birthdateFmt = !empty($resident['birthdate'])
         <div class="dashboard-content">
             <div class="card">
                 <div class="card-header">
-                    <div class="fw-bold">Certification Of Registration of Birth Certificate</div>
+                    <div class="fw-bold">Certification for Vessel Docking</div>
                 </div>
 
                 <div class="card-body" id="printThis">
@@ -557,37 +498,38 @@ $birthdateFmt = !empty($resident['birthdate'])
 
                                     <!-- TO WHOM IT MAY CONCERN -->
                                     <p style="margin-top: 10px; font-size:16px;">
-                                        <span>TO WHOM IT MAY CONCERN:</span>
+                                        TO WHOM IT MAY CONCERN:
                                     </p>
 
                                     <!-- Paragraph 1: Certification body -->
                                     <p class="text-indent">
-                                       THIS IS TO CERTIFY that
-                                       <span class="bold"><?= !empty($childFullName) ? strtoupper($childFullName) : '*name of the child*' ?></span>
-                                       born on <span class="underline-val"><?= !empty($childBirthdate) ? $childBirthdate : '*birth date*' ?></span>
-                                       at <span class="underline-val"><?= !empty($childPlaceOfBirth) ? $childPlaceOfBirth : '*place of birth*' ?></span>, 
-                                       Filipino, <span class="bold"><?= !empty($sonDaughter) ? $sonDaughter : '*SON/DAUGHTER*' ?></span> of  
-                                       <span class="bold"><?= strtoupper($residentFullName) ?></span>
-                                       is a resident with postal address at 
+                                        <i>This is to certify that </i> the fishing vessel, <span class="bold">"<?= htmlspecialchars(strtoupper($vesselName)) ?>"</span> owned and operated by
+                                        <span class="bold"><?= strtoupper($residentFullName) ?></span>,
+                                        of   
+                                        <span><?= ucwords($brgy) ?></span>,
+                                        <span><?= ucwords($town) ?></span>,
+                                        <span><?= ucwords($province) ?></span> 
+                                        has been dry docked to its regular repair at 
                                         <span><?= ucwords($brgy) ?></span>,
                                         <span><?= ucwords($town) ?></span>,
                                         <span><?= ucwords($province) ?>.</span>
+                                        The said fishing vessel will breached-in from <strong><?= strtoupper($fromDate) ?> to <?= strtoupper($toDate) ?></strong>.
                                        
                                     </p>
 
                                     <!-- Paragraph 2: Purpose -->
                                     <p class="text-indent">
-                                        This Certification is issued upon request of <span class="bold"><?= strtoupper($residentFullName) ?></span>
-                                        for REGISTRATION OF BIRTH CERTIFICATE of <?= !empty($herHis) ? $herHis : '*her/his*' ?> <?= !empty($sonDaughter) ? strtolower($sonDaughter) : '*son/daughter*' ?>.
+                                        This Certification is being issued upon request of the subject person for whatever legal
+                                         purpose or intend it may serve his/her.
                                     </p>
 
                                     <!-- Paragraph 3: Given this -->
                                     <p class="text-indent">
-                                       <strong> Issued this
-                                        <span class="underline-val"><?= $dayOrdinal ?></span>
-                                        <strong>day</strong> of
-                                        <span class="underline-val"><?= $monthName ?></span>,
-                                        <span class="underline-val"><?= $yearNum ?></span></strong>
+                                        ISSUED this
+                                        <strong><?= $dayOrdinal ?>
+                                        day of
+                                        <?= strtoupper($monthName) ?>,
+                                        <?= $yearNum ?></strong>
                                         at the Office of the Punong Barangay of
                                          <span><?= ucwords($brgy) ?></span>,
                                         <span><?= ucwords($town) ?></span>,
@@ -645,8 +587,8 @@ $birthdateFmt = !empty($resident['birthdate'])
         function saveAndPrint() {
             const formData = new FormData();
             formData.append('resident_id', '<?php echo $resident_id; ?>');
-            formData.append('certificate_type', 'Registration of Birth Certificate');
-            formData.append('purpose', 'Birth Certificate Registration');
+            formData.append('certificate_type', 'Certificate for Vessel Docking');
+            formData.append('purpose', 'Vessel Docking Certification');
 
             fetch('../model/save_print_log.php', {
                 method: 'POST',

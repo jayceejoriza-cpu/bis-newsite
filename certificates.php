@@ -87,6 +87,12 @@ $certificateTypes = [
         'icon'        => 'fa-file-signature',
         'modal'       => 'oathModal',
     ],
+    [
+        'title'       => 'Certificate for Vessel Docking',
+        'description' => 'For vessel owners who need docking certification',
+        'icon'        => 'fa-anchor',
+        'modal'       => 'vesselDockingModal',
+    ],
 ];
 ?>
 <!DOCTYPE html>
@@ -228,7 +234,7 @@ $certificateTypes = [
                     <!-- Date -->
                     <div class="cert-field-group">
                         <label class="cert-field-label">
-                            DATE <span class="required-star">*</span>
+                             ISSUED DATE <span class="required-star">*</span>
                         </label>
                         <input type="date"
                                id="indigencyDate"
@@ -239,9 +245,8 @@ $certificateTypes = [
 
                     <!-- Type of Assistance -->
                     <div class="cert-field-group">
-                        <label class="cert-field-label">TYPE OF ASSISTANCE</label>
-                        <select id="indigencyAssistance" class="form-control cert-input">
-                            <option value="">Select assistance type</option>
+                        <label class="cert-field-label">TYPE OF ASSISTANCE<span class="required-star">*</span></label>
+                        <select id="indigencyAssistance" class="form-control cert-input" required>
                             <option value="FINANCIAL">FINANCIAL</option>
                             <option value="MEDICAL">MEDICAL</option>
                             <option value="BURIAL">BURIAL</option>
@@ -260,7 +265,7 @@ $certificateTypes = [
                     </button>
                     <button type="button" class="btn btn-print-cert" id="indigencyPrintBtn">
                         <i class="fas fa-print"></i>
-                        Print Certificate
+                        Generate Certificate
                     </button>
                 </div>
             </div>
@@ -311,7 +316,7 @@ $certificateTypes = [
                     <!-- Date -->
                     <div class="cert-field-group">
                         <label class="cert-field-label">
-                            DATE <span class="required-star">*</span>
+                            ISSUED DATE <span class="required-star">*</span>
                         </label>
                         <input type="date"
                                id="residencyDate"
@@ -344,7 +349,7 @@ $certificateTypes = [
                     </button>
                     <button type="button" class="btn btn-print-cert" id="residencyPrintBtn">
                         <i class="fas fa-print"></i>
-                        Print Certificate
+                        Generate Certificate
                     </button>
                 </div>
             </div>
@@ -377,7 +382,7 @@ $certificateTypes = [
                         </div>
                     </div>
                     <div class="cert-field-group">
-                        <label class="cert-field-label">DATE <span class="required-star">*</span></label>
+                        <label class="cert-field-label">ISSUED DATE <span class="required-star">*</span></label>
                         <input type="date" id="lowIncomeDate" class="form-control cert-input" value="<?php echo date('Y-m-d'); ?>" required>
                     </div>
                     <div class="cert-field-group">
@@ -387,7 +392,7 @@ $certificateTypes = [
                 </div>
                 <div class="modal-footer cert-modal-footer">
                     <button type="button" class="btn btn-cancel" data-bs-dismiss="modal"><i class="fas fa-times"></i> Cancel</button>
-                    <button type="button" class="btn btn-print-cert" id="lowIncomePrintBtn"><i class="fas fa-print"></i> Print Certificate</button>
+                    <button type="button" class="btn btn-print-cert" id="lowIncomePrintBtn"><i class="fas fa-print"></i> Generate Certificate</button>
                 </div>
             </div>
         </div>
@@ -419,7 +424,7 @@ $certificateTypes = [
                         </div>
                     </div>
                     <div class="cert-field-group">
-                        <label class="cert-field-label">DATE <span class="required-star">*</span></label>
+                        <label class="cert-field-label">ISSUED DATE <span class="required-star">*</span></label>
                         <input type="date" id="soloParentDate" class="form-control cert-input" value="<?php echo date('Y-m-d'); ?>" required>
                     </div>
                     <div class="cert-field-group">
@@ -429,7 +434,7 @@ $certificateTypes = [
                 </div>
                 <div class="modal-footer cert-modal-footer">
                     <button type="button" class="btn btn-cancel" data-bs-dismiss="modal"><i class="fas fa-times"></i> Cancel</button>
-                    <button type="button" class="btn btn-print-cert" id="soloParentPrintBtn"><i class="fas fa-print"></i> Print Certificate</button>
+                    <button type="button" class="btn btn-print-cert" id="soloParentPrintBtn"><i class="fas fa-print"></i> Generate Certificate</button>
                 </div>
             </div>
         </div>
@@ -449,19 +454,32 @@ $certificateTypes = [
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body cert-modal-body">
+                    <!-- Parent/Applicant Full Name -->
                     <div class="cert-field-group">
-                        <label class="cert-field-label">RESIDENT FULL NAME <span class="required-star">*</span></label>
+                        <label class="cert-field-label">PARENT/APPLICANT FULL NAME <span class="required-star">*</span></label>
                         <div class="resident-search-wrap">
                             <div class="resident-input-group">
-                                <input type="text" id="rbcResidentName" class="form-control cert-input" placeholder="Select resident" autocomplete="off">
+                                <input type="text" id="rbcResidentName" class="form-control cert-input" placeholder="Select parent/applicant" autocomplete="off">
                                 <input type="hidden" id="rbcResidentId">
                                 <button type="button" class="btn btn-primary btn-resident" id="rbcResidentBtn"><i class="fas fa-user"></i> RESIDENT</button>
                             </div>
                             <div class="resident-dropdown" id="rbcResidentDropdown" style="display:none;"></div>
                         </div>
                     </div>
+                    <!-- Child Full Name -->
                     <div class="cert-field-group">
-                        <label class="cert-field-label">DATE <span class="required-star">*</span></label>
+                        <label class="cert-field-label">CHILD NAME <span class="required-star">*</span></label>
+                        <div class="resident-search-wrap">
+                            <div class="resident-input-group">
+                                <input type="text" id="rbcChildName" class="form-control cert-input" placeholder="Select child" autocomplete="off">
+                                <input type="hidden" id="rbcChildId">
+                                <button type="button" class="btn btn-primary btn-resident" id="rbcChildBtn"><i class="fas fa-child"></i> CHILD</button>
+                            </div>
+                            <div class="resident-dropdown" id="rbcChildDropdown" style="display:none;"></div>
+                        </div>
+                    </div>
+                    <div class="cert-field-group">
+                        <label class="cert-field-label">ISSUED DATE <span class="required-star">*</span></label>
                         <input type="date" id="rbcDate" class="form-control cert-input" value="<?php echo date('Y-m-d'); ?>" required>
                     </div>
                     <div class="cert-field-group">
@@ -471,7 +489,7 @@ $certificateTypes = [
                 </div>
                 <div class="modal-footer cert-modal-footer">
                     <button type="button" class="btn btn-cancel" data-bs-dismiss="modal"><i class="fas fa-times"></i> Cancel</button>
-                    <button type="button" class="btn btn-print-cert" id="rbcPrintBtn"><i class="fas fa-print"></i> Print Certificate</button>
+                    <button type="button" class="btn btn-print-cert" id="rbcPrintBtn"><i class="fas fa-print"></i> Generate Certificate</button>
                 </div>
             </div>
         </div>
@@ -507,7 +525,7 @@ $certificateTypes = [
                         <input type="text" id="fishingBoatName" class="form-control cert-input">
                     </div>
                     <div class="cert-field-group">
-                        <label class="cert-field-label">DATE <span class="required-star">*</span></label>
+                        <label class="cert-field-label">ISSUED DATE <span class="required-star">*</span></label>
                         <input type="date" id="fishingDate" class="form-control cert-input" value="<?php echo date('Y-m-d'); ?>" required>
                     </div>
                     <div class="cert-field-group">
@@ -517,7 +535,7 @@ $certificateTypes = [
                 </div>
                 <div class="modal-footer cert-modal-footer">
                     <button type="button" class="btn btn-cancel" data-bs-dismiss="modal"><i class="fas fa-times"></i> Cancel</button>
-                    <button type="button" class="btn btn-print-cert" id="fishingPrintBtn"><i class="fas fa-print"></i> Print Certificate</button>
+                    <button type="button" class="btn btn-print-cert" id="fishingPrintBtn"><i class="fas fa-print"></i> Generate Certificate</button>
                 </div>
             </div>
         </div>
@@ -549,7 +567,7 @@ $certificateTypes = [
                         </div>
                     </div>
                     <div class="cert-field-group">
-                        <label class="cert-field-label">DATE <span class="required-star">*</span></label>
+                        <label class="cert-field-label">ISSUED DATE <span class="required-star">*</span></label>
                         <input type="date" id="ftJobseekerDate" class="form-control cert-input" value="<?php echo date('Y-m-d'); ?>" required>
                     </div>
                     <div class="cert-field-group">
@@ -559,7 +577,7 @@ $certificateTypes = [
                 </div>
                 <div class="modal-footer cert-modal-footer">
                     <button type="button" class="btn btn-cancel" data-bs-dismiss="modal"><i class="fas fa-times"></i> Cancel</button>
-                    <button type="button" class="btn btn-print-cert" id="ftJobseekerPrintBtn"><i class="fas fa-print"></i> Print Certificate</button>
+                    <button type="button" class="btn btn-print-cert" id="ftJobseekerPrintBtn"><i class="fas fa-print"></i> Generate Certificate</button>
                 </div>
             </div>
         </div>
@@ -591,7 +609,7 @@ $certificateTypes = [
                         </div>
                     </div>
                     <div class="cert-field-group">
-                        <label class="cert-field-label">DATE <span class="required-star">*</span></label>
+                        <label class="cert-field-label">ISSUED DATE <span class="required-star">*</span></label>
                         <input type="date" id="gmrcDate" class="form-control cert-input" value="<?php echo date('Y-m-d'); ?>" required>
                     </div>
                     <div class="cert-field-group">
@@ -605,7 +623,7 @@ $certificateTypes = [
                 </div>
                 <div class="modal-footer cert-modal-footer">
                     <button type="button" class="btn btn-cancel" data-bs-dismiss="modal"><i class="fas fa-times"></i> Cancel</button>
-                    <button type="button" class="btn btn-print-cert" id="gmrcPrintBtn"><i class="fas fa-print"></i> Print Certificate</button>
+                    <button type="button" class="btn btn-print-cert" id="gmrcPrintBtn"><i class="fas fa-print"></i> Generate Certificate</button>
                 </div>
             </div>
         </div>
@@ -637,7 +655,7 @@ $certificateTypes = [
                         </div>
                     </div>
                     <div class="cert-field-group">
-                        <label class="cert-field-label">DATE <span class="required-star">*</span></label>
+                        <label class="cert-field-label">ISSUED DATE <span class="required-star">*</span></label>
                         <input type="date" id="oathDate" class="form-control cert-input" value="<?php echo date('Y-m-d'); ?>" required>
                     </div>
                     <div class="cert-field-group">
@@ -647,7 +665,7 @@ $certificateTypes = [
                 </div>
                 <div class="modal-footer cert-modal-footer">
                     <button type="button" class="btn btn-cancel" data-bs-dismiss="modal"><i class="fas fa-times"></i> Cancel</button>
-                    <button type="button" class="btn btn-print-cert" id="oathPrintBtn"><i class="fas fa-print"></i> Print Certificate</button>
+                    <button type="button" class="btn btn-print-cert" id="oathPrintBtn"><i class="fas fa-print"></i> Generate Certificate</button>
                 </div>
             </div>
         </div>
@@ -679,7 +697,7 @@ $certificateTypes = [
                         </div>
                     </div>
                     <div class="cert-field-group">
-                        <label class="cert-field-label">DATE <span class="required-star">*</span></label>
+                        <label class="cert-field-label">ISSUED DATE <span class="required-star">*</span></label>
                         <input type="date" id="brgyClearanceDate" class="form-control cert-input" value="<?php echo date('Y-m-d'); ?>" required>
                     </div>
                     <div class="cert-field-group">
@@ -701,7 +719,7 @@ $certificateTypes = [
                 </div>
                 <div class="modal-footer cert-modal-footer">
                     <button type="button" class="btn btn-cancel" data-bs-dismiss="modal"><i class="fas fa-times"></i> Cancel</button>
-                    <button type="button" class="btn btn-print-cert" id="brgyClearancePrintBtn"><i class="fas fa-print"></i> Print Certificate</button>
+                    <button type="button" class="btn btn-print-cert" id="brgyClearancePrintBtn"><i class="fas fa-print"></i> Generate Certificate</button>
                 </div>
             </div>
         </div>
@@ -754,13 +772,13 @@ $certificateTypes = [
                         </select>
                     </div>
                     <div class="cert-field-group">
-                        <label class="cert-field-label">DATE <span class="required-star">*</span></label>
+                        <label class="cert-field-label">ISSUED DATE <span class="required-star">*</span></label>
                         <input type="date" id="brgyBusinessClearanceDate" class="form-control cert-input" value="<?php echo date('Y-m-d'); ?>" required>
                     </div>
                 </div>
                 <div class="modal-footer cert-modal-footer">
                     <button type="button" class="btn btn-cancel" data-bs-dismiss="modal"><i class="fas fa-times"></i> Cancel</button>
-                    <button type="button" class="btn btn-print-cert" id="brgyBusinessClearancePrintBtn"><i class="fas fa-print"></i> Print Certificate</button>
+                    <button type="button" class="btn btn-print-cert" id="brgyBusinessClearancePrintBtn"><i class="fas fa-print"></i> Generate Certificate</button>
                 </div>
             </div>
         </div>
@@ -813,13 +831,63 @@ $certificateTypes = [
                         </select>
                     </div>
                     <div class="cert-field-group">
-                        <label class="cert-field-label">DATE <span class="required-star">*</span></label>
+                        <label class="cert-field-label">ISSUED DATE <span class="required-star">*</span></label>
                         <input type="date" id="businessPermitDate" class="form-control cert-input" value="<?php echo date('Y-m-d'); ?>" required>
                     </div>
                 </div>
                 <div class="modal-footer cert-modal-footer">
                     <button type="button" class="btn btn-cancel" data-bs-dismiss="modal"><i class="fas fa-times"></i> Cancel</button>
-                    <button type="button" class="btn btn-print-cert" id="businessPermitPrintBtn"><i class="fas fa-print"></i> Print Certificate</button>
+                    <button type="button" class="btn btn-print-cert" id="businessPermitPrintBtn"><i class="fas fa-print"></i> Generate Certificate</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================
+         Certificate for Vessel Docking Modal
+         ============================================ -->
+    <div class="modal fade" id="vesselDockingModal" tabindex="-1" aria-labelledby="vesselDockingModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content cert-request-modal">
+                <div class="modal-header cert-modal-header">
+                    <div class="cert-modal-title-wrap">
+                        <i class="fas fa-anchor cert-modal-icon"></i>
+                        <h5 class="modal-title" id="vesselDockingModalLabel">Create Certificate for Vessel Docking Request</h5>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body cert-modal-body">
+                    <div class="cert-field-group">
+                        <label class="cert-field-label">RESIDENT FULL NAME <span class="required-star">*</span></label>
+                        <div class="resident-search-wrap">
+                            <div class="resident-input-group">
+                                <input type="text" id="vesselDockingResidentName" class="form-control cert-input" placeholder="Select resident" autocomplete="off">
+                                <input type="hidden" id="vesselDockingResidentId">
+                                <button type="button" class="btn btn-primary btn-resident" id="vesselDockingResidentBtn"><i class="fas fa-user"></i> RESIDENT</button>
+                            </div>
+                            <div class="resident-dropdown" id="vesselDockingResidentDropdown" style="display:none;"></div>
+                        </div>
+                    </div>
+                    <div class="cert-field-group">
+                        <label class="cert-field-label">NAME OF VESSEL <span class="required-star">*</span></label>
+                        <input type="text" id="vesselDockingVesselName" class="form-control cert-input" placeholder="Enter vessel name">
+                    </div>
+                    <div class="cert-field-group">
+                        <label class="cert-field-label">FROM DATE <span class="required-star">*</span></label>
+                        <input type="date" id="vesselDockingFromDate" class="form-control cert-input" value="<?php echo date('Y-m-d'); ?>" required>
+                    </div>
+                    <div class="cert-field-group">
+                        <label class="cert-field-label">TO DATE <span class="required-star">*</span></label>
+                        <input type="date" id="vesselDockingToDate" class="form-control cert-input" value="<?php echo date('Y-m-d'); ?>" required>
+                    </div>
+                    <div class="cert-field-group">
+                        <label class="cert-field-label">ISSUED DATE <span class="required-star">*</span></label>
+                        <input type="date" id="vesselDockingDate" class="form-control cert-input" value="<?php echo date('Y-m-d'); ?>" required>
+                    </div>
+                </div>
+                <div class="modal-footer cert-modal-footer">
+                    <button type="button" class="btn btn-cancel" data-bs-dismiss="modal"><i class="fas fa-times"></i> Cancel</button>
+                    <button type="button" class="btn btn-print-cert" id="vesselDockingPrintBtn"><i class="fas fa-print"></i> Generate Certificate</button>
                 </div>
             </div>
         </div>
