@@ -46,6 +46,24 @@ $certificateTypes = [
         'modal'       => 'rbcModal',
     ],
     [
+        'title'       => 'Barangay Clearance',
+        'description' => 'For residents who need barangay clearance',
+        'icon'        => 'fa-file-signature',
+        'modal'       => 'brgyClearanceModal',
+    ],
+    [
+        'title'       => 'Barangay Business Clearance',
+        'description' => 'For business owners who need clearance',
+        'icon'        => 'fa-briefcase',
+        'modal'       => 'brgyBusinessClearanceModal',
+    ],
+    [
+        'title'       => 'Business Permit',
+        'description' => 'For business permit endorsement',
+        'icon'        => 'fa-store',
+        'modal'       => 'businessPermitModal',
+    ],
+    [
         'title'       => 'Fishing Clearance',
         'description' => 'For residents who need fishing clearance',
         'icon'        => 'fa-fish',
@@ -222,10 +240,14 @@ $certificateTypes = [
                     <!-- Type of Assistance -->
                     <div class="cert-field-group">
                         <label class="cert-field-label">TYPE OF ASSISTANCE</label>
-                        <input type="text"
-                               id="indigencyAssistance"
-                               class="form-control cert-input"
-                               placeholder="e.g., Medical, Educational, Financial">
+                        <select id="indigencyAssistance" class="form-control cert-input">
+                            <option value="">Select assistance type</option>
+                            <option value="FINANCIAL">FINANCIAL</option>
+                            <option value="MEDICAL">MEDICAL</option>
+                            <option value="BURIAL">BURIAL</option>
+                            <option value="SCHOLARSHIP">SCHOLARSHIP</option>
+                            <option value="EDUCATIONAL">EDUCATIONAL</option>
+                        </select>
                     </div>
 
                 </div>
@@ -300,11 +322,16 @@ $certificateTypes = [
 
                     <!-- Purpose -->
                     <div class="cert-field-group">
-                        <label class="cert-field-label">PURPOSE <small class="text-muted" style="text-transform:none;font-weight:400;">(for "issued upon request... for ___")</small></label>
-                        <input type="text"
-                               id="residencyPurpose"
-                               class="form-control cert-input"
-                               placeholder="e.g., Employment, Scholarship, Loan Application">
+                        <label class="cert-field-label">PURPOSE</label>
+                        <select id="residencyPurpose" class="form-control cert-input">
+                            <option value="">Select assistance type</option>
+                            <option value="DEPED RANKING">DEPED RANKING</option>
+                            <option value="BANK PURPOSES">BANK PURPOSES</option>
+                            <option value="SCHOOL PURPOSES">SCHOOL PURPOSES</option>
+                            <option value="MARRIAGE COUNSELLING">MARRIAGE COUNSELLING</option>
+                            <option value="SENIOR CETIZEN MEMBERSHIP">SENIOR CETIZEN MEMBERSHIP</option>
+                            <option value="PWD MEMBERSHIP">PWD MEMBERSHIP</option>
+                         </select>
                     </div>
 
                 </div>
@@ -476,6 +503,10 @@ $certificateTypes = [
                         </div>
                     </div>
                     <div class="cert-field-group">
+                        <label class="cert-field-label">NAME OF BOAT <span class="required-star">*</span></label>
+                        <input type="text" id="fishingBoatName" class="form-control cert-input">
+                    </div>
+                    <div class="cert-field-group">
                         <label class="cert-field-label">DATE <span class="required-star">*</span></label>
                         <input type="date" id="fishingDate" class="form-control cert-input" value="<?php echo date('Y-m-d'); ?>" required>
                     </div>
@@ -523,7 +554,7 @@ $certificateTypes = [
                     </div>
                     <div class="cert-field-group">
                         <label class="cert-field-label">PURPOSE</label>
-                        <input type="text" id="ftJobseekerPurpose" class="form-control cert-input" value="First Time Jobseeker Assistance (RA 11261)" placeholder="e.g., Employment">
+                        <input type="text" id="ftJobseekerPurpose" class="form-control cert-input" value="First Time Jobseeker Assistance (RA 11261)" placeholder="e.g., Employment" readonly>
                     </div>
                 </div>
                 <div class="modal-footer cert-modal-footer">
@@ -565,7 +596,11 @@ $certificateTypes = [
                     </div>
                     <div class="cert-field-group">
                         <label class="cert-field-label">PURPOSE</label>
-                        <input type="text" id="gmrcPurpose" class="form-control cert-input" value="Good Moral Character Verification" placeholder="e.g., Employment, School Enrollment">
+                        <select id="gmrcPurpose" class="form-control cert-input">
+                            <option value="EDUCATIONAL">EDUCATIONAL</option>
+                            <option value="DEPED RANKING">DEPED RANKING</option>
+                            <option value="BOARD EXAMINATION">BOARD EXAMINATION</option>
+                         </select>
                     </div>
                 </div>
                 <div class="modal-footer cert-modal-footer">
@@ -607,12 +642,184 @@ $certificateTypes = [
                     </div>
                     <div class="cert-field-group">
                         <label class="cert-field-label">PURPOSE</label>
-                        <input type="text" id="oathPurpose" class="form-control cert-input" value="Oath of Undertaking (RA 11261)" placeholder="First-Time Jobseeker">
+                        <input type="text" id="oathPurpose" class="form-control cert-input" value="Oath of Undertaking (RA 11261)" placeholder="First-Time Jobseeker" disabled readonly>
                     </div>
                 </div>
                 <div class="modal-footer cert-modal-footer">
                     <button type="button" class="btn btn-cancel" data-bs-dismiss="modal"><i class="fas fa-times"></i> Cancel</button>
                     <button type="button" class="btn btn-print-cert" id="oathPrintBtn"><i class="fas fa-print"></i> Print Certificate</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================
+         Barangay Clearance Modal
+         ============================================ -->
+    <div class="modal fade" id="brgyClearanceModal" tabindex="-1" aria-labelledby="brgyClearanceModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content cert-request-modal">
+                <div class="modal-header cert-modal-header">
+                    <div class="cert-modal-title-wrap">
+                        <i class="fas fa-file-signature cert-modal-icon"></i>
+                        <h5 class="modal-title" id="brgyClearanceModalLabel">Create Barangay Clearance Request</h5>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body cert-modal-body">
+                    <div class="cert-field-group">
+                        <label class="cert-field-label">RESIDENT FULL NAME <span class="required-star">*</span></label>
+                        <div class="resident-search-wrap">
+                            <div class="resident-input-group">
+                                <input type="text" id="brgyClearanceResidentName" class="form-control cert-input" placeholder="Select resident" autocomplete="off">
+                                <input type="hidden" id="brgyClearanceResidentId">
+                                <button type="button" class="btn btn-primary btn-resident" id="brgyClearanceResidentBtn"><i class="fas fa-user"></i> RESIDENT</button>
+                            </div>
+                            <div class="resident-dropdown" id="brgyClearanceResidentDropdown" style="display:none;"></div>
+                        </div>
+                    </div>
+                    <div class="cert-field-group">
+                        <label class="cert-field-label">DATE <span class="required-star">*</span></label>
+                        <input type="date" id="brgyClearanceDate" class="form-control cert-input" value="<?php echo date('Y-m-d'); ?>" required>
+                    </div>
+                    <div class="cert-field-group">
+                        <label class="cert-field-label">PURPOSE</label>
+                        <select id="brgyClearancePurpose" class="form-control cert-input">
+                            <option value="">Select purpose</option>
+                            <option value="FISHING PERMIT">FISHING PERMIT</option>
+                            <option value="FOR EMPLOYMENT">FOR EMPLOYMENT</option>
+                            <option value="WORKING PERMIT">WORKING PERMIT</option>
+                            <option value="TRICYCLE RENEWAL PERMIT">TRICYCLE RENEWAL PERMIT</option>
+                            <option value="LOAN APPLICATION">LOAN APPLICATION</option>
+                            <option value="TRICYLE LOAN">TRICYLE LOAN</option>
+                            <option value="MOTORCYCLE LOAN">MOTORCYCLE LOAN</option>
+                            <option value="CAR LOAN">CAR LOANN</option>
+                            <option value="WORK IMMERSION">WORK IMMERSION</option>
+                            <option value="BANK PURPOSES">BANK PURPOSES</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer cert-modal-footer">
+                    <button type="button" class="btn btn-cancel" data-bs-dismiss="modal"><i class="fas fa-times"></i> Cancel</button>
+                    <button type="button" class="btn btn-print-cert" id="brgyClearancePrintBtn"><i class="fas fa-print"></i> Print Certificate</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================
+         Barangay Business Clearance Modal
+         ============================================ -->
+    <div class="modal fade" id="brgyBusinessClearanceModal" tabindex="-1" aria-labelledby="brgyBusinessClearanceModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content cert-request-modal">
+                <div class="modal-header cert-modal-header">
+                    <div class="cert-modal-title-wrap">
+                        <i class="fas fa-briefcase cert-modal-icon"></i>
+                        <h5 class="modal-title" id="brgyBusinessClearanceModalLabel">Create Barangay Business Clearance Request</h5>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body cert-modal-body">
+                    <div class="cert-field-group">
+                        <label class="cert-field-label">BUSINESS OWNER NAME <span class="required-star">*</span></label>
+                        <div class="resident-search-wrap">
+                            <div class="resident-input-group">
+                                <input type="text" id="brgyBusinessClearanceResidentName" class="form-control cert-input" placeholder="Select resident" autocomplete="off">
+                                <input type="hidden" id="brgyBusinessClearanceResidentId">
+                                <button type="button" class="btn btn-primary btn-resident" id="brgyBusinessClearanceResidentBtn"><i class="fas fa-user"></i> RESIDENT</button>
+                            </div>
+                            <div class="resident-dropdown" id="brgyBusinessClearanceResidentDropdown" style="display:none;"></div>
+                        </div>
+                    </div>
+                    <div class="cert-field-group">
+                        <label class="cert-field-label">BUSINESS NAME <span class="required-star">*</span></label>
+                        <input type="text" id="brgyBusinessClearanceBusinessName" class="form-control cert-input" placeholder="Enter business name">
+                    </div>
+                    <div class="cert-field-group">
+                        <label class="cert-field-label">BUSINESS ADDRESS</label>
+                        <input type="text" id="brgyBusinessClearanceBusinessAddress" class="form-control cert-input" placeholder="Enter business address">
+                    </div>
+                    <div class="cert-field-group">
+                        <label class="cert-field-label">NATURE OF BUSINESS</label>
+                        <select id="brgyBusinessClearanceNature" class="form-control cert-input">
+                            <option value="">Select nature of business</option>
+                            <option value="RETAIL">RETAIL</option>
+                            <option value="WHOLESALE">WHOLESALE</option>
+                            <option value="SERVICE">SERVICE</option>
+                            <option value="MANUFACTURING">MANUFACTURING</option>
+                            <option value="RESTAURANT">RESTAURANT</option>
+                            <option value="SARI-SARI STORE">SARI-SARI STORE</option>
+                            <option value="OTHER">OTHER</option>
+                        </select>
+                    </div>
+                    <div class="cert-field-group">
+                        <label class="cert-field-label">DATE <span class="required-star">*</span></label>
+                        <input type="date" id="brgyBusinessClearanceDate" class="form-control cert-input" value="<?php echo date('Y-m-d'); ?>" required>
+                    </div>
+                </div>
+                <div class="modal-footer cert-modal-footer">
+                    <button type="button" class="btn btn-cancel" data-bs-dismiss="modal"><i class="fas fa-times"></i> Cancel</button>
+                    <button type="button" class="btn btn-print-cert" id="brgyBusinessClearancePrintBtn"><i class="fas fa-print"></i> Print Certificate</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================
+         Business Permit Modal
+         ============================================ -->
+    <div class="modal fade" id="businessPermitModal" tabindex="-1" aria-labelledby="businessPermitModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content cert-request-modal">
+                <div class="modal-header cert-modal-header">
+                    <div class="cert-modal-title-wrap">
+                        <i class="fas fa-store cert-modal-icon"></i>
+                        <h5 class="modal-title" id="businessPermitModalLabel">Create Business Permit Request</h5>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body cert-modal-body">
+                    <div class="cert-field-group">
+                        <label class="cert-field-label">BUSINESS OWNER NAME <span class="required-star">*</span></label>
+                        <div class="resident-search-wrap">
+                            <div class="resident-input-group">
+                                <input type="text" id="businessPermitResidentName" class="form-control cert-input" placeholder="Select resident" autocomplete="off">
+                                <input type="hidden" id="businessPermitResidentId">
+                                <button type="button" class="btn btn-primary btn-resident" id="businessPermitResidentBtn"><i class="fas fa-user"></i> RESIDENT</button>
+                            </div>
+                            <div class="resident-dropdown" id="businessPermitResidentDropdown" style="display:none;"></div>
+                        </div>
+                    </div>
+                    <div class="cert-field-group">
+                        <label class="cert-field-label">BUSINESS NAME <span class="required-star">*</span></label>
+                        <input type="text" id="businessPermitBusinessName" class="form-control cert-input" placeholder="Enter business name">
+                    </div>
+                    <div class="cert-field-group">
+                        <label class="cert-field-label">BUSINESS ADDRESS</label>
+                        <input type="text" id="businessPermitBusinessAddress" class="form-control cert-input" placeholder="Enter business address">
+                    </div>
+                    <div class="cert-field-group">
+                        <label class="cert-field-label">NATURE OF BUSINESS</label>
+                        <select id="businessPermitNature" class="form-control cert-input">
+                            <option value="">Select nature of business</option>
+                            <option value="RETAIL">RETAIL</option>
+                            <option value="WHOLESALE">WHOLESALE</option>
+                            <option value="SERVICE">SERVICE</option>
+                            <option value="MANUFACTURING">MANUFACTURING</option>
+                            <option value="RESTAURANT">RESTAURANT</option>
+                            <option value="SARI-SARI STORE">SARI-SARI STORE</option>
+                            <option value="OTHER">OTHER</option>
+                        </select>
+                    </div>
+                    <div class="cert-field-group">
+                        <label class="cert-field-label">DATE <span class="required-star">*</span></label>
+                        <input type="date" id="businessPermitDate" class="form-control cert-input" value="<?php echo date('Y-m-d'); ?>" required>
+                    </div>
+                </div>
+                <div class="modal-footer cert-modal-footer">
+                    <button type="button" class="btn btn-cancel" data-bs-dismiss="modal"><i class="fas fa-times"></i> Cancel</button>
+                    <button type="button" class="btn btn-print-cert" id="businessPermitPrintBtn"><i class="fas fa-print"></i> Print Certificate</button>
                 </div>
             </div>
         </div>

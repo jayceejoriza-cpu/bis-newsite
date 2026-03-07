@@ -483,6 +483,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const fishingIdInput     = document.getElementById('fishingResidentId');
     const fishingDropdown    = document.getElementById('fishingResidentDropdown');
     const fishingResidentBtn = document.getElementById('fishingResidentBtn');
+    const fishingBoatNameInput = document.getElementById('fishingBoatName');
     const fishingDateInput   = document.getElementById('fishingDate');
     const fishingPurposeInput = document.getElementById('fishingPurpose');
     const fishingPrintBtn    = document.getElementById('fishingPrintBtn');
@@ -495,6 +496,7 @@ document.addEventListener('DOMContentLoaded', function () {
             if (fishingNameInput)    fishingNameInput.value    = '';
             if (fishingIdInput)      fishingIdInput.value      = '';
             if (fishingDropdown)     { fishingDropdown.innerHTML = ''; fishingDropdown.style.display = 'none'; }
+            if (fishingBoatNameInput) fishingBoatNameInput.value = '';
             if (fishingDateInput)    fishingDateInput.value    = getTodayDate();
             if (fishingPurposeInput)  fishingPurposeInput.value = 'Boat Registration';
             clearFishingError();
@@ -600,6 +602,7 @@ document.addEventListener('DOMContentLoaded', function () {
     if (fishingPrintBtn) {
         fishingPrintBtn.addEventListener('click', function () {
             var residentId = fishingIdInput      ? fishingIdInput.value.trim()      : '';
+            var boatName   = fishingBoatNameInput ? fishingBoatNameInput.value.trim() : '';
             var date       = fishingDateInput    ? fishingDateInput.value.trim()    : '';
             var purpose    = fishingPurposeInput ? fishingPurposeInput.value.trim() : '';
 
@@ -615,7 +618,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (fishingDateInput) fishingDateInput.classList.remove('is-invalid');
             }
 
-            var params = new URLSearchParams({ resident_id: residentId, date: date, purpose: purpose });
+            var params = new URLSearchParams({ resident_id: residentId,  boatname: boatName, date: date, purpose: purpose });
             window.location.href = 'certifications/certificate-fishingclearance.php?' + params.toString();
         });
     }
@@ -968,6 +971,744 @@ document.addEventListener('DOMContentLoaded', function () {
 
             var params = new URLSearchParams({ resident_id: residentId, date: date, purpose: purpose });
             window.location.href = 'certifications/certificate-oathofundertaking.php?' + params.toString();
+        });
+    }
+
+    // ============================================
+    // Certificate of Low Income Modal Logic
+    // ============================================
+    var lowIncomeNameInput    = document.getElementById('lowIncomeResidentName');
+    var lowIncomeIdInput      = document.getElementById('lowIncomeResidentId');
+    var lowIncomeDropdown     = document.getElementById('lowIncomeResidentDropdown');
+    var lowIncomeResidentBtn  = document.getElementById('lowIncomeResidentBtn');
+    var lowIncomeDateInput    = document.getElementById('lowIncomeDate');
+    var lowIncomePurposeInput = document.getElementById('lowIncomePurpose');
+    var lowIncomePrintBtn     = document.getElementById('lowIncomePrintBtn');
+    var lowIncomeModalEl      = document.getElementById('lowIncomeModal');
+
+    var lowIncomeSearchTimeout = null;
+
+    if (lowIncomeModalEl) {
+        lowIncomeModalEl.addEventListener('show.bs.modal', function () {
+            if (lowIncomeNameInput)    lowIncomeNameInput.value    = '';
+            if (lowIncomeIdInput)      lowIncomeIdInput.value      = '';
+            if (lowIncomeDropdown)    { lowIncomeDropdown.innerHTML = ''; lowIncomeDropdown.style.display = 'none'; }
+            if (lowIncomeDateInput)   lowIncomeDateInput.value    = getTodayDate();
+            if (lowIncomePurposeInput) lowIncomePurposeInput.value = 'Low Income Verification';
+            clearLowIncomeError();
+        });
+    }
+
+    if (lowIncomeNameInput) {
+        lowIncomeNameInput.addEventListener('input', function () {
+            if (lowIncomeIdInput) lowIncomeIdInput.value = '';
+            clearLowIncomeError();
+            var term = this.value.trim();
+            clearTimeout(lowIncomeSearchTimeout);
+            if (term.length < 1) { hideLowIncomeDropdown(); return; }
+            lowIncomeSearchTimeout = setTimeout(function () { searchLowIncomeResidents(term); }, 250);
+        });
+        lowIncomeNameInput.addEventListener('keydown', function (e) { if (e.key === 'Escape') hideLowIncomeDropdown(); });
+    }
+
+    if (lowIncomeResidentBtn) {
+        lowIncomeResidentBtn.addEventListener('click', function (e) {
+            e.stopPropagation();
+            if (lowIncomeNameInput) { lowIncomeNameInput.value = ''; lowIncomeNameInput.focus(); }
+            if (lowIncomeIdInput) lowIncomeIdInput.value = '';
+            hideLowIncomeDropdown();
+        });
+    }
+
+    document.addEventListener('click', function (e) {
+        if (lowIncomeDropdown && !e.target.closest('#lowIncomeModal .resident-search-wrap')) { hideLowIncomeDropdown(); }
+    });
+
+    function searchLowIncomeResidents(term) {
+        fetch('model/search_residents.php?search=' + encodeURIComponent(term))
+            .then(function (res) { return res.json(); })
+            .then(function (data) {
+                var results = data.residents || data.data;
+                if (data.success && results) { renderLowIncomeDropdown(results); }
+                else { hideLowIncomeDropdown(); }
+            })
+            .catch(function () { hideLowIncomeDropdown(); });
+    }
+
+    function renderLowIncomeDropdown(residents) {
+        if (!lowIncomeDropdown) return;
+        if (residents.length === 0) { lowIncomeDropdown.innerHTML = '<div class="resident-dropdown-empty">No residents found</div>'; lowIncomeDropdown.style.display = 'block'; return; }
+        lowIncomeDropdown.innerHTML = '';
+        residents.forEach(function (r) {
+            var item = document.createElement('div');
+            item.className = 'resident-dropdown-item';
+            item.innerHTML = '<span class="resident-dropdown-name">' + escapeHtml(r.full_name.trim()) + '</span><span class="resident-dropdown-id">' + escapeHtml(r.resident_id || '') + '</span>';
+            item.addEventListener('mousedown', function (e) { e.preventDefault(); selectLowIncomeResident(r); });
+            lowIncomeDropdown.appendChild(item);
+        });
+        lowIncomeDropdown.style.display = 'block';
+    }
+
+    function selectLowIncomeResident(resident) {
+        if (lowIncomeNameInput) lowIncomeNameInput.value = resident.full_name.trim();
+        if (lowIncomeIdInput)   lowIncomeIdInput.value   = resident.id;
+        hideLowIncomeDropdown();
+        clearLowIncomeError();
+    }
+
+    function hideLowIncomeDropdown() {
+        if (lowIncomeDropdown) { lowIncomeDropdown.style.display = 'none'; lowIncomeDropdown.innerHTML = ''; }
+    }
+
+    function clearLowIncomeError() {
+        if (lowIncomeNameInput) lowIncomeNameInput.classList.remove('is-invalid');
+        var existing = document.querySelector('.lowincome-error-msg');
+        if (existing) existing.remove();
+    }
+
+    function showLowIncomeError(msg) {
+        clearLowIncomeError();
+        if (!lowIncomeNameInput) return;
+        lowIncomeNameInput.classList.add('is-invalid');
+        var err = document.createElement('div');
+        err.className = 'invalid-feedback lowincome-error-msg';
+        err.textContent = msg;
+        lowIncomeNameInput.closest('.resident-input-group').after(err);
+    }
+
+    if (lowIncomePrintBtn) {
+        lowIncomePrintBtn.addEventListener('click', function () {
+            var residentId = lowIncomeIdInput      ? lowIncomeIdInput.value.trim()      : '';
+            var date       = lowIncomeDateInput    ? lowIncomeDateInput.value.trim()    : '';
+            var purpose    = lowIncomePurposeInput ? lowIncomePurposeInput.value.trim() : '';
+
+            if (!residentId) { showLowIncomeError('Please select a resident from the list.'); if (lowIncomeNameInput) lowIncomeNameInput.focus(); return; }
+            if (!date) { if (lowIncomeDateInput) { lowIncomeDateInput.classList.add('is-invalid'); lowIncomeDateInput.focus(); } return; }
+            else { if (lowIncomeDateInput) lowIncomeDateInput.classList.remove('is-invalid'); }
+
+            var params = new URLSearchParams({ resident_id: residentId, date: date, purpose: purpose });
+            window.location.href = 'certifications/certificate-lowincome.php?' + params.toString();
+        });
+    }
+
+    // ============================================
+    // Certificate of Solo Parent Modal Logic
+    // ============================================
+    var soloParentNameInput    = document.getElementById('soloParentResidentName');
+    var soloParentIdInput      = document.getElementById('soloParentResidentId');
+    var soloParentDropdown     = document.getElementById('soloParentResidentDropdown');
+    var soloParentResidentBtn  = document.getElementById('soloParentResidentBtn');
+    var soloParentDateInput    = document.getElementById('soloParentDate');
+    var soloParentPurposeInput = document.getElementById('soloParentPurpose');
+    var soloParentPrintBtn     = document.getElementById('soloParentPrintBtn');
+    var soloParentModalEl      = document.getElementById('soloParentModal');
+
+    var soloParentSearchTimeout = null;
+
+    if (soloParentModalEl) {
+        soloParentModalEl.addEventListener('show.bs.modal', function () {
+            if (soloParentNameInput)    soloParentNameInput.value    = '';
+            if (soloParentIdInput)       soloParentIdInput.value      = '';
+            if (soloParentDropdown)     { soloParentDropdown.innerHTML = ''; soloParentDropdown.style.display = 'none'; }
+            if (soloParentDateInput)     soloParentDateInput.value    = getTodayDate();
+            if (soloParentPurposeInput)  soloParentPurposeInput.value = 'Solo Parent Verification';
+            clearSoloParentError();
+        });
+    }
+
+    if (soloParentNameInput) {
+        soloParentNameInput.addEventListener('input', function () {
+            if (soloParentIdInput) soloParentIdInput.value = '';
+            clearSoloParentError();
+            var term = this.value.trim();
+            clearTimeout(soloParentSearchTimeout);
+            if (term.length < 1) { hideSoloParentDropdown(); return; }
+            soloParentSearchTimeout = setTimeout(function () { searchSoloParentResidents(term); }, 250);
+        });
+        soloParentNameInput.addEventListener('keydown', function (e) { if (e.key === 'Escape') hideSoloParentDropdown(); });
+    }
+
+    if (soloParentResidentBtn) {
+        soloParentResidentBtn.addEventListener('click', function (e) {
+            e.stopPropagation();
+            if (soloParentNameInput) { soloParentNameInput.value = ''; soloParentNameInput.focus(); }
+            if (soloParentIdInput) soloParentIdInput.value = '';
+            hideSoloParentDropdown();
+        });
+    }
+
+    document.addEventListener('click', function (e) {
+        if (soloParentDropdown && !e.target.closest('#soloParentModal .resident-search-wrap')) { hideSoloParentDropdown(); }
+    });
+
+    function searchSoloParentResidents(term) {
+        fetch('model/search_residents.php?search=' + encodeURIComponent(term))
+            .then(function (res) { return res.json(); })
+            .then(function (data) {
+                var results = data.residents || data.data;
+                if (data.success && results) { renderSoloParentDropdown(results); }
+                else { hideSoloParentDropdown(); }
+            })
+            .catch(function () { hideSoloParentDropdown(); });
+    }
+
+    function renderSoloParentDropdown(residents) {
+        if (!soloParentDropdown) return;
+        if (residents.length === 0) { soloParentDropdown.innerHTML = '<div class="resident-dropdown-empty">No residents found</div>'; soloParentDropdown.style.display = 'block'; return; }
+        soloParentDropdown.innerHTML = '';
+        residents.forEach(function (r) {
+            var item = document.createElement('div');
+            item.className = 'resident-dropdown-item';
+            item.innerHTML = '<span class="resident-dropdown-name">' + escapeHtml(r.full_name.trim()) + '</span><span class="resident-dropdown-id">' + escapeHtml(r.resident_id || '') + '</span>';
+            item.addEventListener('mousedown', function (e) { e.preventDefault(); selectSoloParentResident(r); });
+            soloParentDropdown.appendChild(item);
+        });
+        soloParentDropdown.style.display = 'block';
+    }
+
+    function selectSoloParentResident(resident) {
+        if (soloParentNameInput) soloParentNameInput.value = resident.full_name.trim();
+        if (soloParentIdInput)    soloParentIdInput.value   = resident.id;
+        hideSoloParentDropdown();
+        clearSoloParentError();
+    }
+
+    function hideSoloParentDropdown() {
+        if (soloParentDropdown) { soloParentDropdown.style.display = 'none'; soloParentDropdown.innerHTML = ''; }
+    }
+
+    function clearSoloParentError() {
+        if (soloParentNameInput) soloParentNameInput.classList.remove('is-invalid');
+        var existing = document.querySelector('.soloparent-error-msg');
+        if (existing) existing.remove();
+    }
+
+    function showSoloParentError(msg) {
+        clearSoloParentError();
+        if (!soloParentNameInput) return;
+        soloParentNameInput.classList.add('is-invalid');
+        var err = document.createElement('div');
+        err.className = 'invalid-feedback soloparent-error-msg';
+        err.textContent = msg;
+        soloParentNameInput.closest('.resident-input-group').after(err);
+    }
+
+    if (soloParentPrintBtn) {
+        soloParentPrintBtn.addEventListener('click', function () {
+            var residentId = soloParentIdInput      ? soloParentIdInput.value.trim()      : '';
+            var date       = soloParentDateInput    ? soloParentDateInput.value.trim()    : '';
+            var purpose    = soloParentPurposeInput ? soloParentPurposeInput.value.trim() : '';
+
+            if (!residentId) { showSoloParentError('Please select a resident from the list.'); if (soloParentNameInput) soloParentNameInput.focus(); return; }
+            if (!date) { if (soloParentDateInput) { soloParentDateInput.classList.add('is-invalid'); soloParentDateInput.focus(); } return; }
+            else { if (soloParentDateInput) soloParentDateInput.classList.remove('is-invalid'); }
+
+            var params = new URLSearchParams({ resident_id: residentId, date: date, purpose: purpose });
+            window.location.href = 'certifications/certificate-soloparent.php?' + params.toString();
+        });
+    }
+
+    // ============================================
+    // Registration of Birth Certificate Modal Logic
+    // ============================================
+    var rbcNameInput    = document.getElementById('rbcResidentName');
+    var rbcIdInput      = document.getElementById('rbcResidentId');
+    var rbcDropdown     = document.getElementById('rbcResidentDropdown');
+    var rbcResidentBtn  = document.getElementById('rbcResidentBtn');
+    var rbcDateInput    = document.getElementById('rbcDate');
+    var rbcPurposeInput = document.getElementById('rbcPurpose');
+    var rbcPrintBtn     = document.getElementById('rbcPrintBtn');
+    var rbcModalEl      = document.getElementById('rbcModal');
+
+    var rbcSearchTimeout = null;
+
+    if (rbcModalEl) {
+        rbcModalEl.addEventListener('show.bs.modal', function () {
+            if (rbcNameInput)    rbcNameInput.value    = '';
+            if (rbcIdInput)      rbcIdInput.value      = '';
+            if (rbcDropdown)     { rbcDropdown.innerHTML = ''; rbcDropdown.style.display = 'none'; }
+            if (rbcDateInput)    rbcDateInput.value    = getTodayDate();
+            if (rbcPurposeInput)  rbcPurposeInput.value = 'Birth Certificate Registration';
+            clearRbcError();
+        });
+    }
+
+    if (rbcNameInput) {
+        rbcNameInput.addEventListener('input', function () {
+            if (rbcIdInput) rbcIdInput.value = '';
+            clearRbcError();
+            var term = this.value.trim();
+            clearTimeout(rbcSearchTimeout);
+            if (term.length < 1) { hideRbcDropdown(); return; }
+            rbcSearchTimeout = setTimeout(function () { searchRbcResidents(term); }, 250);
+        });
+        rbcNameInput.addEventListener('keydown', function (e) { if (e.key === 'Escape') hideRbcDropdown(); });
+    }
+
+    if (rbcResidentBtn) {
+        rbcResidentBtn.addEventListener('click', function (e) {
+            e.stopPropagation();
+            if (rbcNameInput) { rbcNameInput.value = ''; rbcNameInput.focus(); }
+            if (rbcIdInput) rbcIdInput.value = '';
+            hideRbcDropdown();
+        });
+    }
+
+    document.addEventListener('click', function (e) {
+        if (rbcDropdown && !e.target.closest('#rbcModal .resident-search-wrap')) { hideRbcDropdown(); }
+    });
+
+    function searchRbcResidents(term) {
+        fetch('model/search_residents.php?search=' + encodeURIComponent(term))
+            .then(function (res) { return res.json(); })
+            .then(function (data) {
+                var results = data.residents || data.data;
+                if (data.success && results) { renderRbcDropdown(results); }
+                else { hideRbcDropdown(); }
+            })
+            .catch(function () { hideRbcDropdown(); });
+    }
+
+    function renderRbcDropdown(residents) {
+        if (!rbcDropdown) return;
+        if (residents.length === 0) { rbcDropdown.innerHTML = '<div class="resident-dropdown-empty">No residents found</div>'; rbcDropdown.style.display = 'block'; return; }
+        rbcDropdown.innerHTML = '';
+        residents.forEach(function (r) {
+            var item = document.createElement('div');
+            item.className = 'resident-dropdown-item';
+            item.innerHTML = '<span class="resident-dropdown-name">' + escapeHtml(r.full_name.trim()) + '</span><span class="resident-dropdown-id">' + escapeHtml(r.resident_id || '') + '</span>';
+            item.addEventListener('mousedown', function (e) { e.preventDefault(); selectRbcResident(r); });
+            rbcDropdown.appendChild(item);
+        });
+        rbcDropdown.style.display = 'block';
+    }
+
+    function selectRbcResident(resident) {
+        if (rbcNameInput) rbcNameInput.value = resident.full_name.trim();
+        if (rbcIdInput)   rbcIdInput.value   = resident.id;
+        hideRbcDropdown();
+        clearRbcError();
+    }
+
+    function hideRbcDropdown() {
+        if (rbcDropdown) { rbcDropdown.style.display = 'none'; rbcDropdown.innerHTML = ''; }
+    }
+
+    function clearRbcError() {
+        if (rbcNameInput) rbcNameInput.classList.remove('is-invalid');
+        var existing = document.querySelector('.rbc-error-msg');
+        if (existing) existing.remove();
+    }
+
+    function showRbcError(msg) {
+        clearRbcError();
+        if (!rbcNameInput) return;
+        rbcNameInput.classList.add('is-invalid');
+        var err = document.createElement('div');
+        err.className = 'invalid-feedback rbc-error-msg';
+        err.textContent = msg;
+        rbcNameInput.closest('.resident-input-group').after(err);
+    }
+
+    if (rbcPrintBtn) {
+        rbcPrintBtn.addEventListener('click', function () {
+            var residentId = rbcIdInput      ? rbcIdInput.value.trim()      : '';
+            var date       = rbcDateInput    ? rbcDateInput.value.trim()    : '';
+            var purpose    = rbcPurposeInput ? rbcPurposeInput.value.trim() : '';
+
+            if (!residentId) { showRbcError('Please select a resident from the list.'); if (rbcNameInput) rbcNameInput.focus(); return; }
+            if (!date) { if (rbcDateInput) { rbcDateInput.classList.add('is-invalid'); rbcDateInput.focus(); } return; }
+            else { if (rbcDateInput) rbcDateInput.classList.remove('is-invalid'); }
+
+            var params = new URLSearchParams({ resident_id: residentId, date: date, purpose: purpose });
+            window.location.href = 'certifications/certificate-RBC.php?' + params.toString();
+        });
+    }
+
+    // ============================================
+    // Barangay Clearance Modal Logic
+    // ============================================
+    var brgyClearanceNameInput    = document.getElementById('brgyClearanceResidentName');
+    var brgyClearanceIdInput      = document.getElementById('brgyClearanceResidentId');
+    var brgyClearanceDropdown     = document.getElementById('brgyClearanceResidentDropdown');
+    var brgyClearanceResidentBtn  = document.getElementById('brgyClearanceResidentBtn');
+    var brgyClearanceDateInput    = document.getElementById('brgyClearanceDate');
+    var brgyClearancePurposeInput = document.getElementById('brgyClearancePurpose');
+    var brgyClearancePrintBtn     = document.getElementById('brgyClearancePrintBtn');
+    var brgyClearanceModalEl      = document.getElementById('brgyClearanceModal');
+
+    var brgyClearanceSearchTimeout = null;
+
+    if (brgyClearanceModalEl) {
+        brgyClearanceModalEl.addEventListener('show.bs.modal', function () {
+            if (brgyClearanceNameInput)    brgyClearanceNameInput.value    = '';
+            if (brgyClearanceIdInput)      brgyClearanceIdInput.value      = '';
+            if (brgyClearanceDropdown)     { brgyClearanceDropdown.innerHTML = ''; brgyClearanceDropdown.style.display = 'none'; }
+            if (brgyClearanceDateInput)    brgyClearanceDateInput.value    = getTodayDate();
+            if (brgyClearancePurposeInput) brgyClearancePurposeInput.value = '';
+            clearBrgyClearanceError();
+        });
+    }
+
+    if (brgyClearanceNameInput) {
+        brgyClearanceNameInput.addEventListener('input', function () {
+            if (brgyClearanceIdInput) brgyClearanceIdInput.value = '';
+            clearBrgyClearanceError();
+            var term = this.value.trim();
+            clearTimeout(brgyClearanceSearchTimeout);
+            if (term.length < 1) { hideBrgyClearanceDropdown(); return; }
+            brgyClearanceSearchTimeout = setTimeout(function () { searchBrgyClearanceResidents(term); }, 250);
+        });
+        brgyClearanceNameInput.addEventListener('keydown', function (e) { if (e.key === 'Escape') hideBrgyClearanceDropdown(); });
+    }
+
+    if (brgyClearanceResidentBtn) {
+        brgyClearanceResidentBtn.addEventListener('click', function (e) {
+            e.stopPropagation();
+            if (brgyClearanceNameInput) { brgyClearanceNameInput.value = ''; brgyClearanceNameInput.focus(); }
+            if (brgyClearanceIdInput) brgyClearanceIdInput.value = '';
+            hideBrgyClearanceDropdown();
+        });
+    }
+
+    document.addEventListener('click', function (e) {
+        if (brgyClearanceDropdown && !e.target.closest('#brgyClearanceModal .resident-search-wrap')) { hideBrgyClearanceDropdown(); }
+    });
+
+    function searchBrgyClearanceResidents(term) {
+        fetch('model/search_residents.php?search=' + encodeURIComponent(term))
+            .then(function (res) { return res.json(); })
+            .then(function (data) {
+                var results = data.residents || data.data;
+                if (data.success && results) { renderBrgyClearanceDropdown(results); }
+                else { hideBrgyClearanceDropdown(); }
+            })
+            .catch(function () { hideBrgyClearanceDropdown(); });
+    }
+
+    function renderBrgyClearanceDropdown(residents) {
+        if (!brgyClearanceDropdown) return;
+        if (residents.length === 0) { brgyClearanceDropdown.innerHTML = '<div class="resident-dropdown-empty">No residents found</div>'; brgyClearanceDropdown.style.display = 'block'; return; }
+        brgyClearanceDropdown.innerHTML = '';
+        residents.forEach(function (r) {
+            var item = document.createElement('div');
+            item.className = 'resident-dropdown-item';
+            item.innerHTML = '<span class="resident-dropdown-name">' + escapeHtml(r.full_name.trim()) + '</span><span class="resident-dropdown-id">' + escapeHtml(r.resident_id || '') + '</span>';
+            item.addEventListener('mousedown', function (e) { e.preventDefault(); selectBrgyClearanceResident(r); });
+            brgyClearanceDropdown.appendChild(item);
+        });
+        brgyClearanceDropdown.style.display = 'block';
+    }
+
+    function selectBrgyClearanceResident(resident) {
+        if (brgyClearanceNameInput) brgyClearanceNameInput.value = resident.full_name.trim();
+        if (brgyClearanceIdInput)   brgyClearanceIdInput.value   = resident.id;
+        hideBrgyClearanceDropdown();
+        clearBrgyClearanceError();
+    }
+
+    function hideBrgyClearanceDropdown() {
+        if (brgyClearanceDropdown) { brgyClearanceDropdown.style.display = 'none'; brgyClearanceDropdown.innerHTML = ''; }
+    }
+
+    function clearBrgyClearanceError() {
+        if (brgyClearanceNameInput) brgyClearanceNameInput.classList.remove('is-invalid');
+        var existing = document.querySelector('.brgyclearance-error-msg');
+        if (existing) existing.remove();
+    }
+
+    function showBrgyClearanceError(msg) {
+        clearBrgyClearanceError();
+        if (!brgyClearanceNameInput) return;
+        brgyClearanceNameInput.classList.add('is-invalid');
+        var err = document.createElement('div');
+        err.className = 'invalid-feedback brgyclearance-error-msg';
+        err.textContent = msg;
+        brgyClearanceNameInput.closest('.resident-input-group').after(err);
+    }
+
+    if (brgyClearancePrintBtn) {
+        brgyClearancePrintBtn.addEventListener('click', function () {
+            var residentId = brgyClearanceIdInput      ? brgyClearanceIdInput.value.trim()      : '';
+            var date       = brgyClearanceDateInput    ? brgyClearanceDateInput.value.trim()    : '';
+            var purpose    = brgyClearancePurposeInput ? brgyClearancePurposeInput.value.trim() : '';
+
+            if (!residentId) { showBrgyClearanceError('Please select a resident from the list.'); if (brgyClearanceNameInput) brgyClearanceNameInput.focus(); return; }
+            if (!date) { if (brgyClearanceDateInput) { brgyClearanceDateInput.classList.add('is-invalid'); brgyClearanceDateInput.focus(); } return; }
+            else { if (brgyClearanceDateInput) brgyClearanceDateInput.classList.remove('is-invalid'); }
+
+            var params = new URLSearchParams({ resident_id: residentId, date: date, purpose: purpose });
+            window.location.href = 'certifications/certificate-barangayclearance.php?' + params.toString();
+        });
+    }
+
+    // ============================================
+    // Barangay Business Clearance Modal Logic
+    // ============================================
+    var brgyBusinessClearanceNameInput    = document.getElementById('brgyBusinessClearanceResidentName');
+    var brgyBusinessClearanceIdInput      = document.getElementById('brgyBusinessClearanceResidentId');
+    var brgyBusinessClearanceDropdown     = document.getElementById('brgyBusinessClearanceResidentDropdown');
+    var brgyBusinessClearanceResidentBtn  = document.getElementById('brgyBusinessClearanceResidentBtn');
+    var brgyBusinessClearanceBusinessNameInput = document.getElementById('brgyBusinessClearanceBusinessName');
+    var brgyBusinessClearanceBusinessAddressInput = document.getElementById('brgyBusinessClearanceBusinessAddress');
+    var brgyBusinessClearanceNatureInput = document.getElementById('brgyBusinessClearanceNature');
+    var brgyBusinessClearanceDateInput    = document.getElementById('brgyBusinessClearanceDate');
+    var brgyBusinessClearancePrintBtn     = document.getElementById('brgyBusinessClearancePrintBtn');
+    var brgyBusinessClearanceModalEl      = document.getElementById('brgyBusinessClearanceModal');
+
+    var brgyBusinessClearanceSearchTimeout = null;
+
+    if (brgyBusinessClearanceModalEl) {
+        brgyBusinessClearanceModalEl.addEventListener('show.bs.modal', function () {
+            if (brgyBusinessClearanceNameInput)    brgyBusinessClearanceNameInput.value    = '';
+            if (brgyBusinessClearanceIdInput)      brgyBusinessClearanceIdInput.value      = '';
+            if (brgyBusinessClearanceDropdown)     { brgyBusinessClearanceDropdown.innerHTML = ''; brgyBusinessClearanceDropdown.style.display = 'none'; }
+            if (brgyBusinessClearanceBusinessNameInput) brgyBusinessClearanceBusinessNameInput.value = '';
+            if (brgyBusinessClearanceBusinessAddressInput) brgyBusinessClearanceBusinessAddressInput.value = '';
+            if (brgyBusinessClearanceNatureInput) brgyBusinessClearanceNatureInput.value = '';
+            if (brgyBusinessClearanceDateInput)    brgyBusinessClearanceDateInput.value    = getTodayDate();
+            clearBrgyBusinessClearanceError();
+        });
+    }
+
+    if (brgyBusinessClearanceNameInput) {
+        brgyBusinessClearanceNameInput.addEventListener('input', function () {
+            if (brgyBusinessClearanceIdInput) brgyBusinessClearanceIdInput.value = '';
+            clearBrgyBusinessClearanceError();
+            var term = this.value.trim();
+            clearTimeout(brgyBusinessClearanceSearchTimeout);
+            if (term.length < 1) { hideBrgyBusinessClearanceDropdown(); return; }
+            brgyBusinessClearanceSearchTimeout = setTimeout(function () { searchBrgyBusinessClearanceResidents(term); }, 250);
+        });
+        brgyBusinessClearanceNameInput.addEventListener('keydown', function (e) { if (e.key === 'Escape') hideBrgyBusinessClearanceDropdown(); });
+    }
+
+    if (brgyBusinessClearanceResidentBtn) {
+        brgyBusinessClearanceResidentBtn.addEventListener('click', function (e) {
+            e.stopPropagation();
+            if (brgyBusinessClearanceNameInput) { brgyBusinessClearanceNameInput.value = ''; brgyBusinessClearanceNameInput.focus(); }
+            if (brgyBusinessClearanceIdInput) brgyBusinessClearanceIdInput.value = '';
+            hideBrgyBusinessClearanceDropdown();
+        });
+    }
+
+    document.addEventListener('click', function (e) {
+        if (brgyBusinessClearanceDropdown && !e.target.closest('#brgyBusinessClearanceModal .resident-search-wrap')) { hideBrgyBusinessClearanceDropdown(); }
+    });
+
+    function searchBrgyBusinessClearanceResidents(term) {
+        fetch('model/search_residents.php?search=' + encodeURIComponent(term))
+            .then(function (res) { return res.json(); })
+            .then(function (data) {
+                var results = data.residents || data.data;
+                if (data.success && results) { renderBrgyBusinessClearanceDropdown(results); }
+                else { hideBrgyBusinessClearanceDropdown(); }
+            })
+            .catch(function () { hideBrgyBusinessClearanceDropdown(); });
+    }
+
+    function renderBrgyBusinessClearanceDropdown(residents) {
+        if (!brgyBusinessClearanceDropdown) return;
+        if (residents.length === 0) { brgyBusinessClearanceDropdown.innerHTML = '<div class="resident-dropdown-empty">No residents found</div>'; brgyBusinessClearanceDropdown.style.display = 'block'; return; }
+        brgyBusinessClearanceDropdown.innerHTML = '';
+        residents.forEach(function (r) {
+            var item = document.createElement('div');
+            item.className = 'resident-dropdown-item';
+            item.innerHTML = '<span class="resident-dropdown-name">' + escapeHtml(r.full_name.trim()) + '</span><span class="resident-dropdown-id">' + escapeHtml(r.resident_id || '') + '</span>';
+            item.addEventListener('mousedown', function (e) { e.preventDefault(); selectBrgyBusinessClearanceResident(r); });
+            brgyBusinessClearanceDropdown.appendChild(item);
+        });
+        brgyBusinessClearanceDropdown.style.display = 'block';
+    }
+
+    function selectBrgyBusinessClearanceResident(resident) {
+        if (brgyBusinessClearanceNameInput) brgyBusinessClearanceNameInput.value = resident.full_name.trim();
+        if (brgyBusinessClearanceIdInput)   brgyBusinessClearanceIdInput.value   = resident.id;
+        hideBrgyBusinessClearanceDropdown();
+        clearBrgyBusinessClearanceError();
+    }
+
+    function hideBrgyBusinessClearanceDropdown() {
+        if (brgyBusinessClearanceDropdown) { brgyBusinessClearanceDropdown.style.display = 'none'; brgyBusinessClearanceDropdown.innerHTML = ''; }
+    }
+
+    function clearBrgyBusinessClearanceError() {
+        if (brgyBusinessClearanceNameInput) brgyBusinessClearanceNameInput.classList.remove('is-invalid');
+        var existing = document.querySelector('.brgybusinessclearance-error-msg');
+        if (existing) existing.remove();
+    }
+
+    function showBrgyBusinessClearanceError(msg) {
+        clearBrgyBusinessClearanceError();
+        if (!brgyBusinessClearanceNameInput) return;
+        brgyBusinessClearanceNameInput.classList.add('is-invalid');
+        var err = document.createElement('div');
+        err.className = 'invalid-feedback brgybusinessclearance-error-msg';
+        err.textContent = msg;
+        brgyBusinessClearanceNameInput.closest('.resident-input-group').after(err);
+    }
+
+    if (brgyBusinessClearancePrintBtn) {
+        brgyBusinessClearancePrintBtn.addEventListener('click', function () {
+            var residentId = brgyBusinessClearanceIdInput      ? brgyBusinessClearanceIdInput.value.trim()      : '';
+            var businessName = brgyBusinessClearanceBusinessNameInput ? brgyBusinessClearanceBusinessNameInput.value.trim() : '';
+            var businessAddress = brgyBusinessClearanceBusinessAddressInput ? brgyBusinessClearanceBusinessAddressInput.value.trim() : '';
+            var nature = brgyBusinessClearanceNatureInput ? brgyBusinessClearanceNatureInput.value.trim() : '';
+            var date       = brgyBusinessClearanceDateInput    ? brgyBusinessClearanceDateInput.value.trim()    : '';
+
+            if (!residentId) { showBrgyBusinessClearanceError('Please select a resident from the list.'); if (brgyBusinessClearanceNameInput) brgyBusinessClearanceNameInput.focus(); return; }
+            if (!businessName) { 
+                if (brgyBusinessClearanceBusinessNameInput) { brgyBusinessClearanceBusinessNameInput.classList.add('is-invalid'); brgyBusinessClearanceBusinessNameInput.focus(); }
+                return;
+            }
+            if (!date) { if (brgyBusinessClearanceDateInput) { brgyBusinessClearanceDateInput.classList.add('is-invalid'); brgyBusinessClearanceDateInput.focus(); } return; }
+            
+            if (brgyBusinessClearanceBusinessNameInput) brgyBusinessClearanceBusinessNameInput.classList.remove('is-invalid');
+            if (brgyBusinessClearanceDateInput) brgyBusinessClearanceDateInput.classList.remove('is-invalid');
+
+            var params = new URLSearchParams({ 
+                resident_id: residentId, 
+                business_name: businessName,
+                business_address: businessAddress,
+                nature: nature,
+                date: date
+            });
+            window.location.href = 'certifications/certificate-brgybusinessclearance.php?' + params.toString();
+        });
+    }
+
+    // ============================================
+    // Business Permit Modal Logic
+    // ============================================
+    var businessPermitNameInput    = document.getElementById('businessPermitResidentName');
+    var businessPermitIdInput      = document.getElementById('businessPermitResidentId');
+    var businessPermitDropdown     = document.getElementById('businessPermitResidentDropdown');
+    var businessPermitResidentBtn  = document.getElementById('businessPermitResidentBtn');
+    var businessPermitBusinessNameInput = document.getElementById('businessPermitBusinessName');
+    var businessPermitBusinessAddressInput = document.getElementById('businessPermitBusinessAddress');
+    var businessPermitNatureInput = document.getElementById('businessPermitNature');
+    var businessPermitDateInput    = document.getElementById('businessPermitDate');
+    var businessPermitPrintBtn     = document.getElementById('businessPermitPrintBtn');
+    var businessPermitModalEl      = document.getElementById('businessPermitModal');
+
+    var businessPermitSearchTimeout = null;
+
+    if (businessPermitModalEl) {
+        businessPermitModalEl.addEventListener('show.bs.modal', function () {
+            if (businessPermitNameInput)    businessPermitNameInput.value    = '';
+            if (businessPermitIdInput)      businessPermitIdInput.value      = '';
+            if (businessPermitDropdown)     { businessPermitDropdown.innerHTML = ''; businessPermitDropdown.style.display = 'none'; }
+            if (businessPermitBusinessNameInput) businessPermitBusinessNameInput.value = '';
+            if (businessPermitBusinessAddressInput) businessPermitBusinessAddressInput.value = '';
+            if (businessPermitNatureInput) businessPermitNatureInput.value = '';
+            if (businessPermitDateInput)    businessPermitDateInput.value    = getTodayDate();
+            clearBusinessPermitError();
+        });
+    }
+
+    if (businessPermitNameInput) {
+        businessPermitNameInput.addEventListener('input', function () {
+            if (businessPermitIdInput) businessPermitIdInput.value = '';
+            clearBusinessPermitError();
+            var term = this.value.trim();
+            clearTimeout(businessPermitSearchTimeout);
+            if (term.length < 1) { hideBusinessPermitDropdown(); return; }
+            businessPermitSearchTimeout = setTimeout(function () { searchBusinessPermitResidents(term); }, 250);
+        });
+        businessPermitNameInput.addEventListener('keydown', function (e) { if (e.key === 'Escape') hideBusinessPermitDropdown(); });
+    }
+
+    if (businessPermitResidentBtn) {
+        businessPermitResidentBtn.addEventListener('click', function (e) {
+            e.stopPropagation();
+            if (businessPermitNameInput) { businessPermitNameInput.value = ''; businessPermitNameInput.focus(); }
+            if (businessPermitIdInput) businessPermitIdInput.value = '';
+            hideBusinessPermitDropdown();
+        });
+    }
+
+    document.addEventListener('click', function (e) {
+        if (businessPermitDropdown && !e.target.closest('#businessPermitModal .resident-search-wrap')) { hideBusinessPermitDropdown(); }
+    });
+
+    function searchBusinessPermitResidents(term) {
+        fetch('model/search_residents.php?search=' + encodeURIComponent(term))
+            .then(function (res) { return res.json(); })
+            .then(function (data) {
+                var results = data.residents || data.data;
+                if (data.success && results) { renderBusinessPermitDropdown(results); }
+                else { hideBusinessPermitDropdown(); }
+            })
+            .catch(function () { hideBusinessPermitDropdown(); });
+    }
+
+    function renderBusinessPermitDropdown(residents) {
+        if (!businessPermitDropdown) return;
+        if (residents.length === 0) { businessPermitDropdown.innerHTML = '<div class="resident-dropdown-empty">No residents found</div>'; businessPermitDropdown.style.display = 'block'; return; }
+        businessPermitDropdown.innerHTML = '';
+        residents.forEach(function (r) {
+            var item = document.createElement('div');
+            item.className = 'resident-dropdown-item';
+            item.innerHTML = '<span class="resident-dropdown-name">' + escapeHtml(r.full_name.trim()) + '</span><span class="resident-dropdown-id">' + escapeHtml(r.resident_id || '') + '</span>';
+            item.addEventListener('mousedown', function (e) { e.preventDefault(); selectBusinessPermitResident(r); });
+            businessPermitDropdown.appendChild(item);
+        });
+        businessPermitDropdown.style.display = 'block';
+    }
+
+    function selectBusinessPermitResident(resident) {
+        if (businessPermitNameInput) businessPermitNameInput.value = resident.full_name.trim();
+        if (businessPermitIdInput)   businessPermitIdInput.value   = resident.id;
+        hideBusinessPermitDropdown();
+        clearBusinessPermitError();
+    }
+
+    function hideBusinessPermitDropdown() {
+        if (businessPermitDropdown) { businessPermitDropdown.style.display = 'none'; businessPermitDropdown.innerHTML = ''; }
+    }
+
+    function clearBusinessPermitError() {
+        if (businessPermitNameInput) businessPermitNameInput.classList.remove('is-invalid');
+        var existing = document.querySelector('.businesspermit-error-msg');
+        if (existing) existing.remove();
+    }
+
+    function showBusinessPermitError(msg) {
+        clearBusinessPermitError();
+        if (!businessPermitNameInput) return;
+        businessPermitNameInput.classList.add('is-invalid');
+        var err = document.createElement('div');
+        err.className = 'invalid-feedback businesspermit-error-msg';
+        err.textContent = msg;
+        businessPermitNameInput.closest('.resident-input-group').after(err);
+    }
+
+    if (businessPermitPrintBtn) {
+        businessPermitPrintBtn.addEventListener('click', function () {
+            var residentId = businessPermitIdInput      ? businessPermitIdInput.value.trim()      : '';
+            var businessName = businessPermitBusinessNameInput ? businessPermitBusinessNameInput.value.trim() : '';
+            var businessAddress = businessPermitBusinessAddressInput ? businessPermitBusinessAddressInput.value.trim() : '';
+            var nature = businessPermitNatureInput ? businessPermitNatureInput.value.trim() : '';
+            var date       = businessPermitDateInput    ? businessPermitDateInput.value.trim()    : '';
+
+            if (!residentId) { showBusinessPermitError('Please select a resident from the list.'); if (businessPermitNameInput) businessPermitNameInput.focus(); return; }
+            if (!businessName) { 
+                if (businessPermitBusinessNameInput) { businessPermitBusinessNameInput.classList.add('is-invalid'); businessPermitBusinessNameInput.focus(); }
+                return;
+            }
+            if (!date) { if (businessPermitDateInput) { businessPermitDateInput.classList.add('is-invalid'); businessPermitDateInput.focus(); } return; }
+            
+            if (businessPermitBusinessNameInput) businessPermitBusinessNameInput.classList.remove('is-invalid');
+            if (businessPermitDateInput) businessPermitDateInput.classList.remove('is-invalid');
+
+            var params = new URLSearchParams({ 
+                resident_id: residentId, 
+                business_name: businessName,
+                business_address: businessAddress,
+                nature: nature,
+                date: date
+            });
+            window.location.href = 'certifications/certificate-businesspermit.php?' + params.toString();
         });
     }
 

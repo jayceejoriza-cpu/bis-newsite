@@ -28,6 +28,9 @@ try {
 // ============================================
 $resident_id = isset($_GET['resident_id']) ? intval($_GET['resident_id']) : 0;
 $cert_date   = isset($_GET['date'])        ? $_GET['date']                : date('Y-m-d');
+$business_name = isset($_GET['business_name']) ? trim($_GET['business_name']) : '';
+$business_address = isset($_GET['business_address']) ? trim($_GET['business_address']) : '';
+$nature = isset($_GET['nature']) ? trim($_GET['nature']) : '';
 
 if ($resident_id <= 0) {
     die("Invalid resident ID.");
@@ -39,8 +42,8 @@ if ($resident_id <= 0) {
 $resident = null;
 try {
     $stmt = $pdo->prepare("
-        SELECT id, first_name, middle_name, last_name, suffix, civil_status, 
-               date_of_birth, 
+        SELECT id, first_name, middle_name, last_name, suffix,
+               date_of_birth,
                TIMESTAMPDIFF(YEAR, date_of_birth, CURDATE()) AS age
         FROM residents
         WHERE id = ?
@@ -54,10 +57,8 @@ try {
             'middlename' => $row['middle_name'],
             'lastname'   => $row['last_name'],
             'suffix'     => $row['suffix'],
-            'civil_status' => $row['civil_status'],
             'birthdate'  => $row['date_of_birth'],
             'age'        => $row['age'],
-            
         ];
     }
 } catch (PDOException $e) {
@@ -98,47 +99,60 @@ try {
 } catch (PDOException $e) {
     error_log("Error fetching barangay info: " . $e->getMessage());
 }
+
 // ============================================
-// Fetch the brgy captain and admin
+// Fetch Officials (Active)
 // ============================================
-$captain = null;
-$brgy_admin  = null;
+$captain      = null;
+$officials    = [];
+$sk_chairman  = null;
+$treasurer    = null;
+$sec          = null;
+$office_admin = null;
 
 try {
-    // Fetching only the specific roles needed
-    $offStmt = $pdo->prepare("
-        SELECT 
+    $offStmt = $pdo->query("
+        SELECT
             bo.position,
-            COALESCE(bo.fullname, 
+            COALESCE(bo.fullname,
                 CONCAT(
-                    COALESCE(r.first_name,''), ' ', 
-                    COALESCE(r.middle_name,''), ' ', 
+                    COALESCE(r.first_name,''), ' ',
+                    COALESCE(r.middle_name,''), ' ',
                     COALESCE(r.last_name,'')
                 )
             ) AS name
         FROM barangay_officials bo
         LEFT JOIN residents r ON bo.resident_id = r.id
-        WHERE bo.position IN ('Barangay Captain', 'Barangay Administrator') 
-          AND bo.status = 'Active'
+        WHERE bo.status = 'Active'
+        ORDER BY bo.hierarchy_level ASC, bo.position ASC
     ");
-    $offStmt->execute();
-    $results = $offStmt->fetchAll();
+    $allOfficials = $offStmt->fetchAll();
 
-    foreach ($results as $row) {
-        $cleanName = trim(preg_replace('/\s+/', ' ', $row['name']));
-        
-        if ($row['position'] === 'Barangay Captain') {
-            $captain = ['name' => $cleanName];
-        } elseif ($row['position'] === 'Barangay Administrator') {
-            $brgy_admin = ['name' => $cleanName];
+    foreach ($allOfficials as $off) {
+        $name = trim(preg_replace('/\s+/', ' ', $off['name']));
+        switch ($off['position']) {
+            case 'Barangay Captain':
+                if (!$captain) $captain = ['name' => $name];
+                break;
+            case 'Kagawad':
+                $officials[] = ['name' => $name];
+                break;
+            case 'SK Chairman':
+                if (!$sk_chairman) $sk_chairman = ['name' => $name];
+                break;
+            case 'Barangay Treasurer':
+                if (!$treasurer) $treasurer = ['name' => $name];
+                break;
+            case 'Barangay Secretary':
+                if (!$sec) $sec = ['name' => $name];
+                break;
+            case 'Office Administrator':
+                if (!$office_admin) $office_admin = ['name' => $name];
+                break;
         }
     }
-
 } catch (PDOException $e) {
     error_log("Error fetching officials: " . $e->getMessage());
-
-} catch (PDOException $e) {
-    error_log("Error fetching Captain: " . $e->getMessage());
 }
 
 // ============================================
@@ -150,7 +164,6 @@ $residentFullName = ucwords(trim(
     $resident['lastname'] .
     ($resident['suffix'] ? ' ' . $resident['suffix'] : '')
 ));
-
 
 // ============================================
 // Format Date Parts
@@ -168,7 +181,7 @@ $birthdateFmt = !empty($resident['birthdate'])
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Outh of Undertaking- <?= htmlspecialchars($brgy) ?></title>
+    <title>Barangay Clearance - <?= htmlspecialchars($brgy) ?></title>
 
     <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="../assets/bootstrap/css/bootstrap.min.css">
@@ -203,6 +216,26 @@ $birthdateFmt = !empty($resident['birthdate'])
             font-family: Arial, sans-serif;
             background: #fff;
         }
+
+        /* ===========================
+           Vertical Side Text
+        =========================== */
+        .vertical-text {
+        position: absolute;
+        left: 50px;
+        top: 30px;
+        font-style: italic;
+        font-weight: bold;
+        font-size: 34px;
+        color: #000000;
+        letter-spacing: 10px;
+        user-select: none;
+        /* Rotation properties */
+        transform: rotate(90deg);
+        transform-origin: left top; /* Keeps the text anchored to your top/left coordinates */
+        white-space: nowrap; /* Ensures the text stays on one line */
+        }
+
         /* ===========================
            Certificate Header
         =========================== */
@@ -210,10 +243,10 @@ $birthdateFmt = !empty($resident['birthdate'])
             display: flex;
             align-items: center;
             justify-content: space-between;
-            border-bottom: 2px solid #c40d0d;
             padding-bottom: 10px;
             margin-bottom: 12px;
             margin-top: 70px;
+            
         }
 
         .cert-header .logo-img {
@@ -233,7 +266,6 @@ $birthdateFmt = !empty($resident['birthdate'])
             flex: 1;
             text-align: center;
             padding: 0 15px;
-            margin-right: 140px;
         }
 
         .cert-header .header-center p {
@@ -244,41 +276,40 @@ $birthdateFmt = !empty($resident['birthdate'])
 
         .cert-header .header-center .brgy-name {
             font-size: 19px;
-         
+            font-weight: bold;
             font-family: 'Times New Roman', Times, serif;
-        
+            margin-top: 2px;
         }
 
         .cert-header .header-center .office-name {
-            font-size: 16px;
+            font-size: 13px;
             font-weight: bold;
-            margin-top: 10px;
         }
 
         /* ===========================
            Certificate Title
         =========================== */
-        .cert-title {
+       .cert-title {
             text-align: center;
-            font-family: arial, sans-serif;
-            margin: 40px 0 20px;
-            letter-spacing: 1px;
+            margin: 20px 0 30px 100px;
+            font-family: 'Arial Narrow', Arial, sans-serif;
+            font-weight: bold;
+            font-size: 48px;
+            color: #4a8ddc; /* Blue color matching the image */
+            user-select: none;
+            text-transform: uppercase;
         }
 
-        .cert-title h2 {
-             font-weight: 700;
-             font-size: 20px;
-        }
         /* ===========================
            Content Area (sidebar + body)
         =========================== */
         .cert-content-area {
             display: flex;
             gap: 15px;
-            align-items: flex-start;
+            align-items: stretch; /* Makes sidebar and body same height */
         }
 
-
+       
         /* ===========================
            Certificate Body
         =========================== */
@@ -301,84 +332,86 @@ $birthdateFmt = !empty($resident['birthdate'])
             user-select: none;
         }
 
+       /* ===========================
+           Certificate Body (Updated for Centering)
+        =========================== */
         .cert-body-content {
             position: relative;
             z-index: 1;
+            text-align: center; /* Center everything by default */
         }
 
         .cert-body-content p {
-            font-size: 15px;
-            text-align: justify;
-            margin-bottom: 14px;
-            line-height: 1.15;
-            font-family: 'Times New Roman', Times, serif;
+            font-size: 12px;
+            text-align: center; /* Override justify */
+            margin-bottom: 15px;
+            line-height: 1.5;
+            font-family: Arial, Helvetica, sans-serif; /* Image uses a standard sans-serif like Arial */
         }
-        
+
+        /* Wide Underline for Names */
+        .underline-wide {
+            display: inline-block;
+            min-width: 350px;
+            border-bottom: 1px solid #000;
+            font-weight: bold;
+            font-size: 14px;
+            padding-bottom: 2px;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            margin-left: 100px;
+        }
+
+        .underline-val {
+            font-weight: bold;
+            text-decoration: underline;
+            font-size: 14px;
+            text-transform: uppercase;
+        }
+
+        /* Paragraphs at the bottom */
+       .cert-body-content p.terms-text {
+            font-size: 12px;
+          
+        }
 
         .cert-body-content .text-indent {
             text-indent: 40px;
         }
 
-        .cert-body-content .numbered-items {
-            padding-left: 20px;
-            margin-left: 0;
+        .sig-right {
+            float: right;
+            text-align: center;
+            margin-right: 50px;
+            margin-top: 30px;
         }
 
-        .cert-body-content .numbered-items .item {
-            display: block;
-        }
-
-        .cert-body-content .underline-val {
+        .sig-captain-name {
+            font-family: 'Times New Roman', Times, serif; /* Image uses serif for name */
             font-weight: bold;
-            text-decoration: underline;
-            font-size: 16px;
-        }
-        .cert-body-content .bold {
-            font-weight: bold;
-            font-size: 16px;
-        }
-
-        /* ===========================
-           Signatures
-        =========================== */
-      .signatures-container {
-            display: flex;
-            justify-content: space-between;
-            width: 100%;
-            margin-top: 40px; /* Adjust spacing above the section */
-            font-family: Arial, sans-serif; /* Use your document's font */
-        }
-
-        .sig-left, .sig-right {
-            width: 45%; /* Gives both columns equal width with a gap in the middle */
-        }
-
-        .sig-label {
-            margin-bottom: 10px;
-            font-size: 14px;
-           font-style: italic;
-        }
-
-        /* Creates the vertical gap where they will physically sign */
-        .signature-space {
-            height: 10px; 
-        }
-
-        /* Creates a slightly smaller gap between the two witnesses on the right */
-        .signature-space-small {
-            height: 20px;
-        }
-
-        .sig-name {
-            font-weight: bold;
+            font-size: 18px;
             text-transform: uppercase;
-            font-size: 14px;
         }
 
-        .sig-title {
-            font-size: 14px;
+        .sig-captain-title {
+            font-family: 'Times New Roman', Times, serif;
+            font-size: 16px;
+        }
+        
+        /* Large Year Stamp */
+        .year-stamp {
+            font-size: 70px;
+            font-weight: 900;
+            color: #4292d3;
+            margin: 10px 0 -5px 40px;
+            font-family: 'Arial Black', sans-serif;
+
         }
 
+       
+      
+
+        
         /* ===========================
            Print Styles
         =========================== */
@@ -432,9 +465,26 @@ $birthdateFmt = !empty($resident['birthdate'])
 
             /* Adjust sizes for print */
             .cert-page {
-                padding: 15px 50px 20px 50px;
+                padding: 15px 70px 20px 70px;
             }
 
+            .vertical-text {
+                position: absolute;
+                left: 95px;
+                top: 45px;
+                font-style: italic;
+                font-weight: bold;
+                font-size: 70px;
+                font-weight: 900;
+                color: #3b89e2;
+                letter-spacing: 2px;
+                user-select: none;
+                
+                /* Rotation properties */
+                transform: rotate(90deg);
+                transform-origin: left top; /* Keeps the text anchored to your top/left coordinates */
+                white-space: nowrap; /* Ensures the text stays on one line */
+            }
 
             .cert-header .logo-img {
                 width: 110px;
@@ -442,15 +492,20 @@ $birthdateFmt = !empty($resident['birthdate'])
             }
 
             .cert-header .header-center .brgy-name {
-                font-size: 16px;
+                font-size: 22px;
             }
 
             .cert-title {
-                font-size: 18px;
+               letter-spacing: -4.5px;
+               font-size: 45px;
+               font-style: italic;
+               
+                font-weight: 600;
             }
 
             .cert-body-content p {
-                font-size: 16px;
+                font-size: 14px;
+                margin-left: 100px;
             }
 
             .cert-watermark {
@@ -480,11 +535,18 @@ $birthdateFmt = !empty($resident['birthdate'])
         <div class="dashboard-content">
             <div class="card">
                 <div class="card-header">
-                    <div class="fw-bold">Outh of Undertaking</div>
+                    <div class="fw-bold">Barangay Clearance</div>
                 </div>
 
                 <div class="card-body" id="printThis">
                     <div class="cert-page">
+
+                        <!-- =====================
+                             Vertical Side Text
+                        ===================== -->
+                        <div class="vertical-text">
+                           BARANGAY WAWANDUE
+                        </div>
 
                         <!-- =====================
                              Header
@@ -504,22 +566,24 @@ $birthdateFmt = !empty($resident['birthdate'])
                                 <p class="office-name">OFFICE OF THE PUNONG BARANGAY</p>
                             </div>
 
-                        
+                            <?php if (!empty($city_logo)): ?>
+                                <img src="<?= htmlspecialchars($city_logo) ?>" class="logo-img" alt="Municipal Logo">
+                            <?php else: ?>
+                                <div class="logo-placeholder-box"></div>
+                            <?php endif; ?>
                         </div>
-                            <span style="font-size: 11px; font-style: italic; float:right;">Revised as of 16 June 2021</span>
 
                         <!-- =====================
                              Title
                         ===================== -->
-                        <div class="cert-title">
-                        <h2>OUTH OF UNDERTAKING</h2>
-                        <p style="font-size:13px;  font-style: italic;">Republic Act 11261 - First-Time Jobseeker Assistance Act</p>
-                        </div>
+                        <h2 class="cert-title">BARANGAY BUSINESS CLEARANCE</h2>
 
                         <!-- =====================
                              Content Area
                         ===================== -->
                         <div class="cert-content-area">
+
+                            
 
                             <!-- Certificate Body -->
                             <div class="cert-body">
@@ -528,80 +592,61 @@ $birthdateFmt = !empty($resident['birthdate'])
                                 <?php endif; ?>
 
                                 <div class="cert-body-content">
-
-                                    <!-- Paragraph 1: Certification body -->
-                                    <p class="text-indent">
-                                         I, <span class="bold"><?= strtoupper($residentFullName) ?></span>,
-                                        <strong><?= ucwords($resident['age']) ?></strong> years old, 
-                                        a resident of   
-                                        <span><?= ucwords($brgy) ?></span>,
-                                        <span><?= ucwords($town) ?></span>,
-                                        <span><?= ucwords($province) ?></span> 
-                                        <strong>SINCE BIRTH</strong> availing the benefits of the Republic Act 11261 otherwise known as the <strong>First Time Jobseeker Assistance Act Of 2019</strong>,
-                                        do hereby declare agree and undertake to abide and be bound by the following:
-                                    </p>
-
-                                    <!-- Paragraph 2: Purpose -->
-                                    <p class="numbered-items">
-                                        <span class="item">1. That this is the first time that I will actively look for a job, and therefore requesting that a Barangay Certification be issued in my favor to avail the benefits of the law;</span>
-                                        <span class="item">2. That I am aware that the benefit and privilege/s under the said law shall be valid only for one (1) year from the date that the Barangay Certification is issued;</span>
-                                        <span class="item">3. That I can avail the benefits of the law only once;</span>
-                                        <span class="item">4. That I understand that my personal information shall be included in the Roster/List of First Time Jobseekers and will not be used for any unlawful purpose;</span>
-                                        <span class="item">5. That I will inform and/or report to the Barangay personally, through text or other means, or through my family/relatives once I get employed;</span>
-                                        <span class="item">6. That I am not a beneficiary of the Jobstart Program under R.A. No. 10869 and other laws that give similar exemptions for the documents of transactions exempted under R.A. No. 11261;</span>
-                                        <span class="item">7. That if issued the requested Certification, I will not use the same in any fraud, neither falsify nor help and/or assist in the fabrication of the said certification;</span>
-                                        <span class="item">8. That the undertaking is made solely for the purpose of obtaining a Barangay Certification consistent with the objectives of R.A. No. 11261 and not for any other purpose; and</span>
-                                        <span class="item">9. That I consent to the use of my personal information pursuant to the Data Privacy Act and other applicable laws, rules and regulations.</span>
-                                    </p>
-
-                                    <!-- Paragraph 3: Given this -->
-                                    <p class="text-indent">
-                                       Signed this 
-                                        <span class="underline-val"><?= $dayOrdinal ?></span>
-                                        <span>day</span> of
-                                        <span class="underline-val"><?= $monthName ?></span>,
-                                        <span class="underline-val"><?= $yearNum ?></span>
-                                     in
-                                         <span><?= ucwords($brgy) ?></span>,
-                                        <span><?= ucwords($town) ?></span>,
-                                        <span><?= ucwords($province) ?>.</span>
-                                    </p>
-
-                                   
-                  <!-- Signatures -->
-                                    
-                                    <div class="signatures-container">
     
-                                    <div class="sig-left">
-                                        <div class="sig-label">Signed by:</div>
-                                        
-                                        <div class="signature-space"></div> 
-                                        
-                                        <div class="sig-name"><?= strtoupper($residentFullName) ?></div>
-                                        <div class="sig-title">First Time Jobseeker</div>
-                                    </div>
-                                    
-                                    <div class="sig-right">
-                                        <div class="sig-label">Witnessed by:</div>
-                                        
-                                        <div class="signature-space"></div>
-                                        
-                                        <?php if (!empty($captain)): ?>
-                                        <div class="sig-name">HON. <?= strtoupper($captain['name']) ?></div>
-                                        <div class="sig-title">Punong Barangay</div>
-                                        <?php endif; ?>
-                                        
-                                        <div class="signature-space-small"></div>
-                                        
-                                        <div class="sig-name">FOR HON. RICKY ENCOMIO</div>
-                                        <div class="sig-title">Barangay Kagawad</div>
-                                    </div>
+                                        <p>is hereby granted to</p>
 
-                                </div>
-                                    
+                                        <div>
+                                            <span class="underline-wide"><?= htmlspecialchars($residentFullName) ?></span>
+                                        </div>
+
+                                        <p>
+                                            a resident of <strong><?= strtoupper($brgy) ?>, <?= strtoupper($town) ?>, <?= strtoupper($province) ?></strong> Filipino Citizen,
+                                        </p>
+
+                                        <p>
+                                            single, married/widow/er to engage/operate a <span class="underline-val">"<?= strtoupper($nature) ?>"</span>
+                                        </p>
+
+                                        <p>
+                                            located at <strong><?= ucwords($brgy) ?>, <?= ucwords($town) ?>, <?= ucwords($province) ?></strong> within the jurisdiction of this barangay
+                                        </p>
+
+                                        <p style="margin-top: 25px;">under the business name:</p>
+
+                                        <div style="margin-top: 20px; margin-bottom: 20px;">
+                                            <span class="underline-wide">"<?= strtoupper($business_name) ?>"</span>
+                                        </div>
+
+                                        <p style="font-weight: bold;">
+                                            Valid until DEC 31, 2026
+                                        </p>
+
+                                        <p class="terms-text">
+                                            The <strong>GRANTEE</strong> of this permit shall secure and comply with all existing General Orders, Municipal and Barangay Ordinance, Rules and Regulations Governing the operation of such activity.
+                                        </p>
+
+                                        <p class="terms-text">
+                                            This <strong>CLEARANCE</strong> is not valid without corresponding receipts of license fees and is subject to revocation of non-compliance with all the existing laws mentioned above.
+                                        </p>
+
+                                        <p class="terms-text">
+                                            Issued <strong><?= strtoupper($dayOrdinal) ?></strong> day of <strong><?= strtoupper($monthName) ?>, <?= $yearNum ?></strong> at Barangay <?= ucwords($brgy) ?> <?= ucwords($town) ?>, <?= ucwords($province) ?>
+                                        </p>
+
+                                        <div class="sig-right">
+                                            <?php if (!empty($captain)): ?>
+                                                <div class="sig-captain-name"><?= strtoupper($captain['name']) ?></div>
+                                                <div class="sig-captain-title">Punong Barangay</div>
+                                            <?php endif; ?>
+                                        </div>
+                                        <div style="clear: both;"></div>
+
+                                    </div>
+                                  
                                     <!-- /Signatures -->
+                                    <div class="year-stamp"><?= $yearNum ?></div>
 
-                                </div>
+                                    
                                 <!-- /cert-body-content -->
                             </div>
                             <!-- /Certificate Body -->
@@ -643,8 +688,8 @@ $birthdateFmt = !empty($resident['birthdate'])
         function saveAndPrint() {
             const formData = new FormData();
             formData.append('resident_id', '<?php echo $resident_id; ?>');
-            formData.append('certificate_type', 'Certificate of Low-Income');
-            formData.append('purpose', 'Low Income Verification');
+            formData.append('certificate_type', 'Certificate of Residency');
+            formData.append('purpose', '<?php echo !empty($purpose) ? htmlspecialchars($purpose) : "Residency Proof"; ?>');
 
             fetch('../model/save_print_log.php', {
                 method: 'POST',

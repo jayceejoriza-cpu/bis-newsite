@@ -555,7 +555,7 @@ $birthdateFmt = !empty($resident['birthdate'])
 
                                     <!-- Paragraph 2: Purpose -->
                                     <p class="text-indent">
-                                        This futher certifies that the above-mentioned name is a___________ since *date*
+                                        This futher certifies that the above-mentioned name is a___________ since *date* up to present
                                         with estimated income of *INCOME* pesos and hereby classified as a low income citizen.
                                     </p>
 

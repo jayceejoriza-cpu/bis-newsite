@@ -28,6 +28,7 @@ try {
 // ============================================
 $resident_id = isset($_GET['resident_id']) ? intval($_GET['resident_id']) : 0;
 $cert_date   = isset($_GET['date'])        ? $_GET['date']                : date('Y-m-d');
+$purpose     = isset($_GET['purpose'])     ? trim($_GET['purpose'])       : '';
 
 if ($resident_id <= 0) {
     die("Invalid resident ID.");
@@ -243,10 +244,9 @@ $birthdateFmt = !empty($resident['birthdate'])
         }
 
         .cert-header .header-center .brgy-name {
-            font-size: 19px;
-            font-weight: bold;
+            font-size: 15px;
             font-family: 'Times New Roman', Times, serif;
-            margin-top: 2px;
+            
         }
 
         .cert-header .header-center .office-name {
@@ -261,7 +261,7 @@ $birthdateFmt = !empty($resident['birthdate'])
         .cert-title {
             text-align: center;
             font-size: 22px;
-            font-weight: bold;
+            font-weight: 900;
            
             font-family: arial, sans-serif;
             margin: 40px 0 20px;
@@ -425,7 +425,7 @@ $birthdateFmt = !empty($resident['birthdate'])
             }
 
             .cert-header .header-center .brgy-name {
-                font-size: 22px;
+                font-size: 15px;
             }
 
             .cert-title {
@@ -480,9 +480,10 @@ $birthdateFmt = !empty($resident['birthdate'])
                             <?php endif; ?>
 
                             <div class="header-center">
-                                <p>Republic of the Philippines</p>
-                                <p>Province of <?= ucwords($province) ?></p>
+                                <p>Republic of the Philippines</p> 
                                 <p>Municipality of <?= ucwords($town) ?></p>
+                                <p style="letter-spacing: 2px;"><?= strtoupper($province) ?></p>
+                               
                                 <p class="brgy-name"><?= strtoupper($brgy) ?></p>
                                 <p class="office-name">OFFICE OF THE PUNONG BARANGAY</p>
                             </div>
@@ -493,7 +494,7 @@ $birthdateFmt = !empty($resident['birthdate'])
                         <!-- =====================
                              Title
                         ===================== -->
-                        <h2 class="cert-title">CERTIFICATE OF GOOD MORAL CHARACTER</h2>
+                        <h2 class="cert-title">CERTIFICATE OF GOOD <br>MORAL CHARACTER</h2>
 
                         <!-- =====================
                              Content Area
@@ -534,7 +535,7 @@ $birthdateFmt = !empty($resident['birthdate'])
 
                                      <!-- Paragraph 3: Purpose -->
                                     <p class="text-indent">
-                                        This certification is issued upon the request of above-mentioned name for <strong>*purpose* ASSISTANCE</strong>.
+                                        This certification is issued upon the request of above-mentioned name for <strong><?= htmlspecialchars(strtoupper($purpose)) ?> ASSISTANCE.</strong>
                                     </p>
 
                                     <!-- Paragraph 3: Given this -->

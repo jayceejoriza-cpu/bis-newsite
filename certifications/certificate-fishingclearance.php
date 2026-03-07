@@ -27,7 +27,9 @@ try {
 // GET Parameters
 // ============================================
 $resident_id = isset($_GET['resident_id']) ? intval($_GET['resident_id']) : 0;
+$boatName     = isset($_GET['boatname'])     ? trim($_GET['boatname'])       : '';
 $cert_date   = isset($_GET['date'])        ? $_GET['date']                : date('Y-m-d');
+$purpose     = isset($_GET['purpose'])     ? trim($_GET['purpose'])       : '';
 
 if ($resident_id <= 0) {
     die("Invalid resident ID.");
@@ -243,10 +245,8 @@ $birthdateFmt = !empty($resident['birthdate'])
         }
 
         .cert-header .header-center .brgy-name {
-            font-size: 19px;
-            font-weight: bold;
+            font-size: 15px;
             font-family: 'Times New Roman', Times, serif;
-            margin-top: 2px;
         }
 
         .cert-header .header-center .office-name {
@@ -261,9 +261,8 @@ $birthdateFmt = !empty($resident['birthdate'])
         .cert-title {
             text-align: center;
             font-size: 22px;
-            font-weight: bold;
            
-            font-family: arial, sans-serif;
+            font-family:  'Times New Roman', Times, serif;
             margin: 40px 0 20px;
             letter-spacing: 1px;
         }
@@ -411,7 +410,8 @@ $birthdateFmt = !empty($resident['birthdate'])
             }
 
             .cert-header .header-center .brgy-name {
-                font-size: 22px;
+                font-size: 15px;
+                letter-spacing: 1px;
             }
 
             .cert-title {
@@ -466,9 +466,9 @@ $birthdateFmt = !empty($resident['birthdate'])
                             <?php endif; ?>
 
                             <div class="header-center">
-                                <p>Republic of the Philippines</p>
-                                <p>Province of <?= ucwords($province) ?></p>
+                                <p>Republic of the Philippines</p> 
                                 <p>Municipality of <?= ucwords($town) ?></p>
+                                <p style="letter-spacing: 2px;"><?= strtoupper($province) ?></p>
                                 <p class="brgy-name"><?= strtoupper($brgy) ?></p>
                                 <p class="office-name">OFFICE OF THE PUNONG BARANGAY</p>
                             </div>
@@ -495,7 +495,7 @@ $birthdateFmt = !empty($resident['birthdate'])
                                 <div class="cert-body-content">
 
                                     <!-- TO WHOM IT MAY CONCERN -->
-                                    <p style="margin-top: 10px; margin-bottom: 20px; font-size:16px;">
+                                    <p style="margin-top: 10px; margin-bottom: 30px; font-size:16px;">
                                         <span>TO WHOM IT MAY CONCERN:</span>
                                     </p>
 
@@ -508,13 +508,13 @@ $birthdateFmt = !empty($resident['birthdate'])
                                         <span><?= ucwords($brgy) ?></span>,
                                         <span><?= ucwords($town) ?></span>,
                                         <span><?= ucwords($province) ?>.</span> 
-                                        is the owner of "NAME OF VESSEL" and he/she is requesting to get a Barangay Fishing Clearance to 
+                                        is the owner of "<strong><?= htmlspecialchars(strtoupper($boatName)) ?></strong>" and he/she is requesting to get a Barangay Fishing Clearance to 
                                         operate his/her vessel.
                                     </p>
 
                                     <!-- Paragraph 2: Purpose -->
                                     <p class="text-indent">
-                                        This certification is being issued upon request of above-name person for <strong>BOAT REGISTRATION.</strong>
+                                        This certification is being issued upon request of above-name person for <strong><?= htmlspecialchars(strtoupper($purpose)) ?>.</strong>
                                     </p>
 
                                     <!-- Paragraph 3: Given this -->

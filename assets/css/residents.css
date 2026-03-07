@@ -144,7 +144,8 @@
 .residents-table th:nth-child(2),
 .residents-table td:nth-child(2) {
     /* Full Name: auto — takes all remaining space */
-    width: 680px;
+    min-width: 100px;
+    width: auto
 }
 
 .residents-table th:nth-child(3),

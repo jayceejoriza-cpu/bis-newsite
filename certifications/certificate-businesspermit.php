@@ -28,6 +28,9 @@ try {
 // ============================================
 $resident_id = isset($_GET['resident_id']) ? intval($_GET['resident_id']) : 0;
 $cert_date   = isset($_GET['date'])        ? $_GET['date']                : date('Y-m-d');
+$business_name = isset($_GET['business_name']) ? trim($_GET['business_name']) : '';
+$business_address = isset($_GET['business_address']) ? trim($_GET['business_address']) : '';
+$nature = isset($_GET['nature']) ? trim($_GET['nature']) : '';
 
 if ($resident_id <= 0) {
     die("Invalid resident ID.");
@@ -136,9 +139,6 @@ try {
 
 } catch (PDOException $e) {
     error_log("Error fetching officials: " . $e->getMessage());
-
-} catch (PDOException $e) {
-    error_log("Error fetching Captain: " . $e->getMessage());
 }
 
 // ============================================
@@ -327,6 +327,27 @@ $birthdateFmt = !empty($resident['birthdate'])
             font-size: 16px;
         }
 
+        .business-info-table {
+            border-collapse: collapse;
+            font-family: Arial, sans-serif; /* Adjust to match your document */
+            font-size: 14px;
+            color: #333; /* Adjust color as needed */
+            margin-left: 80px;
+            margin-bottom: 15px;
+        }
+        
+        .business-info-table td {
+            vertical-align: top;
+        }
+
+        .business-info-table .label {
+            width: 150px; /* Adjust this to push the colons further left or right */
+        }
+
+        .business-info-table .colon {
+            width: 20px;
+            text-align: center;
+        }
         /* ===========================
            Signatures
         =========================== */
@@ -539,14 +560,28 @@ $birthdateFmt = !empty($resident['birthdate'])
                                         with the following information;
                                     </p>
 
-                                    <!-- Paragraph 2: Purpose -->
-                                    <p class="">
-                                         Business name      :<br>
-                                         Owner              :<br>
-                                         Address            :<br>
-                                         Type of business   :<br>
-                                    </p>
-
+                                <table class="business-info-table">
+                                    <tr>
+                                        <td class="label">Business name</td>
+                                        <td class="colon">:</td>
+                                        <td class="value"><span><?= strtoupper($business_name) ?></span></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="label">Owner</td>
+                                        <td class="colon">:</td>
+                                        <td class="value"><span><?= strtoupper($residentFullName) ?></span></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="label">Address</td>
+                                        <td class="colon">:</td>
+                                        <td class="value"><span><?= strtoupper($business_address) ?></span></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="label">Type of business</td>
+                                        <td class="colon">:</td>
+                                        <td class="value"><span><?= strtoupper($nature) ?></span></td>
+                                    </tr>
+                                </table>
                                      <!-- Paragraph 3: Purpose -->
                                     <p>
                                         Hoping that you may accommadate their application.
