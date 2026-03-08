@@ -39,7 +39,7 @@ try {
     
     // Get form data
     $resident_id = isset($_POST['resident_id']) ? intval($_POST['resident_id']) : 0;
-    $certificate_id = isset($_POST['certificate_id']) ? intval($_POST['certificate_id']) : 0;
+    $certificate_name = isset($_POST['certificate_name']) ? trim($_POST['certificate_name']) : '';
     $purpose = isset($_POST['purpose']) ? trim($_POST['purpose']) : '';
     $field_values = isset($_POST['field_values']) ? $_POST['field_values'] : '{}';
     
@@ -48,7 +48,7 @@ try {
         throw new Exception('Please select a resident');
     }
     
-    if ($certificate_id <= 0) {
+    if (empty($certificate_name)) {
         throw new Exception('Please select a certificate type');
     }
     
@@ -69,7 +69,7 @@ try {
         INSERT INTO certificate_requests (
             reference_no,
             resident_id,
-            certificate_id,
+            certificate_name,
             purpose,
             field_values,
             status,
@@ -78,7 +78,7 @@ try {
         ) VALUES (
             :reference_no,
             :resident_id,
-            :certificate_id,
+            :certificate_name,
             :purpose,
             :field_values,
             'Pending',
@@ -90,7 +90,7 @@ try {
     $stmt->execute([
         ':reference_no' => $reference_no,
         ':resident_id' => $resident_id,
-        ':certificate_id' => $certificate_id,
+        ':certificate_name' => $certificate_name,
         ':purpose' => $purpose,
         ':field_values' => $field_values
     ]);

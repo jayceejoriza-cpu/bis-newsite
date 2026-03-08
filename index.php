@@ -234,15 +234,14 @@ $certTypeData    = [];
 $certTypeRevenue = [];
 try {
     $rows = $pdo->query("
-        SELECT c.title, COUNT(cr.id) as cnt, COALESCE(SUM(cr.certificate_fee),0) as revenue
+        SELECT cr.certificate_name, COUNT(cr.id) as cnt
         FROM certificate_requests cr
-        JOIN certificates c ON cr.certificate_id = c.id
-        GROUP BY c.id, c.title
+        GROUP BY cr.certificate_name
         ORDER BY cnt DESC
     ")->fetchAll();
     foreach ($rows as $r) {
-        $certTypeData[$r['title']]    = (int)$r['cnt'];
-        $certTypeRevenue[$r['title']] = (float)$r['revenue'];
+        $certTypeData[$r['certificate_name']]    = (int)$r['cnt'];
+        $certTypeRevenue[$r['certificate_name']] = 0;
     }
 } catch (PDOException $e) { error_log($e->getMessage()); }
 

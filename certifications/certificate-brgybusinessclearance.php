@@ -688,8 +688,8 @@ $birthdateFmt = !empty($resident['birthdate'])
         function saveAndPrint() {
             const formData = new FormData();
             formData.append('resident_id', '<?php echo $resident_id; ?>');
-            formData.append('certificate_type', 'Certificate of Residency');
-            formData.append('purpose', '<?php echo !empty($purpose) ? htmlspecialchars($purpose) : "Residency Proof"; ?>');
+            formData.append('certificate_type', 'Barangay Business Clearance');
+            formData.append('purpose', '<?php echo !empty($nature) ? htmlspecialchars($nature) : "Barangay Business Clearance"; ?>');
 
             fetch('../model/save_print_log.php', {
                 method: 'POST',

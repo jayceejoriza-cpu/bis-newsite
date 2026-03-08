@@ -21,7 +21,6 @@ $files_to_update = [
     
     // Backend/API files
     'save_resident.php',
-    'save_certificate.php',
     'save_household.php',
     'save_blotter_record.php',
     'save_barangay_info.php',

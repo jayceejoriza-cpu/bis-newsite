@@ -132,7 +132,6 @@
     border-radius: 12px;
     overflow: hidden;
     width: 100%;
-    table-layout: fixed;
 }
 
 /* Column widths — short-text columns are compact, Full Name takes remaining space */
@@ -143,9 +142,9 @@
 
 .residents-table th:nth-child(2),
 .residents-table td:nth-child(2) {
-    /* Full Name: auto — takes all remaining space */
-    min-width: 100px;
-    width: auto
+    /* Full Name: takes remaining space after other columns */
+    min-width: 150px;
+    width: auto;
 }
 
 .residents-table th:nth-child(3),

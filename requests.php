@@ -109,16 +109,19 @@ try {
                             <label for="filterCertificate">Certificate</label>
                             <select id="filterCertificate" class="filter-select">
                                 <option value="">All</option>
-                                <?php
-                                try {
-                                    $certStmt = $pdo->query("SELECT DISTINCT title FROM certificates WHERE status = 'Published' ORDER BY title");
-                                    while ($cert = $certStmt->fetch()) {
-                                        echo '<option value="' . htmlspecialchars($cert['title']) . '">' . htmlspecialchars($cert['title']) . '</option>';
-                                    }
-                                } catch (PDOException $e) {
-                                    // Silently fail if certificates table doesn't exist
-                                }
-                                ?>
+                                <option value="Certificate of Indigency">Certificate of Indigency</option>
+                                <option value="Certificate of Residency">Certificate of Residency</option>
+                                <option value="Certificate of Low Income">Certificate of Low Income</option>
+                                <option value="Certificate of Solo Parent">Certificate of Solo Parent</option>
+                                <option value="Registration of Birth Certificate">Registration of Birth Certificate</option>
+                                <option value="Barangay Clearance">Barangay Clearance</option>
+                                <option value="Barangay Business Clearance">Barangay Business Clearance</option>
+                                <option value="Business Permit">Business Permit</option>
+                                <option value="Fishing Clearance">Fishing Clearance</option>
+                                <option value="First Time Jobseeker Assistance">First Time Jobseeker Assistance</option>
+                                <option value="Certificate of Good Moral Character">Certificate of Good Moral Character</option>
+                                <option value="Oath of Undertaking">Oath of Undertaking</option>
+                                <option value="Certificate for Vessel Docking">Certificate for Vessel Docking</option>
                             </select>
                         </div>
                         

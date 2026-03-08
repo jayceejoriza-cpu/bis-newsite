@@ -1,18 +1,16 @@
-# Fix Certificate Resident Fetch - TODO
+# Task: Remove save_certificate.php and change certificate_id to certificate_name
 
-## Task
-Fix the fetch resident functionality for:
-- certificate-barangayclearance.php
-- certificate-brgybusinessclearance.php  
-- certificate-businesspermit.php
+## Steps:
+- [x] 1. Delete model/save_certificate.php
+- [x] 2. Database changes - Drop certificates table and change certificate_id to certificate_name
+- [x] 3. Update model/save_print_log.php
+- [x] 4. Update model/save_certificate_request.php
+- [x] 5. Update model/get_requests.php
+- [x] 6. Update requests.php filter
+- [x] 7. Update index.php dashboard queries
+- [x] 8. Update reports.php queries
+- [x] 9. Update config.php (no changes needed - no certificate_id usage)
+- [x] 10. Update batch_update_auth.php
 
-## Issues Identified
-1. Missing URL parameter retrieval (business_name, business_address, nature)
-2. Business details not displayed in certificates
-3. Duplicate catch block in certificate-businesspermit.php
-
-## Steps to Completed
-- [x] 1. Fix certificate-businesspermit.php - Added business parameter retrieval and removed duplicate catch block
-- [x] 2. Fix certificate-brgybusinessclearance.php - Added business parameter retrieval
-- [x] 3. certificate-barangayclearance.php - Already has correct purpose parameter (no changes needed)
+## Completed: ALL
 

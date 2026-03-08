@@ -594,8 +594,8 @@ $birthdateFmt = !empty($resident['birthdate'])
         function saveAndPrint() {
             const formData = new FormData();
             formData.append('resident_id', '<?php echo $resident_id; ?>');
-            formData.append('certificate_type', 'Certificate of Low-Income');
-            formData.append('purpose', 'Low Income Verification');
+            formData.append('certificate_type', 'Certificate of Job Seeker Assistance');
+            formData.append('purpose', 'First-Time Jobseeker Assistance (RA 11261)');
 
             fetch('../model/save_print_log.php', {
                 method: 'POST',

@@ -8,12 +8,11 @@ $sql = "
         cr.id,
         r.resident_id,
         CONCAT(r.first_name, ' ', IFNULL(CONCAT(r.middle_name, ' '), ''), r.last_name) as resident_name,
-        c.title as certificate_name,
+        cr.certificate_name,
         cr.purpose,
         cr.date_requested
     FROM certificate_requests cr
     LEFT JOIN residents r ON cr.resident_id = r.id
-    LEFT JOIN certificates c ON cr.certificate_id = c.id
     ORDER BY cr.date_requested DESC
 ";
 

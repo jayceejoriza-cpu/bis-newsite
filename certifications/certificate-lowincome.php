@@ -646,7 +646,7 @@ $birthdateFmt = !empty($resident['birthdate'])
             const formData = new FormData();
             formData.append('resident_id', '<?php echo $resident_id; ?>');
             formData.append('certificate_type', 'Certificate of Low-Income');
-            formData.append('purpose', 'Low Income Verification');
+            formData.append('purpose', '<?php echo !empty($purpose) ? htmlspecialchars($purpose) : "Low Income Verification"; ?>');
 
             fetch('../model/save_print_log.php', {
                 method: 'POST',
