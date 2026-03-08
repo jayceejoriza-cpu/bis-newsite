@@ -123,7 +123,7 @@ try {
             purok
         FROM residents
         WHERE activity_status != 'Archived'
-        ORDER BY created_at DESC
+        ORDER BY last_name ASC, first_name ASC
     ");
     
     $stmt->execute();
@@ -489,8 +489,10 @@ try {
                         $avatarColor = getAvatarColor($index);
                         $residentId = !empty($resident['resident_id']) ? $resident['resident_id'] : generateResidentId($resident['id']);
                         $age = calculateAge($resident['date_of_birth']);
+                        $sortName = $resident['last_name'] . ', ' . $resident['first_name'];
                     ?>
                     <div class="resident-card" 
+                         data-name="<?php echo htmlspecialchars($sortName); ?>"
                          data-religion="<?php echo htmlspecialchars($resident['religion'] ?? ''); ?>"
                          data-ethnicity="<?php echo htmlspecialchars($resident['ethnicity'] ?? ''); ?>"
                          data-civil-status="<?php echo htmlspecialchars($resident['civil_status'] ?? ''); ?>"
@@ -500,7 +502,6 @@ try {
                          data-age-health-group="<?php echo htmlspecialchars($resident['age_health_group'] ?? ''); ?>"
                          data-date-of-birth="<?php echo htmlspecialchars($resident['date_of_birth'] ?? ''); ?>"
                          data-pwd-status="<?php echo htmlspecialchars($resident['pwd_status'] ?? 'No'); ?>"
-                                data-date-of-birth="<?php echo htmlspecialchars($resident['date_of_birth'] ?? ''); ?>"
                          data-voter-status="<?php echo htmlspecialchars($resident['voter_status'] ?: 'No'); ?>"
                          data-activity-status="<?php echo htmlspecialchars($resident['activity_status'] ?? 'Active'); ?>">
                         <div class="avatar <?php echo htmlspecialchars($avatarColor); ?>">
