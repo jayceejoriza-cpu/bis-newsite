@@ -1131,7 +1131,7 @@ html.dark-mode .year-filter-select:focus {
 /* Table Loading State */
 .table-container {
     position: relative;
-    min-height: 400px;
+ 
 }
 
 .table-loader {

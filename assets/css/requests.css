@@ -43,8 +43,11 @@
 
 .requests-table {
     font-size: 13px;
+    border: 1px solid var(--border-color);
     border-collapse: separate;
     border-spacing: 0;
+    border-radius: 12px;
+    overflow: hidden;
     width: 100%;
     table-layout: auto;
 }
@@ -58,7 +61,7 @@
     font-weight: 600;
     color: var(--text-primary);
     text-align: left;
-    padding: 16px 20px;
+    padding: 15px 20px;
     border-bottom: 2px solid var(--border-color);
     white-space: nowrap;
     background-color: var(--bg-secondary);
@@ -69,7 +72,7 @@
 }
 
 .requests-table td {
-    padding: 16px 20px;
+    padding: 14px 20px;
     color: var(--text-primary);
     border-bottom: 1px solid var(--border-color);
     transition: background-color 0.2s ease;

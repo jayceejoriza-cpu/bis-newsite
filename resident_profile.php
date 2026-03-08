@@ -259,11 +259,12 @@ $age = calculateAge($resident['date_of_birth']);
                         <a href="#family-info" class="profile-nav-item">
                             <i class="fas fa-users"></i>
                             <span>Family Information</span>
-                        </a>
+                        </a> 
+                        <!---
                         <a href="#emergency-contact" class="profile-nav-item">
                             <i class="fas fa-phone-alt"></i>
                             <span>Emergency Contact</span>
-                        </a>
+                        </a>--->
                         <a href="#additional-info" class="profile-nav-item">
                             <i class="fas fa-info-circle"></i>
                             <span>Additional Information</span>
@@ -271,15 +272,16 @@ $age = calculateAge($resident['date_of_birth']);
                         <a href="#household-details" class="profile-nav-item">
                             <i class="fas fa-home"></i>
                             <span>Household Details</span>
+                        </a> 
+                        <a href="#service-requests" class="profile-nav-item">
+                            <i class="fas fa-clipboard-list"></i>
+                            <span>Service Requests</span>
                         </a>
                         <a href="#blotter-records" class="profile-nav-item">
                             <i class="fas fa-file-alt"></i>
                             <span>Blotter Records</span>
                         </a>
-                        <a href="#service-requests" class="profile-nav-item">
-                            <i class="fas fa-clipboard-list"></i>
-                            <span>Service Requests</span>
-                        </a>
+                       
                         <a href="#incident-report" class="profile-nav-item">
                             <i class="fas fa-exclamation-triangle"></i>
                             <span>Incident Report</span>
@@ -641,7 +643,78 @@ $age = calculateAge($resident['date_of_birth']);
                             <?php endif; ?>
                         </div>
                     </section>
-                    
+
+                     <section id="service-requests" class="profile-section">
+                        <div class="section-header">
+                            <h2><i class="fas fa-clipboard-list"></i> Service Requests</h2>
+                            <p>Document and certificate requests</p>
+                        </div>
+                        
+                        <div class="section-content">
+                            <?php
+                            // Fetch certificate requests for this resident
+                            $certRequests = [];
+                            try {
+                                $certStmt = $pdo->prepare("
+                                    SELECT 
+                                        id,
+                                        reference_no,
+                                        certificate_name,
+                                        purpose,
+                                        status,
+                                        date_requested
+                                    FROM certificate_requests
+                                    WHERE resident_id = ?
+                                    ORDER BY date_requested DESC, created_at DESC
+                                ");
+                                $certStmt->execute([$residentId]);
+                                $certRequests = $certStmt->fetchAll();
+                            } catch (PDOException $e) {
+                                error_log("Error fetching certificate requests: " . $e->getMessage());
+                            }
+                            ?>
+                            
+                            <?php if (empty($certRequests)): ?>
+                                <p class="no-data">No service requests found</p>
+                            <?php else: ?>
+                                <div class="cert-requests-table-wrapper">
+                                    <table class="data-table cert-requests-table">
+                                        <thead>
+                                            <tr>
+                                                <th>#</th>
+                                                <th>Certificate</th>
+                                                <th>Purpose</th>
+                                                <th>Issued Date</th>
+                                                <th>Status</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <?php foreach ($certRequests as $index => $req): ?>
+                                                <tr>
+                                                    <td><?php echo $index + 1; ?></td>
+                                                    <td><?php echo htmlspecialchars($req['certificate_name']); ?></td>
+                                                    <td><?php echo htmlspecialchars($req['purpose'] ?: 'N/A'); ?></td>
+                                                    <td><?php echo $req['date_requested'] ? date('M d, Y', strtotime($req['date_requested'])) : 'N/A'; ?></td>
+                                                    <td>
+                                                        <?php 
+                                                            $statusClass = strtolower($req['status']);
+                                                            if ($statusClass === 'pending') $statusClass = 'pending';
+                                                            elseif ($statusClass === 'approved' || $statusClass === 'completed') $statusClass = 'completed';
+                                                            elseif ($statusClass === 'rejected') $statusClass = 'rejected';
+                                                        ?>
+                                                        <span class="status-badge status-<?php echo $statusClass; ?>">
+                                                            <?php echo htmlspecialchars($req['status']); ?>
+                                                        </span>
+                                                    </td>
+                                                </tr>
+                                            <?php endforeach; ?>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            <?php endif; ?>
+                        </div>
+                    </section>
+
                     <section id="blotter-records" class="profile-section">
                         <div class="section-header">
                             <h2><i class="fas fa-file-alt"></i> Blotter Records</h2>
@@ -652,15 +725,7 @@ $age = calculateAge($resident['date_of_birth']);
                         </div>
                     </section>
                     
-                    <section id="service-requests" class="profile-section">
-                        <div class="section-header">
-                            <h2><i class="fas fa-clipboard-list"></i> Service Requests</h2>
-                            <p>Document and certificate requests</p>
-                        </div>
-                        <div class="section-content">
-                            <p class="no-data">No service requests found</p>
-                        </div>
-                    </section>
+                   
                     
                     <section id="incident-report" class="profile-section">
                         <div class="section-header">

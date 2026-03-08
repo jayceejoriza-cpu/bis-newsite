@@ -1,16 +1,18 @@
-# Task: Remove save_certificate.php and change certificate_id to certificate_name
+# TODO - Fix Tables to Match residents.php Style
 
-## Steps:
-- [x] 1. Delete model/save_certificate.php
-- [x] 2. Database changes - Drop certificates table and change certificate_id to certificate_name
-- [x] 3. Update model/save_print_log.php
-- [x] 4. Update model/save_certificate_request.php
-- [x] 5. Update model/get_requests.php
-- [x] 6. Update requests.php filter
-- [x] 7. Update index.php dashboard queries
-- [x] 8. Update reports.php queries
-- [x] 9. Update config.php (no changes needed - no certificate_id usage)
-- [x] 10. Update batch_update_auth.php
+## Task
+Make the tables in requests.php, blotter.php, and officials.php match the table style in residents.php
 
-## Completed: ALL
+## Steps
+- [x] 1. Update requests.css - Add rounded table style from residents.css
+- [x] 2. Update blotter.css - Update table styling to match residents.css
+- [x] 3. Update officials.css - Apply consistent table styling
+
+## Summary
+Successfully updated all three CSS files to match the table style in residents.php:
+- Added `border: 1px solid var(--border-color)` to all tables
+- Set `border-collapse: separate` with `border-spacing: 0`
+- Added `border-radius: 12px` with `overflow: hidden`
+- Unified padding: `15px 20px` for th, `14px 20px` for td
+- Added consistent hover effects and border styling
 

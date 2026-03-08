@@ -223,6 +223,9 @@ try {
                 
                 <button class="btn btn-icon" id="filterBtn">
                     <i class="fas fa-filter"></i>
+                    <span class="filter-notification" id="filterNotification" style="display: none;">
+                        <span class="filter-count" id="filterCount">0</span>
+                    </span>
                 </button>
                 
                 <button class="btn btn-icon" id="refreshBtn">

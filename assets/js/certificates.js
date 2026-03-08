@@ -187,7 +187,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!residentDropdown) return;
 
         if (residents.length === 0) {
-            residentDropdown.innerHTML = '<div class="resident-dropdown-empty">No residents found</div>';
+            residentDropdown.innerHTML = '<div class="resident-dropdown-empty">No resident found. <a href="model/create-resident.php">Click here to register.</a></div>';
             residentDropdown.style.display = 'block';
             return;
         }
@@ -353,7 +353,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!residencyDropdown) return;
 
         if (residents.length === 0) {
-            residencyDropdown.innerHTML = '<div class="resident-dropdown-empty">No residents found</div>';
+            residencyDropdown.innerHTML = '<div class="resident-dropdown-empty">No resident found. <a href="model/create-resident.php">Click here to register.</a></div>';
             residencyDropdown.style.display = 'block';
             return;
         }
@@ -557,7 +557,7 @@ document.addEventListener('DOMContentLoaded', function () {
     function renderFishingDropdown(residents) {
         if (!fishingDropdown) return;
         if (residents.length === 0) {
-            fishingDropdown.innerHTML = '<div class="resident-dropdown-empty">No residents found</div>';
+            fishingDropdown.innerHTML = '<div class="resident-dropdown-empty">No resident found. <a href="model/create-resident.php">Click here to register.</a></div>';
             fishingDropdown.style.display = 'block';
             return;
         }
@@ -686,7 +686,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function renderFtJobseekerDropdown(residents) {
         if (!ftJobseekerDropdown) return;
-        if (residents.length === 0) { ftJobseekerDropdown.innerHTML = '<div class="resident-dropdown-empty">No residents found</div>'; ftJobseekerDropdown.style.display = 'block'; return; }
+        if (residents.length === 0) { ftJobseekerDropdown.innerHTML = '<div class="resident-dropdown-empty">No resident found. <a href="model/create-resident.php">Click here to register.</a></div>'; ftJobseekerDropdown.style.display = 'block'; return; }
         ftJobseekerDropdown.innerHTML = '';
         residents.forEach(function (r) {
             var item = document.createElement('div');
@@ -803,7 +803,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function renderGmrcDropdown(residents) {
         if (!gmrcDropdown) return;
-        if (residents.length === 0) { gmrcDropdown.innerHTML = '<div class="resident-dropdown-empty">No residents found</div>'; gmrcDropdown.style.display = 'block'; return; }
+        if (residents.length === 0) { gmrcDropdown.innerHTML = '<div class="resident-dropdown-empty">No resident found. <a href="model/create-resident.php">Click here to register.</a></div>'; gmrcDropdown.style.display = 'block'; return; }
         gmrcDropdown.innerHTML = '';
         residents.forEach(function (r) {
             var item = document.createElement('div');
@@ -920,7 +920,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function renderOathDropdown(residents) {
         if (!oathDropdown) return;
-        if (residents.length === 0) { oathDropdown.innerHTML = '<div class="resident-dropdown-empty">No residents found</div>'; oathDropdown.style.display = 'block'; return; }
+        if (residents.length === 0) { oathDropdown.innerHTML = '<div class="resident-dropdown-empty">No resident found. <a href="model/create-resident.php">Click here to register.</a></div>'; oathDropdown.style.display = 'block'; return; }
         oathDropdown.innerHTML = '';
         residents.forEach(function (r) {
             var item = document.createElement('div');
@@ -1037,7 +1037,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function renderLowIncomeDropdown(residents) {
         if (!lowIncomeDropdown) return;
-        if (residents.length === 0) { lowIncomeDropdown.innerHTML = '<div class="resident-dropdown-empty">No residents found</div>'; lowIncomeDropdown.style.display = 'block'; return; }
+        if (residents.length === 0) { lowIncomeDropdown.innerHTML = '<div class="resident-dropdown-empty">No resident found. <a href="model/create-resident.php">Click here to register.</a></div>'; lowIncomeDropdown.style.display = 'block'; return; }
         lowIncomeDropdown.innerHTML = '';
         residents.forEach(function (r) {
             var item = document.createElement('div');
@@ -1154,7 +1154,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function renderSoloParentDropdown(residents) {
         if (!soloParentDropdown) return;
-        if (residents.length === 0) { soloParentDropdown.innerHTML = '<div class="resident-dropdown-empty">No residents found</div>'; soloParentDropdown.style.display = 'block'; return; }
+        if (residents.length === 0) { soloParentDropdown.innerHTML = '<div class="resident-dropdown-empty">No resident found. <a href="model/create-resident.php">Click here to register.</a></div>'; soloParentDropdown.style.display = 'block'; return; }
         soloParentDropdown.innerHTML = '';
         residents.forEach(function (r) {
             var item = document.createElement('div');
@@ -1319,7 +1319,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function renderRbcDropdown(residents) {
         if (!rbcDropdown) return;
-        if (residents.length === 0) { rbcDropdown.innerHTML = '<div class="resident-dropdown-empty">No residents found</div>'; rbcDropdown.style.display = 'block'; return; }
+        if (residents.length === 0) { rbcDropdown.innerHTML = '<div class="resident-dropdown-empty">No resident found. <a href="model/create-resident.php">Click here to register.</a></div>'; rbcDropdown.style.display = 'block'; return; }
         rbcDropdown.innerHTML = '';
         residents.forEach(function (r) {
             var item = document.createElement('div');
@@ -1333,7 +1333,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function renderRbcChildDropdown(residents) {
         if (!rbcChildDropdown) return;
-        if (residents.length === 0) { rbcChildDropdown.innerHTML = '<div class="resident-dropdown-empty">No residents found</div>'; rbcChildDropdown.style.display = 'block'; return; }
+        if (residents.length === 0) { rbcChildDropdown.innerHTML = '<div class="resident-dropdown-empty">No resident found. <a href="model/create-resident.php">Click here to register.</a></div>'; rbcChildDropdown.style.display = 'block'; return; }
         rbcChildDropdown.innerHTML = '';
         residents.forEach(function (r) {
             var item = document.createElement('div');
@@ -1469,7 +1469,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function renderBrgyClearanceDropdown(residents) {
         if (!brgyClearanceDropdown) return;
-        if (residents.length === 0) { brgyClearanceDropdown.innerHTML = '<div class="resident-dropdown-empty">No residents found</div>'; brgyClearanceDropdown.style.display = 'block'; return; }
+        if (residents.length === 0) { brgyClearanceDropdown.innerHTML = '<div class="resident-dropdown-empty">No resident found. <a href="model/create-resident.php">Click here to register.</a></div>'; brgyClearanceDropdown.style.display = 'block'; return; }
         brgyClearanceDropdown.innerHTML = '';
         residents.forEach(function (r) {
             var item = document.createElement('div');
@@ -1590,7 +1590,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function renderBrgyBusinessClearanceDropdown(residents) {
         if (!brgyBusinessClearanceDropdown) return;
-        if (residents.length === 0) { brgyBusinessClearanceDropdown.innerHTML = '<div class="resident-dropdown-empty">No residents found</div>'; brgyBusinessClearanceDropdown.style.display = 'block'; return; }
+        if (residents.length === 0) { brgyBusinessClearanceDropdown.innerHTML = '<div class="resident-dropdown-empty">No resident found. <a href="model/create-resident.php">Click here to register.</a></div>'; brgyBusinessClearanceDropdown.style.display = 'block'; return; }
         brgyBusinessClearanceDropdown.innerHTML = '';
         residents.forEach(function (r) {
             var item = document.createElement('div');
@@ -1725,7 +1725,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function renderBusinessPermitDropdown(residents) {
         if (!businessPermitDropdown) return;
-        if (residents.length === 0) { businessPermitDropdown.innerHTML = '<div class="resident-dropdown-empty">No residents found</div>'; businessPermitDropdown.style.display = 'block'; return; }
+        if (residents.length === 0) { businessPermitDropdown.innerHTML = '<div class="resident-dropdown-empty">No resident found. <a href="model/create-resident.php">Click here to register.</a></div>'; businessPermitDropdown.style.display = 'block'; return; }
         businessPermitDropdown.innerHTML = '';
         residents.forEach(function (r) {
             var item = document.createElement('div');
@@ -1860,7 +1860,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function renderVesselDockingDropdown(residents) {
         if (!vesselDockingDropdown) return;
-        if (residents.length === 0) { vesselDockingDropdown.innerHTML = '<div class="resident-dropdown-empty">No residents found</div>'; vesselDockingDropdown.style.display = 'block'; return; }
+        if (residents.length === 0) { vesselDockingDropdown.innerHTML = '<div class="resident-dropdown-empty">No resident found. <a href="model/create-resident.php">Click here to register.</a></div>'; vesselDockingDropdown.style.display = 'block'; return; }
         vesselDockingDropdown.innerHTML = '';
         residents.forEach(function (r) {
             var item = document.createElement('div');

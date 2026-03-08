@@ -801,10 +801,56 @@ body.dark-mode .picker-resident-item {
 
 /* Officials Table */
 .officials-table {
-    border-radius: 0 0 12px 12px;
+    font-size: 13px;
+    border: 1px solid var(--border-color);
+    border-collapse: separate;
+    border-spacing: 0;
+    border-radius: 12px;
+    overflow: hidden;
+    width: 100%;
+    table-layout: auto;
+}
+
+.officials-table thead {
+    background-color: var(--bg-secondary);
 }
 
 .officials-table th {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+    text-align: left;
+    padding: 15px 20px;
+    border-bottom: 2px solid var(--border-color);
+    white-space: nowrap;
+    background-color: var(--bg-secondary);
+}
+
+.officials-table th:not(:last-child) {
+    border-right: 1px solid var(--border-color);
+}
+
+.officials-table td {
+    padding: 14px 20px;
+    color: var(--text-primary);
+    border-bottom: 1px solid var(--border-color);
+    transition: background-color 0.2s ease;
+}
+
+.officials-table td:not(:last-child) {
+    border-right: 1px solid var(--border-color);
+}
+
+.officials-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.officials-table tbody tr {
+    transition: all 0.2s ease;
+    background-color: var(--bg-secondary);
+}
+
+.officials-table tbody tr:hover {
     background-color: var(--bg-primary);
 }
 

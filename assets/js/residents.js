@@ -81,6 +81,31 @@ function initializeEventListeners() {
 }
 
 // ===================================
+// Filter Notification Badge
+// ===================================
+function updateFilterNotification(count) {
+    const notification = document.getElementById('filterNotification');
+    const countSpan = document.getElementById('filterCount');
+    const filterBtn = document.getElementById('filterBtn');
+    
+    if (!notification || !countSpan || !filterBtn) return;
+    
+    if (count > 0) {
+        countSpan.textContent = count > 9 ? '9+' : count;
+        notification.style.display = 'flex';
+        filterBtn.classList.add('has-active-filters');
+        
+        // Re-trigger animation
+        notification.style.animation = 'none';
+        notification.offsetHeight; // Trigger reflow
+        notification.style.animation = 'filterNotifPop 0.3s ease';
+    } else {
+        notification.style.display = 'none';
+        filterBtn.classList.remove('has-active-filters');
+    }
+}
+
+// ===================================
 // Close Filter Panel on Outside Click
 // ===================================
 function initializeFilterPanelOutsideClick() {
@@ -190,7 +215,12 @@ function initializeSearch() {
         searchInput.addEventListener('input', (e) => {
             clearTimeout(searchTimeout);
             searchTimeout = setTimeout(() => {
-                residentsTable.search(e.target.value);
+                if (e.target.value === '') {
+                    residentsTable.reset();
+                    residentsTable.sortByColumn(1);
+                } else {
+                    residentsTable.search(e.target.value);
+                }
                 
                 // Filter grid cards
                 const query = e.target.value.toLowerCase();
@@ -207,7 +237,8 @@ function initializeSearch() {
     if (clearSearchBtn) {
         clearSearchBtn.addEventListener('click', () => {
             searchInput.value = '';
-            residentsTable.search('');
+            residentsTable.reset();
+            residentsTable.sortByColumn(1);
             
             // Reset grid cards
             const gridCards = document.querySelectorAll('.resident-card');
@@ -448,6 +479,7 @@ function refreshData() {
         if (searchInput) searchInput.value = '';
         
         residentsTable.reset();
+        residentsTable.sortByColumn(1);
         
         // Show success message
         showNotification('Data refreshed successfully', 'success');
@@ -991,6 +1023,9 @@ function applyAdvancedFilters() {
     // Count active filters
     const activeFiltersCount = Object.values(filters).filter(v => v !== '').length;
     
+    // Update the filter notification badge
+    updateFilterNotification(activeFiltersCount);
+    
     if (activeFiltersCount > 0) {
         showNotification(`${activeFiltersCount} filter(s) applied successfully`, 'success');
     } else {
@@ -1028,10 +1063,14 @@ function clearAdvancedFilters() {
     
     // Reset the table
     residentsTable.reset();
+    residentsTable.sortByColumn(1);
     
     // Reset grid cards
     const gridCards = document.querySelectorAll('.resident-card');
     gridCards.forEach(card => card.style.display = '');
+    
+    // Clear the filter notification badge
+    updateFilterNotification(0);
     
     showNotification('Filters cleared', 'success');
 }
