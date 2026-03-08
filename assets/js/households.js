@@ -95,6 +95,7 @@ function displayHouseholds(households) {
     households.forEach((household, index) => {
         const row = document.createElement('tr');
         row.setAttribute('data-size', household.size);
+        row.setAttribute('data-member-count', household.member_count);
         row.setAttribute('data-household-id', household.id);
         
         // Get initials for avatar
@@ -151,7 +152,12 @@ function initializeTable() {
         searchable: true,
         paginated: true,
         pageSize: 10,
-        responsive: true
+        responsive: true,
+        customSearch: (row, term) => {
+            const householdNumber = row.cells[0]?.textContent.toLowerCase() || '';
+            const headName = row.cells[1]?.textContent.toLowerCase() || '';
+            return householdNumber.includes(term) || headName.includes(term);
+        }
     });
     
     console.log(`Total households: ${householdsTable.getTotalRows()}`);
@@ -197,24 +203,38 @@ function initializeFilterTabs() {
 function applyFilter(filterType) {
     console.log('Filter applied:', filterType);
     
-    const rows = document.querySelectorAll('#householdsTableBody tr');
-    let visibleCount = 0;
-    
-    rows.forEach(row => {
-        const size = row.getAttribute('data-size');
+    if (householdsTable) {
+        householdsTable.filter(row => {
+            let memberCount = 0;
+            // Get member count from attribute
+            if (row.hasAttribute('data-member-count')) {
+                memberCount = parseInt(row.getAttribute('data-member-count'));
+            } else {
+                // Fallback: try to parse from the badge
+                const countEl = row.querySelector('.member-count .count');
+                if (countEl) memberCount = parseInt(countEl.textContent);
+            }
+            
+            switch(filterType) {
+                case 'all':
+                    return true;
+                case 'single-person':
+                    return memberCount === 0;
+                case 'small':
+                    return memberCount >= 1 && memberCount <= 4;
+                case 'medium':
+                    return memberCount >= 5 && memberCount <= 7;
+                case 'large':
+                    return memberCount >= 8 && memberCount <= 10;
+                case 'very-large':
+                    return memberCount >= 11;
+                default:
+                    return true;
+            }
+        });
         
-        if (filterType === 'all') {
-            row.style.display = '';
-            visibleCount++;
-        } else if (size === filterType) {
-            row.style.display = '';
-            visibleCount++;
-        } else {
-            row.style.display = 'none';
-        }
-    });
-    
-    updateTotalCount(visibleCount);
+        updateTotalCount(householdsTable.getFilteredRows());
+    }
 }
 
 function updateTotalCount(count) {
@@ -257,41 +277,10 @@ function initializeSearch() {
 }
 
 function performSearch(searchTerm) {
-    const rows = document.querySelectorAll('#householdsTableBody tr');
-    const term = searchTerm.toLowerCase().trim();
-    let visibleCount = 0;
-    
-    rows.forEach(row => {
-        // Skip rows already hidden by filter
-        const currentDisplay = row.style.display;
-        if (currentDisplay === 'none' && term === '') {
-            return;
-        }
-        
-        const householdNumber = row.cells[0].textContent.toLowerCase();
-        const headName = row.cells[1].textContent.toLowerCase();
-        const memberCount = row.cells[2].textContent.toLowerCase();
-        
-        const matches = householdNumber.includes(term) || 
-                       headName.includes(term) || 
-                       memberCount.includes(term);
-        
-        if (term === '' || matches) {
-            // Check if row should be visible based on current filter
-            const activeFilter = document.querySelector('.tab-btn.active');
-            const filterType = activeFilter ? activeFilter.getAttribute('data-filter') : 'all';
-            const size = row.getAttribute('data-size');
-            
-            if (filterType === 'all' || size === filterType) {
-                row.style.display = '';
-                visibleCount++;
-            }
-        } else {
-            row.style.display = 'none';
-        }
-    });
-    
-    updateTotalCount(visibleCount);
+    if (householdsTable) {
+        householdsTable.search(searchTerm);
+        updateTotalCount(householdsTable.getFilteredRows());
+    }
 }
 
 // ===================================

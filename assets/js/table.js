@@ -188,13 +188,17 @@ class EnhancedTable {
         } else {
             // Active search — search ALL rows including those hidden by defaultFilter
             // so deceased residents are still findable by name
-            this.filteredRows = this.allRows.filter(row => {
-                const cells = Array.from(row.cells);
-                return cells.some(cell => {
-                    const text = cell.textContent.toLowerCase();
-                    return text.includes(searchTerm);
+            if (this.options.customSearch && typeof this.options.customSearch === 'function') {
+                this.filteredRows = this.allRows.filter(row => this.options.customSearch(row, searchTerm));
+            } else {
+                this.filteredRows = this.allRows.filter(row => {
+                    const cells = Array.from(row.cells);
+                    return cells.some(cell => {
+                        const text = cell.textContent.toLowerCase();
+                        return text.includes(searchTerm);
+                    });
                 });
-            });
+            }
         }
         
         this.currentPage = 1;

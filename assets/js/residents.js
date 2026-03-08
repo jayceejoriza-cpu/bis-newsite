@@ -51,6 +51,12 @@ function initializeTable() {
         defaultFilter: (row) => {
             const status = row.getAttribute('data-activity-status');
             return status !== 'Deceased';
+        },
+        customSearch: (row, term) => {
+            const id = row.cells[0]?.textContent.toLowerCase() || '';
+            const nameEl = row.querySelector('.resident-name span:last-child');
+            const name = nameEl ? nameEl.textContent.toLowerCase() : (row.cells[1]?.textContent.toLowerCase() || '');
+            return id.includes(term) || name.includes(term);
         }
     });
     residentsTable.sortByColumn(1);

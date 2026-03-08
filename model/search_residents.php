@@ -18,7 +18,7 @@ $filterHouseholds = isset($_GET['filter_households']) ? $_GET['filter_households
 $excludeResidentId = isset($_GET['exclude_resident_id']) ? intval($_GET['exclude_resident_id']) : 0;
 
 try {
-    // Prepare SQL query to search residents
+    // Prepare SQL query to search residents - ONLY search by name and resident_id
     $sql = "SELECT 
                 r.id,
                 r.resident_id,
@@ -29,7 +29,6 @@ try {
                 r.suffix,
                 r.date_of_birth,
                 r.sex,
-                r.mobile_number,
                 r.current_address
             FROM residents r
             WHERE r.activity_status = 'Active'";
@@ -52,23 +51,22 @@ try {
         $sql .= " AND r.id != " . $excludeResidentId;
     }
     
-    // Add search condition if search term is provided
+    // Add search condition - ONLY search by name and resident_id
     if (!empty($searchTerm)) {
         $searchParam = "%{$searchTerm}%";
         $sql .= " AND (
             CONCAT(r.first_name, ' ', IFNULL(r.middle_name, ''), ' ', r.last_name) LIKE ?
             OR r.resident_id LIKE ?
-            OR r.mobile_number LIKE ?
         )";
     }
     
     $sql .= " ORDER BY r.last_name, r.first_name LIMIT 100";
     
-    // Prepare statement
+    // Prepare statement using mysqli
     $stmt = $conn->prepare($sql);
     
     if (!empty($searchTerm)) {
-        $stmt->bind_param('sss', $searchParam, $searchParam, $searchParam);
+        $stmt->bind_param('ss', $searchParam, $searchParam);
     }
     
     $stmt->execute();

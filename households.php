@@ -67,11 +67,11 @@ $pageTitle = 'Households';
             <!-- Filter Tabs -->
             <div class="filter-tabs">
                 <button class="tab-btn active" data-filter="all">All</button>
-                <button class="tab-btn" data-filter="single-person">Single-person</button>
-                <button class="tab-btn" data-filter="small">Small</button>
-                <button class="tab-btn" data-filter="medium">Medium</button>
-                <button class="tab-btn" data-filter="large">Large</button>
-                <button class="tab-btn" data-filter="very-large">Very Large</button>
+                <button class="tab-btn" data-filter="single-person">Single-person (1)</button>
+                <button class="tab-btn" data-filter="small">Small (2-4)</button>
+                <button class="tab-btn" data-filter="medium">Medium (5-7)</button>
+                <button class="tab-btn" data-filter="large">Large (8-10)</button>
+                <button class="tab-btn" data-filter="very-large">Very Large (11+)</button>
             </div>
 
               <!-- Search and Filter Bar -->

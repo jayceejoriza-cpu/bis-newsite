@@ -84,7 +84,12 @@ function loadRequests() {
                 searchable: true,
                 paginated: true,
                 pageSize: 10,
-                responsive: true
+                responsive: true,
+                customSearch: (row, term) => {
+                    const residentId = row.cells[0]?.textContent.toLowerCase() || '';
+                    const residentName = row.cells[1]?.textContent.toLowerCase() || '';
+                    return residentId.includes(term) || residentName.includes(term);
+                }
             });
         })
         .catch(error => {
