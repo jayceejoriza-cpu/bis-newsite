@@ -523,6 +523,9 @@ try {
                             <span class="badge <?php echo ($resident['voter_status'] === 'Yes') ? 'badge-yes' : 'badge-no'; ?>">
                                 Registered Voter: <?php echo htmlspecialchars($resident['voter_status'] ?: 'No'); ?>
                             </span>
+                            <span class="badge badge-<?php echo strtolower($resident['activity_status'] ?? 'Active'); ?>">
+                                Activity Status: <?php echo htmlspecialchars($resident['activity_status'] ?? 'Active'); ?>
+                            </span>
                         </div>
                         <div class="actions">
                             <a href="resident_profile.php?id=<?php echo htmlspecialchars($resident['id']); ?>" class="btn btn-sm btn-outline-primary">View Profile</a>

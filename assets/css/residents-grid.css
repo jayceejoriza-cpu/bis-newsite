@@ -68,8 +68,10 @@
 
 .resident-card .badges {
     display: flex;
-    gap: 10px;
+    flex-direction: column;
+    gap: 8px;
     margin-bottom: 20px;
+    align-items: center;
 }
 
 .resident-card .actions {
