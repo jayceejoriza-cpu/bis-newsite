@@ -897,8 +897,8 @@ $birthdateFmt = !empty($resident['birthdate'])
         function saveAndPrint() {
             const formData = new FormData();
             formData.append('resident_id', '<?php echo $resident_id; ?>');
-            formData.append('certificate_type', 'Certificate of Residency');
-            formData.append('purpose', '<?php echo !empty($purpose) ? htmlspecialchars($purpose) : "Residency Proof"; ?>');
+            formData.append('certificate_type', 'Barangay Clearance');
+            formData.append('purpose', '<?php echo !empty($purpose) ? htmlspecialchars($purpose) : "Barangay Clearance"; ?>');
 
             fetch('../model/save_print_log.php', {
                 method: 'POST',
@@ -917,6 +917,11 @@ $birthdateFmt = !empty($resident['birthdate'])
                 console.error('Error:', error);
                 window.print();
             });
+            
+            // Redirect after printing
+            window.onafterprint = function() {
+                window.location.href = '../certificates.php';
+            };
         }
             
     </script>

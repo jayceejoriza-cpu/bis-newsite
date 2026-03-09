@@ -215,11 +215,12 @@ $certificateTypes = [
                         </label>
                         <div class="resident-search-wrap">
                             <div class="resident-input-group">
-                                <input type="text"
+<input type="text"
                                        id="indigencyResidentName"
                                        class="form-control cert-input"
                                        placeholder="Select resident"
-                                       autocomplete="off">
+                                       autocomplete="off"
+                                       required>
                                 <input type="hidden" id="indigencyResidentId">
                                 <button type="button" class="btn btn-primary btn-resident" id="indigencyResidentBtn">
                                     <i class="fas fa-user"></i>
@@ -297,11 +298,12 @@ $certificateTypes = [
                         </label>
                         <div class="resident-search-wrap">
                             <div class="resident-input-group">
-                                <input type="text"
+<input type="text"
                                        id="residencyResidentName"
                                        class="form-control cert-input"
                                        placeholder="Select resident"
-                                       autocomplete="off">
+                                       autocomplete="off"
+                                       required>
                                 <input type="hidden" id="residencyResidentId">
                                 <button type="button" class="btn btn-primary btn-resident" id="residencyResidentBtn">
                                     <i class="fas fa-user"></i>
@@ -374,7 +376,7 @@ $certificateTypes = [
                         <label class="cert-field-label">RESIDENT FULL NAME <span class="required-star">*</span></label>
                         <div class="resident-search-wrap">
                             <div class="resident-input-group">
-                                <input type="text" id="lowIncomeResidentName" class="form-control cert-input" placeholder="Select resident" autocomplete="off">
+<input type="text" id="lowIncomeResidentName" class="form-control cert-input" placeholder="Select resident" autocomplete="off" required>
                                 <input type="hidden" id="lowIncomeResidentId">
                                 <button type="button" class="btn btn-primary btn-resident" id="lowIncomeResidentBtn"><i class="fas fa-user"></i> RESIDENT</button>
                             </div>
@@ -416,7 +418,7 @@ $certificateTypes = [
                         <label class="cert-field-label">RESIDENT FULL NAME <span class="required-star">*</span></label>
                         <div class="resident-search-wrap">
                             <div class="resident-input-group">
-                                <input type="text" id="soloParentResidentName" class="form-control cert-input" placeholder="Select resident" autocomplete="off">
+<input type="text" id="soloParentResidentName" class="form-control cert-input" placeholder="Select resident" autocomplete="off" required>
                                 <input type="hidden" id="soloParentResidentId">
                                 <button type="button" class="btn btn-primary btn-resident" id="soloParentResidentBtn"><i class="fas fa-user"></i> RESIDENT</button>
                             </div>
@@ -459,7 +461,7 @@ $certificateTypes = [
                         <label class="cert-field-label">PARENT/APPLICANT FULL NAME <span class="required-star">*</span></label>
                         <div class="resident-search-wrap">
                             <div class="resident-input-group">
-                                <input type="text" id="rbcResidentName" class="form-control cert-input" placeholder="Select parent/applicant" autocomplete="off">
+<input type="text" id="rbcResidentName" class="form-control cert-input" placeholder="Select parent/applicant" autocomplete="off" required>
                                 <input type="hidden" id="rbcResidentId">
                                 <button type="button" class="btn btn-primary btn-resident" id="rbcResidentBtn"><i class="fas fa-user"></i> RESIDENT</button>
                             </div>
@@ -471,7 +473,7 @@ $certificateTypes = [
                         <label class="cert-field-label">CHILD NAME <span class="required-star">*</span></label>
                         <div class="resident-search-wrap">
                             <div class="resident-input-group">
-                                <input type="text" id="rbcChildName" class="form-control cert-input" placeholder="Select child" autocomplete="off">
+<input type="text" id="rbcChildName" class="form-control cert-input" placeholder="Select child" autocomplete="off" required>
                                 <input type="hidden" id="rbcChildId">
                                 <button type="button" class="btn btn-primary btn-resident" id="rbcChildBtn"><i class="fas fa-child"></i> CHILD</button>
                             </div>
@@ -513,7 +515,7 @@ $certificateTypes = [
                         <label class="cert-field-label">RESIDENT FULL NAME <span class="required-star">*</span></label>
                         <div class="resident-search-wrap">
                             <div class="resident-input-group">
-                                <input type="text" id="fishingResidentName" class="form-control cert-input" placeholder="Select resident" autocomplete="off">
+<input type="text" id="fishingResidentName" class="form-control cert-input" placeholder="Select resident" autocomplete="off" required>
                                 <input type="hidden" id="fishingResidentId">
                                 <button type="button" class="btn btn-primary btn-resident" id="fishingResidentBtn"><i class="fas fa-user"></i> RESIDENT</button>
                             </div>
@@ -522,7 +524,7 @@ $certificateTypes = [
                     </div>
                     <div class="cert-field-group">
                         <label class="cert-field-label">NAME OF BOAT <span class="required-star">*</span></label>
-                        <input type="text" id="fishingBoatName" class="form-control cert-input">
+<input type="text" id="fishingBoatName" class="form-control cert-input" required>
                     </div>
                     <div class="cert-field-group">
                         <label class="cert-field-label">ISSUED DATE <span class="required-star">*</span></label>
@@ -559,7 +561,7 @@ $certificateTypes = [
                         <label class="cert-field-label">RESIDENT FULL NAME <span class="required-star">*</span></label>
                         <div class="resident-search-wrap">
                             <div class="resident-input-group">
-                                <input type="text" id="ftJobseekerResidentName" class="form-control cert-input" placeholder="Select resident" autocomplete="off">
+<input type="text" id="ftJobseekerResidentName" class="form-control cert-input" placeholder="Select resident" autocomplete="off" required>
                                 <input type="hidden" id="ftJobseekerResidentId">
                                 <button type="button" class="btn btn-primary btn-resident" id="ftJobseekerResidentBtn"><i class="fas fa-user"></i> RESIDENT</button>
                             </div>
@@ -601,7 +603,7 @@ $certificateTypes = [
                         <label class="cert-field-label">RESIDENT FULL NAME <span class="required-star">*</span></label>
                         <div class="resident-search-wrap">
                             <div class="resident-input-group">
-                                <input type="text" id="gmrcResidentName" class="form-control cert-input" placeholder="Select resident" autocomplete="off">
+<input type="text" id="gmrcResidentName" class="form-control cert-input" placeholder="Select resident" autocomplete="off" required>
                                 <input type="hidden" id="gmrcResidentId">
                                 <button type="button" class="btn btn-primary btn-resident" id="gmrcResidentBtn"><i class="fas fa-user"></i> RESIDENT</button>
                             </div>
@@ -647,7 +649,7 @@ $certificateTypes = [
                         <label class="cert-field-label">RESIDENT FULL NAME <span class="required-star">*</span></label>
                         <div class="resident-search-wrap">
                             <div class="resident-input-group">
-                                <input type="text" id="oathResidentName" class="form-control cert-input" placeholder="Select resident" autocomplete="off">
+<input type="text" id="oathResidentName" class="form-control cert-input" placeholder="Select resident" autocomplete="off" required>
                                 <input type="hidden" id="oathResidentId">
                                 <button type="button" class="btn btn-primary btn-resident" id="oathResidentBtn"><i class="fas fa-user"></i> RESIDENT</button>
                             </div>
@@ -689,7 +691,7 @@ $certificateTypes = [
                         <label class="cert-field-label">RESIDENT FULL NAME <span class="required-star">*</span></label>
                         <div class="resident-search-wrap">
                             <div class="resident-input-group">
-                                <input type="text" id="brgyClearanceResidentName" class="form-control cert-input" placeholder="Select resident" autocomplete="off">
+<input type="text" id="brgyClearanceResidentName" class="form-control cert-input" placeholder="Select resident" autocomplete="off" required>
                                 <input type="hidden" id="brgyClearanceResidentId">
                                 <button type="button" class="btn btn-primary btn-resident" id="brgyClearanceResidentBtn"><i class="fas fa-user"></i> RESIDENT</button>
                             </div>
@@ -743,7 +745,7 @@ $certificateTypes = [
                         <label class="cert-field-label">BUSINESS OWNER NAME <span class="required-star">*</span></label>
                         <div class="resident-search-wrap">
                             <div class="resident-input-group">
-                                <input type="text" id="brgyBusinessClearanceResidentName" class="form-control cert-input" placeholder="Select resident" autocomplete="off">
+                                <input type="text" id="brgyBusinessClearanceResidentName" class="form-control cert-input" placeholder="Select resident" autocomplete="off" required>
                                 <input type="hidden" id="brgyBusinessClearanceResidentId">
                                 <button type="button" class="btn btn-primary btn-resident" id="brgyBusinessClearanceResidentBtn"><i class="fas fa-user"></i> RESIDENT</button>
                             </div>
@@ -752,7 +754,7 @@ $certificateTypes = [
                     </div>
                     <div class="cert-field-group">
                         <label class="cert-field-label">BUSINESS NAME <span class="required-star">*</span></label>
-                        <input type="text" id="brgyBusinessClearanceBusinessName" class="form-control cert-input" placeholder="Enter business name">
+                        <input type="text" id="brgyBusinessClearanceBusinessName" class="form-control cert-input" placeholder="Enter business name" required>
                     </div>
                     <div class="cert-field-group">
                         <label class="cert-field-label">BUSINESS ADDRESS</label>
@@ -802,7 +804,7 @@ $certificateTypes = [
                         <label class="cert-field-label">BUSINESS OWNER NAME <span class="required-star">*</span></label>
                         <div class="resident-search-wrap">
                             <div class="resident-input-group">
-                                <input type="text" id="businessPermitResidentName" class="form-control cert-input" placeholder="Select resident" autocomplete="off">
+                                <input type="text" id="businessPermitResidentName" class="form-control cert-input" placeholder="Select resident" autocomplete="off" required>
                                 <input type="hidden" id="businessPermitResidentId">
                                 <button type="button" class="btn btn-primary btn-resident" id="businessPermitResidentBtn"><i class="fas fa-user"></i> RESIDENT</button>
                             </div>
@@ -811,7 +813,8 @@ $certificateTypes = [
                     </div>
                     <div class="cert-field-group">
                         <label class="cert-field-label">BUSINESS NAME <span class="required-star">*</span></label>
-                        <input type="text" id="businessPermitBusinessName" class="form-control cert-input" placeholder="Enter business name">
+                        <input type="text" id="businessPermitBusinessName" class="form-control cert-input" placeholder="Enter business name" required>
+
                     </div>
                     <div class="cert-field-group">
                         <label class="cert-field-label">BUSINESS ADDRESS</label>
@@ -861,7 +864,7 @@ $certificateTypes = [
                         <label class="cert-field-label">RESIDENT FULL NAME <span class="required-star">*</span></label>
                         <div class="resident-search-wrap">
                             <div class="resident-input-group">
-                                <input type="text" id="vesselDockingResidentName" class="form-control cert-input" placeholder="Select resident" autocomplete="off">
+<input type="text" id="vesselDockingResidentName" class="form-control cert-input" placeholder="Select resident" autocomplete="off" required>
                                 <input type="hidden" id="vesselDockingResidentId">
                                 <button type="button" class="btn btn-primary btn-resident" id="vesselDockingResidentBtn"><i class="fas fa-user"></i> RESIDENT</button>
                             </div>
@@ -870,7 +873,7 @@ $certificateTypes = [
                     </div>
                     <div class="cert-field-group">
                         <label class="cert-field-label">NAME OF VESSEL <span class="required-star">*</span></label>
-                        <input type="text" id="vesselDockingVesselName" class="form-control cert-input" placeholder="Enter vessel name">
+<input type="text" id="vesselDockingVesselName" class="form-control cert-input" placeholder="Enter vessel name" required>
                     </div>
                     <div class="cert-field-group">
                         <label class="cert-field-label">FROM DATE <span class="required-star">*</span></label>

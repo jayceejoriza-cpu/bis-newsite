@@ -652,6 +652,11 @@ $residentFullName = ucwords(trim(
                 console.error('Error:', error);
                 window.print();
             });
+
+            // Redirect after printing
+            window.onafterprint = function() {
+                window.location.href = '../certificates.php';
+            };
         }
             
     </script>

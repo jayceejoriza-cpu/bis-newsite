@@ -1,6 +1,7 @@
 /**
  * Certificates Page JavaScript
  * Handles search, card navigation, and certificate request modals
+ * Includes certificate request limitation logic (3x daily for most certs, 1x for jobseeker/oath)
  */
 
 document.addEventListener('DOMContentLoaded', function () {
@@ -12,6 +13,26 @@ document.addEventListener('DOMContentLoaded', function () {
     const clearSearchBtn   = document.getElementById('clearSearch');
     const refreshBtn       = document.getElementById('refreshBtn');
     const certificatesGrid = document.getElementById('certificatesGrid');
+
+    // Certificate types with their limits (daily)
+    const CERTIFICATE_LIMITS = {
+        'indigency': 3,
+        'residency': 3,
+        'fishing': 3,
+        'gmrc': 3,
+        'lowincome': 3,
+        'soloparent': 3,
+        'rbc': 3,
+        'brgyclearance': 3,
+        'brgybusinessclearance': 3,
+        'businesspermit': 3,
+        'vesseldocking': 3,
+        'ftjobseeker': 1,  // 1-time only
+        'oath': 1          // 1-time only
+    };
+
+    // Current certificate type for each modal
+    let currentCertType = '';
 
     // ============================================
     // Search Functionality
@@ -76,8 +97,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // ============================================
     // Certificate Card Click
-    // — Opens a modal if data-modal is set
-    // — Navigates directly if data-link is set
     // ============================================
     document.querySelectorAll('.certificate-card-clickable').forEach(function (card) {
         card.addEventListener('click', function () {
@@ -97,6 +116,13 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     // ============================================
+    // Helper: Get certificate limit
+    // ============================================
+    function getCertificateLimit(certType) {
+        return CERTIFICATE_LIMITS[certType] || 3;
+    }
+
+    // ============================================
     // Certificate of Indigency Modal Logic
     // ============================================
     const residentNameInput  = document.getElementById('indigencyResidentName');
@@ -109,8 +135,8 @@ document.addEventListener('DOMContentLoaded', function () {
     const indigencyModalEl   = document.getElementById('indigencyModal');
 
     let searchTimeout = null;
+    currentCertType = 'indigency';
 
-    // Reset modal fields when it opens
     if (indigencyModalEl) {
         indigencyModalEl.addEventListener('show.bs.modal', function () {
             if (residentNameInput) residentNameInput.value = '';
@@ -122,32 +148,25 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // Resident name input — live search
     if (residentNameInput) {
         residentNameInput.addEventListener('input', function () {
-            // Clear previously selected ID when user types again
             if (residentIdInput) residentIdInput.value = '';
             clearResidentError();
-
             const term = this.value.trim();
             clearTimeout(searchTimeout);
-
             if (term.length < 1) {
                 hideDropdown();
                 return;
             }
-
             searchTimeout = setTimeout(function () {
-                searchResidents(term);
+                searchResidents(term, 'indigency');
             }, 250);
         });
-
         residentNameInput.addEventListener('keydown', function (e) {
             if (e.key === 'Escape') hideDropdown();
         });
     }
 
-    // RESIDENT button — clears selection and focuses input
     if (residentBtn) {
         residentBtn.addEventListener('click', function (e) {
             e.stopPropagation();
@@ -160,21 +179,19 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // Close dropdown when clicking outside
     document.addEventListener('click', function (e) {
         if (residentDropdown && !e.target.closest('.resident-search-wrap')) {
             hideDropdown();
         }
     });
 
-    // Search residents via AJAX
-    function searchResidents(term) {
-        fetch('model/search_residents.php?search=' + encodeURIComponent(term))
+    function searchResidents(term, certType) {
+        fetch('model/search_residents.php?search=' + encodeURIComponent(term) + '&certificate_type=' + encodeURIComponent(certType))
             .then(function (res) { return res.json(); })
             .then(function (data) {
                 const results = data.residents || data.data;
                 if (data.success && results) {
-                    renderDropdown(results);
+                    renderDropdown(results, certType);
                 } else {
                     hideDropdown();
                 }
@@ -182,9 +199,9 @@ document.addEventListener('DOMContentLoaded', function () {
             .catch(function () { hideDropdown(); });
     }
 
-    // Render autocomplete dropdown
-    function renderDropdown(residents) {
+    function renderDropdown(residents, certType) {
         if (!residentDropdown) return;
+        const limit = getCertificateLimit(certType);
 
         if (residents.length === 0) {
             residentDropdown.innerHTML = '<div class="resident-dropdown-empty">No resident found. <a href="model/create-resident.php">Click here to register.</a></div>';
@@ -194,23 +211,40 @@ document.addEventListener('DOMContentLoaded', function () {
 
         residentDropdown.innerHTML = '';
         residents.forEach(function (r) {
+            const limitInfo = r.resident_limits ? r.resident_limits[certType] : null;
+            const used = limitInfo ? limitInfo.used : 0;
+            const remaining = limit - used;
+            const isDisabled = remaining <= 0;
+
             const item = document.createElement('div');
-            item.className = 'resident-dropdown-item';
+            item.className = 'resident-dropdown-item' + (isDisabled ? ' disabled' : '');
+            
+            let limitBadge = '';
+            if (remaining > 0) {
+                limitBadge = `<span class="resident-dropdown-limit">${remaining}/${limit} available</span>`;
+            } else {
+                limitBadge = '<span class="resident-dropdown-limit">Limit reached</span>';
+            }
+
             item.innerHTML = `
-                <span class="resident-dropdown-name">${escapeHtml(r.full_name.trim())}</span>
-                <span class="resident-dropdown-id">${escapeHtml(r.resident_id || '')}</span>
+                <div class="resident-dropdown-info">
+                    <span class="resident-dropdown-id">${escapeHtml(r.resident_id || '')}</span>
+                    <span class="resident-dropdown-name">${escapeHtml(r.full_name.trim())}</span>
+                </div>
+                ${limitBadge}
             `;
-            item.addEventListener('mousedown', function (e) {
-                e.preventDefault(); // prevent blur before click
-                selectResident(r);
-            });
+            
+            if (!isDisabled) {
+                item.addEventListener('mousedown', function (e) {
+                    e.preventDefault();
+                    selectResident(r);
+                });
+            }
             residentDropdown.appendChild(item);
         });
-
         residentDropdown.style.display = 'block';
     }
 
-    // Select a resident from dropdown
     function selectResident(resident) {
         if (residentNameInput) residentNameInput.value = resident.full_name.trim();
         if (residentIdInput)   residentIdInput.value   = resident.id;
@@ -225,41 +259,28 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    // ============================================
-    // Print Certificate Button
-    // ============================================
     if (printBtn) {
         printBtn.addEventListener('click', function () {
             const residentId  = residentIdInput  ? residentIdInput.value.trim()  : '';
             const date        = dateInput        ? dateInput.value.trim()        : '';
             const assistance  = assistanceInput  ? assistanceInput.value.trim()  : '';
 
-            // Validate resident
             if (!residentId) {
                 showResidentError('Please select a resident from the list.');
                 if (residentNameInput) residentNameInput.focus();
                 return;
             }
-
-            // Validate date
             if (!date) {
-                if (dateInput) {
-                    dateInput.classList.add('is-invalid');
-                    dateInput.focus();
-                }
+                if (dateInput) { dateInput.classList.add('is-invalid'); dateInput.focus(); }
                 return;
             } else {
                 if (dateInput) dateInput.classList.remove('is-invalid');
             }
 
-            // Build URL and navigate
-            const params = new URLSearchParams({
-                resident_id: residentId,
-                date:        date,
-                assistance:  assistance
+            const params = new URLSearchParams({ resident_id: residentId, date: date, assistance: assistance });
+            logCertificateRequest(residentId, 'indigency', assistance, function() {
+                window.location.href = 'certifications/certificate-indigency.php?' + params.toString();
             });
-
-            window.location.href = 'certifications/certificate-indigency.php?' + params.toString();
         });
     }
 
@@ -277,7 +298,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
     let residencySearchTimeout = null;
 
-    // Reset modal fields when it opens
     if (residencyModalEl) {
         residencyModalEl.addEventListener('show.bs.modal', function () {
             if (residencyNameInput)    residencyNameInput.value    = '';
@@ -289,68 +309,45 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // Resident name input — live search
     if (residencyNameInput) {
         residencyNameInput.addEventListener('input', function () {
             if (residencyIdInput) residencyIdInput.value = '';
             clearResidencyError();
-
             const term = this.value.trim();
             clearTimeout(residencySearchTimeout);
-
-            if (term.length < 1) {
-                hideResidencyDropdown();
-                return;
-            }
-
-            residencySearchTimeout = setTimeout(function () {
-                searchResidencyResidents(term);
-            }, 250);
+            if (term.length < 1) { hideResidencyDropdown(); return; }
+            residencySearchTimeout = setTimeout(function () { searchResidencyResidents(term, 'residency'); }, 250);
         });
-
-        residencyNameInput.addEventListener('keydown', function (e) {
-            if (e.key === 'Escape') hideResidencyDropdown();
-        });
+        residencyNameInput.addEventListener('keydown', function (e) { if (e.key === 'Escape') hideResidencyDropdown(); });
     }
 
-    // RESIDENT button — clears selection and focuses input
     if (residencyResidentBtn) {
         residencyResidentBtn.addEventListener('click', function (e) {
             e.stopPropagation();
-            if (residencyNameInput) {
-                residencyNameInput.value = '';
-                residencyNameInput.focus();
-            }
+            if (residencyNameInput) { residencyNameInput.value = ''; residencyNameInput.focus(); }
             if (residencyIdInput) residencyIdInput.value = '';
             hideResidencyDropdown();
         });
     }
 
-    // Close dropdown when clicking outside
     document.addEventListener('click', function (e) {
-        if (residencyDropdown && !e.target.closest('#residencyModal .resident-search-wrap')) {
-            hideResidencyDropdown();
-        }
+        if (residencyDropdown && !e.target.closest('#residencyModal .resident-search-wrap')) { hideResidencyDropdown(); }
     });
 
-    // Search residents via AJAX
-    function searchResidencyResidents(term) {
-        fetch('model/search_residents.php?search=' + encodeURIComponent(term))
+    function searchResidencyResidents(term, certType) {
+        fetch('model/search_residents.php?search=' + encodeURIComponent(term) + '&certificate_type=' + encodeURIComponent(certType))
             .then(function (res) { return res.json(); })
             .then(function (data) {
                 const results = data.residents || data.data;
-                if (data.success && results) {
-                    renderResidencyDropdown(results);
-                } else {
-                    hideResidencyDropdown();
-                }
+                if (data.success && results) { renderResidencyDropdown(results, certType); }
+                else { hideResidencyDropdown(); }
             })
             .catch(function () { hideResidencyDropdown(); });
     }
 
-    // Render autocomplete dropdown
-    function renderResidencyDropdown(residents) {
+    function renderResidencyDropdown(residents, certType) {
         if (!residencyDropdown) return;
+        const limit = getCertificateLimit(certType);
 
         if (residents.length === 0) {
             residencyDropdown.innerHTML = '<div class="resident-dropdown-empty">No resident found. <a href="model/create-resident.php">Click here to register.</a></div>';
@@ -360,23 +357,37 @@ document.addEventListener('DOMContentLoaded', function () {
 
         residencyDropdown.innerHTML = '';
         residents.forEach(function (r) {
+            const limitInfo = r.resident_limits ? r.resident_limits[certType] : null;
+            const used = limitInfo ? limitInfo.used : 0;
+            const remaining = limit - used;
+            const isDisabled = remaining <= 0;
+
             const item = document.createElement('div');
-            item.className = 'resident-dropdown-item';
+            item.className = 'resident-dropdown-item' + (isDisabled ? ' disabled' : '');
+            
+            let limitBadge = '';
+            if (remaining > 0) {
+                limitBadge = `<span class="resident-dropdown-limit">${remaining}/${limit} available</span>`;
+            } else {
+                limitBadge = '<span class="resident-dropdown-limit">Limit reached</span>';
+            }
+
             item.innerHTML = `
-                <span class="resident-dropdown-name">${escapeHtml(r.full_name.trim())}</span>
-                <span class="resident-dropdown-id">${escapeHtml(r.resident_id || '')}</span>
+                <div class="resident-dropdown-info">
+                    <span class="resident-dropdown-id">${escapeHtml(r.resident_id || '')}</span>
+                    <span class="resident-dropdown-name">${escapeHtml(r.full_name.trim())}</span>
+                </div>
+                ${limitBadge}
             `;
-            item.addEventListener('mousedown', function (e) {
-                e.preventDefault();
-                selectResidencyResident(r);
-            });
+            
+            if (!isDisabled) {
+                item.addEventListener('mousedown', function (e) { e.preventDefault(); selectResidencyResident(r); });
+            }
             residencyDropdown.appendChild(item);
         });
-
         residencyDropdown.style.display = 'block';
     }
 
-    // Select a resident from dropdown
     function selectResidencyResident(resident) {
         if (residencyNameInput) residencyNameInput.value = resident.full_name.trim();
         if (residencyIdInput)   residencyIdInput.value   = resident.id;
@@ -385,45 +396,23 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function hideResidencyDropdown() {
-        if (residencyDropdown) {
-            residencyDropdown.style.display = 'none';
-            residencyDropdown.innerHTML = '';
-        }
+        if (residencyDropdown) { residencyDropdown.style.display = 'none'; residencyDropdown.innerHTML = ''; }
     }
 
-    // Print Certificate Button
     if (residencyPrintBtn) {
         residencyPrintBtn.addEventListener('click', function () {
             const residentId = residencyIdInput      ? residencyIdInput.value.trim()      : '';
             const date       = residencyDateInput    ? residencyDateInput.value.trim()    : '';
             const purpose    = residencyPurposeInput ? residencyPurposeInput.value.trim() : '';
 
-            // Validate resident
-            if (!residentId) {
-                showResidencyError('Please select a resident from the list.');
-                if (residencyNameInput) residencyNameInput.focus();
-                return;
-            }
+            if (!residentId) { showResidencyError('Please select a resident from the list.'); if (residencyNameInput) residencyNameInput.focus(); return; }
+            if (!date) { if (residencyDateInput) { residencyDateInput.classList.add('is-invalid'); residencyDateInput.focus(); } return; }
+            else { if (residencyDateInput) residencyDateInput.classList.remove('is-invalid'); }
 
-            // Validate date
-            if (!date) {
-                if (residencyDateInput) {
-                    residencyDateInput.classList.add('is-invalid');
-                    residencyDateInput.focus();
-                }
-                return;
-            } else {
-                if (residencyDateInput) residencyDateInput.classList.remove('is-invalid');
-            }
-
-            // Build URL and navigate
-            const params = new URLSearchParams({
-                resident_id: residentId,
-                date:        date,
-                purpose:     purpose
+            const params = new URLSearchParams({ resident_id: residentId, date: date, purpose: purpose });
+            logCertificateRequest(residentId, 'residency', purpose, function() {
+                window.location.href = 'certifications/certificate-residency.php?' + params.toString();
             });
-
-            window.location.href = 'certifications/certificate-residency.php?' + params.toString();
         });
     }
 
@@ -480,14 +469,14 @@ document.addEventListener('DOMContentLoaded', function () {
     // Fishing Clearance Modal Logic
     // ============================================
     const fishingNameInput    = document.getElementById('fishingResidentName');
-    const fishingIdInput     = document.getElementById('fishingResidentId');
-    const fishingDropdown    = document.getElementById('fishingResidentDropdown');
-    const fishingResidentBtn = document.getElementById('fishingResidentBtn');
+    const fishingIdInput      = document.getElementById('fishingResidentId');
+    const fishingDropdown     = document.getElementById('fishingResidentDropdown');
+    const fishingResidentBtn  = document.getElementById('fishingResidentBtn');
     const fishingBoatNameInput = document.getElementById('fishingBoatName');
-    const fishingDateInput   = document.getElementById('fishingDate');
+    const fishingDateInput    = document.getElementById('fishingDate');
     const fishingPurposeInput = document.getElementById('fishingPurpose');
-    const fishingPrintBtn    = document.getElementById('fishingPrintBtn');
-    const fishingModalEl     = document.getElementById('fishingClearanceModal');
+    const fishingPrintBtn     = document.getElementById('fishingPrintBtn');
+    const fishingModalEl      = document.getElementById('fishingClearanceModal');
 
     let fishingSearchTimeout = null;
 
@@ -509,53 +498,40 @@ document.addEventListener('DOMContentLoaded', function () {
             clearFishingError();
             const term = this.value.trim();
             clearTimeout(fishingSearchTimeout);
-            if (term.length < 1) {
-                hideFishingDropdown();
-                return;
-            }
-            fishingSearchTimeout = setTimeout(function () {
-                searchFishingResidents(term);
-            }, 250);
+            if (term.length < 1) { hideFishingDropdown(); return; }
+            fishingSearchTimeout = setTimeout(function () { searchFishingResidents(term, 'fishing'); }, 250);
         });
-        fishingNameInput.addEventListener('keydown', function (e) {
-            if (e.key === 'Escape') hideFishingDropdown();
-        });
+        fishingNameInput.addEventListener('keydown', function (e) { if (e.key === 'Escape') hideFishingDropdown(); });
     }
 
     if (fishingResidentBtn) {
         fishingResidentBtn.addEventListener('click', function (e) {
             e.stopPropagation();
-            if (fishingNameInput) {
-                fishingNameInput.value = '';
-                fishingNameInput.focus();
-            }
+            if (fishingNameInput) { fishingNameInput.value = ''; fishingNameInput.focus(); }
             if (fishingIdInput) fishingIdInput.value = '';
             hideFishingDropdown();
         });
     }
 
     document.addEventListener('click', function (e) {
-        if (fishingDropdown && !e.target.closest('#fishingClearanceModal .resident-search-wrap')) {
-            hideFishingDropdown();
-        }
+        if (fishingDropdown && !e.target.closest('#fishingClearanceModal .resident-search-wrap')) { hideFishingDropdown(); }
     });
 
-    function searchFishingResidents(term) {
-        fetch('model/search_residents.php?search=' + encodeURIComponent(term))
+    function searchFishingResidents(term, certType) {
+        fetch('model/search_residents.php?search=' + encodeURIComponent(term) + '&certificate_type=' + encodeURIComponent(certType))
             .then(function (res) { return res.json(); })
             .then(function (data) {
                 const results = data.residents || data.data;
-                if (data.success && results) {
-                    renderFishingDropdown(results);
-                } else {
-                    hideFishingDropdown();
-                }
+                if (data.success && results) { renderFishingDropdown(results, certType); }
+                else { hideFishingDropdown(); }
             })
             .catch(function () { hideFishingDropdown(); });
     }
 
-    function renderFishingDropdown(residents) {
+    function renderFishingDropdown(residents, certType) {
         if (!fishingDropdown) return;
+        const limit = getCertificateLimit(certType);
+
         if (residents.length === 0) {
             fishingDropdown.innerHTML = '<div class="resident-dropdown-empty">No resident found. <a href="model/create-resident.php">Click here to register.</a></div>';
             fishingDropdown.style.display = 'block';
@@ -563,10 +539,32 @@ document.addEventListener('DOMContentLoaded', function () {
         }
         fishingDropdown.innerHTML = '';
         residents.forEach(function (r) {
+            const limitInfo = r.resident_limits ? r.resident_limits[certType] : null;
+            const used = limitInfo ? limitInfo.used : 0;
+            const remaining = limit - used;
+            const isDisabled = remaining <= 0;
+
             const item = document.createElement('div');
-            item.className = 'resident-dropdown-item';
-            item.innerHTML = '<span class="resident-dropdown-name">' + escapeHtml(r.full_name.trim()) + '</span><span class="resident-dropdown-id">' + escapeHtml(r.resident_id || '') + '</span>';
-            item.addEventListener('mousedown', function (e) { e.preventDefault(); selectFishingResident(r); });
+            item.className = 'resident-dropdown-item' + (isDisabled ? ' disabled' : '');
+            
+            let limitBadge = '';
+            if (remaining > 0) {
+                limitBadge = `<span class="resident-dropdown-limit">${remaining}/${limit} available</span>`;
+            } else {
+                limitBadge = '<span class="resident-dropdown-limit">Limit reached</span>';
+            }
+
+            item.innerHTML = `
+                <div class="resident-dropdown-info">
+                    <span class="resident-dropdown-id">${escapeHtml(r.resident_id || '')}</span>
+                    <span class="resident-dropdown-name">${escapeHtml(r.full_name.trim())}</span>
+                </div>
+                ${limitBadge}
+            `;
+            
+            if (!isDisabled) {
+                item.addEventListener('mousedown', function (e) { e.preventDefault(); selectFishingResident(r); });
+            }
             fishingDropdown.appendChild(item);
         });
         fishingDropdown.style.display = 'block';
@@ -619,12 +617,14 @@ document.addEventListener('DOMContentLoaded', function () {
             }
 
             var params = new URLSearchParams({ resident_id: residentId,  boatname: boatName, date: date, purpose: purpose });
-            window.location.href = 'certifications/certificate-fishingclearance.php?' + params.toString();
+            logCertificateRequest(residentId, 'fishing', purpose, function() {
+                window.location.href = 'certifications/certificate-fishingclearance.php?' + params.toString();
+            });
         });
     }
 
     // ============================================
-    // First Time Jobseeker Modal Logic
+    // First Time Jobseeker Modal Logic (1-time only)
     // ============================================
     var ftJobseekerNameInput    = document.getElementById('ftJobseekerResidentName');
     var ftJobseekerIdInput      = document.getElementById('ftJobseekerResidentId');
@@ -655,7 +655,7 @@ document.addEventListener('DOMContentLoaded', function () {
             var term = this.value.trim();
             clearTimeout(ftJobseekerSearchTimeout);
             if (term.length < 1) { hideFtJobseekerDropdown(); return; }
-            ftJobseekerSearchTimeout = setTimeout(function () { searchFtJobseekerResidents(term); }, 250);
+            ftJobseekerSearchTimeout = setTimeout(function () { searchFtJobseekerResidents(term, 'ftjobseeker'); }, 250);
         });
         ftJobseekerNameInput.addEventListener('keydown', function (e) { if (e.key === 'Escape') hideFtJobseekerDropdown(); });
     }
@@ -673,26 +673,50 @@ document.addEventListener('DOMContentLoaded', function () {
         if (ftJobseekerDropdown && !e.target.closest('#ftJobseekerModal .resident-search-wrap')) { hideFtJobseekerDropdown(); }
     });
 
-    function searchFtJobseekerResidents(term) {
-        fetch('model/search_residents.php?search=' + encodeURIComponent(term))
+    function searchFtJobseekerResidents(term, certType) {
+        fetch('model/search_residents.php?search=' + encodeURIComponent(term) + '&certificate_type=' + encodeURIComponent(certType))
             .then(function (res) { return res.json(); })
             .then(function (data) {
                 var results = data.residents || data.data;
-                if (data.success && results) { renderFtJobseekerDropdown(results); }
+                if (data.success && results) { renderFtJobseekerDropdown(results, certType); }
                 else { hideFtJobseekerDropdown(); }
             })
             .catch(function () { hideFtJobseekerDropdown(); });
     }
 
-    function renderFtJobseekerDropdown(residents) {
+    function renderFtJobseekerDropdown(residents, certType) {
         if (!ftJobseekerDropdown) return;
+        var limit = getCertificateLimit(certType);
+
         if (residents.length === 0) { ftJobseekerDropdown.innerHTML = '<div class="resident-dropdown-empty">No resident found. <a href="model/create-resident.php">Click here to register.</a></div>'; ftJobseekerDropdown.style.display = 'block'; return; }
         ftJobseekerDropdown.innerHTML = '';
         residents.forEach(function (r) {
+            var limitInfo = r.resident_limits ? r.resident_limits[certType] : null;
+            var used = limitInfo ? limitInfo.used : 0;
+            var remaining = limit - used;
+            var isDisabled = remaining <= 0;
+
             var item = document.createElement('div');
-            item.className = 'resident-dropdown-item';
-            item.innerHTML = '<span class="resident-dropdown-name">' + escapeHtml(r.full_name.trim()) + '</span><span class="resident-dropdown-id">' + escapeHtml(r.resident_id || '') + '</span>';
-            item.addEventListener('mousedown', function (e) { e.preventDefault(); selectFtJobseekerResident(r); });
+            item.className = 'resident-dropdown-item' + (isDisabled ? ' disabled' : '');
+            
+            var limitBadge = '';
+            if (remaining > 0) {
+                limitBadge = `<span class="resident-dropdown-limit">${remaining}/${limit} available</span>`;
+            } else {
+                limitBadge = '<span class="resident-dropdown-limit">Limit reached</span>';
+            }
+
+            item.innerHTML = `
+                <div class="resident-dropdown-info">
+                    <span class="resident-dropdown-id">${escapeHtml(r.resident_id || '')}</span>
+                    <span class="resident-dropdown-name">${escapeHtml(r.full_name.trim())}</span>
+                </div>
+                ${limitBadge}
+            `;
+            
+            if (!isDisabled) {
+                item.addEventListener('mousedown', function (e) { e.preventDefault(); selectFtJobseekerResident(r); });
+            }
             ftJobseekerDropdown.appendChild(item);
         });
         ftJobseekerDropdown.style.display = 'block';
@@ -736,7 +760,9 @@ document.addEventListener('DOMContentLoaded', function () {
             else { if (ftJobseekerDateInput) ftJobseekerDateInput.classList.remove('is-invalid'); }
 
             var params = new URLSearchParams({ resident_id: residentId, date: date, purpose: purpose });
-            window.location.href = 'certifications/certificate-ft-jobseeker-assistance.php?' + params.toString();
+            logCertificateRequest(residentId, 'ftjobseeker', purpose, function() {
+                window.location.href = 'certifications/certificate-ft-jobseeker-assistance.php?' + params.toString();
+            });
         });
     }
 
@@ -744,13 +770,13 @@ document.addEventListener('DOMContentLoaded', function () {
     // Good Moral Character (GMRC) Modal Logic
     // ============================================
     var gmrcNameInput    = document.getElementById('gmrcResidentName');
-    var gmrcIdInput     = document.getElementById('gmrcResidentId');
-    var gmrcDropdown    = document.getElementById('gmrcResidentDropdown');
-    var gmrcResidentBtn = document.getElementById('gmrcResidentBtn');
-    var gmrcDateInput   = document.getElementById('gmrcDate');
+    var gmrcIdInput      = document.getElementById('gmrcResidentId');
+    var gmrcDropdown     = document.getElementById('gmrcResidentDropdown');
+    var gmrcResidentBtn  = document.getElementById('gmrcResidentBtn');
+    var gmrcDateInput    = document.getElementById('gmrcDate');
     var gmrcPurposeInput = document.getElementById('gmrcPurpose');
-    var gmrcPrintBtn    = document.getElementById('gmrcPrintBtn');
-    var gmrcModalEl     = document.getElementById('gmrcModal');
+    var gmrcPrintBtn     = document.getElementById('gmrcPrintBtn');
+    var gmrcModalEl      = document.getElementById('gmrcModal');
 
     var gmrcSearchTimeout = null;
 
@@ -772,7 +798,7 @@ document.addEventListener('DOMContentLoaded', function () {
             var term = this.value.trim();
             clearTimeout(gmrcSearchTimeout);
             if (term.length < 1) { hideGmrcDropdown(); return; }
-            gmrcSearchTimeout = setTimeout(function () { searchGmrcResidents(term); }, 250);
+            gmrcSearchTimeout = setTimeout(function () { searchGmrcResidents(term, 'gmrc'); }, 250);
         });
         gmrcNameInput.addEventListener('keydown', function (e) { if (e.key === 'Escape') hideGmrcDropdown(); });
     }
@@ -790,26 +816,50 @@ document.addEventListener('DOMContentLoaded', function () {
         if (gmrcDropdown && !e.target.closest('#gmrcModal .resident-search-wrap')) { hideGmrcDropdown(); }
     });
 
-    function searchGmrcResidents(term) {
-        fetch('model/search_residents.php?search=' + encodeURIComponent(term))
+    function searchGmrcResidents(term, certType) {
+        fetch('model/search_residents.php?search=' + encodeURIComponent(term) + '&certificate_type=' + encodeURIComponent(certType))
             .then(function (res) { return res.json(); })
             .then(function (data) {
                 var results = data.residents || data.data;
-                if (data.success && results) { renderGmrcDropdown(results); }
+                if (data.success && results) { renderGmrcDropdown(results, certType); }
                 else { hideGmrcDropdown(); }
             })
             .catch(function () { hideGmrcDropdown(); });
     }
 
-    function renderGmrcDropdown(residents) {
+    function renderGmrcDropdown(residents, certType) {
         if (!gmrcDropdown) return;
+        var limit = getCertificateLimit(certType);
+
         if (residents.length === 0) { gmrcDropdown.innerHTML = '<div class="resident-dropdown-empty">No resident found. <a href="model/create-resident.php">Click here to register.</a></div>'; gmrcDropdown.style.display = 'block'; return; }
         gmrcDropdown.innerHTML = '';
         residents.forEach(function (r) {
+            var limitInfo = r.resident_limits ? r.resident_limits[certType] : null;
+            var used = limitInfo ? limitInfo.used : 0;
+            var remaining = limit - used;
+            var isDisabled = remaining <= 0;
+
             var item = document.createElement('div');
-            item.className = 'resident-dropdown-item';
-            item.innerHTML = '<span class="resident-dropdown-name">' + escapeHtml(r.full_name.trim()) + '</span><span class="resident-dropdown-id">' + escapeHtml(r.resident_id || '') + '</span>';
-            item.addEventListener('mousedown', function (e) { e.preventDefault(); selectGmrcResident(r); });
+            item.className = 'resident-dropdown-item' + (isDisabled ? ' disabled' : '');
+            
+            var limitBadge = '';
+            if (remaining > 0) {
+                limitBadge = `<span class="resident-dropdown-limit">${remaining}/${limit} available</span>`;
+            } else {
+                limitBadge = '<span class="resident-dropdown-limit">Limit reached</span>';
+            }
+
+            item.innerHTML = `
+                <div class="resident-dropdown-info">
+                    <span class="resident-dropdown-id">${escapeHtml(r.resident_id || '')}</span>
+                    <span class="resident-dropdown-name">${escapeHtml(r.full_name.trim())}</span>
+                </div>
+                ${limitBadge}
+            `;
+            
+            if (!isDisabled) {
+                item.addEventListener('mousedown', function (e) { e.preventDefault(); selectGmrcResident(r); });
+            }
             gmrcDropdown.appendChild(item);
         });
         gmrcDropdown.style.display = 'block';
@@ -853,12 +903,14 @@ document.addEventListener('DOMContentLoaded', function () {
             else { if (gmrcDateInput) gmrcDateInput.classList.remove('is-invalid'); }
 
             var params = new URLSearchParams({ resident_id: residentId, date: date, purpose: purpose });
-            window.location.href = 'certifications/certificate-gmrc.php?' + params.toString();
+            logCertificateRequest(residentId, 'gmrc', purpose, function() {
+                window.location.href = 'certifications/certificate-gmrc.php?' + params.toString();
+            });
         });
     }
 
     // ============================================
-    // Oath of Undertaking Modal Logic
+    // Oath of Undertaking Modal Logic (1-time only)
     // ============================================
     var oathNameInput    = document.getElementById('oathResidentName');
     var oathIdInput      = document.getElementById('oathResidentId');
@@ -889,7 +941,7 @@ document.addEventListener('DOMContentLoaded', function () {
             var term = this.value.trim();
             clearTimeout(oathSearchTimeout);
             if (term.length < 1) { hideOathDropdown(); return; }
-            oathSearchTimeout = setTimeout(function () { searchOathResidents(term); }, 250);
+            oathSearchTimeout = setTimeout(function () { searchOathResidents(term, 'oath'); }, 250);
         });
         oathNameInput.addEventListener('keydown', function (e) { if (e.key === 'Escape') hideOathDropdown(); });
     }
@@ -907,26 +959,50 @@ document.addEventListener('DOMContentLoaded', function () {
         if (oathDropdown && !e.target.closest('#oathModal .resident-search-wrap')) { hideOathDropdown(); }
     });
 
-    function searchOathResidents(term) {
-        fetch('model/search_residents.php?search=' + encodeURIComponent(term))
+    function searchOathResidents(term, certType) {
+        fetch('model/search_residents.php?search=' + encodeURIComponent(term) + '&certificate_type=' + encodeURIComponent(certType))
             .then(function (res) { return res.json(); })
             .then(function (data) {
                 var results = data.residents || data.data;
-                if (data.success && results) { renderOathDropdown(results); }
+                if (data.success && results) { renderOathDropdown(results, certType); }
                 else { hideOathDropdown(); }
             })
             .catch(function () { hideOathDropdown(); });
     }
 
-    function renderOathDropdown(residents) {
+    function renderOathDropdown(residents, certType) {
         if (!oathDropdown) return;
+        var limit = getCertificateLimit(certType);
+
         if (residents.length === 0) { oathDropdown.innerHTML = '<div class="resident-dropdown-empty">No resident found. <a href="model/create-resident.php">Click here to register.</a></div>'; oathDropdown.style.display = 'block'; return; }
         oathDropdown.innerHTML = '';
         residents.forEach(function (r) {
+            var limitInfo = r.resident_limits ? r.resident_limits[certType] : null;
+            var used = limitInfo ? limitInfo.used : 0;
+            var remaining = limit - used;
+            var isDisabled = remaining <= 0;
+
             var item = document.createElement('div');
-            item.className = 'resident-dropdown-item';
-            item.innerHTML = '<span class="resident-dropdown-name">' + escapeHtml(r.full_name.trim()) + '</span><span class="resident-dropdown-id">' + escapeHtml(r.resident_id || '') + '</span>';
-            item.addEventListener('mousedown', function (e) { e.preventDefault(); selectOathResident(r); });
+            item.className = 'resident-dropdown-item' + (isDisabled ? ' disabled' : '');
+            
+            var limitBadge = '';
+            if (remaining > 0) {
+                limitBadge = `<span class="resident-dropdown-limit">${remaining}/${limit} available</span>`;
+            } else {
+                limitBadge = '<span class="resident-dropdown-limit">Limit reached</span>';
+            }
+
+            item.innerHTML = `
+                <div class="resident-dropdown-info">
+                    <span class="resident-dropdown-id">${escapeHtml(r.resident_id || '')}</span>
+                    <span class="resident-dropdown-name">${escapeHtml(r.full_name.trim())}</span>
+                </div>
+                ${limitBadge}
+            `;
+            
+            if (!isDisabled) {
+                item.addEventListener('mousedown', function (e) { e.preventDefault(); selectOathResident(r); });
+            }
             oathDropdown.appendChild(item);
         });
         oathDropdown.style.display = 'block';
@@ -970,7 +1046,9 @@ document.addEventListener('DOMContentLoaded', function () {
             else { if (oathDateInput) oathDateInput.classList.remove('is-invalid'); }
 
             var params = new URLSearchParams({ resident_id: residentId, date: date, purpose: purpose });
-            window.location.href = 'certifications/certificate-oathofundertaking.php?' + params.toString();
+            logCertificateRequest(residentId, 'oath', purpose, function() {
+                window.location.href = 'certifications/certificate-oathofundertaking.php?' + params.toString();
+            });
         });
     }
 
@@ -1006,7 +1084,7 @@ document.addEventListener('DOMContentLoaded', function () {
             var term = this.value.trim();
             clearTimeout(lowIncomeSearchTimeout);
             if (term.length < 1) { hideLowIncomeDropdown(); return; }
-            lowIncomeSearchTimeout = setTimeout(function () { searchLowIncomeResidents(term); }, 250);
+            lowIncomeSearchTimeout = setTimeout(function () { searchLowIncomeResidents(term, 'lowincome'); }, 250);
         });
         lowIncomeNameInput.addEventListener('keydown', function (e) { if (e.key === 'Escape') hideLowIncomeDropdown(); });
     }
@@ -1024,26 +1102,50 @@ document.addEventListener('DOMContentLoaded', function () {
         if (lowIncomeDropdown && !e.target.closest('#lowIncomeModal .resident-search-wrap')) { hideLowIncomeDropdown(); }
     });
 
-    function searchLowIncomeResidents(term) {
-        fetch('model/search_residents.php?search=' + encodeURIComponent(term))
+    function searchLowIncomeResidents(term, certType) {
+        fetch('model/search_residents.php?search=' + encodeURIComponent(term) + '&certificate_type=' + encodeURIComponent(certType))
             .then(function (res) { return res.json(); })
             .then(function (data) {
                 var results = data.residents || data.data;
-                if (data.success && results) { renderLowIncomeDropdown(results); }
+                if (data.success && results) { renderLowIncomeDropdown(results, certType); }
                 else { hideLowIncomeDropdown(); }
             })
             .catch(function () { hideLowIncomeDropdown(); });
     }
 
-    function renderLowIncomeDropdown(residents) {
+    function renderLowIncomeDropdown(residents, certType) {
         if (!lowIncomeDropdown) return;
+        var limit = getCertificateLimit(certType);
+
         if (residents.length === 0) { lowIncomeDropdown.innerHTML = '<div class="resident-dropdown-empty">No resident found. <a href="model/create-resident.php">Click here to register.</a></div>'; lowIncomeDropdown.style.display = 'block'; return; }
         lowIncomeDropdown.innerHTML = '';
         residents.forEach(function (r) {
+            var limitInfo = r.resident_limits ? r.resident_limits[certType] : null;
+            var used = limitInfo ? limitInfo.used : 0;
+            var remaining = limit - used;
+            var isDisabled = remaining <= 0;
+
             var item = document.createElement('div');
-            item.className = 'resident-dropdown-item';
-            item.innerHTML = '<span class="resident-dropdown-name">' + escapeHtml(r.full_name.trim()) + '</span><span class="resident-dropdown-id">' + escapeHtml(r.resident_id || '') + '</span>';
-            item.addEventListener('mousedown', function (e) { e.preventDefault(); selectLowIncomeResident(r); });
+            item.className = 'resident-dropdown-item' + (isDisabled ? ' disabled' : '');
+            
+            var limitBadge = '';
+            if (remaining > 0) {
+                limitBadge = `<span class="resident-dropdown-limit">${remaining}/${limit} available</span>`;
+            } else {
+                limitBadge = '<span class="resident-dropdown-limit">Limit reached</span>';
+            }
+
+            item.innerHTML = `
+                <div class="resident-dropdown-info">
+                    <span class="resident-dropdown-id">${escapeHtml(r.resident_id || '')}</span>
+                    <span class="resident-dropdown-name">${escapeHtml(r.full_name.trim())}</span>
+                </div>
+                ${limitBadge}
+            `;
+            
+            if (!isDisabled) {
+                item.addEventListener('mousedown', function (e) { e.preventDefault(); selectLowIncomeResident(r); });
+            }
             lowIncomeDropdown.appendChild(item);
         });
         lowIncomeDropdown.style.display = 'block';
@@ -1087,45 +1189,43 @@ document.addEventListener('DOMContentLoaded', function () {
             else { if (lowIncomeDateInput) lowIncomeDateInput.classList.remove('is-invalid'); }
 
             var params = new URLSearchParams({ resident_id: residentId, date: date, purpose: purpose });
-            window.location.href = 'certifications/certificate-lowincome.php?' + params.toString();
+            logCertificateRequest(residentId, 'lowincome', purpose, function() {
+                window.location.href = 'certifications/certificate-lowincome.php?' + params.toString();
+            });
         });
     }
 
     // ============================================
     // Certificate of Solo Parent Modal Logic
     // ============================================
-    var soloParentNameInput    = document.getElementById('soloParentResidentName');
-    var soloParentIdInput      = document.getElementById('soloParentResidentId');
-    var soloParentDropdown     = document.getElementById('soloParentResidentDropdown');
-    var soloParentResidentBtn  = document.getElementById('soloParentResidentBtn');
-    var soloParentDateInput    = document.getElementById('soloParentDate');
+    var soloParentNameInput = document.getElementById('soloParentResidentName');
+    var soloParentIdInput = document.getElementById('soloParentResidentId');
+    var soloParentDropdown = document.getElementById('soloParentResidentDropdown');
+    var soloParentResidentBtn = document.getElementById('soloParentResidentBtn');
+    var soloParentDateInput = document.getElementById('soloParentDate');
     var soloParentPurposeInput = document.getElementById('soloParentPurpose');
-    var soloParentPrintBtn     = document.getElementById('soloParentPrintBtn');
-    var soloParentModalEl      = document.getElementById('soloParentModal');
-
+    var soloParentPrintBtn = document.getElementById('soloParentPrintBtn');
+    var soloParentModalEl = document.getElementById('soloParentModal');
     var soloParentSearchTimeout = null;
 
     if (soloParentModalEl) {
         soloParentModalEl.addEventListener('show.bs.modal', function () {
-            if (soloParentNameInput)    soloParentNameInput.value    = '';
-            if (soloParentIdInput)       soloParentIdInput.value      = '';
-            if (soloParentDropdown)     { soloParentDropdown.innerHTML = ''; soloParentDropdown.style.display = 'none'; }
-            if (soloParentDateInput)     soloParentDateInput.value    = getTodayDate();
-            if (soloParentPurposeInput)  soloParentPurposeInput.value = 'Solo Parent Verification';
-            clearSoloParentError();
+            if (soloParentNameInput) soloParentNameInput.value = '';
+            if (soloParentIdInput) soloParentIdInput.value = '';
+            if (soloParentDropdown) { soloParentDropdown.innerHTML = ''; soloParentDropdown.style.display = 'none'; }
+            if (soloParentDateInput) soloParentDateInput.value = getTodayDate();
+            if (soloParentPurposeInput) soloParentPurposeInput.value = 'Solo Parent Verification';
         });
     }
 
     if (soloParentNameInput) {
         soloParentNameInput.addEventListener('input', function () {
             if (soloParentIdInput) soloParentIdInput.value = '';
-            clearSoloParentError();
             var term = this.value.trim();
             clearTimeout(soloParentSearchTimeout);
             if (term.length < 1) { hideSoloParentDropdown(); return; }
-            soloParentSearchTimeout = setTimeout(function () { searchSoloParentResidents(term); }, 250);
+            soloParentSearchTimeout = setTimeout(function () { searchSoloParentResidents(term, 'soloparent'); }, 250);
         });
-        soloParentNameInput.addEventListener('keydown', function (e) { if (e.key === 'Escape') hideSoloParentDropdown(); });
     }
 
     if (soloParentResidentBtn) {
@@ -1141,26 +1241,48 @@ document.addEventListener('DOMContentLoaded', function () {
         if (soloParentDropdown && !e.target.closest('#soloParentModal .resident-search-wrap')) { hideSoloParentDropdown(); }
     });
 
-    function searchSoloParentResidents(term) {
-        fetch('model/search_residents.php?search=' + encodeURIComponent(term))
+    function searchSoloParentResidents(term, certType) {
+        fetch('model/search_residents.php?search=' + encodeURIComponent(term) + '&certificate_type=' + encodeURIComponent(certType))
             .then(function (res) { return res.json(); })
             .then(function (data) {
                 var results = data.residents || data.data;
-                if (data.success && results) { renderSoloParentDropdown(results); }
+                if (data.success && results) { renderSoloParentDropdown(results, certType); }
                 else { hideSoloParentDropdown(); }
             })
             .catch(function () { hideSoloParentDropdown(); });
     }
 
-    function renderSoloParentDropdown(residents) {
+    function renderSoloParentDropdown(residents, certType) {
         if (!soloParentDropdown) return;
-        if (residents.length === 0) { soloParentDropdown.innerHTML = '<div class="resident-dropdown-empty">No resident found. <a href="model/create-resident.php">Click here to register.</a></div>'; soloParentDropdown.style.display = 'block'; return; }
+        var limit = getCertificateLimit(certType);
+        if (residents.length === 0) { soloParentDropdown.innerHTML = '<div class="resident-dropdown-empty">No resident found.</div>'; soloParentDropdown.style.display = 'block'; return; }
         soloParentDropdown.innerHTML = '';
         residents.forEach(function (r) {
+            var limitInfo = r.resident_limits ? r.resident_limits[certType] : null;
+            var used = limitInfo ? limitInfo.used : 0;
+            var remaining = limit - used;
+            var isDisabled = remaining <= 0;
             var item = document.createElement('div');
-            item.className = 'resident-dropdown-item';
-            item.innerHTML = '<span class="resident-dropdown-name">' + escapeHtml(r.full_name.trim()) + '</span><span class="resident-dropdown-id">' + escapeHtml(r.resident_id || '') + '</span>';
-            item.addEventListener('mousedown', function (e) { e.preventDefault(); selectSoloParentResident(r); });
+            item.className = 'resident-dropdown-item' + (isDisabled ? ' disabled' : '');
+            
+            var limitBadge = '';
+            if (remaining > 0) {
+                limitBadge = `<span class="resident-dropdown-limit">${remaining}/${limit} available</span>`;
+            } else {
+                limitBadge = '<span class="resident-dropdown-limit">Limit reached</span>';
+            }
+
+            item.innerHTML = `
+                <div class="resident-dropdown-info">
+                    <span class="resident-dropdown-id">${escapeHtml(r.resident_id || '')}</span>
+                    <span class="resident-dropdown-name">${escapeHtml(r.full_name.trim())}</span>
+                </div>
+                ${limitBadge}
+            `;
+            
+            if (!isDisabled) {
+                item.addEventListener('mousedown', function (e) { e.preventDefault(); selectSoloParentResident(r); });
+            }
             soloParentDropdown.appendChild(item);
         });
         soloParentDropdown.style.display = 'block';
@@ -1168,144 +1290,946 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function selectSoloParentResident(resident) {
         if (soloParentNameInput) soloParentNameInput.value = resident.full_name.trim();
-        if (soloParentIdInput)    soloParentIdInput.value   = resident.id;
+        if (soloParentIdInput) soloParentIdInput.value = resident.id;
         hideSoloParentDropdown();
-        clearSoloParentError();
     }
 
     function hideSoloParentDropdown() {
         if (soloParentDropdown) { soloParentDropdown.style.display = 'none'; soloParentDropdown.innerHTML = ''; }
     }
 
-    function clearSoloParentError() {
-        if (soloParentNameInput) soloParentNameInput.classList.remove('is-invalid');
-        var existing = document.querySelector('.soloparent-error-msg');
-        if (existing) existing.remove();
-    }
-
-    function showSoloParentError(msg) {
-        clearSoloParentError();
-        if (!soloParentNameInput) return;
-        soloParentNameInput.classList.add('is-invalid');
-        var err = document.createElement('div');
-        err.className = 'invalid-feedback soloparent-error-msg';
-        err.textContent = msg;
-        soloParentNameInput.closest('.resident-input-group').after(err);
-    }
-
     if (soloParentPrintBtn) {
         soloParentPrintBtn.addEventListener('click', function () {
-            var residentId = soloParentIdInput      ? soloParentIdInput.value.trim()      : '';
-            var date       = soloParentDateInput    ? soloParentDateInput.value.trim()    : '';
-            var purpose    = soloParentPurposeInput ? soloParentPurposeInput.value.trim() : '';
-
-            if (!residentId) { showSoloParentError('Please select a resident from the list.'); if (soloParentNameInput) soloParentNameInput.focus(); return; }
-            if (!date) { if (soloParentDateInput) { soloParentDateInput.classList.add('is-invalid'); soloParentDateInput.focus(); } return; }
-            else { if (soloParentDateInput) soloParentDateInput.classList.remove('is-invalid'); }
-
+            var residentId = soloParentIdInput ? soloParentIdInput.value.trim() : '';
+            var date = soloParentDateInput ? soloParentDateInput.value.trim() : '';
+            var purpose = soloParentPurposeInput ? soloParentPurposeInput.value.trim() : '';
+            if (!residentId) { alert('Please select a resident from the list.'); return; }
             var params = new URLSearchParams({ resident_id: residentId, date: date, purpose: purpose });
-            window.location.href = 'certifications/certificate-soloparent.php?' + params.toString();
+            logCertificateRequest(residentId, 'soloparent', purpose, function() {
+                window.location.href = 'certifications/certificate-soloparent.php?' + params.toString();
+            });
         });
     }
 
     // ============================================
-    // Registration of Birth Certificate Modal Logic
+    // Registration of Birth Certificate (RBC) Modal Logic
     // ============================================
-    var rbcNameInput    = document.getElementById('rbcResidentName');
-    var rbcIdInput      = document.getElementById('rbcResidentId');
-    var rbcDropdown     = document.getElementById('rbcResidentDropdown');
-    var rbcResidentBtn  = document.getElementById('rbcResidentBtn');
-    var rbcChildNameInput = document.getElementById('rbcChildName');
-    var rbcChildIdInput   = document.getElementById('rbcChildId');
-    var rbcChildDropdown  = document.getElementById('rbcChildDropdown');
-    var rbcChildBtn       = document.getElementById('rbcChildBtn');
-    var rbcDateInput    = document.getElementById('rbcDate');
-    var rbcPurposeInput = document.getElementById('rbcPurpose');
-    var rbcPrintBtn     = document.getElementById('rbcPrintBtn');
-    var rbcModalEl      = document.getElementById('rbcModal');
-
-    var rbcSearchTimeout = null;
-    var rbcChildSearchTimeout = null;
+    var rbcNameInput = document.getElementById('rbcResidentName');
+    var rbcIdInput = document.getElementById('rbcResidentId');
+    var rbcDropdown = document.getElementById('rbcResidentDropdown');
+    var rbcResidentBtn = document.getElementById('rbcResidentBtn');
+    var rbcPrintBtn = document.getElementById('rbcPrintBtn');
+    var rbcModalEl = document.getElementById('rbcModal');
 
     if (rbcModalEl) {
         rbcModalEl.addEventListener('show.bs.modal', function () {
-            if (rbcNameInput)    rbcNameInput.value    = '';
-            if (rbcIdInput)      rbcIdInput.value      = '';
-            if (rbcDropdown)     { rbcDropdown.innerHTML = ''; rbcDropdown.style.display = 'none'; }
-            if (rbcChildNameInput) rbcChildNameInput.value = '';
-            if (rbcChildIdInput)   rbcChildIdInput.value   = '';
-            if (rbcChildDropdown)  { rbcChildDropdown.innerHTML = ''; rbcChildDropdown.style.display = 'none'; }
-            if (rbcDateInput)    rbcDateInput.value    = getTodayDate();
-            if (rbcPurposeInput)  rbcPurposeInput.value = 'Birth Certificate Registration';
-            clearRbcError();
+            if (rbcNameInput) rbcNameInput.value = '';
+            if (rbcIdInput) rbcIdInput.value = '';
+            if (rbcDropdown) { rbcDropdown.innerHTML = ''; rbcDropdown.style.display = 'none'; }
         });
     }
 
-    // Parent/Applicant search
     if (rbcNameInput) {
         rbcNameInput.addEventListener('input', function () {
             if (rbcIdInput) rbcIdInput.value = '';
-            clearRbcError();
             var term = this.value.trim();
-            clearTimeout(rbcSearchTimeout);
             if (term.length < 1) { hideRbcDropdown(); return; }
-            rbcSearchTimeout = setTimeout(function () { searchRbcResidents(term); }, 250);
-        });
-        rbcNameInput.addEventListener('keydown', function (e) { if (e.key === 'Escape') hideRbcDropdown(); });
-    }
-
-    // Child search
-    if (rbcChildNameInput) {
-        rbcChildNameInput.addEventListener('input', function () {
-            if (rbcChildIdInput) rbcChildIdInput.value = '';
-            clearRbcError();
-            var term = this.value.trim();
-            clearTimeout(rbcChildSearchTimeout);
-            if (term.length < 1) { hideRbcChildDropdown(); return; }
-            rbcChildSearchTimeout = setTimeout(function () { searchRbcChildResidents(term); }, 250);
-        });
-        rbcChildNameInput.addEventListener('keydown', function (e) { if (e.key === 'Escape') hideRbcChildDropdown(); });
-    }
-
-    if (rbcResidentBtn) {
-        rbcResidentBtn.addEventListener('click', function (e) {
-            e.stopPropagation();
-            if (rbcNameInput) { rbcNameInput.value = ''; rbcNameInput.focus(); }
-            if (rbcIdInput) rbcIdInput.value = '';
-            hideRbcDropdown();
+            setTimeout(function () { searchRbcResidents(term, 'rbc'); }, 250);
         });
     }
 
-    if (rbcChildBtn) {
-        rbcChildBtn.addEventListener('click', function (e) {
-            e.stopPropagation();
-            if (rbcChildNameInput) { rbcChildNameInput.value = ''; rbcChildNameInput.focus(); }
-            if (rbcChildIdInput) rbcChildIdInput.value = '';
-            hideRbcChildDropdown();
-        });
-    }
-
-    document.addEventListener('click', function (e) {
-        if (rbcDropdown && !e.target.closest('#rbcModal .resident-search-wrap')) { hideRbcDropdown(); }
-        if (rbcChildDropdown && !e.target.closest('#rbcModal .resident-search-wrap')) { hideRbcChildDropdown(); }
-    });
-
-    function searchRbcResidents(term) {
-        fetch('model/search_residents.php?search=' + encodeURIComponent(term))
+    function searchRbcResidents(term, certType) {
+        fetch('model/search_residents.php?search=' + encodeURIComponent(term) + '&certificate_type=' + encodeURIComponent(certType))
             .then(function (res) { return res.json(); })
             .then(function (data) {
                 var results = data.residents || data.data;
-                if (data.success && results) { renderRbcDropdown(results); }
+                if (data.success && results) { renderRbcDropdown(results, certType); }
                 else { hideRbcDropdown(); }
             })
             .catch(function () { hideRbcDropdown(); });
     }
 
+    function renderRbcDropdown(residents, certType) {
+        if (!rbcDropdown) return;
+        var limit = getCertificateLimit(certType);
+        if (residents.length === 0) { rbcDropdown.innerHTML = '<div class="resident-dropdown-empty">No resident found.</div>'; rbcDropdown.style.display = 'block'; return; }
+        rbcDropdown.innerHTML = '';
+        residents.forEach(function (r) {
+            var limitInfo = r.resident_limits ? r.resident_limits[certType] : null;
+            var used = limitInfo ? limitInfo.used : 0;
+            var remaining = limit - used;
+            var isDisabled = remaining <= 0;
+            var item = document.createElement('div');
+            item.className = 'resident-dropdown-item' + (isDisabled ? ' disabled' : '');
+            
+            var limitBadge = '';
+            if (remaining > 0) {
+                limitBadge = `<span class="resident-dropdown-limit">${remaining}/${limit} available</span>`;
+            } else {
+                limitBadge = '<span class="resident-dropdown-limit">Limit reached</span>';
+            }
+
+            item.innerHTML = `
+                <div class="resident-dropdown-info">
+                    <span class="resident-dropdown-id">${escapeHtml(r.resident_id || '')}</span>
+                    <span class="resident-dropdown-name">${escapeHtml(r.full_name.trim())}</span>
+                </div>
+                ${limitBadge}
+            `;
+            
+            if (!isDisabled) {
+                item.addEventListener('mousedown', function (e) { e.preventDefault(); selectRbcResident(r); });
+            }
+            rbcDropdown.appendChild(item);
+        });
+        rbcDropdown.style.display = 'block';
+    }
+
+    function selectRbcResident(resident) {
+        if (rbcNameInput) rbcNameInput.value = resident.full_name.trim();
+        if (rbcIdInput) rbcIdInput.value = resident.id;
+        // Store the selected parent ID to exclude from child search
+        rbcSelectedParentId = resident.id;
+        hideRbcDropdown();
+    }
+
+    function hideRbcDropdown() {
+        if (rbcDropdown) { rbcDropdown.style.display = 'none'; rbcDropdown.innerHTML = ''; }
+    }
+
+    // ============================================
+    // Barangay Clearance Modal Logic
+    // ============================================
+    var brgyClearanceNameInput = document.getElementById('brgyClearanceResidentName');
+    var brgyClearanceIdInput = document.getElementById('brgyClearanceResidentId');
+    var brgyClearanceDropdown = document.getElementById('brgyClearanceResidentDropdown');
+    var brgyClearancePrintBtn = document.getElementById('brgyClearancePrintBtn');
+    var brgyClearanceModalEl = document.getElementById('brgyClearanceModal');
+
+    if (brgyClearanceModalEl) {
+        brgyClearanceModalEl.addEventListener('show.bs.modal', function () {
+            if (brgyClearanceNameInput) brgyClearanceNameInput.value = '';
+            if (brgyClearanceIdInput) brgyClearanceIdInput.value = '';
+            if (brgyClearanceDropdown) { brgyClearanceDropdown.innerHTML = ''; brgyClearanceDropdown.style.display = 'none'; }
+        });
+    }
+
+    if (brgyClearanceNameInput) {
+        brgyClearanceNameInput.addEventListener('input', function () {
+            if (brgyClearanceIdInput) brgyClearanceIdInput.value = '';
+            var term = this.value.trim();
+            if (term.length < 1) { hideBrgyClearanceDropdown(); return; }
+            setTimeout(function () { searchBrgyClearanceResidents(term, 'brgyclearance'); }, 250);
+        });
+    }
+
+    function searchBrgyClearanceResidents(term, certType) {
+        fetch('model/search_residents.php?search=' + encodeURIComponent(term) + '&certificate_type=' + encodeURIComponent(certType))
+            .then(function (res) { return res.json(); })
+            .then(function (data) {
+                var results = data.residents || data.data;
+                if (data.success && results) { renderBrgyClearanceDropdown(results, certType); }
+                else { hideBrgyClearanceDropdown(); }
+            })
+            .catch(function () { hideBrgyClearanceDropdown(); });
+    }
+
+    function renderBrgyClearanceDropdown(residents, certType) {
+        if (!brgyClearanceDropdown) return;
+        var limit = getCertificateLimit(certType);
+        if (residents.length === 0) { brgyClearanceDropdown.innerHTML = '<div class="resident-dropdown-empty">No resident found.</div>'; brgyClearanceDropdown.style.display = 'block'; return; }
+        brgyClearanceDropdown.innerHTML = '';
+        residents.forEach(function (r) {
+            var limitInfo = r.resident_limits ? r.resident_limits[certType] : null;
+            var used = limitInfo ? limitInfo.used : 0;
+            var remaining = limit - used;
+            var isDisabled = remaining <= 0;
+            var item = document.createElement('div');
+            item.className = 'resident-dropdown-item' + (isDisabled ? ' disabled' : '');
+            
+            var limitBadge = '';
+            if (remaining > 0) {
+                limitBadge = `<span class="resident-dropdown-limit">${remaining}/${limit} available</span>`;
+            } else {
+                limitBadge = '<span class="resident-dropdown-limit">Limit reached</span>';
+            }
+
+            item.innerHTML = `
+                <div class="resident-dropdown-info">
+                    <span class="resident-dropdown-id">${escapeHtml(r.resident_id || '')}</span>
+                    <span class="resident-dropdown-name">${escapeHtml(r.full_name.trim())}</span>
+                </div>
+                ${limitBadge}
+            `;
+            
+            if (!isDisabled) {
+                item.addEventListener('mousedown', function (e) { e.preventDefault(); selectBrgyClearanceResident(r); });
+            }
+            brgyClearanceDropdown.appendChild(item);
+        });
+        brgyClearanceDropdown.style.display = 'block';
+    }
+
+    function selectBrgyClearanceResident(resident) {
+        if (brgyClearanceNameInput) brgyClearanceNameInput.value = resident.full_name.trim();
+        if (brgyClearanceIdInput) brgyClearanceIdInput.value = resident.id;
+        hideBrgyClearanceDropdown();
+    }
+
+    function hideBrgyClearanceDropdown() {
+        if (brgyClearanceDropdown) { brgyClearanceDropdown.style.display = 'none'; brgyClearanceDropdown.innerHTML = ''; }
+    }
+
+    // ============================================
+    // Barangay Business Clearance Modal Logic
+    // ============================================
+    var brgyBusinessNameInput = document.getElementById('brgyBusinessClearanceResidentName');
+    var brgyBusinessIdInput = document.getElementById('brgyBusinessClearanceResidentId');
+    var brgyBusinessDropdown = document.getElementById('brgyBusinessClearanceResidentDropdown');
+    var brgyBusinessPrintBtn = document.getElementById('brgyBusinessClearancePrintBtn');
+    var brgyBusinessModalEl = document.getElementById('brgyBusinessClearanceModal');
+
+    if (brgyBusinessModalEl) {
+        brgyBusinessModalEl.addEventListener('show.bs.modal', function () {
+            if (brgyBusinessNameInput) brgyBusinessNameInput.value = '';
+            if (brgyBusinessIdInput) brgyBusinessIdInput.value = '';
+            if (brgyBusinessDropdown) { brgyBusinessDropdown.innerHTML = ''; brgyBusinessDropdown.style.display = 'none'; }
+        });
+    }
+
+    if (brgyBusinessNameInput) {
+        brgyBusinessNameInput.addEventListener('input', function () {
+            if (brgyBusinessIdInput) brgyBusinessIdInput.value = '';
+            var term = this.value.trim();
+            if (term.length < 1) { hideBrgyBusinessDropdown(); return; }
+            setTimeout(function () { searchBrgyBusinessResidents(term, 'brgybusinessclearance'); }, 250);
+        });
+    }
+
+    function searchBrgyBusinessResidents(term, certType) {
+        fetch('model/search_residents.php?search=' + encodeURIComponent(term) + '&certificate_type=' + encodeURIComponent(certType))
+            .then(function (res) { return res.json(); })
+            .then(function (data) {
+                var results = data.residents || data.data;
+                if (data.success && results) { renderBrgyBusinessDropdown(results, certType); }
+                else { hideBrgyBusinessDropdown(); }
+            })
+            .catch(function () { hideBrgyBusinessDropdown(); });
+    }
+
+    function renderBrgyBusinessDropdown(residents, certType) {
+        if (!brgyBusinessDropdown) return;
+        var limit = getCertificateLimit(certType);
+        if (residents.length === 0) { brgyBusinessDropdown.innerHTML = '<div class="resident-dropdown-empty">No resident found.</div>'; brgyBusinessDropdown.style.display = 'block'; return; }
+        brgyBusinessDropdown.innerHTML = '';
+        residents.forEach(function (r) {
+            var limitInfo = r.resident_limits ? r.resident_limits[certType] : null;
+            var used = limitInfo ? limitInfo.used : 0;
+            var remaining = limit - used;
+            var isDisabled = remaining <= 0;
+            var item = document.createElement('div');
+            item.className = 'resident-dropdown-item' + (isDisabled ? ' disabled' : '');
+            
+            var limitBadge = '';
+            if (remaining > 0) {
+                limitBadge = `<span class="resident-dropdown-limit">${remaining}/${limit} available</span>`;
+            } else {
+                limitBadge = '<span class="resident-dropdown-limit">Limit reached</span>';
+            }
+
+            item.innerHTML = `
+                <div class="resident-dropdown-info">
+                    <span class="resident-dropdown-id">${escapeHtml(r.resident_id || '')}</span>
+                    <span class="resident-dropdown-name">${escapeHtml(r.full_name.trim())}</span>
+                </div>
+                ${limitBadge}
+            `;
+            
+            if (!isDisabled) {
+                item.addEventListener('mousedown', function (e) { e.preventDefault(); selectBrgyBusinessResident(r); });
+            }
+            brgyBusinessDropdown.appendChild(item);
+        });
+        brgyBusinessDropdown.style.display = 'block';
+    }
+
+    function selectBrgyBusinessResident(resident) {
+        if (brgyBusinessNameInput) brgyBusinessNameInput.value = resident.full_name.trim();
+        if (brgyBusinessIdInput) brgyBusinessIdInput.value = resident.id;
+        hideBrgyBusinessDropdown();
+    }
+
+    function hideBrgyBusinessDropdown() {
+        if (brgyBusinessDropdown) { brgyBusinessDropdown.style.display = 'none'; brgyBusinessDropdown.innerHTML = ''; }
+    }
+
+    // ============================================
+    // Business Permit Modal Logic
+    // ============================================
+    var businessPermitNameInput = document.getElementById('businessPermitResidentName');
+    var businessPermitIdInput = document.getElementById('businessPermitResidentId');
+    var businessPermitDropdown = document.getElementById('businessPermitResidentDropdown');
+    var businessPermitPrintBtn = document.getElementById('businessPermitPrintBtn');
+    var businessPermitModalEl = document.getElementById('businessPermitModal');
+
+    if (businessPermitModalEl) {
+        businessPermitModalEl.addEventListener('show.bs.modal', function () {
+            if (businessPermitNameInput) businessPermitNameInput.value = '';
+            if (businessPermitIdInput) businessPermitIdInput.value = '';
+            if (businessPermitDropdown) { businessPermitDropdown.innerHTML = ''; businessPermitDropdown.style.display = 'none'; }
+        });
+    }
+
+    if (businessPermitNameInput) {
+        businessPermitNameInput.addEventListener('input', function () {
+            if (businessPermitIdInput) businessPermitIdInput.value = '';
+            var term = this.value.trim();
+            if (term.length < 1) { hideBusinessPermitDropdown(); return; }
+            setTimeout(function () { searchBusinessPermitResidents(term, 'businesspermit'); }, 250);
+        });
+    }
+
+    function searchBusinessPermitResidents(term, certType) {
+        fetch('model/search_residents.php?search=' + encodeURIComponent(term) + '&certificate_type=' + encodeURIComponent(certType))
+            .then(function (res) { return res.json(); })
+            .then(function (data) {
+                var results = data.residents || data.data;
+                if (data.success && results) { renderBusinessPermitDropdown(results, certType); }
+                else { hideBusinessPermitDropdown(); }
+            })
+            .catch(function () { hideBusinessPermitDropdown(); });
+    }
+
+    function renderBusinessPermitDropdown(residents, certType) {
+        if (!businessPermitDropdown) return;
+        var limit = getCertificateLimit(certType);
+        if (residents.length === 0) { businessPermitDropdown.innerHTML = '<div class="resident-dropdown-empty">No resident found.</div>'; businessPermitDropdown.style.display = 'block'; return; }
+        businessPermitDropdown.innerHTML = '';
+        residents.forEach(function (r) {
+            var limitInfo = r.resident_limits ? r.resident_limits[certType] : null;
+            var used = limitInfo ? limitInfo.used : 0;
+            var remaining = limit - used;
+            var isDisabled = remaining <= 0;
+            var item = document.createElement('div');
+            item.className = 'resident-dropdown-item' + (isDisabled ? ' disabled' : '');
+            
+            var limitBadge = '';
+            if (remaining > 0) {
+                limitBadge = `<span class="resident-dropdown-limit">${remaining}/${limit} available</span>`;
+            } else {
+                limitBadge = '<span class="resident-dropdown-limit">Limit reached</span>';
+            }
+
+            item.innerHTML = `
+                <div class="resident-dropdown-info">
+                    <span class="resident-dropdown-id">${escapeHtml(r.resident_id || '')}</span>
+                    <span class="resident-dropdown-name">${escapeHtml(r.full_name.trim())}</span>
+                </div>
+                ${limitBadge}
+            `;
+            
+            if (!isDisabled) {
+                item.addEventListener('mousedown', function (e) { e.preventDefault(); selectBusinessPermitResident(r); });
+            }
+            businessPermitDropdown.appendChild(item);
+        });
+        businessPermitDropdown.style.display = 'block';
+    }
+
+    function selectBusinessPermitResident(resident) {
+        if (businessPermitNameInput) businessPermitNameInput.value = resident.full_name.trim();
+        if (businessPermitIdInput) businessPermitIdInput.value = resident.id;
+        hideBusinessPermitDropdown();
+    }
+
+    function hideBusinessPermitDropdown() {
+        if (businessPermitDropdown) { businessPermitDropdown.style.display = 'none'; businessPermitDropdown.innerHTML = ''; }
+    }
+
+    // ============================================
+    // Vessel Docking Modal Logic
+    // ============================================
+    var vesselDockingNameInput = document.getElementById('vesselDockingResidentName');
+    var vesselDockingIdInput = document.getElementById('vesselDockingResidentId');
+    var vesselDockingDropdown = document.getElementById('vesselDockingResidentDropdown');
+    var vesselDockingResidentBtn = document.getElementById('vesselDockingResidentBtn');
+    var vesselDockingVesselNameInput = document.getElementById('vesselDockingVesselName');
+    var vesselDockingFromDateInput = document.getElementById('vesselDockingFromDate');
+    var vesselDockingToDateInput = document.getElementById('vesselDockingToDate');
+    var vesselDockingDateInput = document.getElementById('vesselDockingDate');
+    var vesselDockingPrintBtn = document.getElementById('vesselDockingPrintBtn');
+    var vesselDockingModalEl = document.getElementById('vesselDockingModal');
+
+    var vesselDockingSearchTimeout = null;
+
+    if (vesselDockingModalEl) {
+        vesselDockingModalEl.addEventListener('show.bs.modal', function () {
+            if (vesselDockingNameInput) vesselDockingNameInput.value = '';
+            if (vesselDockingIdInput) vesselDockingIdInput.value = '';
+            if (vesselDockingDropdown) { vesselDockingDropdown.innerHTML = ''; vesselDockingDropdown.style.display = 'none'; }
+            if (vesselDockingVesselNameInput) vesselDockingVesselNameInput.value = '';
+            if (vesselDockingFromDateInput) vesselDockingFromDateInput.value = getTodayDate();
+            if (vesselDockingToDateInput) vesselDockingToDateInput.value = getTodayDate();
+            if (vesselDockingDateInput) vesselDockingDateInput.value = getTodayDate();
+        });
+    }
+
+    if (vesselDockingNameInput) {
+        vesselDockingNameInput.addEventListener('input', function () {
+            if (vesselDockingIdInput) vesselDockingIdInput.value = '';
+            var term = this.value.trim();
+            if (term.length < 1) { hideVesselDockingDropdown(); return; }
+            setTimeout(function () { searchVesselDockingResidents(term, 'vesseldocking'); }, 250);
+        });
+    }
+
+    function searchVesselDockingResidents(term, certType) {
+        fetch('model/search_residents.php?search=' + encodeURIComponent(term) + '&certificate_type=' + encodeURIComponent(certType))
+            .then(function (res) { return res.json(); })
+            .then(function (data) {
+                var results = data.residents || data.data;
+                if (data.success && results) { renderVesselDockingDropdown(results, certType); }
+                else { hideVesselDockingDropdown(); }
+            })
+            .catch(function () { hideVesselDockingDropdown(); });
+    }
+
+    function renderVesselDockingDropdown(residents, certType) {
+        if (!vesselDockingDropdown) return;
+        var limit = getCertificateLimit(certType);
+        if (residents.length === 0) { vesselDockingDropdown.innerHTML = '<div class="resident-dropdown-empty">No resident found.</div>'; vesselDockingDropdown.style.display = 'block'; return; }
+        vesselDockingDropdown.innerHTML = '';
+        residents.forEach(function (r) {
+            var limitInfo = r.resident_limits ? r.resident_limits[certType] : null;
+            var used = limitInfo ? limitInfo.used : 0;
+            var remaining = limit - used;
+            var isDisabled = remaining <= 0;
+            var item = document.createElement('div');
+            item.className = 'resident-dropdown-item' + (isDisabled ? ' disabled' : '');
+            
+            var limitBadge = '';
+            if (remaining > 0) {
+                limitBadge = `<span class="resident-dropdown-limit">${remaining}/${limit} available</span>`;
+            } else {
+                limitBadge = '<span class="resident-dropdown-limit">Limit reached</span>';
+            }
+
+            item.innerHTML = `
+                <div class="resident-dropdown-info">
+                    <span class="resident-dropdown-id">${escapeHtml(r.resident_id || '')}</span>
+                    <span class="resident-dropdown-name">${escapeHtml(r.full_name.trim())}</span>
+                </div>
+                ${limitBadge}
+            `;
+            
+            if (!isDisabled) {
+                item.addEventListener('mousedown', function (e) { e.preventDefault(); selectVesselDockingResident(r); });
+            }
+            vesselDockingDropdown.appendChild(item);
+        });
+        vesselDockingDropdown.style.display = 'block';
+    }
+
+    function selectVesselDockingResident(resident) {
+        if (vesselDockingNameInput) vesselDockingNameInput.value = resident.full_name.trim();
+        if (vesselDockingIdInput) vesselDockingIdInput.value = resident.id;
+        hideVesselDockingDropdown();
+    }
+
+    function hideVesselDockingDropdown() {
+        if (vesselDockingDropdown) { vesselDockingDropdown.style.display = 'none'; vesselDockingDropdown.innerHTML = ''; }
+    }
+
+    if (vesselDockingPrintBtn) {
+        vesselDockingPrintBtn.addEventListener('click', function () {
+            var residentId = vesselDockingIdInput ? vesselDockingIdInput.value.trim() : '';
+            var vesselName = vesselDockingVesselNameInput ? vesselDockingVesselNameInput.value.trim() : '';
+            var fromDate = vesselDockingFromDateInput ? vesselDockingFromDateInput.value.trim() : '';
+            var toDate = vesselDockingToDateInput ? vesselDockingToDateInput.value.trim() : '';
+            var date = vesselDockingDateInput ? vesselDockingDateInput.value.trim() : '';
+
+            if (!residentId) { alert('Please select a resident from the list.'); return; }
+            if (!vesselName) { alert('Please enter the vessel name.'); return; }
+            if (!date) { alert('Please select a date.'); return; }
+
+            var params = new URLSearchParams({ 
+                resident_id: residentId, 
+                vesselname: vesselName,
+                fromdate: fromDate,
+                todate: toDate,
+                date: date 
+            });
+            logCertificateRequest(residentId, 'vesseldocking', 'Vessel Docking Certification', function() {
+                window.location.href = 'certifications/certificate-vesseldocking.php?' + params.toString();
+            });
+        });
+    }
+
+    // ============================================
+    // Business Permit Modal Logic
+    // ============================================
+    var businessPermitNameInput = document.getElementById('businessPermitResidentName');
+    var businessPermitIdInput = document.getElementById('businessPermitResidentId');
+    var businessPermitDropdown = document.getElementById('businessPermitResidentDropdown');
+    var businessPermitResidentBtn = document.getElementById('businessPermitResidentBtn');
+    var businessPermitBusinessNameInput = document.getElementById('businessPermitBusinessName');
+    var businessPermitBusinessAddressInput = document.getElementById('businessPermitBusinessAddress');
+    var businessPermitNatureInput = document.getElementById('businessPermitNature');
+    var businessPermitDateInput = document.getElementById('businessPermitDate');
+    var businessPermitPrintBtn = document.getElementById('businessPermitPrintBtn');
+    var businessPermitModalEl = document.getElementById('businessPermitModal');
+
+    var businessPermitSearchTimeout = null;
+
+    if (businessPermitModalEl) {
+        businessPermitModalEl.addEventListener('show.bs.modal', function () {
+            if (businessPermitNameInput) businessPermitNameInput.value = '';
+            if (businessPermitIdInput) businessPermitIdInput.value = '';
+            if (businessPermitDropdown) { businessPermitDropdown.innerHTML = ''; businessPermitDropdown.style.display = 'none'; }
+            if (businessPermitBusinessNameInput) businessPermitBusinessNameInput.value = '';
+            if (businessPermitBusinessAddressInput) businessPermitBusinessAddressInput.value = '';
+            if (businessPermitNatureInput) businessPermitNatureInput.value = '';
+            if (businessPermitDateInput) businessPermitDateInput.value = getTodayDate();
+        });
+    }
+
+    if (businessPermitNameInput) {
+        businessPermitNameInput.addEventListener('input', function () {
+            if (businessPermitIdInput) businessPermitIdInput.value = '';
+            var term = this.value.trim();
+            if (term.length < 1) { hideBusinessPermitDropdown(); return; }
+            setTimeout(function () { searchBusinessPermitResidents(term, 'businesspermit'); }, 250);
+        });
+    }
+
+    function searchBusinessPermitResidents(term, certType) {
+        fetch('model/search_residents.php?search=' + encodeURIComponent(term) + '&certificate_type=' + encodeURIComponent(certType))
+            .then(function (res) { return res.json(); })
+            .then(function (data) {
+                var results = data.residents || data.data;
+                if (data.success && results) { renderBusinessPermitDropdown(results, certType); }
+                else { hideBusinessPermitDropdown(); }
+            })
+            .catch(function () { hideBusinessPermitDropdown(); });
+    }
+
+    function renderBusinessPermitDropdown(residents, certType) {
+        if (!businessPermitDropdown) return;
+        var limit = getCertificateLimit(certType);
+        if (residents.length === 0) { businessPermitDropdown.innerHTML = '<div class="resident-dropdown-empty">No resident found.</div>'; businessPermitDropdown.style.display = 'block'; return; }
+        businessPermitDropdown.innerHTML = '';
+        residents.forEach(function (r) {
+            var limitInfo = r.resident_limits ? r.resident_limits[certType] : null;
+            var used = limitInfo ? limitInfo.used : 0;
+            var remaining = limit - used;
+            var isDisabled = remaining <= 0;
+            var item = document.createElement('div');
+            item.className = 'resident-dropdown-item' + (isDisabled ? ' disabled' : '');
+            
+            var limitBadge = '';
+            if (remaining > 0) {
+                limitBadge = `<span class="resident-dropdown-limit">${remaining}/${limit} available</span>`;
+            } else {
+                limitBadge = '<span class="resident-dropdown-limit">Limit reached</span>';
+            }
+
+            item.innerHTML = `
+                <div class="resident-dropdown-info">
+                    <span class="resident-dropdown-id">${escapeHtml(r.resident_id || '')}</span>
+                    <span class="resident-dropdown-name">${escapeHtml(r.full_name.trim())}</span>
+                </div>
+                ${limitBadge}
+            `;
+            
+            if (!isDisabled) {
+                item.addEventListener('mousedown', function (e) { e.preventDefault(); selectBusinessPermitResident(r); });
+            }
+            businessPermitDropdown.appendChild(item);
+        });
+        businessPermitDropdown.style.display = 'block';
+    }
+
+    function selectBusinessPermitResident(resident) {
+        if (businessPermitNameInput) businessPermitNameInput.value = resident.full_name.trim();
+        if (businessPermitIdInput) businessPermitIdInput.value = resident.id;
+        hideBusinessPermitDropdown();
+    }
+
+    function hideBusinessPermitDropdown() {
+        if (businessPermitDropdown) { businessPermitDropdown.style.display = 'none'; businessPermitDropdown.innerHTML = ''; }
+    }
+
+    if (businessPermitPrintBtn) {
+        businessPermitPrintBtn.addEventListener('click', function () {
+            var residentId = businessPermitIdInput ? businessPermitIdInput.value.trim() : '';
+            var businessName = businessPermitBusinessNameInput ? businessPermitBusinessNameInput.value.trim() : '';
+            var businessAddress = businessPermitBusinessAddressInput ? businessPermitBusinessAddressInput.value.trim() : '';
+            var nature = businessPermitNatureInput ? businessPermitNatureInput.value.trim() : '';
+            var date = businessPermitDateInput ? businessPermitDateInput.value.trim() : '';
+
+            if (!residentId) { alert('Please select a resident from the list.'); return; }
+            if (!businessName) { alert('Please enter the business name.'); return; }
+            if (!date) { alert('Please select a date.'); return; }
+
+            var params = new URLSearchParams({ 
+                resident_id: residentId, 
+                business_name: businessName,
+                business_address: businessAddress,
+                nature: nature,
+                date: date 
+            });
+            logCertificateRequest(residentId, 'businesspermit', nature || 'Business Permit', function() {
+                window.location.href = 'certifications/certificate-businesspermit.php?' + params.toString();
+            });
+        });
+    }
+
+    // ============================================
+    // Barangay Business Clearance Modal Logic
+    // ============================================
+    var brgyBusinessNameInput = document.getElementById('brgyBusinessClearanceResidentName');
+    var brgyBusinessIdInput = document.getElementById('brgyBusinessClearanceResidentId');
+    var brgyBusinessDropdown = document.getElementById('brgyBusinessClearanceResidentDropdown');
+    var brgyBusinessResidentBtn = document.getElementById('brgyBusinessClearanceResidentBtn');
+    var brgyBusinessClearanceBusinessNameInput = document.getElementById('brgyBusinessClearanceBusinessName');
+    var brgyBusinessClearanceBusinessAddressInput = document.getElementById('brgyBusinessClearanceBusinessAddress');
+    var brgyBusinessClearanceNatureInput = document.getElementById('brgyBusinessClearanceNature');
+    var brgyBusinessClearanceDateInput = document.getElementById('brgyBusinessClearanceDate');
+    var brgyBusinessClearancePrintBtn = document.getElementById('brgyBusinessClearancePrintBtn');
+    var brgyBusinessModalEl = document.getElementById('brgyBusinessClearanceModal');
+
+    var brgyBusinessSearchTimeout = null;
+
+    if (brgyBusinessModalEl) {
+        brgyBusinessModalEl.addEventListener('show.bs.modal', function () {
+            if (brgyBusinessNameInput) brgyBusinessNameInput.value = '';
+            if (brgyBusinessIdInput) brgyBusinessIdInput.value = '';
+            if (brgyBusinessDropdown) { brgyBusinessDropdown.innerHTML = ''; brgyBusinessDropdown.style.display = 'none'; }
+            if (brgyBusinessClearanceBusinessNameInput) brgyBusinessClearanceBusinessNameInput.value = '';
+            if (brgyBusinessClearanceBusinessAddressInput) brgyBusinessClearanceBusinessAddressInput.value = '';
+            if (brgyBusinessClearanceNatureInput) brgyBusinessClearanceNatureInput.value = '';
+            if (brgyBusinessClearanceDateInput) brgyBusinessClearanceDateInput.value = getTodayDate();
+        });
+    }
+
+    if (brgyBusinessNameInput) {
+        brgyBusinessNameInput.addEventListener('input', function () {
+            if (brgyBusinessIdInput) brgyBusinessIdInput.value = '';
+            var term = this.value.trim();
+            if (term.length < 1) { hideBrgyBusinessDropdown(); return; }
+            setTimeout(function () { searchBrgyBusinessResidents(term, 'brgybusinessclearance'); }, 250);
+        });
+    }
+
+    function searchBrgyBusinessResidents(term, certType) {
+        fetch('model/search_residents.php?search=' + encodeURIComponent(term) + '&certificate_type=' + encodeURIComponent(certType))
+            .then(function (res) { return res.json(); })
+            .then(function (data) {
+                var results = data.residents || data.data;
+                if (data.success && results) { renderBrgyBusinessDropdown(results, certType); }
+                else { hideBrgyBusinessDropdown(); }
+            })
+            .catch(function () { hideBrgyBusinessDropdown(); });
+    }
+
+    function renderBrgyBusinessDropdown(residents, certType) {
+        if (!brgyBusinessDropdown) return;
+        var limit = getCertificateLimit(certType);
+        if (residents.length === 0) { brgyBusinessDropdown.innerHTML = '<div class="resident-dropdown-empty">No resident found.</div>'; brgyBusinessDropdown.style.display = 'block'; return; }
+        brgyBusinessDropdown.innerHTML = '';
+        residents.forEach(function (r) {
+            var limitInfo = r.resident_limits ? r.resident_limits[certType] : null;
+            var used = limitInfo ? limitInfo.used : 0;
+            var remaining = limit - used;
+            var isDisabled = remaining <= 0;
+            var item = document.createElement('div');
+            item.className = 'resident-dropdown-item' + (isDisabled ? ' disabled' : '');
+            
+            var limitBadge = '';
+            if (remaining > 0) {
+                limitBadge = `<span class="resident-dropdown-limit">${remaining}/${limit} available</span>`;
+            } else {
+                limitBadge = '<span class="resident-dropdown-limit">Limit reached</span>';
+            }
+
+            item.innerHTML = `
+                <div class="resident-dropdown-info">
+                    <span class="resident-dropdown-id">${escapeHtml(r.resident_id || '')}</span>
+                    <span class="resident-dropdown-name">${escapeHtml(r.full_name.trim())}</span>
+                </div>
+                ${limitBadge}
+            `;
+            
+            if (!isDisabled) {
+                item.addEventListener('mousedown', function (e) { e.preventDefault(); selectBrgyBusinessResident(r); });
+            }
+            brgyBusinessDropdown.appendChild(item);
+        });
+        brgyBusinessDropdown.style.display = 'block';
+    }
+
+    function selectBrgyBusinessResident(resident) {
+        if (brgyBusinessNameInput) brgyBusinessNameInput.value = resident.full_name.trim();
+        if (brgyBusinessIdInput) brgyBusinessIdInput.value = resident.id;
+        hideBrgyBusinessDropdown();
+    }
+
+    function hideBrgyBusinessDropdown() {
+        if (brgyBusinessDropdown) { brgyBusinessDropdown.style.display = 'none'; brgyBusinessDropdown.innerHTML = ''; }
+    }
+
+    if (brgyBusinessClearancePrintBtn) {
+        brgyBusinessClearancePrintBtn.addEventListener('click', function () {
+            var residentId = brgyBusinessIdInput ? brgyBusinessIdInput.value.trim() : '';
+            var businessName = brgyBusinessClearanceBusinessNameInput ? brgyBusinessClearanceBusinessNameInput.value.trim() : '';
+            var businessAddress = brgyBusinessClearanceBusinessAddressInput ? brgyBusinessClearanceBusinessAddressInput.value.trim() : '';
+            var nature = brgyBusinessClearanceNatureInput ? brgyBusinessClearanceNatureInput.value.trim() : '';
+            var date = brgyBusinessClearanceDateInput ? brgyBusinessClearanceDateInput.value.trim() : '';
+
+            if (!residentId) { alert('Please select a resident from the list.'); return; }
+            if (!businessName) { alert('Please enter the business name.'); return; }
+            if (!date) { alert('Please select a date.'); return; }
+
+            var params = new URLSearchParams({ 
+                resident_id: residentId, 
+                business_name: businessName,
+                business_address: businessAddress,
+                nature: nature,
+                date: date 
+            });
+            logCertificateRequest(residentId, 'brgybusinessclearance', nature || 'Barangay Business Clearance', function() {
+                window.location.href = 'certifications/certificate-brgybusinessclearance.php?' + params.toString();
+            });
+        });
+    }
+
+    // ============================================
+    // Barangay Clearance Modal Logic
+    // ============================================
+    var brgyClearanceNameInput = document.getElementById('brgyClearanceResidentName');
+    var brgyClearanceIdInput = document.getElementById('brgyClearanceResidentId');
+    var brgyClearanceDropdown = document.getElementById('brgyClearanceResidentDropdown');
+    var brgyClearanceResidentBtn = document.getElementById('brgyClearanceResidentBtn');
+    var brgyClearanceDateInput = document.getElementById('brgyClearanceDate');
+    var brgyClearancePurposeInput = document.getElementById('brgyClearancePurpose');
+    var brgyClearancePrintBtn = document.getElementById('brgyClearancePrintBtn');
+    var brgyClearanceModalEl = document.getElementById('brgyClearanceModal');
+
+    var brgyClearanceSearchTimeout = null;
+
+    if (brgyClearanceModalEl) {
+        brgyClearanceModalEl.addEventListener('show.bs.modal', function () {
+            if (brgyClearanceNameInput) brgyClearanceNameInput.value = '';
+            if (brgyClearanceIdInput) brgyClearanceIdInput.value = '';
+            if (brgyClearanceDropdown) { brgyClearanceDropdown.innerHTML = ''; brgyClearanceDropdown.style.display = 'none'; }
+            if (brgyClearanceDateInput) brgyClearanceDateInput.value = getTodayDate();
+            if (brgyClearancePurposeInput) brgyClearancePurposeInput.value = '';
+        });
+    }
+
+    if (brgyClearanceNameInput) {
+        brgyClearanceNameInput.addEventListener('input', function () {
+            if (brgyClearanceIdInput) brgyClearanceIdInput.value = '';
+            var term = this.value.trim();
+            if (term.length < 1) { hideBrgyClearanceDropdown(); return; }
+            setTimeout(function () { searchBrgyClearanceResidents(term, 'brgyclearance'); }, 250);
+        });
+    }
+
+    function searchBrgyClearanceResidents(term, certType) {
+        fetch('model/search_residents.php?search=' + encodeURIComponent(term) + '&certificate_type=' + encodeURIComponent(certType))
+            .then(function (res) { return res.json(); })
+            .then(function (data) {
+                var results = data.residents || data.data;
+                if (data.success && results) { renderBrgyClearanceDropdown(results, certType); }
+                else { hideBrgyClearanceDropdown(); }
+            })
+            .catch(function () { hideBrgyClearanceDropdown(); });
+    }
+
+    function renderBrgyClearanceDropdown(residents, certType) {
+        if (!brgyClearanceDropdown) return;
+        var limit = getCertificateLimit(certType);
+        if (residents.length === 0) { brgyClearanceDropdown.innerHTML = '<div class="resident-dropdown-empty">No resident found.</div>'; brgyClearanceDropdown.style.display = 'block'; return; }
+        brgyClearanceDropdown.innerHTML = '';
+        residents.forEach(function (r) {
+            var limitInfo = r.resident_limits ? r.resident_limits[certType] : null;
+            var used = limitInfo ? limitInfo.used : 0;
+            var remaining = limit - used;
+            var isDisabled = remaining <= 0;
+            var item = document.createElement('div');
+            item.className = 'resident-dropdown-item' + (isDisabled ? ' disabled' : '');
+            
+            var limitBadge = '';
+            if (remaining > 0) {
+                limitBadge = `<span class="resident-dropdown-limit">${remaining}/${limit} available</span>`;
+            } else {
+                limitBadge = '<span class="resident-dropdown-limit">Limit reached</span>';
+            }
+
+            item.innerHTML = `
+                <div class="resident-dropdown-info">
+                    <span class="resident-dropdown-id">${escapeHtml(r.resident_id || '')}</span>
+                    <span class="resident-dropdown-name">${escapeHtml(r.full_name.trim())}</span>
+                </div>
+                ${limitBadge}
+            `;
+            
+            if (!isDisabled) {
+                item.addEventListener('mousedown', function (e) { e.preventDefault(); selectBrgyClearanceResident(r); });
+            }
+            brgyClearanceDropdown.appendChild(item);
+        });
+        brgyClearanceDropdown.style.display = 'block';
+    }
+
+    function selectBrgyClearanceResident(resident) {
+        if (brgyClearanceNameInput) brgyClearanceNameInput.value = resident.full_name.trim();
+        if (brgyClearanceIdInput) brgyClearanceIdInput.value = resident.id;
+        hideBrgyClearanceDropdown();
+    }
+
+    function hideBrgyClearanceDropdown() {
+        if (brgyClearanceDropdown) { brgyClearanceDropdown.style.display = 'none'; brgyClearanceDropdown.innerHTML = ''; }
+    }
+
+    if (brgyClearancePrintBtn) {
+        brgyClearancePrintBtn.addEventListener('click', function () {
+            var residentId = brgyClearanceIdInput ? brgyClearanceIdInput.value.trim() : '';
+            var date = brgyClearanceDateInput ? brgyClearanceDateInput.value.trim() : '';
+            var purpose = brgyClearancePurposeInput ? brgyClearancePurposeInput.value.trim() : '';
+
+            if (!residentId) { alert('Please select a resident from the list.'); return; }
+            if (!date) { alert('Please select a date.'); return; }
+
+            var params = new URLSearchParams({ 
+                resident_id: residentId, 
+                date: date,
+                purpose: purpose 
+            });
+            logCertificateRequest(residentId, 'brgyclearance', purpose || 'Barangay Clearance', function() {
+                window.location.href = 'certifications/certificate-barangayclearance.php?' + params.toString();
+            });
+        });
+    }
+
+    // ============================================
+    // Registration of Birth Certificate (RBC) Modal Logic
+    // ============================================
+    var rbcNameInput = document.getElementById('rbcResidentName');
+    var rbcIdInput = document.getElementById('rbcResidentId');
+    var rbcDropdown = document.getElementById('rbcResidentDropdown');
+    var rbcResidentBtn = document.getElementById('rbcResidentBtn');
+    var rbcChildNameInput = document.getElementById('rbcChildName');
+    var rbcChildIdInput = document.getElementById('rbcChildId');
+    var rbcChildDropdown = document.getElementById('rbcChildDropdown');
+    var rbcDateInput = document.getElementById('rbcDate');
+    var rbcPurposeInput = document.getElementById('rbcPurpose');
+    var rbcPrintBtn = document.getElementById('rbcPrintBtn');
+    var rbcModalEl = document.getElementById('rbcModal');
+
+    var rbcSearchTimeout = null;
+    var rbcChildSearchTimeout = null;
+    var rbcSelectedParentId = null;
+
+    if (rbcModalEl) {
+        rbcModalEl.addEventListener('show.bs.modal', function () {
+            if (rbcNameInput) rbcNameInput.value = '';
+            if (rbcIdInput) rbcIdInput.value = '';
+            if (rbcDropdown) { rbcDropdown.innerHTML = ''; rbcDropdown.style.display = 'none'; }
+            if (rbcChildNameInput) rbcChildNameInput.value = '';
+            if (rbcChildIdInput) rbcChildIdInput.value = '';
+            if (rbcChildDropdown) { rbcChildDropdown.innerHTML = ''; rbcChildDropdown.style.display = 'none'; }
+            if (rbcDateInput) rbcDateInput.value = getTodayDate();
+            if (rbcPurposeInput) rbcPurposeInput.value = 'Birth Certificate Registration';
+            // Reset selected parent ID when modal opens
+            rbcSelectedParentId = null;
+        });
+    }
+
+    if (rbcNameInput) {
+        rbcNameInput.addEventListener('input', function () {
+            if (rbcIdInput) rbcIdInput.value = '';
+            var term = this.value.trim();
+            if (term.length < 1) { hideRbcDropdown(); return; }
+            setTimeout(function () { searchRbcResidents(term, 'rbc'); }, 250);
+        });
+    }
+
+    function searchRbcResidents(term, certType) {
+        fetch('model/search_residents.php?search=' + encodeURIComponent(term) + '&certificate_type=' + encodeURIComponent(certType))
+            .then(function (res) { return res.json(); })
+            .then(function (data) {
+                var results = data.residents || data.data;
+                if (data.success && results) { renderRbcDropdown(results, certType); }
+                else { hideRbcDropdown(); }
+            })
+            .catch(function () { hideRbcDropdown(); });
+    }
+
+    function renderRbcDropdown(residents, certType) {
+        if (!rbcDropdown) return;
+        var limit = getCertificateLimit(certType);
+        if (residents.length === 0) { rbcDropdown.innerHTML = '<div class="resident-dropdown-empty">No resident found.</div>'; rbcDropdown.style.display = 'block'; return; }
+        rbcDropdown.innerHTML = '';
+        residents.forEach(function (r) {
+            var limitInfo = r.resident_limits ? r.resident_limits[certType] : null;
+            var used = limitInfo ? limitInfo.used : 0;
+            var remaining = limit - used;
+            var isDisabled = remaining <= 0;
+            var item = document.createElement('div');
+            item.className = 'resident-dropdown-item' + (isDisabled ? ' disabled' : '');
+            
+            var limitBadge = '';
+            if (remaining > 0) {
+                limitBadge = `<span class="resident-dropdown-limit">${remaining}/${limit} available</span>`;
+            } else {
+                limitBadge = '<span class="resident-dropdown-limit">Limit reached</span>';
+            }
+
+            item.innerHTML = `
+                <div class="resident-dropdown-info">
+                    <span class="resident-dropdown-id">${escapeHtml(r.resident_id || '')}</span>
+                    <span class="resident-dropdown-name">${escapeHtml(r.full_name.trim())}</span>
+                </div>
+                ${limitBadge}
+            `;
+            
+            if (!isDisabled) {
+                item.addEventListener('mousedown', function (e) { e.preventDefault(); selectRbcResident(r); });
+            }
+            rbcDropdown.appendChild(item);
+        });
+        rbcDropdown.style.display = 'block';
+    }
+
+    function selectRbcResident(resident) {
+        if (rbcNameInput) rbcNameInput.value = resident.full_name.trim();
+        if (rbcIdInput) rbcIdInput.value = resident.id;
+        // Store the selected parent ID to exclude from child search
+        rbcSelectedParentId = resident.id;
+        hideRbcDropdown();
+    }
+
+    function hideRbcDropdown() {
+        if (rbcDropdown) { rbcDropdown.style.display = 'none'; rbcDropdown.innerHTML = ''; }
+    }
+
+    // Child search functionality
+    if (rbcChildNameInput) {
+        rbcChildNameInput.addEventListener('input', function () {
+            if (rbcChildIdInput) rbcChildIdInput.value = '';
+            var term = this.value.trim();
+            if (term.length < 1) { hideRbcChildDropdown(); return; }
+            setTimeout(function () { searchRbcChildResidents(term); }, 250);
+        });
+    }
+
     function searchRbcChildResidents(term) {
-        var residentId = rbcIdInput ? rbcIdInput.value.trim() : '';
+        // Build query with exclude_resident_id if parent is selected
         var url = 'model/search_residents.php?search=' + encodeURIComponent(term);
-        if (residentId) {
-            url += '&exclude_resident_id=' + encodeURIComponent(residentId);
+        if (rbcSelectedParentId) {
+            url += '&exclude_resident_id=' + encodeURIComponent(rbcSelectedParentId);
         }
         fetch(url)
             .then(function (res) { return res.json(); })
@@ -1317,618 +2241,74 @@ document.addEventListener('DOMContentLoaded', function () {
             .catch(function () { hideRbcChildDropdown(); });
     }
 
-    function renderRbcDropdown(residents) {
-        if (!rbcDropdown) return;
-        if (residents.length === 0) { rbcDropdown.innerHTML = '<div class="resident-dropdown-empty">No resident found. <a href="model/create-resident.php">Click here to register.</a></div>'; rbcDropdown.style.display = 'block'; return; }
-        rbcDropdown.innerHTML = '';
-        residents.forEach(function (r) {
-            var item = document.createElement('div');
-            item.className = 'resident-dropdown-item';
-            item.innerHTML = '<span class="resident-dropdown-name">' + escapeHtml(r.full_name.trim()) + '</span><span class="resident-dropdown-id">' + escapeHtml(r.resident_id || '') + '</span>';
-            item.addEventListener('mousedown', function (e) { e.preventDefault(); selectRbcResident(r); });
-            rbcDropdown.appendChild(item);
-        });
-        rbcDropdown.style.display = 'block';
-    }
-
     function renderRbcChildDropdown(residents) {
         if (!rbcChildDropdown) return;
-        if (residents.length === 0) { rbcChildDropdown.innerHTML = '<div class="resident-dropdown-empty">No resident found. <a href="model/create-resident.php">Click here to register.</a></div>'; rbcChildDropdown.style.display = 'block'; return; }
+        if (residents.length === 0) { rbcChildDropdown.innerHTML = '<div class="resident-dropdown-empty">No resident found.</div>'; rbcChildDropdown.style.display = 'block'; return; }
         rbcChildDropdown.innerHTML = '';
         residents.forEach(function (r) {
             var item = document.createElement('div');
             item.className = 'resident-dropdown-item';
-            item.innerHTML = '<span class="resident-dropdown-name">' + escapeHtml(r.full_name.trim()) + '</span><span class="resident-dropdown-id">' + escapeHtml(r.resident_id || '') + '</span>';
+            item.innerHTML = `
+                <div class="resident-dropdown-info">
+                    <span class="resident-dropdown-id">${escapeHtml(r.resident_id || '')}</span>
+                    <span class="resident-dropdown-name">${escapeHtml(r.full_name.trim())}</span>
+                </div>
+            `;
             item.addEventListener('mousedown', function (e) { e.preventDefault(); selectRbcChildResident(r); });
             rbcChildDropdown.appendChild(item);
         });
         rbcChildDropdown.style.display = 'block';
     }
 
-    function selectRbcResident(resident) {
-        if (rbcNameInput) rbcNameInput.value = resident.full_name.trim();
-        if (rbcIdInput)   rbcIdInput.value   = resident.id;
-        hideRbcDropdown();
-        clearRbcError();
-    }
-
     function selectRbcChildResident(resident) {
         if (rbcChildNameInput) rbcChildNameInput.value = resident.full_name.trim();
-        if (rbcChildIdInput)   rbcChildIdInput.value   = resident.id;
+        if (rbcChildIdInput) rbcChildIdInput.value = resident.id;
         hideRbcChildDropdown();
-        clearRbcError();
-    }
-
-    function hideRbcDropdown() {
-        if (rbcDropdown) { rbcDropdown.style.display = 'none'; rbcDropdown.innerHTML = ''; }
     }
 
     function hideRbcChildDropdown() {
         if (rbcChildDropdown) { rbcChildDropdown.style.display = 'none'; rbcChildDropdown.innerHTML = ''; }
     }
 
-    function clearRbcError() {
-        if (rbcNameInput) rbcNameInput.classList.remove('is-invalid');
-        if (rbcChildNameInput) rbcChildNameInput.classList.remove('is-invalid');
-        var existing = document.querySelector('.rbc-error-msg');
-        if (existing) existing.remove();
-    }
-
-    function showRbcError(msg) {
-        clearRbcError();
-        if (!rbcNameInput && !rbcChildNameInput) return;
-        var err = document.createElement('div');
-        err.className = 'invalid-feedback rbc-error-msg';
-        err.textContent = msg;
-        if (rbcNameInput) {
-            rbcNameInput.classList.add('is-invalid');
-            rbcNameInput.closest('.resident-input-group').after(err);
-        } else if (rbcChildNameInput) {
-            rbcChildNameInput.classList.add('is-invalid');
-            rbcChildNameInput.closest('.resident-input-group').after(err);
-        }
-    }
-
     if (rbcPrintBtn) {
         rbcPrintBtn.addEventListener('click', function () {
-            var residentId = rbcIdInput      ? rbcIdInput.value.trim()      : '';
-            var childId    = rbcChildIdInput ? rbcChildIdInput.value.trim()  : '';
-            var date       = rbcDateInput    ? rbcDateInput.value.trim()    : '';
-            var purpose    = rbcPurposeInput ? rbcPurposeInput.value.trim() : '';
+            var residentId = rbcIdInput ? rbcIdInput.value.trim() : '';
+            var childId = rbcChildIdInput ? rbcChildIdInput.value.trim() : '';
+            var date = rbcDateInput ? rbcDateInput.value.trim() : '';
+            var purpose = rbcPurposeInput ? rbcPurposeInput.value.trim() : '';
 
-            if (!residentId) { showRbcError('Please select a parent/applicant from the list.'); if (rbcNameInput) rbcNameInput.focus(); return; }
-            if (!childId) { showRbcError('Please select a child from the list.'); if (rbcChildNameInput) rbcChildNameInput.focus(); return; }
-            if (!date) { if (rbcDateInput) { rbcDateInput.classList.add('is-invalid'); rbcDateInput.focus(); } return; }
-            else { if (rbcDateInput) rbcDateInput.classList.remove('is-invalid'); }
-
-            var params = new URLSearchParams({ resident_id: residentId, child_id: childId, date: date, purpose: purpose });
-            window.location.href = 'certifications/certificate-RBC.php?' + params.toString();
-        });
-    }
-
-    // ============================================
-    // Barangay Clearance Modal Logic
-    // ============================================
-    var brgyClearanceNameInput    = document.getElementById('brgyClearanceResidentName');
-    var brgyClearanceIdInput      = document.getElementById('brgyClearanceResidentId');
-    var brgyClearanceDropdown     = document.getElementById('brgyClearanceResidentDropdown');
-    var brgyClearanceResidentBtn  = document.getElementById('brgyClearanceResidentBtn');
-    var brgyClearanceDateInput    = document.getElementById('brgyClearanceDate');
-    var brgyClearancePurposeInput = document.getElementById('brgyClearancePurpose');
-    var brgyClearancePrintBtn     = document.getElementById('brgyClearancePrintBtn');
-    var brgyClearanceModalEl      = document.getElementById('brgyClearanceModal');
-
-    var brgyClearanceSearchTimeout = null;
-
-    if (brgyClearanceModalEl) {
-        brgyClearanceModalEl.addEventListener('show.bs.modal', function () {
-            if (brgyClearanceNameInput)    brgyClearanceNameInput.value    = '';
-            if (brgyClearanceIdInput)      brgyClearanceIdInput.value      = '';
-            if (brgyClearanceDropdown)     { brgyClearanceDropdown.innerHTML = ''; brgyClearanceDropdown.style.display = 'none'; }
-            if (brgyClearanceDateInput)    brgyClearanceDateInput.value    = getTodayDate();
-            if (brgyClearancePurposeInput) brgyClearancePurposeInput.value = '';
-            clearBrgyClearanceError();
-        });
-    }
-
-    if (brgyClearanceNameInput) {
-        brgyClearanceNameInput.addEventListener('input', function () {
-            if (brgyClearanceIdInput) brgyClearanceIdInput.value = '';
-            clearBrgyClearanceError();
-            var term = this.value.trim();
-            clearTimeout(brgyClearanceSearchTimeout);
-            if (term.length < 1) { hideBrgyClearanceDropdown(); return; }
-            brgyClearanceSearchTimeout = setTimeout(function () { searchBrgyClearanceResidents(term); }, 250);
-        });
-        brgyClearanceNameInput.addEventListener('keydown', function (e) { if (e.key === 'Escape') hideBrgyClearanceDropdown(); });
-    }
-
-    if (brgyClearanceResidentBtn) {
-        brgyClearanceResidentBtn.addEventListener('click', function (e) {
-            e.stopPropagation();
-            if (brgyClearanceNameInput) { brgyClearanceNameInput.value = ''; brgyClearanceNameInput.focus(); }
-            if (brgyClearanceIdInput) brgyClearanceIdInput.value = '';
-            hideBrgyClearanceDropdown();
-        });
-    }
-
-    document.addEventListener('click', function (e) {
-        if (brgyClearanceDropdown && !e.target.closest('#brgyClearanceModal .resident-search-wrap')) { hideBrgyClearanceDropdown(); }
-    });
-
-    function searchBrgyClearanceResidents(term) {
-        fetch('model/search_residents.php?search=' + encodeURIComponent(term))
-            .then(function (res) { return res.json(); })
-            .then(function (data) {
-                var results = data.residents || data.data;
-                if (data.success && results) { renderBrgyClearanceDropdown(results); }
-                else { hideBrgyClearanceDropdown(); }
-            })
-            .catch(function () { hideBrgyClearanceDropdown(); });
-    }
-
-    function renderBrgyClearanceDropdown(residents) {
-        if (!brgyClearanceDropdown) return;
-        if (residents.length === 0) { brgyClearanceDropdown.innerHTML = '<div class="resident-dropdown-empty">No resident found. <a href="model/create-resident.php">Click here to register.</a></div>'; brgyClearanceDropdown.style.display = 'block'; return; }
-        brgyClearanceDropdown.innerHTML = '';
-        residents.forEach(function (r) {
-            var item = document.createElement('div');
-            item.className = 'resident-dropdown-item';
-            item.innerHTML = '<span class="resident-dropdown-name">' + escapeHtml(r.full_name.trim()) + '</span><span class="resident-dropdown-id">' + escapeHtml(r.resident_id || '') + '</span>';
-            item.addEventListener('mousedown', function (e) { e.preventDefault(); selectBrgyClearanceResident(r); });
-            brgyClearanceDropdown.appendChild(item);
-        });
-        brgyClearanceDropdown.style.display = 'block';
-    }
-
-    function selectBrgyClearanceResident(resident) {
-        if (brgyClearanceNameInput) brgyClearanceNameInput.value = resident.full_name.trim();
-        if (brgyClearanceIdInput)   brgyClearanceIdInput.value   = resident.id;
-        hideBrgyClearanceDropdown();
-        clearBrgyClearanceError();
-    }
-
-    function hideBrgyClearanceDropdown() {
-        if (brgyClearanceDropdown) { brgyClearanceDropdown.style.display = 'none'; brgyClearanceDropdown.innerHTML = ''; }
-    }
-
-    function clearBrgyClearanceError() {
-        if (brgyClearanceNameInput) brgyClearanceNameInput.classList.remove('is-invalid');
-        var existing = document.querySelector('.brgyclearance-error-msg');
-        if (existing) existing.remove();
-    }
-
-    function showBrgyClearanceError(msg) {
-        clearBrgyClearanceError();
-        if (!brgyClearanceNameInput) return;
-        brgyClearanceNameInput.classList.add('is-invalid');
-        var err = document.createElement('div');
-        err.className = 'invalid-feedback brgyclearance-error-msg';
-        err.textContent = msg;
-        brgyClearanceNameInput.closest('.resident-input-group').after(err);
-    }
-
-    if (brgyClearancePrintBtn) {
-        brgyClearancePrintBtn.addEventListener('click', function () {
-            var residentId = brgyClearanceIdInput      ? brgyClearanceIdInput.value.trim()      : '';
-            var date       = brgyClearanceDateInput    ? brgyClearanceDateInput.value.trim()    : '';
-            var purpose    = brgyClearancePurposeInput ? brgyClearancePurposeInput.value.trim() : '';
-
-            if (!residentId) { showBrgyClearanceError('Please select a resident from the list.'); if (brgyClearanceNameInput) brgyClearanceNameInput.focus(); return; }
-            if (!date) { if (brgyClearanceDateInput) { brgyClearanceDateInput.classList.add('is-invalid'); brgyClearanceDateInput.focus(); } return; }
-            else { if (brgyClearanceDateInput) brgyClearanceDateInput.classList.remove('is-invalid'); }
-
-            var params = new URLSearchParams({ resident_id: residentId, date: date, purpose: purpose });
-            window.location.href = 'certifications/certificate-barangayclearance.php?' + params.toString();
-        });
-    }
-
-    // ============================================
-    // Barangay Business Clearance Modal Logic
-    // ============================================
-    var brgyBusinessClearanceNameInput    = document.getElementById('brgyBusinessClearanceResidentName');
-    var brgyBusinessClearanceIdInput      = document.getElementById('brgyBusinessClearanceResidentId');
-    var brgyBusinessClearanceDropdown     = document.getElementById('brgyBusinessClearanceResidentDropdown');
-    var brgyBusinessClearanceResidentBtn  = document.getElementById('brgyBusinessClearanceResidentBtn');
-    var brgyBusinessClearanceBusinessNameInput = document.getElementById('brgyBusinessClearanceBusinessName');
-    var brgyBusinessClearanceBusinessAddressInput = document.getElementById('brgyBusinessClearanceBusinessAddress');
-    var brgyBusinessClearanceNatureInput = document.getElementById('brgyBusinessClearanceNature');
-    var brgyBusinessClearanceDateInput    = document.getElementById('brgyBusinessClearanceDate');
-    var brgyBusinessClearancePrintBtn     = document.getElementById('brgyBusinessClearancePrintBtn');
-    var brgyBusinessClearanceModalEl      = document.getElementById('brgyBusinessClearanceModal');
-
-    var brgyBusinessClearanceSearchTimeout = null;
-
-    if (brgyBusinessClearanceModalEl) {
-        brgyBusinessClearanceModalEl.addEventListener('show.bs.modal', function () {
-            if (brgyBusinessClearanceNameInput)    brgyBusinessClearanceNameInput.value    = '';
-            if (brgyBusinessClearanceIdInput)      brgyBusinessClearanceIdInput.value      = '';
-            if (brgyBusinessClearanceDropdown)     { brgyBusinessClearanceDropdown.innerHTML = ''; brgyBusinessClearanceDropdown.style.display = 'none'; }
-            if (brgyBusinessClearanceBusinessNameInput) brgyBusinessClearanceBusinessNameInput.value = '';
-            if (brgyBusinessClearanceBusinessAddressInput) brgyBusinessClearanceBusinessAddressInput.value = '';
-            if (brgyBusinessClearanceNatureInput) brgyBusinessClearanceNatureInput.value = '';
-            if (brgyBusinessClearanceDateInput)    brgyBusinessClearanceDateInput.value    = getTodayDate();
-            clearBrgyBusinessClearanceError();
-        });
-    }
-
-    if (brgyBusinessClearanceNameInput) {
-        brgyBusinessClearanceNameInput.addEventListener('input', function () {
-            if (brgyBusinessClearanceIdInput) brgyBusinessClearanceIdInput.value = '';
-            clearBrgyBusinessClearanceError();
-            var term = this.value.trim();
-            clearTimeout(brgyBusinessClearanceSearchTimeout);
-            if (term.length < 1) { hideBrgyBusinessClearanceDropdown(); return; }
-            brgyBusinessClearanceSearchTimeout = setTimeout(function () { searchBrgyBusinessClearanceResidents(term); }, 250);
-        });
-        brgyBusinessClearanceNameInput.addEventListener('keydown', function (e) { if (e.key === 'Escape') hideBrgyBusinessClearanceDropdown(); });
-    }
-
-    if (brgyBusinessClearanceResidentBtn) {
-        brgyBusinessClearanceResidentBtn.addEventListener('click', function (e) {
-            e.stopPropagation();
-            if (brgyBusinessClearanceNameInput) { brgyBusinessClearanceNameInput.value = ''; brgyBusinessClearanceNameInput.focus(); }
-            if (brgyBusinessClearanceIdInput) brgyBusinessClearanceIdInput.value = '';
-            hideBrgyBusinessClearanceDropdown();
-        });
-    }
-
-    document.addEventListener('click', function (e) {
-        if (brgyBusinessClearanceDropdown && !e.target.closest('#brgyBusinessClearanceModal .resident-search-wrap')) { hideBrgyBusinessClearanceDropdown(); }
-    });
-
-    function searchBrgyBusinessClearanceResidents(term) {
-        fetch('model/search_residents.php?search=' + encodeURIComponent(term))
-            .then(function (res) { return res.json(); })
-            .then(function (data) {
-                var results = data.residents || data.data;
-                if (data.success && results) { renderBrgyBusinessClearanceDropdown(results); }
-                else { hideBrgyBusinessClearanceDropdown(); }
-            })
-            .catch(function () { hideBrgyBusinessClearanceDropdown(); });
-    }
-
-    function renderBrgyBusinessClearanceDropdown(residents) {
-        if (!brgyBusinessClearanceDropdown) return;
-        if (residents.length === 0) { brgyBusinessClearanceDropdown.innerHTML = '<div class="resident-dropdown-empty">No resident found. <a href="model/create-resident.php">Click here to register.</a></div>'; brgyBusinessClearanceDropdown.style.display = 'block'; return; }
-        brgyBusinessClearanceDropdown.innerHTML = '';
-        residents.forEach(function (r) {
-            var item = document.createElement('div');
-            item.className = 'resident-dropdown-item';
-            item.innerHTML = '<span class="resident-dropdown-name">' + escapeHtml(r.full_name.trim()) + '</span><span class="resident-dropdown-id">' + escapeHtml(r.resident_id || '') + '</span>';
-            item.addEventListener('mousedown', function (e) { e.preventDefault(); selectBrgyBusinessClearanceResident(r); });
-            brgyBusinessClearanceDropdown.appendChild(item);
-        });
-        brgyBusinessClearanceDropdown.style.display = 'block';
-    }
-
-    function selectBrgyBusinessClearanceResident(resident) {
-        if (brgyBusinessClearanceNameInput) brgyBusinessClearanceNameInput.value = resident.full_name.trim();
-        if (brgyBusinessClearanceIdInput)   brgyBusinessClearanceIdInput.value   = resident.id;
-        hideBrgyBusinessClearanceDropdown();
-        clearBrgyBusinessClearanceError();
-    }
-
-    function hideBrgyBusinessClearanceDropdown() {
-        if (brgyBusinessClearanceDropdown) { brgyBusinessClearanceDropdown.style.display = 'none'; brgyBusinessClearanceDropdown.innerHTML = ''; }
-    }
-
-    function clearBrgyBusinessClearanceError() {
-        if (brgyBusinessClearanceNameInput) brgyBusinessClearanceNameInput.classList.remove('is-invalid');
-        var existing = document.querySelector('.brgybusinessclearance-error-msg');
-        if (existing) existing.remove();
-    }
-
-    function showBrgyBusinessClearanceError(msg) {
-        clearBrgyBusinessClearanceError();
-        if (!brgyBusinessClearanceNameInput) return;
-        brgyBusinessClearanceNameInput.classList.add('is-invalid');
-        var err = document.createElement('div');
-        err.className = 'invalid-feedback brgybusinessclearance-error-msg';
-        err.textContent = msg;
-        brgyBusinessClearanceNameInput.closest('.resident-input-group').after(err);
-    }
-
-    if (brgyBusinessClearancePrintBtn) {
-        brgyBusinessClearancePrintBtn.addEventListener('click', function () {
-            var residentId = brgyBusinessClearanceIdInput      ? brgyBusinessClearanceIdInput.value.trim()      : '';
-            var businessName = brgyBusinessClearanceBusinessNameInput ? brgyBusinessClearanceBusinessNameInput.value.trim() : '';
-            var businessAddress = brgyBusinessClearanceBusinessAddressInput ? brgyBusinessClearanceBusinessAddressInput.value.trim() : '';
-            var nature = brgyBusinessClearanceNatureInput ? brgyBusinessClearanceNatureInput.value.trim() : '';
-            var date       = brgyBusinessClearanceDateInput    ? brgyBusinessClearanceDateInput.value.trim()    : '';
-
-            if (!residentId) { showBrgyBusinessClearanceError('Please select a resident from the list.'); if (brgyBusinessClearanceNameInput) brgyBusinessClearanceNameInput.focus(); return; }
-            if (!businessName) { 
-                if (brgyBusinessClearanceBusinessNameInput) { brgyBusinessClearanceBusinessNameInput.classList.add('is-invalid'); brgyBusinessClearanceBusinessNameInput.focus(); }
-                return;
-            }
-            if (!date) { if (brgyBusinessClearanceDateInput) { brgyBusinessClearanceDateInput.classList.add('is-invalid'); brgyBusinessClearanceDateInput.focus(); } return; }
-            
-            if (brgyBusinessClearanceBusinessNameInput) brgyBusinessClearanceBusinessNameInput.classList.remove('is-invalid');
-            if (brgyBusinessClearanceDateInput) brgyBusinessClearanceDateInput.classList.remove('is-invalid');
+            if (!residentId) { alert('Please select a parent/applicant from the list.'); return; }
+            if (!childId) { alert('Please select a child from the list.'); return; }
+            if (!date) { alert('Please select a date.'); return; }
 
             var params = new URLSearchParams({ 
                 resident_id: residentId, 
-                business_name: businessName,
-                business_address: businessAddress,
-                nature: nature,
-                date: date
+                child_id: childId,
+                date: date 
             });
-            window.location.href = 'certifications/certificate-brgybusinessclearance.php?' + params.toString();
-        });
-    }
-
-    // ============================================
-    // Business Permit Modal Logic
-    // ============================================
-    var businessPermitNameInput    = document.getElementById('businessPermitResidentName');
-    var businessPermitIdInput      = document.getElementById('businessPermitResidentId');
-    var businessPermitDropdown     = document.getElementById('businessPermitResidentDropdown');
-    var businessPermitResidentBtn  = document.getElementById('businessPermitResidentBtn');
-    var businessPermitBusinessNameInput = document.getElementById('businessPermitBusinessName');
-    var businessPermitBusinessAddressInput = document.getElementById('businessPermitBusinessAddress');
-    var businessPermitNatureInput = document.getElementById('businessPermitNature');
-    var businessPermitDateInput    = document.getElementById('businessPermitDate');
-    var businessPermitPrintBtn     = document.getElementById('businessPermitPrintBtn');
-    var businessPermitModalEl      = document.getElementById('businessPermitModal');
-
-    var businessPermitSearchTimeout = null;
-
-    if (businessPermitModalEl) {
-        businessPermitModalEl.addEventListener('show.bs.modal', function () {
-            if (businessPermitNameInput)    businessPermitNameInput.value    = '';
-            if (businessPermitIdInput)      businessPermitIdInput.value      = '';
-            if (businessPermitDropdown)     { businessPermitDropdown.innerHTML = ''; businessPermitDropdown.style.display = 'none'; }
-            if (businessPermitBusinessNameInput) businessPermitBusinessNameInput.value = '';
-            if (businessPermitBusinessAddressInput) businessPermitBusinessAddressInput.value = '';
-            if (businessPermitNatureInput) businessPermitNatureInput.value = '';
-            if (businessPermitDateInput)    businessPermitDateInput.value    = getTodayDate();
-            clearBusinessPermitError();
-        });
-    }
-
-    if (businessPermitNameInput) {
-        businessPermitNameInput.addEventListener('input', function () {
-            if (businessPermitIdInput) businessPermitIdInput.value = '';
-            clearBusinessPermitError();
-            var term = this.value.trim();
-            clearTimeout(businessPermitSearchTimeout);
-            if (term.length < 1) { hideBusinessPermitDropdown(); return; }
-            businessPermitSearchTimeout = setTimeout(function () { searchBusinessPermitResidents(term); }, 250);
-        });
-        businessPermitNameInput.addEventListener('keydown', function (e) { if (e.key === 'Escape') hideBusinessPermitDropdown(); });
-    }
-
-    if (businessPermitResidentBtn) {
-        businessPermitResidentBtn.addEventListener('click', function (e) {
-            e.stopPropagation();
-            if (businessPermitNameInput) { businessPermitNameInput.value = ''; businessPermitNameInput.focus(); }
-            if (businessPermitIdInput) businessPermitIdInput.value = '';
-            hideBusinessPermitDropdown();
-        });
-    }
-
-    document.addEventListener('click', function (e) {
-        if (businessPermitDropdown && !e.target.closest('#businessPermitModal .resident-search-wrap')) { hideBusinessPermitDropdown(); }
-    });
-
-    function searchBusinessPermitResidents(term) {
-        fetch('model/search_residents.php?search=' + encodeURIComponent(term))
-            .then(function (res) { return res.json(); })
-            .then(function (data) {
-                var results = data.residents || data.data;
-                if (data.success && results) { renderBusinessPermitDropdown(results); }
-                else { hideBusinessPermitDropdown(); }
-            })
-            .catch(function () { hideBusinessPermitDropdown(); });
-    }
-
-    function renderBusinessPermitDropdown(residents) {
-        if (!businessPermitDropdown) return;
-        if (residents.length === 0) { businessPermitDropdown.innerHTML = '<div class="resident-dropdown-empty">No resident found. <a href="model/create-resident.php">Click here to register.</a></div>'; businessPermitDropdown.style.display = 'block'; return; }
-        businessPermitDropdown.innerHTML = '';
-        residents.forEach(function (r) {
-            var item = document.createElement('div');
-            item.className = 'resident-dropdown-item';
-            item.innerHTML = '<span class="resident-dropdown-name">' + escapeHtml(r.full_name.trim()) + '</span><span class="resident-dropdown-id">' + escapeHtml(r.resident_id || '') + '</span>';
-            item.addEventListener('mousedown', function (e) { e.preventDefault(); selectBusinessPermitResident(r); });
-            businessPermitDropdown.appendChild(item);
-        });
-        businessPermitDropdown.style.display = 'block';
-    }
-
-    function selectBusinessPermitResident(resident) {
-        if (businessPermitNameInput) businessPermitNameInput.value = resident.full_name.trim();
-        if (businessPermitIdInput)   businessPermitIdInput.value   = resident.id;
-        hideBusinessPermitDropdown();
-        clearBusinessPermitError();
-    }
-
-    function hideBusinessPermitDropdown() {
-        if (businessPermitDropdown) { businessPermitDropdown.style.display = 'none'; businessPermitDropdown.innerHTML = ''; }
-    }
-
-    function clearBusinessPermitError() {
-        if (businessPermitNameInput) businessPermitNameInput.classList.remove('is-invalid');
-        var existing = document.querySelector('.businesspermit-error-msg');
-        if (existing) existing.remove();
-    }
-
-    function showBusinessPermitError(msg) {
-        clearBusinessPermitError();
-        if (!businessPermitNameInput) return;
-        businessPermitNameInput.classList.add('is-invalid');
-        var err = document.createElement('div');
-        err.className = 'invalid-feedback businesspermit-error-msg';
-        err.textContent = msg;
-        businessPermitNameInput.closest('.resident-input-group').after(err);
-    }
-
-    if (businessPermitPrintBtn) {
-        businessPermitPrintBtn.addEventListener('click', function () {
-            var residentId = businessPermitIdInput      ? businessPermitIdInput.value.trim()      : '';
-            var businessName = businessPermitBusinessNameInput ? businessPermitBusinessNameInput.value.trim() : '';
-            var businessAddress = businessPermitBusinessAddressInput ? businessPermitBusinessAddressInput.value.trim() : '';
-            var nature = businessPermitNatureInput ? businessPermitNatureInput.value.trim() : '';
-            var date       = businessPermitDateInput    ? businessPermitDateInput.value.trim()    : '';
-
-            if (!residentId) { showBusinessPermitError('Please select a resident from the list.'); if (businessPermitNameInput) businessPermitNameInput.focus(); return; }
-            if (!businessName) { 
-                if (businessPermitBusinessNameInput) { businessPermitBusinessNameInput.classList.add('is-invalid'); businessPermitBusinessNameInput.focus(); }
-                return;
-            }
-            if (!date) { if (businessPermitDateInput) { businessPermitDateInput.classList.add('is-invalid'); businessPermitDateInput.focus(); } return; }
-            
-            if (businessPermitBusinessNameInput) businessPermitBusinessNameInput.classList.remove('is-invalid');
-            if (businessPermitDateInput) businessPermitDateInput.classList.remove('is-invalid');
-
-            var params = new URLSearchParams({ 
-                resident_id: residentId, 
-                business_name: businessName,
-                business_address: businessAddress,
-                nature: nature,
-                date: date
+            logCertificateRequest(residentId, 'rbc', purpose || 'Birth Certificate Registration', function() {
+                window.location.href = 'certifications/certificate-RBC.php?' + params.toString();
             });
-            window.location.href = 'certifications/certificate-businesspermit.php?' + params.toString();
         });
     }
 
-    // ============================================
-    // Vessel Docking Modal Logic
-    // ============================================
-    var vesselDockingNameInput    = document.getElementById('vesselDockingResidentName');
-    var vesselDockingIdInput      = document.getElementById('vesselDockingResidentId');
-    var vesselDockingDropdown     = document.getElementById('vesselDockingResidentDropdown');
-    var vesselDockingResidentBtn  = document.getElementById('vesselDockingResidentBtn');
-    var vesselDockingVesselNameInput = document.getElementById('vesselDockingVesselName');
-    var vesselDockingFromDateInput = document.getElementById('vesselDockingFromDate');
-    var vesselDockingToDateInput = document.getElementById('vesselDockingToDate');
-    var vesselDockingDateInput    = document.getElementById('vesselDockingDate');
-    var vesselDockingPrintBtn     = document.getElementById('vesselDockingPrintBtn');
-    var vesselDockingModalEl      = document.getElementById('vesselDockingModal');
+    function logCertificateRequest(residentId, certType, purpose, callback) {
+        var formData = new FormData();
+        formData.append('resident_id', residentId);
+        formData.append('certificate_type', certType);
+        formData.append('purpose', purpose || '');
 
-    var vesselDockingSearchTimeout = null;
-
-    if (vesselDockingModalEl) {
-        vesselDockingModalEl.addEventListener('show.bs.modal', function () {
-            if (vesselDockingNameInput)    vesselDockingNameInput.value    = '';
-            if (vesselDockingIdInput)      vesselDockingIdInput.value      = '';
-            if (vesselDockingDropdown)     { vesselDockingDropdown.innerHTML = ''; vesselDockingDropdown.style.display = 'none'; }
-            if (vesselDockingVesselNameInput) vesselDockingVesselNameInput.value = '';
-            if (vesselDockingFromDateInput) vesselDockingFromDateInput.value = getTodayDate();
-            if (vesselDockingToDateInput) vesselDockingToDateInput.value = getTodayDate();
-            if (vesselDockingDateInput)    vesselDockingDateInput.value    = getTodayDate();
-            clearVesselDockingError();
-        });
-    }
-
-    if (vesselDockingNameInput) {
-        vesselDockingNameInput.addEventListener('input', function () {
-            if (vesselDockingIdInput) vesselDockingIdInput.value = '';
-            clearVesselDockingError();
-            var term = this.value.trim();
-            clearTimeout(vesselDockingSearchTimeout);
-            if (term.length < 1) { hideVesselDockingDropdown(); return; }
-            vesselDockingSearchTimeout = setTimeout(function () { searchVesselDockingResidents(term); }, 250);
-        });
-        vesselDockingNameInput.addEventListener('keydown', function (e) { if (e.key === 'Escape') hideVesselDockingDropdown(); });
-    }
-
-    if (vesselDockingResidentBtn) {
-        vesselDockingResidentBtn.addEventListener('click', function (e) {
-            e.stopPropagation();
-            if (vesselDockingNameInput) { vesselDockingNameInput.value = ''; vesselDockingNameInput.focus(); }
-            if (vesselDockingIdInput) vesselDockingIdInput.value = '';
-            hideVesselDockingDropdown();
-        });
-    }
-
-    document.addEventListener('click', function (e) {
-        if (vesselDockingDropdown && !e.target.closest('#vesselDockingModal .resident-search-wrap')) { hideVesselDockingDropdown(); }
-    });
-
-    function searchVesselDockingResidents(term) {
-        fetch('model/search_residents.php?search=' + encodeURIComponent(term))
-            .then(function (res) { return res.json(); })
-            .then(function (data) {
-                var results = data.residents || data.data;
-                if (data.success && results) { renderVesselDockingDropdown(results); }
-                else { hideVesselDockingDropdown(); }
-            })
-            .catch(function () { hideVesselDockingDropdown(); });
-    }
-
-    function renderVesselDockingDropdown(residents) {
-        if (!vesselDockingDropdown) return;
-        if (residents.length === 0) { vesselDockingDropdown.innerHTML = '<div class="resident-dropdown-empty">No resident found. <a href="model/create-resident.php">Click here to register.</a></div>'; vesselDockingDropdown.style.display = 'block'; return; }
-        vesselDockingDropdown.innerHTML = '';
-        residents.forEach(function (r) {
-            var item = document.createElement('div');
-            item.className = 'resident-dropdown-item';
-            item.innerHTML = '<span class="resident-dropdown-name">' + escapeHtml(r.full_name.trim()) + '</span><span class="resident-dropdown-id">' + escapeHtml(r.resident_id || '') + '</span>';
-            item.addEventListener('mousedown', function (e) { e.preventDefault(); selectVesselDockingResident(r); });
-            vesselDockingDropdown.appendChild(item);
-        });
-        vesselDockingDropdown.style.display = 'block';
-    }
-
-    function selectVesselDockingResident(resident) {
-        if (vesselDockingNameInput) vesselDockingNameInput.value = resident.full_name.trim();
-        if (vesselDockingIdInput)   vesselDockingIdInput.value   = resident.id;
-        hideVesselDockingDropdown();
-        clearVesselDockingError();
-    }
-
-    function hideVesselDockingDropdown() {
-        if (vesselDockingDropdown) { vesselDockingDropdown.style.display = 'none'; vesselDockingDropdown.innerHTML = ''; }
-    }
-
-    function clearVesselDockingError() {
-        if (vesselDockingNameInput) vesselDockingNameInput.classList.remove('is-invalid');
-        var existing = document.querySelector('.vesseldocking-error-msg');
-        if (existing) existing.remove();
-    }
-
-    function showVesselDockingError(msg) {
-        clearVesselDockingError();
-        if (!vesselDockingNameInput) return;
-        vesselDockingNameInput.classList.add('is-invalid');
-        var err = document.createElement('div');
-        err.className = 'invalid-feedback vesseldocking-error-msg';
-        err.textContent = msg;
-        vesselDockingNameInput.closest('.resident-input-group').after(err);
-    }
-
-    if (vesselDockingPrintBtn) {
-        vesselDockingPrintBtn.addEventListener('click', function () {
-            var residentId = vesselDockingIdInput      ? vesselDockingIdInput.value.trim()      : '';
-            var vesselName = vesselDockingVesselNameInput ? vesselDockingVesselNameInput.value.trim() : '';
-            var fromDate   = vesselDockingFromDateInput ? vesselDockingFromDateInput.value.trim() : '';
-            var toDate     = vesselDockingToDateInput   ? vesselDockingToDateInput.value.trim()   : '';
-            var date       = vesselDockingDateInput    ? vesselDockingDateInput.value.trim()    : '';
-
-            if (!residentId) { showVesselDockingError('Please select a resident from the list.'); if (vesselDockingNameInput) vesselDockingNameInput.focus(); return; }
-            if (!vesselName) { 
-                if (vesselDockingVesselNameInput) { vesselDockingVesselNameInput.classList.add('is-invalid'); vesselDockingVesselNameInput.focus(); }
-                return;
-            }
-            if (!fromDate) { if (vesselDockingFromDateInput) { vesselDockingFromDateInput.classList.add('is-invalid'); vesselDockingFromDateInput.focus(); } return; }
-            if (!toDate) { if (vesselDockingToDateInput) { vesselDockingToDateInput.classList.add('is-invalid'); vesselDockingToDateInput.focus(); } return; }
-            if (!date) { if (vesselDockingDateInput) { vesselDockingDateInput.classList.add('is-invalid'); vesselDockingDateInput.focus(); } return; }
-            
-            if (vesselDockingVesselNameInput) vesselDockingVesselNameInput.classList.remove('is-invalid');
-            if (vesselDockingFromDateInput) vesselDockingFromDateInput.classList.remove('is-invalid');
-            if (vesselDockingToDateInput) vesselDockingToDateInput.classList.remove('is-invalid');
-            if (vesselDockingDateInput) vesselDockingDateInput.classList.remove('is-invalid');
-
-            var params = new URLSearchParams({ 
-                resident_id: residentId, 
-                vesselname: vesselName,
-                fromdate: fromDate,
-                todate: toDate,
-                date: date
-            });
-            window.location.href = 'certifications/certificate-vesseldocking.php?' + params.toString();
+        fetch('model/save_certificate_log.php', {
+            method: 'POST',
+            body: formData
+        })
+        .then(function(res) { return res.json(); })
+        .then(function(data) {
+            if (callback) callback();
+        })
+        .catch(function(err) {
+            console.error('Error logging request:', err);
+            if (callback) callback();
         });
     }
 
@@ -1949,5 +2329,5 @@ document.addEventListener('DOMContentLoaded', function () {
             to   { transform: translateX(100%); opacity: 0; }
         }
     `;
-    document.head.appendChild(style);
+document.head.appendChild(style);
 })();

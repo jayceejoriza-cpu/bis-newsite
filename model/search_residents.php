@@ -11,11 +11,60 @@ header('Content-Type: application/json');
 // Get search term from request
 $searchTerm = isset($_GET['search']) ? trim($_GET['search']) : '';
 
+// Get certificate type parameter (for limit checking)
+$certificateType = isset($_GET['certificate_type']) ? trim($_GET['certificate_type']) : '';
+
+// Map JavaScript certificate types to database certificate names
+$certificateTypeMap = [
+    'indigency' => 'Certificate of Indigency',
+    'residency' => 'Certificate of Residency',
+    'fishing' => 'Barangay Fishing Clearance',
+    'gmrc' => 'Certificate of Good Moral Character',
+    'lowincome' => 'Certificate of Low-Income',
+    'soloparent' => 'Certificate of Solo Parent',
+    'rbc' => 'Registration of Birth Certificate',
+    'brgyclearance' => 'Barangay Clearance',
+    'brgybusinessclearance' => 'Barangay Business Clearance',
+    'businesspermit' => 'Business Permit',
+    'vesseldocking' => 'Certificate for Vessel Docking',
+    'ftjobseeker' => 'Certificate of Job Seeker Assistance',
+    'oath' => 'Certificate of Oath of Undertaking'
+];
+
+// Get the actual certificate name for database lookup
+$dbCertificateName = isset($certificateTypeMap[$certificateType]) ? $certificateTypeMap[$certificateType] : $certificateType;
+
 // Get optional parameter to filter available residents for households
 $filterHouseholds = isset($_GET['filter_households']) ? $_GET['filter_households'] === 'true' : false;
 
 // Get optional parameter to exclude a specific resident ID (for RBC child search)
 $excludeResidentId = isset($_GET['exclude_resident_id']) ? intval($_GET['exclude_resident_id']) : 0;
+
+// Define certificate types that have 1-time only limit
+$oneTimeCertificates = [
+    'certificate-ft-jobseeker-assistance.php',
+    'certificate-oathofundertaking.php',
+    'First Time Jobseeker',
+    'Oath of Undertaking'
+];
+
+// Determine if this is a 1-time only certificate
+$isOneTime = false;
+if (!empty($certificateType)) {
+    foreach ($oneTimeCertificates as $oneTimeCert) {
+        if (stripos($certificateType, $oneTimeCert) !== false) {
+            $isOneTime = true;
+            break;
+        }
+    }
+}
+
+// Define daily limit for regular certificates
+$dailyLimit = 3;
+$maxLimit = $isOneTime ? 1 : $dailyLimit;
+
+// Get today's date for daily limit check
+$today = date('Y-m-d');
 
 try {
     // Prepare SQL query to search residents - ONLY search by name and resident_id
@@ -73,14 +122,83 @@ try {
     $result = $stmt->get_result();
     $residents = $result->fetch_all(MYSQLI_ASSOC);
     
+    // If certificate type is provided, get certificate usage for each resident
+    $residentLimits = [];
+    if (!empty($certificateType) && count($residents) > 0) {
+        $residentIds = array_column($residents, 'id');
+        
+        if ($isOneTime) {
+            // For 1-time certificates, check total lifetime count
+            $placeholders = str_repeat('?,', count($residentIds) - 1) . '?';
+            $searchTerm1 = '%First Time Jobseeker%';
+            $searchTerm2 = '%Jobseeker%';
+            $searchTerm3 = '%Oath%';
+            
+            $limitSql = "SELECT resident_id, COUNT(*) as used 
+                        FROM certificate_requests 
+                        WHERE resident_id IN ($placeholders)
+                        AND (certificate_name LIKE ? OR certificate_name LIKE ? OR certificate_name LIKE ?)
+                        GROUP BY resident_id";
+            
+            $limitStmt = $conn->prepare($limitSql);
+            $params = array_merge($residentIds, [$searchTerm1, $searchTerm2, $searchTerm3]);
+            $limitStmt->bind_param(str_repeat('i', count($residentIds)) . 'sss', ...$params);
+        } else {
+            // For regular certificates, check today's count
+            $placeholders = str_repeat('?,', count($residentIds) - 1) . '?';
+            
+            $limitSql = "SELECT resident_id, COUNT(*) as used 
+                        FROM certificate_requests 
+                        WHERE resident_id IN ($placeholders)
+                        AND certificate_name = ?
+                        AND DATE(date_requested) = ?
+                        GROUP BY resident_id";
+            
+            $limitStmt = $conn->prepare($limitSql);
+            $params = array_merge($residentIds, [$dbCertificateName, $today]);
+            $limitStmt->bind_param(str_repeat('i', count($residentIds)) . 'ss', ...$params);
+        }
+        
+        $limitStmt->execute();
+        $limitResult = $limitStmt->get_result();
+        
+        while ($row = $limitResult->fetch_assoc()) {
+            // Store with certificate type as key for JavaScript access
+            $residentLimits[$row['resident_id']] = [
+                'used' => intval($row['used']),
+                'remaining' => max(0, $maxLimit - intval($row['used']))
+            ];
+        }
+        $limitStmt->close();
+    }
+    
+    // Build residents array with limits included (for each resident)
+    $residentsWithLimits = [];
+    foreach ($residents as $resident) {
+        $resId = $resident['id'];
+        $limitInfo = isset($residentLimits[$resId]) ? $residentLimits[$resId] : ['used' => 0, 'remaining' => $maxLimit];
+        
+        // Add resident_limits object keyed by certificate type (for JavaScript)
+        $resident['resident_limits'] = [
+            $certificateType => $limitInfo
+        ];
+        $residentsWithLimits[] = $resident;
+    }
+    
     // Return success response with both 'data' and 'residents' for compatibility
+    // Use the residents with limits included
+    $finalResidents = !empty($certificateType) ? $residentsWithLimits : $residents;
     echo json_encode([
         'success' => true,
-        'data' => $residents,
-        'residents' => $residents,
-        'count' => count($residents),
+        'data' => $finalResidents,
+        'residents' => $finalResidents,
+        'count' => count($finalResidents),
         'filtered' => $filterHouseholds,
-        'excluded' => $excludeResidentId
+        'excluded' => $excludeResidentId,
+        'certificate_type' => $certificateType,
+        'is_one_time' => $isOneTime,
+        'max_limit' => $maxLimit,
+        'resident_limits' => $residentLimits
     ]);
     
     $stmt->close();
