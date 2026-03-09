@@ -340,6 +340,48 @@ $pageTitle = 'Edit Resident';
                                     <input type="number" id="numberOfChildren" name="numberOfChildren" class="form-control" min="0" value="0">
                                 </div>
                             </div>
+
+                            <!-- Guardian Section (Hidden by default) -->
+                            <div id="guardianSection" class="form-card" style="display: none; border: 1px solid var(--border-color, #e2e8f0); border-radius: 10px; padding: 20px; margin-top: 20px; background-color: var(--bg-secondary, #f8fafc);">
+                                <h5 style="margin: 0 0 15px 0; color: var(--primary-color);"><i class="fas fa-user-shield"></i> Guardian Information (for Minors)</h5>
+                                <hr style="margin: 0 0 20px 0;">
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="form-group">
+                                            <label for="guardianName">Guardian's Full Name <span class="required">*</span></label>
+                                            <input type="text" id="guardianName" name="guardianName" class="form-control">
+                                            <small class="form-hint">Required for minors</small>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-group">
+                                            <label for="guardianRelationship">Relationship to Guardian <span class="required">*</span></label>
+                                            <select id="guardianRelationship" name="guardianRelationship" class="form-control">
+                                                <option value="">Select Relationship</option>
+                                                <option value="Father">Father</option>
+                                                <option value="Mother">Mother</option>
+                                                <option value="Grandparent">Grandparent</option>
+                                                <option value="Legal Guardian">Legal Guardian</option>
+                                                <option value="Other">Other</option>
+                                            </select>
+                                            <small class="form-hint">Required for minors</small>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-group">
+                                            <label for="guardianContact">Guardian's Mobile Number <span class="required">*</span></label>
+                                            <div class="phone-input-group">
+                                                <span class="phone-prefix">
+                                                    <img src="../assets/image/contactph.png" alt="PH" class="flag-icon">
+                                                    +63
+                                                </span>
+                                                <input type="tel" id="guardianContact" name="guardianContact" class="form-control phone-input" placeholder="XXX XXX XXXX" maxlength="12">
+                                            </div>
+                                            <small class="form-hint">Required for minors</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
 

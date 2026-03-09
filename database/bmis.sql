@@ -92,6 +92,7 @@ CREATE TABLE `barangay_info` (
   `dashboard_text` text DEFAULT NULL,
   `municipal_logo` varchar(255) DEFAULT NULL COMMENT 'Path to municipal/city logo',
   `barangay_logo` varchar(255) DEFAULT NULL COMMENT 'Path to barangay logo',
+  `official_emblem` varchar(255) DEFAULT NULL COMMENT 'Path to official emblem',
   `dashboard_image` varchar(255) DEFAULT NULL COMMENT 'Path to dashboard background image',
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),

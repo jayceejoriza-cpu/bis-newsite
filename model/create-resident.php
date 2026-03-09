@@ -416,6 +416,19 @@ if (isset($conn)) {
                                             <small class="form-hint">Required for minors</small>
                                         </div>
                                     </div>
+                                    <div class="col-md-4">
+                                        <div class="form-group">
+                                            <label for="guardianContact">Guardian's Mobile Number <span class="required">*</span></label>
+                                            <div class="phone-input-group">
+                                                <span class="phone-prefix">
+                                                    <img src="../assets/image/contactph.png" alt="PH" class="flag-icon">
+                                                    +63
+                                                </span>
+                                                <input type="tel" id="guardianContact" name="guardianContact" class="form-control phone-input" placeholder="XXX XXX XXXX" maxlength="12">
+                                            </div>
+                                            <small class="form-hint">Required for minors</small>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -558,7 +571,7 @@ if (isset($conn)) {
                     <div class="form-step" data-step="5">
                         <div class="form-content">
                             <div class="row">
-                                <div class="col-md-4">
+                                <div id="educationContainer" class="col-md-4">
                                     <div class="form-group">
                                         <label for="educationalAttainment">Educational Attainment</label>
                                         <select id="educationalAttainment" name="educationalAttainment" class="form-control">
@@ -575,7 +588,7 @@ if (isset($conn)) {
                                         </select>
                                     </div>
                                 </div>
-                                <div class="col-md-4">
+                                <div id="employmentContainer" class="col-md-4">
                                     <div class="form-group">
                                         <label for="employmentStatus">Employment Status</label>
                                         <select id="employmentStatus" name="employmentStatus" class="form-control">
@@ -588,13 +601,13 @@ if (isset($conn)) {
                                         </select>
                                     </div>
                                 </div>
-                                <div class="col-md-4 adult-only">
+                                <div id="occupationContainer" class="col-md-4">
                                     <div class="form-group">
                                         <label for="occupation">Occupation</label>
                                         <input type="text" id="occupation" name="occupation" class="form-control">
                                     </div>
                                 </div>
-                                <div class="col-md-4 adult-only">
+                                <div id="incomeContainer" class="col-md-4">
                                     <div class="form-group">
                                         <label for="monthlyIncome">Monthly Income</label>
                                         <select id="monthlyIncome" name="monthlyIncome" class="form-control">
@@ -635,7 +648,7 @@ if (isset($conn)) {
                                         <input type="text" id="fourpsId" name="fourpsId" class="form-control" placeholder="XX-YYYY-ZZZZ" maxlength="12">
                                     </div>
                                 </div>
-                                <div class="col-md-4 adult-only">
+                                <div id="voterStatusContainer" class="col-md-4">
                                     <div class="form-group">
                                         <label for="voterStatus">Registered Voter</label>
                                         <select id="voterStatus" name="voterStatus" class="form-control">

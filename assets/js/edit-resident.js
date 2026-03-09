@@ -7,6 +7,16 @@ let currentStep = 1;
 const totalSteps = 6;
 let residentData = null;
 
+// New DOM elements for Guardian Section
+const guardianSection = document.getElementById('guardianSection');
+const guardianNameInput = document.getElementById('guardianName');
+const guardianRelationshipSelect = document.getElementById('guardianRelationship');
+const guardianContactInput = document.getElementById('guardianContact');
+const mobileNumberLabel = document.querySelector('label[for="mobileNumber"]');
+const mobileNumberInput = document.getElementById('mobileNumber');
+
+let isMinor = false;
+
 // Store selected household data for review modal
 let selectedHouseholdData = null;
 
@@ -118,6 +128,11 @@ function populateForm(data) {
     setVal('fatherName', data.father_name);
     setVal('motherName', data.mother_name);
     setVal('numberOfChildren', data.number_of_children || 0);
+    
+    // Guardian Information
+    setVal('guardianName', data.guardian_name);
+    setVal('guardianRelationship', data.guardian_relationship);
+    setVal('guardianContact', data.guardian_contact);
 
     // Step 5: Education & Employment
     setVal('educationalAttainment', data.educational_attainment);
@@ -271,6 +286,34 @@ function updateAgeAndHealthGroup() {
     if (ageHealthGroupSelect) {
         ageHealthGroupSelect.value = healthGroup;
     }
+
+    // Check: Is Age < 18? YES -> Show Guardian Section
+    isMinor = (age < 18);
+    if (isMinor) {
+        if (guardianSection) guardianSection.style.display = 'block';
+        if (guardianNameInput) guardianNameInput.setAttribute('required', 'required');
+        if (guardianRelationshipSelect) guardianRelationshipSelect.setAttribute('required', 'required');
+        if (guardianContactInput) guardianContactInput.setAttribute('required', 'required');
+
+        // Update Mobile Number label for resident
+        if (mobileNumberLabel) mobileNumberLabel.innerHTML = 'Mobile Number';
+        if (mobileNumberInput) mobileNumberInput.removeAttribute('required');
+    } else {
+        if (guardianSection) guardianSection.style.display = 'none';
+        if (guardianNameInput) guardianNameInput.removeAttribute('required');
+        if (guardianRelationshipSelect) guardianRelationshipSelect.removeAttribute('required');
+        if (guardianContactInput) guardianContactInput.removeAttribute('required');
+
+        if (mobileNumberLabel) mobileNumberLabel.innerHTML = 'Mobile Number <span class="required">*</span>';
+        if (mobileNumberInput) mobileNumberInput.setAttribute('required', 'required');
+        
+        // Enable fields that might have been disabled for minors
+        const civilStatusSelect = document.getElementById('civilStatus');
+        if (civilStatusSelect) {
+            civilStatusSelect.removeAttribute('disabled');
+            civilStatusSelect.setAttribute('required', 'required');
+        }
+    }
 }
 
 // ============================================
@@ -356,6 +399,23 @@ function validateStep(step) {
             if (hint) hint.classList.remove('show-error');
         }
     });
+
+    // Specific validation for minors in Step 3 (Family Information)
+    if (step === 3 && isMinor) {
+        if (guardianNameInput && guardianNameInput.hasAttribute('required') && !guardianNameInput.value.trim()) {
+            showNotification('Guardian\'s Full Name is required for minors.', 'error');
+            guardianNameInput.focus();
+            isValid = false;
+        } else if (guardianRelationshipSelect && guardianRelationshipSelect.hasAttribute('required') && !guardianRelationshipSelect.value) {
+            showNotification('Guardian\'s Relationship is required for minors.', 'error');
+            guardianRelationshipSelect.focus();
+            isValid = false;
+        } else if (guardianContactInput && guardianContactInput.hasAttribute('required') && !guardianContactInput.value.trim()) {
+            showNotification('Guardian\'s Contact Number is required for minors.', 'error');
+            guardianContactInput.focus();
+            isValid = false;
+        }
+    }
 
     if (!isValid) {
         showNotification('Please fill in all required fields', 'error');
@@ -925,6 +985,7 @@ function applyPhoneNumberFormatting(input) {
 
 function initializePhoneNumberFormatting() {
     applyPhoneNumberFormatting(document.getElementById('mobileNumber'));
+    applyPhoneNumberFormatting(document.getElementById('guardianContact'));
 }
 
 // ============================================
@@ -1100,11 +1161,23 @@ function populateReviewModal() {
 
     // 3. Family Information
     let familyHTML = '<div class="review-fields-grid">';
-    familyHTML += createField('Civil Status', getValue('civilStatus'));
-    familyHTML += createField('Spouse Name', getValue('spouseName'));
+    if (!isMinor) {
+        familyHTML += createField('Civil Status', getValue('civilStatus'));
+        familyHTML += createField('Spouse Name', getValue('spouseName'));
+    }
     familyHTML += createField("Father's Name", getValue('fatherName'));
     familyHTML += createField("Mother's Maiden Name", getValue('motherName'));
     familyHTML += createField('Number of Children', getValue('numberOfChildren'));
+    familyHTML += '</div>';
+
+    // Add Guardian Information if minor
+    if (isMinor) {
+        familyHTML += '<h5 style="margin: 20px 0 15px 0; color: var(--primary-color);"><i class="fas fa-user-shield"></i> Guardian Information</h5>';
+        familyHTML += '<div class="review-fields-grid">';
+        familyHTML += createField('Guardian\'s Full Name', getValue('guardianName'));
+        familyHTML += createField('Relationship to Guardian', getValue('guardianRelationship'));
+        familyHTML += createField('Guardian\'s Mobile Number', getValue('guardianContact'));
+    }
     familyHTML += '</div>';
     document.getElementById('reviewFamilyInfo').innerHTML = familyHTML;
 

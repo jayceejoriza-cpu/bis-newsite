@@ -35,6 +35,7 @@ if (!$barangay_info) {
         'dashboard_text' => '',
         'municipal_logo' => null,
         'barangay_logo' => null,
+        'official_emblem' => null,
         'dashboard_image' => null
     ];
 }
@@ -542,6 +543,33 @@ if (!$barangay_info) {
                                         <span>Choose File</span>
                                     </label>
                                     <span class="file-name" id="barangay_logoName">No file chosen</span>
+                                </div>
+                            </div>
+                            
+                            <!-- Official Emblem -->
+                            <div class="logo-upload-box">
+                                <label class="form-label">Official Emblem</label>
+                                <div class="logo-preview-container" id="officialEmblemPreview">
+                                    <?php if (!empty($barangay_info['official_emblem']) && file_exists($barangay_info['official_emblem'])): ?>
+                                        <img src="<?php echo htmlspecialchars($barangay_info['official_emblem']); ?>?v=<?php echo time(); ?>" alt="Official Emblem" class="logo-preview">
+                                    <?php else: ?>
+                                        <i class="fas fa-medal logo-placeholder"></i>
+                                    <?php endif; ?>
+                                </div>
+                                <div class="file-input-wrapper">
+                                    <input 
+                                        type="file" 
+                                        id="official_emblem" 
+                                        name="official_emblem" 
+                                        class="file-input" 
+                                        accept="image/*"
+                                        onchange="previewImage(this, 'officialEmblemPreview')"
+                                    >
+                                    <label for="official_emblem" class="file-input-label">
+                                        <i class="fas fa-upload"></i>
+                                        <span>Choose File</span>
+                                    </label>
+                                    <span class="file-name" id="official_emblemName">No file chosen</span>
                                 </div>
                             </div>
                         </div>
