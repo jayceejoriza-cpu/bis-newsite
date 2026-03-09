@@ -46,7 +46,7 @@ try {
     }
     
     // Get current barangay info for existing file paths
-    $stmt = $conn->prepare("SELECT municipal_logo, barangay_logo, dashboard_image FROM barangay_info WHERE id = 1");
+    $stmt = $conn->prepare("SELECT municipal_logo, barangay_logo, official_emblem, dashboard_image FROM barangay_info WHERE id = 1");
     $stmt->execute();
     $result = $stmt->get_result();
     $current_info = $result->fetch_assoc();
@@ -54,6 +54,7 @@ try {
     
     $municipal_logo_path = $current_info['municipal_logo'] ?? null;
     $barangay_logo_path = $current_info['barangay_logo'] ?? null;
+    $official_emblem_path = $current_info['official_emblem'] ?? null;
     $dashboard_image_path = $current_info['dashboard_image'] ?? null;
     
     // Handle Municipal Logo Upload
@@ -118,6 +119,37 @@ try {
         }
     }
     
+    // Handle Official Emblem Upload
+    if (isset($_FILES['official_emblem']) && $_FILES['official_emblem']['error'] === UPLOAD_ERR_OK) {
+        $file = $_FILES['official_emblem'];
+        $allowed_types = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+        
+        if (!in_array($file['type'], $allowed_types)) {
+            echo json_encode(['success' => false, 'message' => 'Official emblem must be an image file (JPEG, PNG, GIF, or WebP)']);
+            exit();
+        }
+        
+        if ($file['size'] > 5 * 1024 * 1024) { // 5MB limit
+            echo json_encode(['success' => false, 'message' => 'Official emblem file size must not exceed 5MB']);
+            exit();
+        }
+        
+        // Delete old file if exists
+        if ($official_emblem_path && file_exists($official_emblem_path)) {
+            unlink($official_emblem_path);
+        }
+        
+        // Generate unique filename
+        $extension = pathinfo($file['name'], PATHINFO_EXTENSION);
+        $filename = 'official_emblem_' . time() . '.' . $extension;
+        $official_emblem_path = 'assets/uploads/barangay/logos/' . $filename; // DB path
+        
+        if (!move_uploaded_file($file['tmp_name'], $logos_dir . '/' . $filename)) {
+            echo json_encode(['success' => false, 'message' => 'Failed to upload official emblem']);
+            exit();
+        }
+    }
+    
     // Handle Dashboard Image Upload
     if (isset($_FILES['dashboard_image']) && $_FILES['dashboard_image']['error'] === UPLOAD_ERR_OK) {
         $file = $_FILES['dashboard_image'];
@@ -153,8 +185,8 @@ try {
     $stmt = $conn->prepare("
         INSERT INTO barangay_info 
         (id, province_name, town_name, barangay_name, contact_number, dashboard_text, 
-         municipal_logo, barangay_logo, dashboard_image, updated_by) 
-        VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+         municipal_logo, barangay_logo, official_emblem, dashboard_image, updated_by) 
+        VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ON DUPLICATE KEY UPDATE 
         province_name = VALUES(province_name),
         town_name = VALUES(town_name),
@@ -163,6 +195,7 @@ try {
         dashboard_text = VALUES(dashboard_text),
         municipal_logo = VALUES(municipal_logo),
         barangay_logo = VALUES(barangay_logo),
+        official_emblem = VALUES(official_emblem),
         dashboard_image = VALUES(dashboard_image),
         updated_by = VALUES(updated_by),
         updated_at = CURRENT_TIMESTAMP
@@ -170,7 +203,7 @@ try {
     
     $user_id = $_SESSION['user_id'];
     $stmt->bind_param(
-        "ssssssssi",
+        "sssssssssi",
         $province_name,
         $town_name,
         $barangay_name,
@@ -178,6 +211,7 @@ try {
         $dashboard_text,
         $municipal_logo_path,
         $barangay_logo_path,
+        $official_emblem_path,
         $dashboard_image_path,
         $user_id
     );
