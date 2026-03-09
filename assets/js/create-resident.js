@@ -4,14 +4,17 @@
 
 let currentStep = 1;
 const totalSteps = 6;
+let currentAge = null;
 
 // New DOM elements for Guardian Section
 const guardianSection = document.getElementById('guardianSection');
 const guardianNameInput = document.getElementById('guardianName');
 const guardianRelationshipSelect = document.getElementById('guardianRelationship');
+const guardianContactInput = document.getElementById('guardianContact');
 
 // Reference to the main mobile number label
 const mobileNumberLabel = document.querySelector('label[for="mobileNumber"]');
+const mobileNumberInput = document.getElementById('mobileNumber');
 const minorConsentNote = document.getElementById('minorConsentNote');
 
 // New DOM elements for adult-only fields
@@ -26,6 +29,12 @@ const educationalAttainmentSelect = document.getElementById('educationalAttainme
 const philhealthIdInput = document.getElementById('philhealthId');
 const membershipTypeSelect = document.getElementById('membershipType');
 const philhealthCategorySelect = document.getElementById('philhealthCategory');
+
+// New DOM elements for Age Milestones
+const educationContainer = document.getElementById('educationContainer');
+const voterStatusContainer = document.getElementById('voterStatusContainer');
+const employmentContainer = document.getElementById('employmentContainer');
+const occupationContainer = document.getElementById('occupationContainer');
 
 // Global flag to track if the resident is a minor
 let isMinor = false;
@@ -118,9 +127,9 @@ function initializeForm() {
     // Auto-calculate age from date of birth
     const dobInput = document.getElementById('dateOfBirth');
     if (dobInput) {
-        dobInput.addEventListener('change', calculateAge);
-        // Call calculateAge once on load to set initial state
-        calculateAge();
+        dobInput.addEventListener('change', updateMinorStatus);
+        // Call updateMinorStatus once on load to set initial state
+        updateMinorStatus();
     }
     
     // Civil status change handler
@@ -194,11 +203,6 @@ function nextStep() {
             currentStepElement.classList.add('completed');
         }
         
-        // Skip step 5 (Education & Employment) for minors when moving from step 4
-        if (currentStep === 4 && isMinor) {
-            currentStep++; // This increments to 5, the next line will make it 6
-        }
-
         currentStep++;
         updateStep();
         saveCurrentStep(); // Save step to localStorage
@@ -208,14 +212,7 @@ function nextStep() {
 function prevStep() {
     if (currentStep > 1) {
         currentStep--;
-        // If we are on step 6 (Additional Info) and it's a minor, skip back to step 4
-        if (currentStep === 6 && isMinor) {
-            currentStep = 4;
-        } else {
-            currentStep--;
-        }
         updateStep();
-        saveCurrentStep(); // Save step to localStorage
         saveCurrentStep();
     }
 }
@@ -342,6 +339,10 @@ function validateStep(step) {
             showNotification('Guardian\'s Relationship is required for minors.', 'error');
             guardianRelationshipSelect.focus();
             isValid = false;
+        } else if (guardianContactInput && guardianContactInput.hasAttribute('required') && !guardianContactInput.value.trim()) {
+            showNotification('Guardian\'s Contact Number is required for minors.', 'error');
+            guardianContactInput.focus();
+            isValid = false;
         }
     }
 
@@ -421,35 +422,58 @@ function initializePhotoUpload() {
 // ===================================
 // Form Handlers
 // ===================================
-function calculateAge() {
+// ===================================
+// Progressive Milestone System
+// This function evaluates each milestone independently based on age
+// ===================================
+function updateMinorStatus() {
     const dobInput = document.getElementById('dateOfBirth');
     const minorAlert = document.getElementById('minorAlert');
     const ageHealthGroupSelect = document.getElementById('ageHealthGroup');
     const adultOnlyElements = document.querySelectorAll('.adult-only');
     const minorOnlyElements = document.querySelectorAll('.minor-only');
 
-    // If DOB is empty, hide guardian section and reset mobile label
+    // New container elements for progressive milestones
+    const educationContainer = document.getElementById('educationContainer');
+    const voterStatusContainer = document.getElementById('voterStatusContainer');
+    const employmentContainer = document.getElementById('employmentContainer');
+    const occupationContainer = document.getElementById('occupationContainer');
+    const incomeContainer = document.getElementById('incomeContainer');
+
+    // If DOB is empty, reset everything to default state
     if (!dobInput.value) {
+        currentAge = null;
         isMinor = false;
+        
         // Reset guardian fields
         if (guardianSection) guardianSection.style.display = 'none';
         if (guardianNameInput) guardianNameInput.removeAttribute('required');
         if (guardianRelationshipSelect) guardianRelationshipSelect.removeAttribute('required');
+        if (guardianContactInput) guardianContactInput.removeAttribute('required');
         if (mobileNumberLabel) mobileNumberLabel.innerHTML = 'Mobile Number <span class="required">*</span>';
+        if (mobileNumberInput) mobileNumberInput.setAttribute('required', 'required');
         if (minorConsentNote) minorConsentNote.style.display = 'none';
         if (minorAlert) minorAlert.style.display = 'none';
         if (ageHealthGroupSelect) ageHealthGroupSelect.value = '';
         
-        // Show adult fields, hide minor fields
+        // Show all containers by default
         minorOnlyElements.forEach(el => el.style.display = 'none');
         adultOnlyElements.forEach(el => el.style.display = 'block');
+        
+        // Show all progressive milestone containers
+        if (educationContainer) educationContainer.style.display = 'block';
+        if (voterStatusContainer) voterStatusContainer.style.display = 'block';
+        if (employmentContainer) employmentContainer.style.display = 'block';
+        if (occupationContainer) occupationContainer.style.display = 'block';
+        if (incomeContainer) incomeContainer.style.display = 'block';
+        
+        // Enable all relevant fields
         if (civilStatusSelect) {
             civilStatusSelect.removeAttribute('disabled');
             civilStatusSelect.setAttribute('required', 'required');
         }
         if (spouseNameInput) {
             spouseNameInput.removeAttribute('disabled');
-            // Re-run this to show/hide spouse field based on civil status
             handleCivilStatusChange();
         }
         if (voterStatusSelect) voterStatusSelect.removeAttribute('disabled');
@@ -498,26 +522,101 @@ function calculateAge() {
     }
 
     console.log(`Calculated age: ${age} years`);
+    currentAge = age;
+
+    // ==============================================
+    // PROGRESSIVE MILESTONE SYSTEM
+    // Each milestone is evaluated independently
+    // ==============================================
+
+    // ==============================================
+    // 1. EDUCATION MILESTONE (All Ages)
+    // Educational Attainment is visible for ALL ages
+    // ==============================================
+    if (educationContainer) {
+        educationContainer.style.display = 'block';
+    }
+    if (educationalAttainmentSelect) {
+        educationalAttainmentSelect.removeAttribute('disabled');
+    }
+
+    // ==============================================
+    // 2. WORKING & VOTER MILESTONE (Age 15+)
+    // Voter Status, Employment Status, Occupation, Income
+    // are visible starting at age 15
+    // ==============================================
+    if (age >= 15) {
+        // Show voter status container
+        if (voterStatusContainer) voterStatusContainer.style.display = 'block';
+        if (voterStatusSelect) voterStatusSelect.removeAttribute('disabled');
+        
+        // Show employment container
+        if (employmentContainer) employmentContainer.style.display = 'block';
+        if (employmentStatusSelect) employmentStatusSelect.removeAttribute('disabled');
+        
+        // Show occupation container
+        if (occupationContainer) occupationContainer.style.display = 'block';
+        if (occupationInput) occupationInput.removeAttribute('disabled');
+        
+        // Show income container
+        if (incomeContainer) incomeContainer.style.display = 'block';
+        if (monthlyIncomeSelect) monthlyIncomeSelect.removeAttribute('disabled');
+    } else {
+        // Hide and disable for age < 15
+        if (voterStatusContainer) voterStatusContainer.style.display = 'none';
+        if (voterStatusSelect) {
+            voterStatusSelect.value = 'No';
+            voterStatusSelect.setAttribute('disabled', 'disabled');
+            voterStatusSelect.dispatchEvent(new Event('change'));
+        }
+        
+        if (employmentContainer) employmentContainer.style.display = 'none';
+        if (employmentStatusSelect) {
+            employmentStatusSelect.value = 'Student';
+            employmentStatusSelect.setAttribute('disabled', 'disabled');
+        }
+        
+        if (occupationContainer) occupationContainer.style.display = 'none';
+        if (occupationInput) {
+            occupationInput.value = '';
+            occupationInput.setAttribute('disabled', 'disabled');
+        }
+        
+        if (incomeContainer) incomeContainer.style.display = 'none';
+        if (monthlyIncomeSelect) {
+            monthlyIncomeSelect.value = '';
+            monthlyIncomeSelect.setAttribute('disabled', 'disabled');
+        }
+    }
+
+    // ==============================================
+    // 3. GUARDIAN MILESTONE (Age 0-17 only)
+    // Guardian section is visible ONLY for minors (age < 18)
+    // ==============================================
     isMinor = (age < 18);
-
+    
     if (isMinor) {
-        // --- MINOR LOGIC ---
-        // Show minor-only fields, hide adult-only fields
+        // Show minor-only fields (Guardian Section)
         minorOnlyElements.forEach(el => el.style.display = 'block');
-        adultOnlyElements.forEach(el => el.style.display = 'none');
-
+        
+        if (guardianSection) guardianSection.style.display = 'block';
         // Set guardian fields as required
         if (guardianNameInput) guardianNameInput.setAttribute('required', 'required');
         if (guardianRelationshipSelect) guardianRelationshipSelect.setAttribute('required', 'required');
+        if (guardianContactInput) guardianContactInput.setAttribute('required', 'required');
 
-        // Change Mobile Number label
-        if (mobileNumberLabel) mobileNumberLabel.innerHTML = 'Guardian\'s Mobile Number <span class="required">*</span>';
+        // Update Mobile Number label for resident (not required for minors)
+        if (mobileNumberLabel) mobileNumberLabel.innerHTML = 'Mobile Number';
+        if (mobileNumberInput) mobileNumberInput.removeAttribute('required');
 
         // Show minor-related UI elements
         if (minorConsentNote) minorConsentNote.style.display = 'block';
         if (minorAlert) minorAlert.style.display = 'block';
 
-        // Set defaults and disable fields so they are not submitted
+        // Hide adult-only fields but keep them accessible for data display
+        adultOnlyElements.forEach(el => el.style.display = 'none');
+
+        // Disable adult-specific fields
         if (civilStatusSelect) {
             civilStatusSelect.value = 'Single';
             civilStatusSelect.setAttribute('disabled', 'disabled');
@@ -526,75 +625,67 @@ function calculateAge() {
         if (spouseNameInput) {
             spouseNameInput.value = '';
             spouseNameInput.setAttribute('disabled', 'disabled');
-            // Also hide the group
             if (spouseNameGroup) spouseNameGroup.style.display = 'none';
             spouseNameInput.required = false;
         }
-        if (voterStatusSelect) {
-            voterStatusSelect.value = 'No';
-            voterStatusSelect.setAttribute('disabled', 'disabled');
-            voterStatusSelect.dispatchEvent(new Event('change'));
-        }
-        if (employmentStatusSelect) {
-            employmentStatusSelect.value = 'Student'; // Set default for minors
-            employmentStatusSelect.removeAttribute('disabled'); // Ensure it's enabled
-        }
-        if (educationalAttainmentSelect) {
-            // Let user select, just ensure it's enabled
-            educationalAttainmentSelect.removeAttribute('disabled');
-        }
-        if (occupationInput) {
-            occupationInput.value = '';
-            occupationInput.setAttribute('disabled', 'disabled');
-        }
-        if (monthlyIncomeSelect) {
-            monthlyIncomeSelect.value = '';
-            monthlyIncomeSelect.setAttribute('disabled', 'disabled');
-        }
-        if (philhealthIdInput) {
-            philhealthIdInput.value = '';
-            philhealthIdInput.setAttribute('disabled', 'disabled');
-        }
-        if (membershipTypeSelect) {
-            membershipTypeSelect.value = '';
-            membershipTypeSelect.setAttribute('disabled', 'disabled');
-        }
-        if (philhealthCategorySelect) {
-            philhealthCategorySelect.value = '';
-            philhealthCategorySelect.setAttribute('disabled', 'disabled');
-        }
-
-    } else { // --- ADULT LOGIC ---
-        // Hide minor-only fields, show adult-only fields
+        if (philhealthIdInput) philhealthIdInput.setAttribute('disabled', 'disabled');
+        if (membershipTypeSelect) membershipTypeSelect.setAttribute('disabled', 'disabled');
+        if (philhealthCategorySelect) philhealthCategorySelect.setAttribute('disabled', 'disabled');
+    } else {
+        // Age >= 18 - Hide Guardian section
         minorOnlyElements.forEach(el => el.style.display = 'none');
-        adultOnlyElements.forEach(el => el.style.display = 'block');
-
+        
+        if (guardianSection) guardianSection.style.display = 'none';
         // Unset guardian fields as required
         if (guardianNameInput) guardianNameInput.removeAttribute('required');
         if (guardianRelationshipSelect) guardianRelationshipSelect.removeAttribute('required');
+        if (guardianContactInput) guardianContactInput.removeAttribute('required');
+        
+        // Restore mobile number requirement
         if (mobileNumberLabel) mobileNumberLabel.innerHTML = 'Mobile Number <span class="required">*</span>';
+        if (mobileNumberInput) mobileNumberInput.setAttribute('required', 'required');
+        
+        // Hide minor-related UI elements
         if (minorConsentNote) minorConsentNote.style.display = 'none';
         if (minorAlert) minorAlert.style.display = 'none';
+    }
 
-        // Enable fields and restore required attributes
+    // ==============================================
+    // 4. ADULT MILESTONE (Age 18+)
+    // Civil Status and Spouse Name are unlocked at age 18
+    // ==============================================
+    if (age >= 18) {
+        // Show adult-only fields
+        adultOnlyElements.forEach(el => el.style.display = 'block');
+
+        // Enable and require Civil Status
         if (civilStatusSelect) {
             civilStatusSelect.removeAttribute('disabled');
             civilStatusSelect.setAttribute('required', 'required');
         }
+        
+        // Enable Spouse Name field (visibility controlled by civilStatus)
         if (spouseNameInput) {
             spouseNameInput.removeAttribute('disabled');
-            // Re-run this to show/hide spouse field based on civil status
             handleCivilStatusChange();
         }
-        if (voterStatusSelect) voterStatusSelect.removeAttribute('disabled');
-        if (employmentStatusSelect) employmentStatusSelect.removeAttribute('disabled');
-        if (educationalAttainmentSelect) educationalAttainmentSelect.removeAttribute('disabled');
-        if (occupationInput) occupationInput.removeAttribute('disabled');
-        if (monthlyIncomeSelect) monthlyIncomeSelect.removeAttribute('disabled');
+        
+        // Enable PhilHealth fields
         if (philhealthIdInput) philhealthIdInput.removeAttribute('disabled');
         if (membershipTypeSelect) membershipTypeSelect.removeAttribute('disabled');
         if (philhealthCategorySelect) philhealthCategorySelect.removeAttribute('disabled');
+    } else {
+        // Age < 18 - Adult fields already hidden above
+        // But we need to ensure they're disabled
+        if (civilStatusSelect) {
+            civilStatusSelect.setAttribute('disabled', 'disabled');
+        }
+        if (spouseNameInput) {
+            spouseNameInput.setAttribute('disabled', 'disabled');
+        }
     }
+    
+    saveFormData();
 }
 
 function handleCivilStatusChange() {
@@ -936,6 +1027,10 @@ function initializePhoneNumberFormatting() {
     // Apply to mobile number field
     const mobileNumberInput = document.getElementById('mobileNumber');
     applyPhoneNumberFormatting(mobileNumberInput);
+
+    // Apply to guardian contact field
+    const guardianContactInput = document.getElementById('guardianContact');
+    applyPhoneNumberFormatting(guardianContactInput);
 }
 
 // ===================================
@@ -1748,10 +1843,7 @@ function populateReviewModal() {
     
     // 2. Contact Information
     let contactInfoHTML = '<div class="review-fields-grid">';
-    // Only show mobile number here for adults to avoid duplication
-    if (!isMinor) {
-        contactInfoHTML += createField('Mobile Number', getValue('mobileNumber'));
-    }
+    contactInfoHTML += createField('Mobile Number', getValue('mobileNumber'));
     contactInfoHTML += createField('Email Address', getValue('email'));
     
     // Construct address for review
@@ -1784,7 +1876,7 @@ function populateReviewModal() {
         familyInfoHTML += '<div class="review-fields-grid">';
         familyInfoHTML += createField('Guardian\'s Full Name', getValue('guardianName'));
         familyInfoHTML += createField('Relationship to Guardian', getValue('guardianRelationship'));
-        familyInfoHTML += createField('Guardian\'s Mobile Number', getValue('mobileNumber'));
+        familyInfoHTML += createField('Guardian\'s Mobile Number', getValue('guardianContact'));
     }
     familyInfoHTML += '</div>';
     
@@ -1818,9 +1910,11 @@ function populateReviewModal() {
 
     // 5. Education & Employment
     let educationHTML = '<div class="review-fields-grid">';
-    educationHTML += createField('Educational Attainment', getValue('educationalAttainment'));
-    educationHTML += createField('Employment Status', getValue('employmentStatus'));
-    if (!isMinor) {
+    if (currentAge >= 5) {
+        educationHTML += createField('Educational Attainment', getValue('educationalAttainment'));
+    }
+    if (currentAge >= 15) {
+        educationHTML += createField('Employment Status', getValue('employmentStatus'));
         educationHTML += createField('Occupation', getValue('occupation'));
         educationHTML += createField('Monthly Income', getValue('monthlyIncome'));
     }
@@ -1832,7 +1926,7 @@ function populateReviewModal() {
     let additionalHTML = '';
     
     // Government Programs (Adults only)
-    if (!isMinor) {
+    if (currentAge >= 15) {
         additionalHTML += '<h5 style="margin: 0 0 15px 0; color: var(--primary-color);"><i class="fas fa-landmark"></i> Government Programs</h5>';
         additionalHTML += '<div class="review-fields-grid">';
         additionalHTML += createField('4Ps Member', getValue('fourPs'));

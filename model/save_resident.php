@@ -160,6 +160,11 @@ try {
     $motherName = $conn->real_escape_string(trim($_POST['motherName'] ?? ''));
     $numberOfChildren = intval($_POST['numberOfChildren'] ?? 0);
     
+    // Guardian Information
+    $guardianName = $conn->real_escape_string(trim($_POST['guardianName'] ?? ''));
+    $guardianRelationship = $conn->real_escape_string(trim($_POST['guardianRelationship'] ?? ''));
+    $guardianContact = $conn->real_escape_string(trim($_POST['guardianContact'] ?? ''));
+    
     // Education & Employment
     $educationalAttainment = $conn->real_escape_string($_POST['educationalAttainment'] ?? '');
     $employmentStatus = $conn->real_escape_string($_POST['employmentStatus'] ?? '');
@@ -201,9 +206,15 @@ try {
     }
 
     // Validation
+    $isMinor = ($age !== null && $age < 18);
     if (empty($firstName) || empty($lastName) || empty($sex) || empty($dateOfBirth) || 
-        empty($mobileNumber) || empty($currentAddress) || empty($civilStatus) || empty($pwdStatus)) {
+        (!$isMinor && empty($mobileNumber)) || empty($currentAddress) || 
+        (!$isMinor && empty($civilStatus)) || empty($pwdStatus)) {
         throw new Exception('Please fill in all required fields.');
+    }
+
+    if ($isMinor && (empty($guardianName) || empty($guardianRelationship) || empty($guardianContact))) {
+        throw new Exception('Guardian information is required for minors.');
     }
 
     // ============================================
@@ -304,6 +315,9 @@ try {
             father_name = " . ($fatherName ? "'$fatherName'" : "NULL") . ",
             mother_name = " . ($motherName ? "'$motherName'" : "NULL") . ",
             number_of_children = $numberOfChildren,
+            guardian_name = " . ($guardianName ? "'$guardianName'" : "NULL") . ",
+            guardian_relationship = " . ($guardianRelationship ? "'$guardianRelationship'" : "NULL") . ",
+            guardian_contact = " . ($guardianContact ? "'$guardianContact'" : "NULL") . ",
             educational_attainment = " . ($educationalAttainment ? "'$educationalAttainment'" : "NULL") . ",
             employment_status = " . ($employmentStatus ? "'$employmentStatus'" : "NULL") . ",
             occupation = " . ($occupation ? "'$occupation'" : "NULL") . ",
@@ -398,6 +412,7 @@ try {
         photo, first_name, middle_name, last_name, suffix, sex, date_of_birth, age, religion, ethnicity,
         mobile_number, email, house_no, purok, street_name, current_address,
         civil_status, spouse_name, father_name, mother_name, number_of_children,
+        guardian_name, guardian_relationship, guardian_contact,
         educational_attainment, employment_status, occupation, monthly_income, pwd_status,
         fourps_member, fourps_id, voter_status, precinct_number,
         philhealth_id, membership_type, philhealth_category, age_health_group, medical_history,
@@ -411,6 +426,7 @@ try {
         " . ($purok ? "'$purok'" : "NULL") . ", " . ($streetName ? "'$streetName'" : "NULL") . ", '$currentAddress',
         '$civilStatus', " . ($spouseName ? "'$spouseName'" : "NULL") . ", " . ($fatherName ? "'$fatherName'" : "NULL") . ", 
         " . ($motherName ? "'$motherName'" : "NULL") . ", $numberOfChildren,
+        " . ($guardianName ? "'$guardianName'" : "NULL") . ", " . ($guardianRelationship ? "'$guardianRelationship'" : "NULL") . ", " . ($guardianContact ? "'$guardianContact'" : "NULL") . ",
         " . ($educationalAttainment ? "'$educationalAttainment'" : "NULL") . ", " . ($employmentStatus ? "'$employmentStatus'" : "NULL") . ",
         " . ($occupation ? "'$occupation'" : "NULL") . ", " . ($monthlyIncome ? "'$monthlyIncome'" : "NULL") . ", '$pwdStatus',
         '$fourPs', " . ($fourpsId ? "'$fourpsId'" : "NULL") . ", " . ($voterStatus ? "'$voterStatus'" : "NULL") . ", 
