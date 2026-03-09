@@ -95,56 +95,41 @@ try {
 }
 
 // ============================================
-// Fetch Officials (Active)
+// Fetch the brgy captain and admin
 // ============================================
-$captain      = null;
-$officials    = [];
-$sk_chairman  = null;
-$treasurer    = null;
-$sec          = null;
-$office_admin = null;
+$captain = null;
+$brgy_admin  = null;
 
 try {
-    $offStmt = $pdo->query("
-        SELECT
+    // Fetching only the specific roles needed
+    $offStmt = $pdo->prepare("
+        SELECT 
             bo.position,
-            COALESCE(bo.fullname,
+            COALESCE(bo.fullname, 
                 CONCAT(
-                    COALESCE(r.first_name,''), ' ',
-                    COALESCE(r.middle_name,''), ' ',
+                    COALESCE(r.first_name,''), ' ', 
+                    COALESCE(r.middle_name,''), ' ', 
                     COALESCE(r.last_name,'')
                 )
             ) AS name
         FROM barangay_officials bo
         LEFT JOIN residents r ON bo.resident_id = r.id
-        WHERE bo.status = 'Active'
-        ORDER BY bo.hierarchy_level ASC, bo.position ASC
+        WHERE bo.position IN ('Barangay Captain', 'Barangay Administrator') 
+          AND bo.status = 'Active'
     ");
-    $allOfficials = $offStmt->fetchAll();
+    $offStmt->execute();
+    $results = $offStmt->fetchAll();
 
-    foreach ($allOfficials as $off) {
-        $name = trim(preg_replace('/\s+/', ' ', $off['name']));
-        switch ($off['position']) {
-            case 'Barangay Captain':
-                if (!$captain) $captain = ['name' => $name];
-                break;
-            case 'Kagawad':
-                $officials[] = ['name' => $name];
-                break;
-            case 'SK Chairman':
-                if (!$sk_chairman) $sk_chairman = ['name' => $name];
-                break;
-            case 'Barangay Treasurer':
-                if (!$treasurer) $treasurer = ['name' => $name];
-                break;
-            case 'Barangay Secretary':
-                if (!$sec) $sec = ['name' => $name];
-                break;
-            case 'Office Administrator':
-                if (!$office_admin) $office_admin = ['name' => $name];
-                break;
+    foreach ($results as $row) {
+        $cleanName = trim(preg_replace('/\s+/', ' ', $row['name']));
+        
+        if ($row['position'] === 'Barangay Captain') {
+            $captain = ['name' => $cleanName];
+        } elseif ($row['position'] === 'Barangay Administrator') {
+            $brgy_admin = ['name' => $cleanName];
         }
     }
+
 } catch (PDOException $e) {
     error_log("Error fetching officials: " . $e->getMessage());
 }
@@ -298,50 +283,6 @@ $residentFullName = ucwords(trim(
             align-items: flex-start;
         }
 
-        /* ===========================
-           Officials Sidebar
-        =========================== */
-        .officials-sidebar {
-            width: 160px;
-            min-width: 160px;
-            border: 2px solid #000;
-            padding: 8px 10px;
-            font-size: 10.5px;
-        }
-
-        .officials-sidebar .council-title {
-            text-align: center;
-            font-weight: bold;
-            text-decoration: underline;
-            font-size: 11.5px;
-            margin: 8px 0 14px;
-            line-height: 1.4;
-        }
-
-        .officials-sidebar .official-item {
-            text-align: center;
-            margin-bottom: 11px;
-        }
-
-        .officials-sidebar .official-name {
-            font-weight: bold;
-            text-transform: uppercase;
-            font-size: 10.5px;
-            line-height: 1.3;
-        }
-
-        .officials-sidebar .official-position {
-            font-style: italic;
-            font-size: 9px;
-            line-height: 1.2;
-        }
-
-        .officials-sidebar .kagawad-header {
-            text-align: center;
-            font-weight: bold;
-            font-size: 10.5px;
-            margin: 6px 0 8px;
-        }
 
         /* ===========================
            Certificate Body
@@ -594,56 +535,6 @@ $residentFullName = ucwords(trim(
                              Content Area
                         ===================== -->
                         <div class="cert-content-area">
-
-                            <!-- Officials Sidebar -->
-                            <div class="officials-sidebar">
-                                <div class="council-title">
-                                    <?= strtoupper($brgy) ?><br>BARANGAY COUNCIL
-                                </div>
-
-                                <?php if (!empty($captain)): ?>
-                                <div class="official-item">
-                                    <div class="official-name">HON. <?= strtoupper($captain['name']) ?></div>
-                                    <div class="official-position">PUNONG BARANGAY</div>
-                                </div>
-                                <?php endif; ?>
-
-                                <div class="kagawad-header">BARANGAY KAGAWAD</div>
-
-                                <?php foreach ($officials as $official): ?>
-                                <div class="official-item">
-                                    <div class="official-name"><?= strtoupper($official['name']) ?></div>
-                                </div>
-                                <?php endforeach; ?>
-
-                                <?php if (!empty($sk_chairman)): ?>
-                                <div class="official-item" style="margin-top:14px;">
-                                    <div class="official-name"><?= strtoupper($sk_chairman['name']) ?></div>
-                                    <div class="official-position">SK Chairman</div>
-                                </div>
-                                <?php endif; ?>
-
-                                <?php if (!empty($treasurer)): ?>
-                                <div class="official-item">
-                                    <div class="official-name"><?= strtoupper($treasurer['name']) ?></div>
-                                    <div class="official-position">BARANGAY TREASURER</div>
-                                </div>
-                                <?php endif; ?>
-
-                                <?php if (!empty($sec)): ?>
-                                <div class="official-item">
-                                    <div class="official-name"><?= strtoupper($sec['name']) ?></div>
-                                    <div class="official-position">BARANGAY SECRETARY</div>
-                                </div>
-                                <?php endif; ?>
-
-                                <?php if (!empty($office_admin)): ?>
-                                <div class="official-item">
-                                    <div class="official-name"><?= strtoupper($office_admin['name']) ?></div>
-                                    <div class="official-position">OFFICE ADMINISTRATOR</div>
-                                </div>
-                                <?php endif; ?>
-                            </div>
 
                             <!-- Certificate Body -->
                             <div class="cert-body">
