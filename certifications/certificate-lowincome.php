@@ -26,9 +26,13 @@ try {
 // ============================================
 // GET Parameters
 // ============================================
+
 $resident_id = isset($_GET['resident_id']) ? intval($_GET['resident_id']) : 0;
 $cert_date   = isset($_GET['date'])        ? $_GET['date']                : date('Y-m-d');
-
+$work_type   = isset($_GET['work_type'])   ? $_GET['work_type']           : 'N/A';
+$work_year   = isset($_GET['work_year'])   ? $_GET['work_year']           : date('Y');
+$purpose     = isset($_GET['purpose'])     ? $_GET['purpose']             : 'MEDICAL';
+$income    = isset($_GET['income'])    ? number_format((float)$_GET['income'], 2) : '0.00';
 if ($resident_id <= 0) {
     die("Invalid resident ID.");
 }
@@ -72,10 +76,10 @@ if (!$resident) {
 // Fetch Barangay Info
 // ============================================
 $brgy_logo = '';
-$city_logo  = '';
-$province   = 'Province';
-$town       = 'Municipality';
-$brgy       = 'Barangay';
+$government_logo = '';
+$province  = 'Province';
+$town      = 'Municipality';
+$brgy      = 'Barangay';
 
 try {
     $biStmt = $pdo->query("SELECT * FROM barangay_info WHERE id = 1 LIMIT 1");
@@ -85,14 +89,14 @@ try {
         $town      = $bi['town_name']      ?? 'Municipality';
         $brgy      = $bi['barangay_name']  ?? 'Barangay';
         $brgy_logo = $bi['barangay_logo']  ?? '';
-        $city_logo = $bi['municipal_logo'] ?? '';
+        $government_logo = $bi['official_emblem'] ?? '';
 
         // Fix paths for subdirectory
         if (!empty($brgy_logo)) {
             $brgy_logo = '../' . $brgy_logo;
         }
-        if (!empty($city_logo)) {
-            $city_logo = '../' . $city_logo;
+        if (!empty($government_logo)) {
+            $government_logo = '../' . $government_logo;
         }
     }
 } catch (PDOException $e) {
@@ -210,7 +214,7 @@ $birthdateFmt = !empty($resident['birthdate'])
             display: flex;
             align-items: center;
             justify-content: space-between;
-            border-bottom: 2px solid #c40d0d;
+            border-bottom: 3px double #c40d0d;
             padding-bottom: 10px;
             margin-bottom: 12px;
             margin-top: 70px;
@@ -233,7 +237,7 @@ $birthdateFmt = !empty($resident['birthdate'])
             flex: 1;
             text-align: center;
             padding: 0 15px;
-            margin-right: 140px;
+          
         }
 
         .cert-header .header-center p {
@@ -287,18 +291,6 @@ $birthdateFmt = !empty($resident['birthdate'])
             min-height: 500px;
         }
 
-        .cert-watermark {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            opacity: 0.1;
-            width: 280px;
-            height: auto;
-            z-index: 0;
-            pointer-events: none;
-            user-select: none;
-        }
 
         .cert-body-content {
             position: relative;
@@ -463,9 +455,7 @@ $birthdateFmt = !empty($resident['birthdate'])
                 font-size: 16px;
             }
 
-            .cert-watermark {
-                width: 380px;
-            }
+          
         }
     </style>
 </head>
@@ -514,7 +504,11 @@ $birthdateFmt = !empty($resident['birthdate'])
                                 <p class="office-name">OFFICE OF THE PUNONG BARANGAY</p>
                             </div>
 
-                        
+                         <?php if (!empty($government_logo)): ?>
+                                <img src="<?= htmlspecialchars($government_logo) ?>" class="logo-img" alt="Bagong Pilipinas Logo">
+                            <?php else: ?>
+                                <div class="logo-placeholder-box"></div>
+                            <?php endif; ?>
                         </div>
 
                         <!-- =====================
@@ -529,9 +523,6 @@ $birthdateFmt = !empty($resident['birthdate'])
 
                             <!-- Certificate Body -->
                             <div class="cert-body">
-                                <?php if (!empty($brgy_logo)): ?>
-                                <img src="<?= htmlspecialchars($brgy_logo) ?>" class="cert-watermark" alt="">
-                                <?php endif; ?>
 
                                 <div class="cert-body-content">
 
@@ -555,13 +546,17 @@ $birthdateFmt = !empty($resident['birthdate'])
 
                                     <!-- Paragraph 2: Purpose -->
                                     <p class="text-indent">
-                                        This futher certifies that the above-mentioned name is a___________ since *date* up to present
-                                        with estimated income of *INCOME* pesos and hereby classified as a low income citizen.
+                                       This further certifies that the above-mentioned name is a 
+                                        <span class="bold"><?= strtoupper(htmlspecialchars($work_type)) ?></span> 
+                                        since <span class="bold"><?= htmlspecialchars($work_year) ?></span> up to present 
+                                        with an estimated monthly income of <span class="bold">PHP <?= htmlspecialchars($income) ?></span> 
+                                        and is hereby classified as a low income citizen.
                                     </p>
 
                                      <!-- Paragraph 3: Purpose -->
                                     <p class="text-indent">
-                                        This certification is issued upon the request of above-mentioned name for <strong>*purpose* ASSISTANCE</strong>.
+                                       This certification is issued upon the request of above-mentioned name for 
+                                       <strong><?= strtoupper(htmlspecialchars($purpose)) ?> ASSISTANCE</strong>. 
                                     </p>
 
                                     <!-- Paragraph 3: Given this -->

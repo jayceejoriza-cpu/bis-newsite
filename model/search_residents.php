@@ -14,6 +14,9 @@ $searchTerm = isset($_GET['search']) ? trim($_GET['search']) : '';
 // Get certificate type parameter (for limit checking)
 $certificateType = isset($_GET['certificate_type']) ? trim($_GET['certificate_type']) : '';
 
+// Get optional filter parameter (e.g., 'minor' for < 18 years old)
+$filterType = isset($_GET['filter']) ? trim($_GET['filter']) : '';
+
 // Map JavaScript certificate types to database certificate names
 $certificateTypeMap = [
     'indigency' => 'Certificate of Indigency',
@@ -99,6 +102,15 @@ try {
     if ($excludeResidentId > 0) {
         $sql .= " AND r.id != " . $excludeResidentId;
     }
+
+    // ==========================================
+    // NEW: Minor Filter (< 18 years old)
+    // ==========================================
+    if ($filterType === 'minor') {
+        $sql .= " AND r.date_of_birth IS NOT NULL AND TIMESTAMPDIFF(YEAR, r.date_of_birth, CURDATE()) < 18";
+    } elseif ($filterType === 'adult' || (!empty($certificateType) && $filterType !== 'minor')) {
+        $sql .= " AND r.date_of_birth IS NOT NULL AND TIMESTAMPDIFF(YEAR, r.date_of_birth, CURDATE()) >= 18";
+    }
     
     // Add search condition - ONLY search by name and resident_id
     if (!empty($searchTerm)) {
@@ -127,8 +139,8 @@ try {
     if (!empty($certificateType) && count($residents) > 0) {
         $residentIds = array_column($residents, 'id');
         
+        // --- Limit checking logic remains unchanged ---
         if ($isOneTime) {
-            // For 1-time certificates, check total lifetime count
             $placeholders = str_repeat('?,', count($residentIds) - 1) . '?';
             $searchTerm1 = '%First Time Jobseeker%';
             $searchTerm2 = '%Jobseeker%';
@@ -144,7 +156,6 @@ try {
             $params = array_merge($residentIds, [$searchTerm1, $searchTerm2, $searchTerm3]);
             $limitStmt->bind_param(str_repeat('i', count($residentIds)) . 'sss', ...$params);
         } else {
-            // For regular certificates, check today's count
             $placeholders = str_repeat('?,', count($residentIds) - 1) . '?';
             
             $limitSql = "SELECT resident_id, COUNT(*) as used 
@@ -163,7 +174,6 @@ try {
         $limitResult = $limitStmt->get_result();
         
         while ($row = $limitResult->fetch_assoc()) {
-            // Store with certificate type as key for JavaScript access
             $residentLimits[$row['resident_id']] = [
                 'used' => intval($row['used']),
                 'remaining' => max(0, $maxLimit - intval($row['used']))
@@ -178,15 +188,12 @@ try {
         $resId = $resident['id'];
         $limitInfo = isset($residentLimits[$resId]) ? $residentLimits[$resId] : ['used' => 0, 'remaining' => $maxLimit];
         
-        // Add resident_limits object keyed by certificate type (for JavaScript)
         $resident['resident_limits'] = [
             $certificateType => $limitInfo
         ];
         $residentsWithLimits[] = $resident;
     }
     
-    // Return success response with both 'data' and 'residents' for compatibility
-    // Use the residents with limits included
     $finalResidents = !empty($certificateType) ? $residentsWithLimits : $residents;
     echo json_encode([
         'success' => true,
@@ -204,7 +211,6 @@ try {
     $stmt->close();
     
 } catch (Exception $e) {
-    // Return error response
     echo json_encode([
         'success' => false,
         'error' => 'Database error: ' . $e->getMessage()

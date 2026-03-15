@@ -132,10 +132,10 @@ $herHis = ($childGender === 'MALE') ? 'his' : 'her';
 // Fetch Barangay Info
 // ============================================
 $brgy_logo = '';
-$city_logo  = '';
-$province   = 'Province';
-$town       = 'Municipality';
-$brgy       = 'Barangay';
+$government_logo = '';
+$province  = 'Province';
+$town      = 'Municipality';
+$brgy      = 'Barangay';
 
 try {
     $biStmt = $pdo->query("SELECT * FROM barangay_info WHERE id = 1 LIMIT 1");
@@ -145,19 +145,20 @@ try {
         $town      = $bi['town_name']      ?? 'Municipality';
         $brgy      = $bi['barangay_name']  ?? 'Barangay';
         $brgy_logo = $bi['barangay_logo']  ?? '';
-        $city_logo = $bi['municipal_logo'] ?? '';
+        $government_logo = $bi['official_emblem'] ?? '';
 
         // Fix paths for subdirectory
         if (!empty($brgy_logo)) {
             $brgy_logo = '../' . $brgy_logo;
         }
-        if (!empty($city_logo)) {
-            $city_logo = '../' . $city_logo;
+        if (!empty($government_logo)) {
+            $government_logo = '../' . $government_logo;
         }
     }
 } catch (PDOException $e) {
     error_log("Error fetching barangay info: " . $e->getMessage());
 }
+
 // ============================================
 // Fetch the brgy captain
 // ============================================
@@ -261,7 +262,7 @@ $birthdateFmt = !empty($resident['birthdate'])
             display: flex;
             align-items: center;
             justify-content: space-between;
-            border-bottom: 2px solid #d81010;
+            border-bottom: 3px double #d81010;
             padding-bottom: 10px;
             margin-bottom: 12px;
             margin-top: 70px;
@@ -340,7 +341,7 @@ $birthdateFmt = !empty($resident['birthdate'])
 
         .cert-watermark {
             position: absolute;
-            top: 50%;
+            top: 41%;
             left: 50%;
             transform: translate(-50%, -50%);
             opacity: 0.1;
@@ -472,7 +473,7 @@ $birthdateFmt = !empty($resident['birthdate'])
             }
 
             .cert-header .header-center .brgy-name {
-                font-size: 22px;
+                font-size: 17px;
             }
 
             .cert-title {
@@ -483,9 +484,6 @@ $birthdateFmt = !empty($resident['birthdate'])
                 font-size: 16px;
             }
 
-            .cert-watermark {
-                width: 380px;
-            }
         }
     </style>
 </head>
@@ -549,9 +547,7 @@ $birthdateFmt = !empty($resident['birthdate'])
 
                             <!-- Certificate Body -->
                             <div class="cert-body">
-                                <?php if (!empty($brgy_logo)): ?>
-                                <img src="<?= htmlspecialchars($brgy_logo) ?>" class="cert-watermark" alt="">
-                                <?php endif; ?>
+                                
 
                                 <div class="cert-body-content">
 
@@ -566,7 +562,7 @@ $birthdateFmt = !empty($resident['birthdate'])
                                        <span class="bold"><?= !empty($childFullName) ? strtoupper($childFullName) : '*name of the child*' ?></span>
                                        born on <span class="underline-val"><?= !empty($childBirthdate) ? $childBirthdate : '*birth date*' ?></span>
                                        at <span class="underline-val"><?= !empty($childPlaceOfBirth) ? $childPlaceOfBirth : '*place of birth*' ?></span>, 
-                                       Filipino, <span class="bold"><?= !empty($sonDaughter) ? $sonDaughter : '*SON/DAUGHTER*' ?></span> of  
+                                       Filipino, <span ><?= !empty($sonDaughter) ? strtolower($sonDaughter) : '*SON/DAUGHTER*' ?></span> of  
                                        <span class="bold"><?= strtoupper($residentFullName) ?></span>
                                        is a resident with postal address at 
                                         <span><?= ucwords($brgy) ?></span>,

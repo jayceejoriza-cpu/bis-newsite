@@ -71,10 +71,10 @@ if (!$resident) {
 // Fetch Barangay Info
 // ============================================
 $brgy_logo = '';
-$city_logo  = '';
-$province   = 'Province';
-$town       = 'Municipality';
-$brgy       = 'Barangay';
+$government_logo = '';
+$province  = 'Province';
+$town      = 'Municipality';
+$brgy      = 'Barangay';
 
 try {
     $biStmt = $pdo->query("SELECT * FROM barangay_info WHERE id = 1 LIMIT 1");
@@ -84,14 +84,14 @@ try {
         $town      = $bi['town_name']      ?? 'Municipality';
         $brgy      = $bi['barangay_name']  ?? 'Barangay';
         $brgy_logo = $bi['barangay_logo']  ?? '';
-        $city_logo = $bi['municipal_logo'] ?? '';
+        $government_logo = $bi['official_emblem'] ?? '';
 
         // Fix paths for subdirectory
         if (!empty($brgy_logo)) {
             $brgy_logo = '../' . $brgy_logo;
         }
-        if (!empty($city_logo)) {
-            $city_logo = '../' . $city_logo;
+        if (!empty($government_logo)) {
+            $government_logo = '../' . $government_logo;
         }
     }
 } catch (PDOException $e) {
@@ -289,7 +289,8 @@ $birthdateFmt = !empty($resident['birthdate'])
         =========================== */
         .cert-title {
             text-align: center;
-            margin: 40px 0 10px 200px;
+                margin: 20px 0 20px;
+                
                 font-style: italic;
                 font-weight: bold;
                 font-size: 40px;
@@ -306,56 +307,10 @@ $birthdateFmt = !empty($resident['birthdate'])
             align-items: stretch; /* Makes sidebar and body same height */
         }
 
-        /* ===========================
-           Officials Sidebar
-        =========================== */
-        .officials-sidebar {
-            width: 190px;
-            min-width: 160px;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between; /* Pushes the last item to the bottom */
-            padding: 8px 10px;
-            font-size: 10.5px;
-        }
-
-        .officials-sidebar .council-title {
-            text-align: center;
-            font-weight: bold;
-            text-decoration: underline;
-            font-size: 11.5px;
-            margin: 8px 0 14px;
-            line-height: 1.4;
-        }
-
-        .officials-sidebar .official-item {
-            text-align: center;
-            margin-bottom: 11px;
-        }
-
-        .officials-sidebar .official-name {
-            font-weight: bold;
-            text-transform: uppercase;
-            font-size: 10.5px;
-            line-height: 1.3;
-        }
-
-        .officials-sidebar .official-position {
-            font-style: italic;
-            font-size: 9px;
-            line-height: 1.2;
-        }
-
-        .officials-sidebar .kagawad-header {
-            text-align: center;
-            font-weight: bold;
-            font-size: 10.5px;
-            margin: 6px 0 8px;
-        }
+       
 
         /* The specific signature style for the admin in the sidebar */
         .sidebar-resident-signature {
-            text-align: center;
             margin-top: auto; /* Pushes it to the bottom of the sidebar */
             padding-top: 20px;
         }
@@ -369,7 +324,6 @@ $birthdateFmt = !empty($resident['birthdate'])
 
         .resident-pos-underline {
             border-top: 1px solid #000;
-            display: block;
             margin-top: 2px;
             padding-top: 2px;
             font-size: 9px;
@@ -393,7 +347,7 @@ $birthdateFmt = !empty($resident['birthdate'])
 
         .cert-watermark {
             position: absolute;
-            top: 50%;
+            top: 40%;
             left: 50%;
             transform: translate(-50%, -50%);
             opacity: 0.1;
@@ -595,7 +549,7 @@ $birthdateFmt = !empty($resident['birthdate'])
 
             /* Adjust sizes for print */
             .cert-page {
-                padding: 15px 70px 20px 70px;
+                padding: 15px 70px 20px 95px;
             }
 
             .vertical-text {
@@ -634,7 +588,7 @@ $birthdateFmt = !empty($resident['birthdate'])
             }
 
             .cert-watermark {
-                width: 380px;
+                width: 600px;
             }
         }
     </style>
@@ -691,8 +645,8 @@ $birthdateFmt = !empty($resident['birthdate'])
                                 <p class="office-name">OFFICE OF THE PUNONG BARANGAY</p>
                             </div>
 
-                            <?php if (!empty($city_logo)): ?>
-                                <img src="<?= htmlspecialchars($city_logo) ?>" class="logo-img" alt="Municipal Logo">
+                            <?php if (!empty($government_logo)): ?>
+                                <img src="<?= htmlspecialchars($government_logo) ?>" class="logo-img" alt="Bagong Pilipinas Logo">
                             <?php else: ?>
                                 <div class="logo-placeholder-box"></div>
                             <?php endif; ?>
@@ -708,60 +662,9 @@ $birthdateFmt = !empty($resident['birthdate'])
                         ===================== -->
                         <div class="cert-content-area">
 
-                            <!-- Officials Sidebar -->
-                            <div class="officials-sidebar">
-                                <div class="sidebar-top-group">
-                                <div class="council-title">
-                                    <?= strtoupper($brgy) ?><br>BARANGAY COUNCIL
-                                </div>
+                           
 
-                                <?php if (!empty($captain)): ?>
-                                <div class="official-item">
-                                    <div class="official-name">HON. <?= strtoupper($captain['name']) ?></div>
-                                    <div class="official-position">PUNONG BARANGAY</div>
-                                </div>
-                                <?php endif; ?>
-
-                                <div class="kagawad-header">BARANGAY KAGAWAD</div>
-
-                                <?php foreach ($officials as $official): ?>
-                                <div class="official-item">
-                                    <div class="official-name"><?= strtoupper($official['name']) ?></div>
-                                </div>
-                                <?php endforeach; ?>
-
-                                <?php if (!empty($sk_chairman)): ?>
-                                <div class="official-item" style="margin-top:14px;">
-                                    <div class="official-name"><?= strtoupper($sk_chairman['name']) ?></div>
-                                    <div class="official-position">SK Chairman</div>
-                                </div>
-                                <?php endif; ?>
-
-                                <?php if (!empty($treasurer)): ?>
-                                <div class="official-item">
-                                    <div class="official-name"><?= strtoupper($treasurer['name']) ?></div>
-                                    <div class="official-position">BARANGAY TREASURER</div>
-                                </div>
-                                <?php endif; ?>
-
-                                <?php if (!empty($sec)): ?>
-                                <div class="official-item">
-                                    <div class="official-name"><?= strtoupper($sec['name']) ?></div>
-                                    <div class="official-position">BARANGAY SECRETARY</div>
-                                </div>
-                                <?php endif; ?>
-
-                                </div>
-
-                                <div class="sidebar-resident-signature">
-                                    <div class="resident-name-line">
-                                       
-                                    </div>
-                                    <span class="resident-pos-underline">SIGNATURE OVER PRINTED NAME</span>
-                                </div>
-                            </div>
-                            <!-- /Officials Sidebar -->
-
+                              
                             <!-- Certificate Body -->
                             <div class="cert-body">
                                 <?php if (!empty($brgy_logo)): ?>
@@ -811,14 +714,7 @@ $birthdateFmt = !empty($resident['birthdate'])
                                         <strong><?= ucwords($town) ?></strong>,
                                         <strong><?= ucwords($province) ?></strong>.
                                     </p>
-
-                                    <!-- Signatures
-                                    <div class="cert-signatures">
-                                        <div class="sig-left">
-                                            <div class="sig-line-wrap">
-                                                APPLICANT SIGNATURE
-                                            </div>
-                                        </div> -->
+                          
                                
                                         <div class="sig-right">
                                             <?php if (!empty($captain)): ?>
@@ -828,6 +724,11 @@ $birthdateFmt = !empty($resident['birthdate'])
                                         </div>
                                     </div> 
                                   
+                                      <div class="sidebar-resident-signature">
+                                    <div class="resident-name-line">
+                                    </div>
+                                    <span class="resident-pos-underline">SIGNATURE OVER PRINTED NAME</span>
+                                </div>
                                     <!-- /Signatures -->
                                     <div class="year-stamp"><?= $yearNum ?></div>
 

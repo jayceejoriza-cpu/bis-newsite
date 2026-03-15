@@ -26,16 +26,20 @@ try {
 // ============================================
 // Get GET Parameters
 // ============================================
-$resident_id = isset($_GET['resident_id']) ? intval($_GET['resident_id']) : 0;
-$cert_date   = isset($_GET['date']) ? $_GET['date'] : date('Y-m-d');
-$assistance  = isset($_GET['assistance']) ? trim($_GET['assistance']) : '';
+$resident_id  = isset($_GET['resident_id']) ? intval($_GET['resident_id']) : 0;
+$cert_date    = isset($_GET['date']) ? $_GET['date'] : date('Y-m-d');
+$assistance   = isset($_GET['assistance']) ? trim($_GET['assistance']) : '';
+
+// NEW: Updated to catch request_type and minor_id
+$request_type = isset($_GET['request_type']) ? trim($_GET['request_type']) : 'self';
+$minor_id     = isset($_GET['minor_id']) ? intval($_GET['minor_id']) : 0;
 
 if ($resident_id <= 0) {
     die("Invalid resident ID.");
 }
 
 // ============================================
-// Fetch Resident Data
+// Fetch Primary Resident Data
 // ============================================
 $resident = null;
 try {
@@ -64,10 +68,40 @@ if (!$resident) {
 }
 
 // ============================================
+// NEW: Fetch Minor Resident Data (If Applicable)
+// ============================================
+$minor = null;
+$minorFullName = '';
+
+if ($request_type === 'guardian' && $minor_id > 0) {
+    try {
+        $stmtMinor = $pdo->prepare("
+            SELECT id, first_name, middle_name, last_name, suffix
+            FROM residents
+            WHERE id = ?
+            LIMIT 1
+        ");
+        $stmtMinor->execute([$minor_id]);
+        $rowMinor = $stmtMinor->fetch();
+        if ($rowMinor) {
+            // Build full minor name immediately
+            $minorFullName = ucwords(trim(
+                $rowMinor['first_name'] . ' ' .
+                ($rowMinor['middle_name'] ? $rowMinor['middle_name'] . ' ' : '') .
+                $rowMinor['last_name'] .
+                ($rowMinor['suffix'] ? ' ' . $rowMinor['suffix'] : '')
+            ));
+        }
+    } catch (PDOException $e) {
+        error_log("Error fetching minor: " . $e->getMessage());
+    }
+}
+
+// ============================================
 // Fetch Barangay Info
 // ============================================
 $brgy_logo = '';
-$city_logo = '';
+$government_logo = '';
 $province  = 'Province';
 $town      = 'Municipality';
 $brgy      = 'Barangay';
@@ -80,14 +114,13 @@ try {
         $town      = $bi['town_name']      ?? 'Municipality';
         $brgy      = $bi['barangay_name']  ?? 'Barangay';
         $brgy_logo = $bi['barangay_logo']  ?? '';
-        $city_logo = $bi['municipal_logo'] ?? '';
+        $government_logo = $bi['official_emblem'] ?? '';
 
-        // Fix paths for subdirectory
         if (!empty($brgy_logo)) {
             $brgy_logo = '../' . $brgy_logo;
         }
-        if (!empty($city_logo)) {
-            $city_logo = '../' . $city_logo;
+        if (!empty($government_logo)) {
+            $government_logo = '../' . $government_logo;
         }
     }
 } catch (PDOException $e) {
@@ -101,7 +134,6 @@ $captain = null;
 $brgy_admin  = null;
 
 try {
-    // Fetching only the specific roles needed
     $offStmt = $pdo->prepare("
         SELECT 
             bo.position,
@@ -134,7 +166,7 @@ try {
     error_log("Error fetching officials: " . $e->getMessage());
 }
 
-// Build full resident name
+// Build full primary resident name
 $residentFullName = ucwords(trim(
     $resident['firstname'] . ' ' .
     ($resident['middlename'] ? $resident['middlename'] . ' ' : '') .
@@ -149,21 +181,12 @@ $residentFullName = ucwords(trim(
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Certificate of Indigency - <?= htmlspecialchars($brgy) ?></title>
 
-    <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="../assets/bootstrap/css/bootstrap.min.css">
-    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <!-- Custom CSS -->
     <link rel="stylesheet" href="../assets/css/style.css">
 
     <style>
-        /* ===========================
-           Base
-        =========================== */
-        
-
         .print-action-bar {
             display: flex;
             justify-content: flex-end;
@@ -172,9 +195,6 @@ $residentFullName = ucwords(trim(
             border-bottom: 1px solid #dee2e6;
         }
 
-        /* ===========================
-           Certificate Page Wrapper
-        =========================== */
         .cert-page {
             position: relative;
             padding: 20px 30px 30px 65px;
@@ -183,9 +203,6 @@ $residentFullName = ucwords(trim(
             background: #fff;
         }
 
-        /* ===========================
-           Vertical Side Text
-        =========================== */
         .vertical-text {
             position: absolute;
             left: 4px;
@@ -200,14 +217,11 @@ $residentFullName = ucwords(trim(
             user-select: none;
         }
 
-        /* ===========================
-           Certificate Header
-        =========================== */
         .cert-header {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            border-bottom: 2px solid #7a51c9;
+            border-bottom: 3px double #000000;
             padding-bottom: 10px;
             margin-bottom: 12px;
             margin-top: 70px;
@@ -243,16 +257,14 @@ $residentFullName = ucwords(trim(
             font-weight: bold;
             font-family: 'Times New Roman', Times, serif;
             margin-top: 2px;
+            margin-bottom: 10px;
         }
 
         .cert-header .header-center .office-name {
-            font-size: 13px;
+            font-size: 15px;
             font-weight: bold;
         }
 
-        /* ===========================
-           Certificate Title
-        =========================== */
         .cert-title {
             text-align: center;
             font-size: 22px;
@@ -264,9 +276,6 @@ $residentFullName = ucwords(trim(
 
         }
 
-        /* ===========================
-           Date Line
-        =========================== */
         .cert-date-line {
             text-align: right;
             margin-right: 60px;
@@ -274,19 +283,12 @@ $residentFullName = ucwords(trim(
             margin-bottom: 14px;
         }
 
-        /* ===========================
-           Content Area (sidebar + body)
-        =========================== */
         .cert-content-area {
             display: flex;
             gap: 15px;
             align-items: flex-start;
         }
 
-
-        /* ===========================
-           Certificate Body
-        =========================== */
         .cert-body {
             flex: 1;
             position: relative;
@@ -295,7 +297,7 @@ $residentFullName = ucwords(trim(
 
         .cert-watermark {
             position: absolute;
-            top: 50%;
+            top: 41%;
             left: 50%;
             transform: translate(-50%, -50%);
             opacity: 0.1;
@@ -322,9 +324,6 @@ $residentFullName = ucwords(trim(
             text-indent: 40px;
         }
 
-        /* ===========================
-           Signatures
-        =========================== */
         .cert-signatures {
             display: flex;
             margin-top: 45px;
@@ -368,9 +367,6 @@ $residentFullName = ucwords(trim(
             font-size: 13px;
         }
 
-        /* ===========================
-           Print Styles
-        =========================== */
         @page {
             size: A4;
             margin: 0;
@@ -384,7 +380,6 @@ $residentFullName = ucwords(trim(
                 overflow: hidden;
             }
 
-            /* Hide system UI */
             .sidebar,
             .main-content > .header,
             .print-action-bar,
@@ -419,7 +414,6 @@ $residentFullName = ucwords(trim(
                 page-break-after: avoid;
             }
 
-            /* Adjust sizes for print */
             .cert-page {
                 padding: 15px 70px 20px 70px;
             }
@@ -443,7 +437,7 @@ $residentFullName = ucwords(trim(
             }
 
             .cert-header .header-center .brgy-name {
-                font-size: 22px;
+                font-size: 17px;
             }
 
             .cert-title {
@@ -455,21 +449,17 @@ $residentFullName = ucwords(trim(
             }
 
             .cert-watermark {
-                width: 380px;
+                width: 600px;
             }
         }
     </style>
 </head>
 <body>
-    <!-- Sidebar -->
     <?php include '../components/sidebar.php'; ?>
 
-    <!-- Main Content -->
     <main class="main-content">
-        <!-- Header -->
         <?php include '../components/header.php'; ?>
 
-        <!-- Print Action Bar -->
         <div class="print-action-bar">
             <button class="btn btn-info btn-sm" onclick="saveAndPrint()">
                 <i class="fa fa-print"></i>
@@ -477,7 +467,6 @@ $residentFullName = ucwords(trim(
             </button>
         </div>
 
-        <!-- Certificate Content -->
         <div class="dashboard-content">
             <div class="card">
                 <div class="card-header">
@@ -487,16 +476,10 @@ $residentFullName = ucwords(trim(
                 <div class="card-body" id="printThis">
                     <div class="cert-page">
 
-                        <!-- =====================
-                             Vertical Side Text
-                        ===================== -->
                         <div class="vertical-text">
                                         B<br>A<br>R<br>A<br>N<br>G<br>A<br>Y<br>W<br>A<br>W<br>A<br>N<br>D<br>U<br>E
                                     </div>
 
-                        <!-- =====================
-                             Header
-                        ===================== -->
                         <div class="cert-header">
                             <?php if (!empty($brgy_logo)): ?>
                                 <img src="<?= htmlspecialchars($brgy_logo) ?>" class="logo-img" alt="Barangay Logo">
@@ -512,31 +495,21 @@ $residentFullName = ucwords(trim(
                                 <p class="office-name">OFFICE OF THE PUNONG BARANGAY</p>
                             </div>
 
-                            <?php if (!empty($city_logo)): ?>
-                                <img src="<?= htmlspecialchars($city_logo) ?>" class="logo-img" alt="Municipal Logo">
+                            <?php if (!empty($government_logo)): ?>
+                                <img src="<?= htmlspecialchars($government_logo) ?>" class="logo-img" alt="Bagong Pilipinas Logo">
                             <?php else: ?>
                                 <div class="logo-placeholder-box"></div>
                             <?php endif; ?>
                         </div>
 
-                        <!-- =====================
-                             Title
-                        ===================== -->
                         <h2 class="cert-title">CERTIFICATE OF INDIGENCY</h2>
 
-                        <!-- =====================
-                             Date
-                        ===================== -->
                         <div class="cert-date-line">
                             Date: <strong><u><?= htmlspecialchars($cert_date) ?></u></strong>
                         </div>
 
-                        <!-- =====================
-                             Content Area
-                        ===================== -->
                         <div class="cert-content-area">
 
-                            <!-- Certificate Body -->
                             <div class="cert-body">
                                 <?php if (!empty($brgy_logo)): ?>
                                 <img src="<?= htmlspecialchars($brgy_logo) ?>" class="cert-watermark" alt="">
@@ -544,16 +517,20 @@ $residentFullName = ucwords(trim(
 
                                 <div class="cert-body-content">
                                     <p class="text-indent">
-                                        <b>THIS IS TO CERTIFY</b> that
-                                        <strong><u><?= htmlspecialchars($residentFullName) ?></u></strong>
+                                        <b>THIS IS TO CERTIFY</b> that 
+                                        <?php if ($request_type === 'guardian' && !empty($minorFullName)): ?>
+                                            <strong><u><?= strtoupper(htmlspecialchars($residentFullName)) ?></u></strong>,
+                                        <?php else: ?>
+                                            <strong><u><?= htmlspecialchars($residentFullName) ?></u></strong>,
+                                        <?php endif; ?>
                                         of legal age, Filipino and presently residing at
                                         <?= ucwords($brgy) ?>, <?= ucwords($town) ?>, <?= ucwords($province) ?>
-                                        has requested for a <b>BARANGAY CERTIFICATION</b> for <b>INDIGENCE</b> from office.
+                                        has requested for a <b>BARANGAY CERTIFICATION</b> for <b>INDIGENCE</b> from this office.
                                     </p>
 
                                     <p class="text-indent">
                                         That through actual investigation conducted and per inventory of the record
-                                        Available in this office that he/she belongs to a;
+                                        available in this office that he/she belongs to a;
                                     </p>
 
                                     <p class="text-indent">
@@ -567,7 +544,7 @@ $residentFullName = ucwords(trim(
                                         This BARANGAY CERTIFICATION for INDIGENCE is hereby issued as
                                         Verification upon request for
                                         <b><u><?= !empty($assistance) ? strtoupper(htmlspecialchars($assistance)) : '________' ?></u>
-                                        ASSISTANCE.</b>
+                                        ASSISTANCE</b><?php if ($request_type === 'guardian' && !empty($minorFullName)): ?> for his/her family member/ward, <strong><u><?= htmlspecialchars($minorFullName) ?></u></strong>.<?php else: ?>.<?php endif; ?>
                                     </p>
 
                                     <p class="text-indent">
@@ -575,7 +552,6 @@ $residentFullName = ucwords(trim(
                                         from <b>ONE</b>(1) MONTH from the date of issue.
                                     </p>
 
-                                    <!-- Signatures -->
                                     <div class="cert-signatures">
                                         <div class="sig-left">
                                             <div class="sig-line-wrap">
@@ -593,22 +569,15 @@ $residentFullName = ucwords(trim(
                                     </div>
                                 </div>
                             </div>
-                            <!-- /Certificate Body -->
-
                         </div>
-                        <!-- /Content Area -->
 
                     </div>
-                    <!-- /cert-page -->
                 </div>
-                <!-- /card-body -->
             </div>
         </div>
     </main>
 
-    <!-- Bootstrap JS -->
     <script src="../assets/bootstrap/js/bootstrap.bundle.min.js"></script>
-    <!-- Custom JS -->
     <script src="../assets/js/script.js"></script>
     <script>
           // Fix sidebar links for subdirectory (handles hardcoded links in sidebar)
@@ -616,7 +585,6 @@ $residentFullName = ucwords(trim(
             const sidebarLinks = document.querySelectorAll('.sidebar a, .sidebar-wrapper a, .nav-item a');
             sidebarLinks.forEach(link => {
                 const href = link.getAttribute('href');
-                // Check if link is relative and doesn't start with ../ or other protocols
                 if (href && 
                     !href.startsWith('http') && 
                     !href.startsWith('/') && 

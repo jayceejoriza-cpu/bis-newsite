@@ -601,7 +601,41 @@
 .cert-input.is-invalid {
     border-color: #ef4444;
 }
+/* ===================================
+   Certificate Request Tabs
+   =================================== */
+.cert-tabs-container {
+    display: flex;
+    width: 100%;
+}
 
+.cert-tab-btn {
+    flex: 1;
+    border: none;
+    padding: 15px 20px;
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    transition: background-color 0.2s, color 0.2s;
+}
+
+/* Active State (The Blue from your image) */
+.cert-tab-btn.active {
+    background-color: #9bc2ff; 
+    color: #1f2937;
+}
+
+/* Inactive State (The Gray from your image) */
+.cert-tab-btn:not(.active) {
+    background-color: #e5e7eb;
+    color: #4b5563;
+}
+
+.cert-tab-btn:not(.active):hover {
+    background-color: #d1d5db; /* Slight darken on hover */
+}
 /* Resident Search */
 .resident-search-wrap {
     position: relative;

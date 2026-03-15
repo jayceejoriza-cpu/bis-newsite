@@ -71,10 +71,10 @@ if (!$resident) {
 // Fetch Barangay Info
 // ============================================
 $brgy_logo = '';
-$city_logo  = '';
-$province   = 'Province';
-$town       = 'Municipality';
-$brgy       = 'Barangay';
+$government_logo = '';
+$province  = 'Province';
+$town      = 'Municipality';
+$brgy      = 'Barangay';
 
 try {
     $biStmt = $pdo->query("SELECT * FROM barangay_info WHERE id = 1 LIMIT 1");
@@ -84,14 +84,14 @@ try {
         $town      = $bi['town_name']      ?? 'Municipality';
         $brgy      = $bi['barangay_name']  ?? 'Barangay';
         $brgy_logo = $bi['barangay_logo']  ?? '';
-        $city_logo = $bi['municipal_logo'] ?? '';
+        $government_logo = $bi['official_emblem'] ?? '';
 
         // Fix paths for subdirectory
         if (!empty($brgy_logo)) {
             $brgy_logo = '../' . $brgy_logo;
         }
-        if (!empty($city_logo)) {
-            $city_logo = '../' . $city_logo;
+        if (!empty($government_logo)) {
+            $government_logo = '../' . $government_logo;
         }
     }
 } catch (PDOException $e) {
@@ -224,7 +224,7 @@ $birthdateFmt = !empty($resident['birthdate'])
             display: flex;
             align-items: center;
             justify-content: space-between;
-            border-bottom: 2px solid #7a51c9;
+            border-bottom: 3px double #7a51c9;
             padding-bottom: 10px;
             margin-bottom: 12px;
             margin-top: 70px;
@@ -454,7 +454,7 @@ $birthdateFmt = !empty($resident['birthdate'])
             }
 
             .cert-header .header-center .brgy-name {
-                font-size: 22px;
+                font-size: 17px;
             }
 
             .cert-title {
@@ -466,7 +466,7 @@ $birthdateFmt = !empty($resident['birthdate'])
             }
 
             .cert-watermark {
-                width: 380px;
+                width: 600px;
             }
         }
     </style>
@@ -520,11 +520,11 @@ $birthdateFmt = !empty($resident['birthdate'])
                                 <p>Province of <?= ucwords($province) ?></p>
                                 <p>Municipality of <?= ucwords($town) ?></p>
                                 <p class="brgy-name"><?= strtoupper($brgy) ?></p>
-                                <p class="office-name">OFFICE OF THE PUNONG BARANGAY</p>
+                               
                             </div>
 
-                            <?php if (!empty($city_logo)): ?>
-                                <img src="<?= htmlspecialchars($city_logo) ?>" class="logo-img" alt="Municipal Logo">
+                            <?php if (!empty($government_logo)): ?>
+                                <img src="<?= htmlspecialchars($government_logo) ?>" class="logo-img" alt="Bagong Pilipinas Logo">
                             <?php else: ?>
                                 <div class="logo-placeholder-box"></div>
                             <?php endif; ?>

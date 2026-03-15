@@ -199,7 +199,7 @@ $birthdateFmt = !empty($resident['birthdate'])
             display: flex;
             align-items: center;
             justify-content: space-between;
-            border-bottom: 2px solid #2f009c;
+            border-bottom: 3px double #2f009c;
             padding-bottom: 10px;
             margin-bottom: 12px;
             margin-top: 70px;
@@ -410,7 +410,7 @@ $birthdateFmt = !empty($resident['birthdate'])
             }
 
             .cert-header .header-center .brgy-name {
-                font-size: 22px;
+                font-size: 17px;
             }
 
             .cert-title {
@@ -487,9 +487,7 @@ $birthdateFmt = !empty($resident['birthdate'])
 
                             <!-- Certificate Body -->
                             <div class="cert-body">
-                                <?php if (!empty($brgy_logo)): ?>
-                                <img src="<?= htmlspecialchars($brgy_logo) ?>" class="cert-watermark" alt="">
-                                <?php endif; ?>
+                                
 
                                 <div class="cert-body-content">
 

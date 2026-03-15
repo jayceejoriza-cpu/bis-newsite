@@ -73,10 +73,10 @@ if (!$resident) {
 // Fetch Barangay Info
 // ============================================
 $brgy_logo = '';
-$city_logo  = '';
-$province   = 'Province';
-$town       = 'Municipality';
-$brgy       = 'Barangay';
+$government_logo = '';
+$province  = 'Province';
+$town      = 'Municipality';
+$brgy      = 'Barangay';
 
 try {
     $biStmt = $pdo->query("SELECT * FROM barangay_info WHERE id = 1 LIMIT 1");
@@ -86,14 +86,14 @@ try {
         $town      = $bi['town_name']      ?? 'Municipality';
         $brgy      = $bi['barangay_name']  ?? 'Barangay';
         $brgy_logo = $bi['barangay_logo']  ?? '';
-        $city_logo = $bi['municipal_logo'] ?? '';
+        $government_logo = $bi['official_emblem'] ?? '';
 
         // Fix paths for subdirectory
         if (!empty($brgy_logo)) {
             $brgy_logo = '../' . $brgy_logo;
         }
-        if (!empty($city_logo)) {
-            $city_logo = '../' . $city_logo;
+        if (!empty($government_logo)) {
+            $government_logo = '../' . $government_logo;
         }
     }
 } catch (PDOException $e) {
@@ -226,8 +226,8 @@ $birthdateFmt = !empty($resident['birthdate'])
         top: 30px;
         font-style: italic;
         font-weight: bold;
-        font-size: 34px;
-        color: #000000;
+        font-size: 50px;
+        color: #4292d3;
         letter-spacing: 10px;
         user-select: none;
         /* Rotation properties */
@@ -321,8 +321,8 @@ $birthdateFmt = !empty($resident['birthdate'])
 
         .cert-watermark {
             position: absolute;
-            top: 50%;
-            left: 50%;
+            top: 38%;
+            left: 57%;
             transform: translate(-50%, -50%);
             opacity: 0.1;
             width: 280px;
@@ -509,7 +509,7 @@ $birthdateFmt = !empty($resident['birthdate'])
             }
 
             .cert-watermark {
-                width: 380px;
+                width: 500px;
             }
         }
     </style>
@@ -566,8 +566,8 @@ $birthdateFmt = !empty($resident['birthdate'])
                                 <p class="office-name">OFFICE OF THE PUNONG BARANGAY</p>
                             </div>
 
-                            <?php if (!empty($city_logo)): ?>
-                                <img src="<?= htmlspecialchars($city_logo) ?>" class="logo-img" alt="Municipal Logo">
+                            <?php if (!empty($government_logo)): ?>
+                                <img src="<?= htmlspecialchars($government_logo) ?>" class="logo-img" alt="Bagong Pilipinas Logo">
                             <?php else: ?>
                                 <div class="logo-placeholder-box"></div>
                             <?php endif; ?>
@@ -613,7 +613,7 @@ $birthdateFmt = !empty($resident['birthdate'])
 
                                         <p style="margin-top: 25px;">under the business name:</p>
 
-                                        <div style="margin-top: 20px; margin-bottom: 20px;">
+                                        <div style="margin-top: 20px; ">
                                             <span class="underline-wide">"<?= strtoupper($business_name) ?>"</span>
                                         </div>
 

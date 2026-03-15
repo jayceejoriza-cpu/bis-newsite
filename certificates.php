@@ -190,13 +190,11 @@ $certificateTypes = [
         </div>
     </main>
 
-    <!-- ============================================
-         Certificate of Indigency Modal
-         ============================================ -->
-    <div class="modal fade" id="indigencyModal" tabindex="-1" aria-labelledby="indigencyModalLabel" aria-hidden="true">
+
+ <div class="modal fade" id="indigencyModal" tabindex="-1" aria-labelledby="indigencyModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content cert-request-modal">
-                <!-- Modal Header -->
+                
                 <div class="modal-header cert-modal-header">
                     <div class="cert-modal-title-wrap">
                         <i class="fas fa-file-alt cert-modal-icon"></i>
@@ -205,19 +203,25 @@ $certificateTypes = [
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
 
-                <!-- Modal Body -->
-                <div class="modal-body cert-modal-body">
+                <div class="cert-tabs-container">
+                    <button type="button" id="tabForSelf" class="cert-tab-btn active">FOR SELF</button>
+                    <button type="button" id="tabGuardian" class="cert-tab-btn">GUARDIAN CONSENT</button>
+                </div>
 
-                    <!-- Resident Full Name -->
+                <div class="modal-body cert-modal-body">
+                    
+                    <input type="hidden" id="indigencyRequestType" value="self">
+
                     <div class="cert-field-group">
-                        <label class="cert-field-label">
+                        <label class="cert-field-label" id="primaryResidentLabel">
                             RESIDENT FULL NAME <span class="required-star">*</span>
                         </label>
                         <div class="resident-search-wrap">
                             <div class="resident-input-group">
-<input type="text"
+                                <input type="text"
                                        id="indigencyResidentName"
-                                       class="form-control cert-input"
+                                       class="cert-input"
+                                       style="width: 100%;"
                                        placeholder="Select resident"
                                        autocomplete="off"
                                        required>
@@ -227,27 +231,46 @@ $certificateTypes = [
                                     RESIDENT
                                 </button>
                             </div>
-                            <!-- Autocomplete Dropdown -->
                             <div class="resident-dropdown" id="indigencyResidentDropdown" style="display:none;"></div>
                         </div>
                     </div>
 
-                    <!-- Date -->
+                    <div class="cert-field-group" id="minorResidentGroup" style="display: none;">
+                        <label class="cert-field-label">
+                            MINOR RESIDENT FULL NAME <span class="required-star">*</span>
+                        </label>
+                        <div class="resident-search-wrap">
+                            <div class="resident-input-group">
+                                <input type="text"
+                                       id="indigencyMinorName"
+                                       class="cert-input"
+                                       style="width: 100%;"
+                                       placeholder="Select minor resident"
+                                       autocomplete="off">
+                                <input type="hidden" id="indigencyMinorId">
+                                <button type="button" class="btn btn-secondary btn-resident" id="indigencyMinorBtn" style="background-color: #6b7280; border-color: #6b7280; color: white;">
+                                    <i class="fas fa-child"></i>
+                                    MINOR
+                                </button>
+                            </div>
+                            <div class="resident-dropdown" id="indigencyMinorDropdown" style="display:none;"></div>
+                        </div>
+                    </div>
+
                     <div class="cert-field-group">
                         <label class="cert-field-label">
                              ISSUED DATE <span class="required-star">*</span>
                         </label>
                         <input type="date"
                                id="indigencyDate"
-                               class="form-control cert-input"
+                               class="cert-input"
                                value="<?php echo date('Y-m-d'); ?>"
                                required>
                     </div>
 
-                    <!-- Type of Assistance -->
                     <div class="cert-field-group">
                         <label class="cert-field-label">TYPE OF ASSISTANCE<span class="required-star">*</span></label>
-                        <select id="indigencyAssistance" class="form-control cert-input" required>
+                        <select id="indigencyAssistance" class="cert-input" required>
                             <option value="FINANCIAL">FINANCIAL</option>
                             <option value="MEDICAL">MEDICAL</option>
                             <option value="BURIAL">BURIAL</option>
@@ -255,10 +278,8 @@ $certificateTypes = [
                             <option value="EDUCATIONAL">EDUCATIONAL</option>
                         </select>
                     </div>
-
                 </div>
 
-                <!-- Modal Footer -->
                 <div class="modal-footer cert-modal-footer">
                     <button type="button" class="btn btn-cancel" data-bs-dismiss="modal">
                         <i class="fas fa-times"></i>
@@ -362,43 +383,72 @@ $certificateTypes = [
          Certificate of Low Income Modal
          ============================================ -->
     <div class="modal fade" id="lowIncomeModal" tabindex="-1" aria-labelledby="lowIncomeModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content cert-request-modal">
-                <div class="modal-header cert-modal-header">
-                    <div class="cert-modal-title-wrap">
-                        <i class="fas fa-money-bill-wave cert-modal-icon"></i>
-                        <h5 class="modal-title" id="lowIncomeModalLabel">Create Low Income Certificate Request</h5>
-                    </div>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content cert-request-modal">
+            <div class="modal-header cert-modal-header">
+                <div class="cert-modal-title-wrap">
+                    <i class="fas fa-money-bill-wave cert-modal-icon"></i>
+                    <h5 class="modal-title" id="lowIncomeModalLabel">Create Low Income Certificate</h5>
                 </div>
-                <div class="modal-body cert-modal-body">
-                    <div class="cert-field-group">
-                        <label class="cert-field-label">RESIDENT FULL NAME <span class="required-star">*</span></label>
-                        <div class="resident-search-wrap">
-                            <div class="resident-input-group">
-<input type="text" id="lowIncomeResidentName" class="form-control cert-input" placeholder="Select resident" autocomplete="off" required>
-                                <input type="hidden" id="lowIncomeResidentId">
-                                <button type="button" class="btn btn-primary btn-resident" id="lowIncomeResidentBtn"><i class="fas fa-user"></i> RESIDENT</button>
-                            </div>
-                            <div class="resident-dropdown" id="lowIncomeResidentDropdown" style="display:none;"></div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body cert-modal-body">
+                <div class="cert-field-group">
+                    <label class="cert-field-label">RESIDENT FULL NAME <span class="required-star">*</span></label>
+                    <div class="resident-search-wrap">
+                        <div class="resident-input-group">
+                            <input type="text" id="lowIncomeResidentName" class="form-control cert-input" placeholder="Search resident..." autocomplete="off" required>
+                            <input type="hidden" id="lowIncomeResidentId">
+                            <button type="button" class="btn btn-primary btn-resident" id="lowIncomeResidentBtn"><i class="fas fa-user"></i></button>
+                        </div>
+                        <div class="resident-dropdown" id="lowIncomeResidentDropdown" style="display:none;"></div>
+                    </div>
+                </div>
+
+                <div class="cert-field-group">
+                    <label class="cert-field-label">TYPE OF WORK <span class="required-star">*</span></label>
+                    <input type="text" id="lowIncomeWork" class="form-control cert-input" placeholder="e.g., Construction Worker" required>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="cert-field-group">
+                            <label class="cert-field-label">WORK SINCE (YEAR) <span class="required-star">*</span></label>
+                            <input type="number" id="lowIncomeWorkYear" class="form-control cert-input" value="<?= date('Y') ?>" min="1900" max="<?= date('Y') ?>" required>
                         </div>
                     </div>
-                    <div class="cert-field-group">
-                        <label class="cert-field-label">ISSUED DATE <span class="required-star">*</span></label>
-                        <input type="date" id="lowIncomeDate" class="form-control cert-input" value="<?php echo date('Y-m-d'); ?>" required>
-                    </div>
-                    <div class="cert-field-group">
-                        <label class="cert-field-label">PURPOSE</label>
-                        <input type="text" id="lowIncomePurpose" class="form-control cert-input" value="Low Income Verification" placeholder="e.g., Medical Assistance">
+                    <div class="col-md-6">
+                        <div class="cert-field-group">
+                            <label class="cert-field-label">MONTHLY INCOME <span class="required-star">*</span></label>
+                            <div class="input-group">
+                                <span class="input-group-text">₱</span>
+                                <input type="number" id="lowIncomeAmount" class="form-control cert-input" placeholder="0.00" step="0.01" required>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <div class="modal-footer cert-modal-footer">
-                    <button type="button" class="btn btn-cancel" data-bs-dismiss="modal"><i class="fas fa-times"></i> Cancel</button>
-                    <button type="button" class="btn btn-print-cert" id="lowIncomePrintBtn"><i class="fas fa-print"></i> Generate Certificate</button>
+
+                <div class="cert-field-group">
+                    <label class="cert-field-label">PURPOSE <span class="required-star">*</span></label>
+                    <select id="lowIncomePurpose" class="form-control cert-input" required>
+                        <option value="MEDICAL">MEDICAL</option>
+                        <option value="FINANCIAL">FINANCIAL</option>
+                        <option value="SCHOLARSHIP">SCHOLARSHIP</option>
+                    </select>
                 </div>
+
+                <div class="cert-field-group">
+                    <label class="cert-field-label">ISSUED DATE <span class="required-star">*</span></label>
+                    <input type="date" id="lowIncomeDate" class="form-control cert-input" value="<?= date('Y-m-d') ?>" required>
+                </div>
+            </div>
+            <div class="modal-footer cert-modal-footer">
+                <button type="button" class="btn btn-cancel" data-bs-dismiss="modal"><i class="fas fa-times"></i> Cancel</button>
+                <button type="button" class="btn btn-print-cert" id="lowIncomePrintBtn"><i class="fas fa-print"></i> Generate Certificate</button>
             </div>
         </div>
     </div>
+</div>
 
     <!-- ============================================
          Certificate of Solo Parent Modal
@@ -418,7 +468,7 @@ $certificateTypes = [
                         <label class="cert-field-label">RESIDENT FULL NAME <span class="required-star">*</span></label>
                         <div class="resident-search-wrap">
                             <div class="resident-input-group">
-<input type="text" id="soloParentResidentName" class="form-control cert-input" placeholder="Select resident" autocomplete="off" required>
+                                <input type="text" id="soloParentResidentName" class="form-control cert-input" placeholder="Select resident" autocomplete="off" required>
                                 <input type="hidden" id="soloParentResidentId">
                                 <button type="button" class="btn btn-primary btn-resident" id="soloParentResidentBtn"><i class="fas fa-user"></i> RESIDENT</button>
                             </div>

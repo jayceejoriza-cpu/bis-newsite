@@ -74,10 +74,10 @@ if (!$resident) {
 // Fetch Barangay Info
 // ============================================
 $brgy_logo = '';
-$city_logo  = '';
-$province   = 'Province';
-$town       = 'Municipality';
-$brgy       = 'Barangay';
+$government_logo = '';
+$province  = 'Province';
+$town      = 'Municipality';
+$brgy      = 'Barangay';
 
 try {
     $biStmt = $pdo->query("SELECT * FROM barangay_info WHERE id = 1 LIMIT 1");
@@ -87,14 +87,14 @@ try {
         $town      = $bi['town_name']      ?? 'Municipality';
         $brgy      = $bi['barangay_name']  ?? 'Barangay';
         $brgy_logo = $bi['barangay_logo']  ?? '';
-        $city_logo = $bi['municipal_logo'] ?? '';
+        $government_logo = $bi['official_emblem'] ?? '';
 
         // Fix paths for subdirectory
         if (!empty($brgy_logo)) {
             $brgy_logo = '../' . $brgy_logo;
         }
-        if (!empty($city_logo)) {
-            $city_logo = '../' . $city_logo;
+        if (!empty($government_logo)) {
+            $government_logo = '../' . $government_logo;
         }
     }
 } catch (PDOException $e) {
@@ -212,7 +212,7 @@ $birthdateFmt = !empty($resident['birthdate'])
             display: flex;
             align-items: center;
             justify-content: space-between;
-            border-bottom: 2px solid #c40d0d;
+            border-bottom: 3px double #7241ce;
             padding-bottom: 10px;
             margin-bottom: 12px;
             margin-top: 70px;
@@ -235,7 +235,6 @@ $birthdateFmt = !empty($resident['birthdate'])
             flex: 1;
             text-align: center;
             padding: 0 15px;
-            margin-right: 140px;
         }
 
         .cert-header .header-center p {
@@ -288,7 +287,7 @@ $birthdateFmt = !empty($resident['birthdate'])
 
         .cert-watermark {
             position: absolute;
-            top: 50%;
+            top: 35%;
             left: 50%;
             transform: translate(-50%, -50%);
             opacity: 0.1;
@@ -423,7 +422,7 @@ $birthdateFmt = !empty($resident['birthdate'])
             }
 
             .cert-watermark {
-                width: 380px;
+                width: 500px;
             }
         }
     </style>
@@ -473,7 +472,11 @@ $birthdateFmt = !empty($resident['birthdate'])
                                 <p class="office-name">OFFICE OF THE PUNONG BARANGAY</p>
                             </div>
 
-                        
+                         <?php if (!empty($government_logo)): ?>
+                                <img src="<?= htmlspecialchars($government_logo) ?>" class="logo-img" alt="Bagong Pilipinas Logo">
+                            <?php else: ?>
+                                <div class="logo-placeholder-box"></div>
+                            <?php endif; ?>
                         </div>
 
                         <!-- =====================
