@@ -685,27 +685,16 @@ $age = calculateAge($resident['date_of_birth']);
                                                 <th>Certificate</th>
                                                 <th>Purpose</th>
                                                 <th>Issued Date</th>
-                                                <th>Status</th>
+                                              
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            <?php foreach ($certRequests as $index => $req): ?>
+                                            <?php $totalRequests = count($certRequests); foreach ($certRequests as $index => $req): ?>
                                                 <tr>
-                                                    <td><?php echo $index + 1; ?></td>
+                                                    <td><?php echo $totalRequests - $index; ?></td>
                                                     <td><?php echo htmlspecialchars($req['certificate_name']); ?></td>
                                                     <td><?php echo htmlspecialchars($req['purpose'] ?: 'N/A'); ?></td>
-                                                    <td><?php echo $req['date_requested'] ? date('M d, Y', strtotime($req['date_requested'])) : 'N/A'; ?></td>
-                                                    <td>
-                                                        <?php 
-                                                            $statusClass = strtolower($req['status']);
-                                                            if ($statusClass === 'pending') $statusClass = 'pending';
-                                                            elseif ($statusClass === 'approved' || $statusClass === 'completed') $statusClass = 'completed';
-                                                            elseif ($statusClass === 'rejected') $statusClass = 'rejected';
-                                                        ?>
-                                                        <span class="status-badge status-<?php echo $statusClass; ?>">
-                                                            <?php echo htmlspecialchars($req['status']); ?>
-                                                        </span>
-                                                    </td>
+                                                    <td><?php echo $req['date_requested'] ? date('M d, Y g:i A', strtotime($req['date_requested'])) : 'N/A'; ?></td>
                                                 </tr>
                                             <?php endforeach; ?>
                                         </tbody>

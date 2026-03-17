@@ -485,6 +485,14 @@ function updateMinorStatus() {
         if (membershipTypeSelect) membershipTypeSelect.removeAttribute('disabled');
         if (philhealthCategorySelect) philhealthCategorySelect.removeAttribute('disabled');
 
+        // Allow adult to be household head by default
+        const yesRadio = document.getElementById('householdHeadYes');
+        if (yesRadio) {
+            yesRadio.disabled = false;
+            const yesLabel = yesRadio.closest('.radio-option') || yesRadio.closest('label');
+            if (yesLabel) yesLabel.style.display = '';
+        }
+
         return;
     }
 
@@ -631,6 +639,19 @@ function updateMinorStatus() {
         if (philhealthIdInput) philhealthIdInput.setAttribute('disabled', 'disabled');
         if (membershipTypeSelect) membershipTypeSelect.setAttribute('disabled', 'disabled');
         if (philhealthCategorySelect) philhealthCategorySelect.setAttribute('disabled', 'disabled');
+
+        // Prevent minor from being household head
+        const yesRadio = document.getElementById('householdHeadYes');
+        const noRadio = document.getElementById('householdHeadNo');
+        if (yesRadio && noRadio) {
+            yesRadio.disabled = true;
+            if (yesRadio.checked) {
+                noRadio.checked = true;
+                noRadio.dispatchEvent(new Event('change'));
+            }
+            const yesLabel = yesRadio.closest('.radio-option') || yesRadio.closest('label');
+            if (yesLabel) yesLabel.style.display = 'none';
+        }
     } else {
         // Age >= 18 - Hide Guardian section
         minorOnlyElements.forEach(el => el.style.display = 'none');
@@ -648,6 +669,14 @@ function updateMinorStatus() {
         // Hide minor-related UI elements
         if (minorConsentNote) minorConsentNote.style.display = 'none';
         if (minorAlert) minorAlert.style.display = 'none';
+
+        // Allow adult to be household head
+        const yesRadio = document.getElementById('householdHeadYes');
+        if (yesRadio) {
+            yesRadio.disabled = false;
+            const yesLabel = yesRadio.closest('.radio-option') || yesRadio.closest('label');
+            if (yesLabel) yesLabel.style.display = '';
+        }
     }
 
     // ==============================================

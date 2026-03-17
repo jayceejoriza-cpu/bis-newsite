@@ -309,22 +309,11 @@ try {
                                     </td>
                                     <td>+63 <?php echo htmlspecialchars($official['contact_number'] ?? 'N/A'); ?></td>
                                     <td>
-                                        <div class="action-buttons">
-                                            <?php if (hasPermission('perm_officials_view')): ?>
-                                            <button class="btn-view" data-official-id="<?php echo $official['id']; ?>">
-                                                <i class="fas fa-eye"></i> View
-                                            </button>
-                                            <?php endif; ?>
-                                            <?php if (hasPermission('perm_officials_edit')): ?>
-                                            <button class="btn-edit" data-official-id="<?php echo $official['id']; ?>">
-                                                <i class="fas fa-edit"></i> Edit
-                                            </button>
-                                            <?php endif; ?>
-                                            <?php if (hasPermission('perm_officials_delete')): ?>
-                                            <button class="btn-delete" data-official-id="<?php echo $official['id']; ?>">
-                                                <i class="fas fa-trash"></i> Delete
-                                            </button>
-                                            <?php endif; ?>
+                                        <div class="dropdown">
+                                            <button class="btn-action" data-official-id="<?= $official['id'] ?>">
+                                        <i class="fas fa-ellipsis-h"></i>
+                                    </button>
+                                            </ul>
                                         </div>
                                     </td>
                                 </tr>
@@ -407,17 +396,14 @@ try {
                             <label for="chairmanship" class="form-label">Chairmanship</label>
                             <select class="form-select" id="chairmanship" name="chairmanship">
                                 <option value="">Select Official Chairmanship</option>
-                                <option value="Executive">Executive</option>
-                                <option value="Health and Sanitation">Health and Sanitation</option>
-                                <option value="Peace and Order">Peace and Order</option>
-                                <option value="Infrastructure">Infrastructure</option>
-                                <option value="Education">Education</option>
-                                <option value="Youth Development">Youth Development</option>
-                                <option value="Administration">Administration</option>
-                                <option value="Finance">Finance</option>
-                                <option value="Agriculture">Agriculture</option>
-                                <option value="Environment">Environment</option>
+                                <option value="Culture and Education">Culture and Education</option>
+                                <option value="Clean and Green">Clean and Green</option>
+                                <option value="Health & Sanitation">Health & Sanitation</option>
+                                <option value="Peace In Order">Peace In Order</option>
                                 <option value="Social Services">Social Services</option>
+                                <option value="Infrastructure">Infrastructure</option>
+                                <option value="Anti-Red Tape">Anti-Red Tape</option>
+                                <option value="Educational and Sports">Educational and Sports</option>
                             </select>
                         </div>
 
@@ -432,6 +418,7 @@ try {
                                 <option value="Barangay Secretary">Barangay Secretary</option>
                                 <option value="Barangay Treasurer">Barangay Treasurer</option>
                                 <option value="Barangay Administator">Barangay Administator</option>
+                                <option value="Bookkeeper">Bookkeeper</option>
                             </select>
                         </div>
 
@@ -616,17 +603,14 @@ try {
                             <label for="editChairmanship" class="form-label">Chairmanship</label>
                             <select class="form-select" id="editChairmanship" name="chairmanship">
                                 <option value="">Select Official Chairmanship</option>
-                                <option value="Executive">Executive</option>
-                                <option value="Health and Sanitation">Health and Sanitation</option>
-                                <option value="Peace and Order">Peace and Order</option>
-                                <option value="Infrastructure">Infrastructure</option>
-                                <option value="Education">Education</option>
-                                <option value="Youth Development">Youth Development</option>
-                                <option value="Administration">Administration</option>
-                                <option value="Finance">Finance</option>
-                                <option value="Agriculture">Agriculture</option>
-                                <option value="Environment">Environment</option>
+                                <option value="Culture and Education">Culture and Education</option>
+                                <option value="Clean and Green">Clean and Green</option>
+                                <option value="Health & Sanitation">Health & Sanitation</option>
+                                <option value="Peace In Order">Peace In Order</option>
                                 <option value="Social Services">Social Services</option>
+                                <option value="Infrastructure">Infrastructure</option>
+                                <option value="Anti-Red Tape">Anti-Red Tape</option>
+                                <option value="Educational and Sports">Educational and Sports</option>
                             </select>
                         </div>
 
@@ -634,14 +618,14 @@ try {
                         <div class="mb-3">
                             <label for="editPosition" class="form-label">Position</label>
                             <select class="form-select" id="editPosition" name="position" required>
-                                <option value="">Select Official Position</option>
+                                 <option value="">Select Official Position</option>
                                 <option value="Barangay Captain">Barangay Captain</option>
                                 <option value="Kagawad">Kagawad</option>
                                 <option value="SK Chairman">SK Chairman</option>
                                 <option value="Barangay Secretary">Barangay Secretary</option>
                                 <option value="Barangay Treasurer">Barangay Treasurer</option>
                                 <option value="Barangay Administator">Barangay Administator</option>
-                            </select>
+                                <option value="Bookkeeper">Bookkeeper</option>
                         </div>
 
                         <!-- Term Start -->

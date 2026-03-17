@@ -1,7 +1,19 @@
 let requestsTable;
 
 document.addEventListener('DOMContentLoaded', function() {
-    loadRequests();
+    // Initialize EnhancedTable for server-rendered data
+    requestsTable = new EnhancedTable('requestsTable', {
+        sortable: true,
+        searchable: true,
+        paginated: true,
+        pageSize: 10,
+        responsive: true,
+        customSearch: (row, term) => {
+            const residentId = row.cells[0]?.textContent.toLowerCase() || '';
+            const residentName = row.cells[1]?.textContent.toLowerCase() || '';
+            return residentId.includes(term) || residentName.includes(term);
+        }
+    });
     initializeSearch();
     initializeButtons();
     initializeFilterPanelOutsideClick();
@@ -34,76 +46,7 @@ function initializeFilterPanelOutsideClick() {
     });
 }
 
-// ===================================
-// Load Requests Data
-// ===================================
-function loadRequests() {
-    const tableBody = document.getElementById('requestsTableBody');
-    if (!tableBody) return;
 
-    // Show loading state
-    tableBody.innerHTML = `
-        <tr>
-            <td colspan="5" style="text-align: center; padding: 40px;">
-                <i class="fas fa-spinner fa-spin" style="font-size: 24px; color: var(--primary-color);"></i>
-                <p style="margin-top: 10px; color: var(--text-secondary);">Loading requests...</p>
-            </td>
-        </tr>
-    `;
-
-    fetch('model/get_requests.php')
-        .then(response => response.json())
-        .then(data => {
-            tableBody.innerHTML = '';
-            if (data.data && data.data.length > 0) {
-                data.data.forEach(row => {
-                    const tr = document.createElement('tr');
-                    tr.innerHTML = `
-                        <td>${row.resident_id || 'N/A'}</td>
-                        <td>${row.resident_name || 'N/A'}</td>
-                        <td>${row.certificate_name || 'N/A'}</td>
-                        <td>${row.purpose || 'N/A'}</td>
-                        <td>${new Date(row.date_requested).toLocaleDateString()}</td>
-                    `;
-                    tableBody.appendChild(tr);
-                });
-            } else {
-                tableBody.innerHTML = `
-                    <tr>
-                        <td colspan="5" style="text-align: center; padding: 40px;">
-                            <i class="fas fa-file-alt" style="font-size: 48px; color: #d1d5db; margin-bottom: 16px;"></i>
-                            <p style="color: #6b7280; font-size: 16px; margin: 0;">No requests found</p>
-                        </td>
-                    </tr>
-                `;
-            }
-
-            // Initialize EnhancedTable after data is loaded
-            requestsTable = new EnhancedTable('requestsTable', {
-                sortable: true,
-                searchable: true,
-                paginated: true,
-                pageSize: 10,
-                responsive: true,
-                customSearch: (row, term) => {
-                    const residentId = row.cells[0]?.textContent.toLowerCase() || '';
-                    const residentName = row.cells[1]?.textContent.toLowerCase() || '';
-                    return residentId.includes(term) || residentName.includes(term);
-                }
-            });
-        })
-        .catch(error => {
-            console.error('Error loading requests:', error);
-            tableBody.innerHTML = `
-                <tr>
-                    <td colspan="5" style="text-align: center; padding: 40px; color: #ef4444;">
-                        <i class="fas fa-exclamation-triangle" style="font-size: 48px; margin-bottom: 16px;"></i>
-                        <p style="margin: 0;">Error loading requests</p>
-                    </td>
-                </tr>
-            `;
-        });
-}
 
 // ===================================
 // Search Functionality
@@ -157,7 +100,7 @@ function initializeButtons() {
             icon.style.animation = 'spin 0.5s linear';
             setTimeout(() => {
                 icon.style.animation = '';
-                loadRequests();
+                location.reload(); // Reload page to refetch server data
             }, 500);
         });
     }

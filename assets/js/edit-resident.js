@@ -255,6 +255,15 @@ function updateAgeAndHealthGroup() {
     const ageHealthGroupSelect = document.getElementById('ageHealthGroup');
     
     if (!dobInput || !dobInput.value) return;
+    if (!dobInput || !dobInput.value) {
+        const yesRadio = document.getElementById('householdHeadYes');
+        if (yesRadio) {
+            yesRadio.disabled = false;
+            const yesContainer = yesRadio.closest('.radio-option') || yesRadio.closest('.form-check') || yesRadio.closest('label') || yesRadio.parentElement;
+            if (yesContainer) yesContainer.style.display = '';
+        }
+        return;
+    }
 
     const dob = new Date(dobInput.value);
     const today = new Date();
@@ -298,6 +307,19 @@ function updateAgeAndHealthGroup() {
         // Update Mobile Number label for resident
         if (mobileNumberLabel) mobileNumberLabel.innerHTML = 'Mobile Number';
         if (mobileNumberInput) mobileNumberInput.removeAttribute('required');
+        
+        // Prevent minor from being household head
+        const yesRadio = document.getElementById('householdHeadYes');
+        const noRadio = document.getElementById('householdHeadNo');
+        if (yesRadio && noRadio) {
+            yesRadio.disabled = true;
+            if (yesRadio.checked) {
+                noRadio.checked = true;
+                noRadio.dispatchEvent(new Event('change'));
+            }
+            const yesContainer = yesRadio.closest('.radio-option') || yesRadio.closest('.form-check') || yesRadio.closest('label') || yesRadio.parentElement;
+            if (yesContainer) yesContainer.style.display = 'none';
+        }
     } else {
         if (guardianSection) guardianSection.style.display = 'none';
         if (guardianNameInput) guardianNameInput.removeAttribute('required');
@@ -312,6 +334,14 @@ function updateAgeAndHealthGroup() {
         if (civilStatusSelect) {
             civilStatusSelect.removeAttribute('disabled');
             civilStatusSelect.setAttribute('required', 'required');
+        }
+        
+        // Allow adult to be household head
+        const yesRadio = document.getElementById('householdHeadYes');
+        if (yesRadio) {
+            yesRadio.disabled = false;
+            const yesContainer = yesRadio.closest('.radio-option') || yesRadio.closest('.form-check') || yesRadio.closest('label') || yesRadio.parentElement;
+            if (yesContainer) yesContainer.style.display = '';
         }
     }
 }

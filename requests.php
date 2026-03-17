@@ -154,7 +154,70 @@ try {
                         </tr>
                     </thead>
                     <tbody id="requestsTableBody">
+                        <?php
+                        ob_start();
+                        $requestsError = false;
+                        $requestsData = [];
                         
+                        try {
+                            $sql = "
+                                SELECT 
+                                    cr.id,
+                                    r.resident_id,
+                                    r.id AS r_id,
+                                    CONCAT(r.first_name, ' ', IFNULL(CONCAT(r.middle_name, ' '), ''), r.last_name) AS resident_name,
+                                    cr.certificate_name,
+                                    cr.purpose,
+                                    cr.date_requested
+                                FROM certificate_requests cr
+                                LEFT JOIN residents r ON cr.resident_id = r.id
+                                ORDER BY cr.date_requested DESC
+                            ";
+                            $stmt = $pdo->query($sql);
+                            $requestsData = $stmt->fetchAll();
+                            
+                            // Update totalRequests to match
+                            $countSql = "SELECT COUNT(*) FROM certificate_requests cr LEFT JOIN residents r ON cr.resident_id = r.id";
+                            $totalRequests = $pdo->query($countSql)->fetchColumn();
+                        } catch (PDOException $e) {
+                            $requestsError = true;
+                            error_log('Requests load error: ' . $e->getMessage());
+                        }
+                        
+                        if ($requestsError) { ?>
+                                <tr>
+                                    <td colspan="5" style="text-align: center; padding: 40px; color: #ef4444;">
+                                        <i class="fas fa-exclamation-triangle" style="font-size: 48px; margin-bottom: 16px;"></i>
+                                        <p style="margin: 0;">Error loading requests</p>
+                                    </td>
+                                </tr>
+                        <?php } elseif (empty($requestsData)) { ?>
+                                <tr>
+                                    <td colspan="5" style="text-align: center; padding: 40px;">
+                                        <i class="fas fa-file-alt" style="font-size: 48px; color: #d1d5db; margin-bottom: 16px;"></i>
+                                        <p style="color: #6b7280; font-size: 16px; margin: 0;">No requests found</p>
+                                    </td>
+                                </tr>
+                        <?php } else { 
+                            foreach ($requestsData as $row) { ?>
+                                <tr>
+                                    <td><?= htmlspecialchars($row['resident_id'] ?? 'N/A') ?></td>
+                                    <td>
+                                        <?php if (!empty($row['r_id'])): ?>
+                                            <a href="resident_profile.php?id=<?= urlencode($row['r_id']) ?>" style="color: var(--primary-color); text-decoration: none; font-weight: 500;">
+                                                <?= htmlspecialchars($row['resident_name'] ?? 'N/A') ?>
+                                            </a>
+                                        <?php else: ?>
+                                            <?= htmlspecialchars($row['resident_name'] ?? 'N/A') ?>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td><?= htmlspecialchars($row['certificate_name'] ?? 'N/A') ?></td>
+                                    <td><?= htmlspecialchars($row['purpose'] ?? 'N/A') ?></td>
+                                    <td><?= ($row['date_requested'] ? date('M d, Y g:i A', strtotime($row['date_requested'])) : 'N/A') ?></td>
+                                </tr>
+                        <?php 
+                            }
+                        } ?>
                     </tbody>
                 </table>
             </div>

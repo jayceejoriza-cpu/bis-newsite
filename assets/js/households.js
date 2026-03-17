@@ -378,6 +378,9 @@ function resetHouseholdForm() {
         tbody.innerHTML = '<tr class="no-members-row"><td colspan="7" style="text-align: center; padding: 20px; color: var(--text-secondary);">No members added yet</td></tr>';
     }
     
+    const actionTh = document.querySelector('.members-table th:last-child');
+    if (actionTh) actionTh.style.display = '';
+    
     // Regenerate household number
     generateHouseholdNumber();
 }
@@ -591,6 +594,9 @@ function viewHousehold(householdId) {
                 document.getElementById('addMemberBtn').style.display = 'none';
                 document.getElementById('saveHouseholdBtn').style.display = 'none';
                 
+                const actionTh = document.querySelector('.members-table th:last-child');
+                if (actionTh) actionTh.style.display = 'none';
+                
                 const form = document.getElementById('createHouseholdForm');
                 form.setAttribute('data-household-id', householdId);
                 form.setAttribute('data-view-mode', 'true');
@@ -616,7 +622,7 @@ function viewHousehold(householdId) {
                             <td>${member.sex || 'N/A'}</td>
                             <td>${member.relationship_to_head}</td>
                             <td>${member.mobile_number || 'N/A'}</td>
-                            <td></td>
+                            <td style="display: none;"></td>
                         `;
                         tbody.appendChild(row);
                     });
@@ -641,6 +647,9 @@ function editHousehold(householdId) {
                 
                 const modalTitle = modal.querySelector('.household-modal-header h3');
                 modalTitle.innerHTML = '<i class="fas fa-edit"></i> Edit Household';
+                
+                const actionTh = document.querySelector('.members-table th:last-child');
+                if (actionTh) actionTh.style.display = '';
                 
                 // Set household number and make it readonly (cannot be edited)
                 const householdNumberInput = document.getElementById('householdNumber');
