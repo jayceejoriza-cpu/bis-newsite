@@ -243,6 +243,13 @@ try {
             </div>
             
             <!-- Advanced Filter Panel -->
+            <style>
+                @media (min-width: 992px) {
+                    .filter-panel-body .filter-grid {
+                        grid-template-columns: repeat(4, 1fr) !important;
+                    }
+                }
+            </style>
             <div class="filter-panel" id="filterPanel" style="display: none;">
                 <div class="filter-panel-header">
                     <h3><i class="fas fa-filter"></i> Select Filters</h3>
@@ -250,6 +257,26 @@ try {
                 <div class="filter-panel-body">
                     <div class="filter-grid">
                         
+                        <div class="filter-item">
+                            <label for="filterSex">Sex</label>
+                            <select id="filterSex" class="filter-select">
+                                <option value="">All</option>
+                                <option value="Male">Male</option>
+                                <option value="Female">Female</option>
+                            </select>
+                        </div>
+                        
+                        <div class="filter-item">
+                            <label for="filterPurok">Purok</label>
+                            <select id="filterPurok" class="filter-select">
+                                <option value="">All</option>
+                                <option value="1">Purok 1</option>
+                                <option value="2">Purok 2</option>
+                                <option value="3">Purok 3</option>
+                                <option value="4">Purok 4</option>
+                            </select>
+                        </div>
+
                         <div class="filter-item">
                             <label for="filterAgeHealthGroup">Age/Health Group</label>
                             <select id="filterAgeHealthGroup" class="filter-select">
@@ -306,7 +333,6 @@ try {
                             </select>
                         </div>
                         
-                        <!-- Column 2 -->
                         <div class="filter-item">
                             <label for="filterDateOfBirth">Date of Birth</label>
                             <input type="date" id="filterDateOfBirth" class="filter-select">
@@ -337,7 +363,11 @@ try {
                             </select>
                         </div>
                         
-                        <!-- Column 3 -->
+                        <div class="filter-item">
+                            <label for="filterOccupation">Occupation</label>
+                            <input type="text" id="filterOccupation" class="filter-select" placeholder="Enter Occupation">
+                        </div>
+                        
                         <div class="filter-item">
                             <label for="filterEmploymentStatus">Employment Status</label>
                             <select id="filterEmploymentStatus" class="filter-select">
@@ -359,6 +389,78 @@ try {
                             </select>
                         </div>
                         
+                        <div class="filter-item">
+                            <label for="filterVoterStatus">Registered Voter</label>
+                            <select id="filterVoterStatus" class="filter-select">
+                                <option value="">All</option>
+                                <option value="Yes">Yes</option>
+                                <option value="No">No</option>
+                            </select>
+                        </div>
+                        
+                        <div class="filter-item">
+                            <label for="filterMembershipType">Philhealth Membership Type</label>
+                            <select id="filterMembershipType" class="filter-select">
+                                <option value="">All</option>
+                                <option value="Direct Contributor">Direct Contributor</option>
+                                <option value="Indirect Contributor">Indirect Contributor</option>
+                                <option value="Dependent">Dependent</option>
+                            </select>
+                        </div>
+                        
+                        <div class="filter-item">
+                            <label for="filterPhilhealthCategory">Philhealth Category</label>
+                            <select id="filterPhilhealthCategory" class="filter-select">
+                                <option value="">All</option>
+                                <option value="Employed Private">Employed Private</option>
+                                <option value="Employed Gov">Employed Government</option>
+                                <option value="Indigent">Indigent</option>
+                                <option value="Sponsored">Sponsored</option>
+                                <option value="Lifetime">Lifetime Member</option>
+                                <option value="Senior Citizen">Senior Citizen</option>
+                            </select>
+                        </div>
+                        
+                        <div class="filter-item">
+                            <label for="filterMedicalHistory">Medical History</label>
+                            <input type="text" id="filterMedicalHistory" class="filter-select" placeholder="Enter Medical History">
+                        </div>
+
+                        <!-- Optional Women's Reproductive Health Fields -->
+                        <div class="filter-item">
+                            <label for="filterUsingFpMethod">Using FP Method</label>
+                            <select id="filterUsingFpMethod" class="filter-select">
+                                <option value="">All</option>
+                                <option value="Yes">Yes</option>
+                                <option value="No">No</option>
+                            </select>
+                        </div>
+                        
+                        <div class="filter-item">
+                            <label for="filterFpMethodsUsed">FP Methods Used</label>
+                            <select id="filterFpMethodsUsed" class="filter-select">
+                                <option value="">All</option>
+                                <option value="Pills">Pills</option>
+                                <option value="IUD">IUD</option>
+                                <option value="Injectables">Injectables</option>
+                                <option value="Implant">Implant</option>
+                                <option value="Condom">Condom</option>
+                                <option value="BTL">BTL</option>
+                                <option value="NSV">NSV</option>
+                                <option value="LAM">LAM</option>
+                                <option value="Natural">Natural</option>
+                            </select>
+                        </div>
+                        
+                        <div class="filter-item">
+                            <label for="filterFpStatus">FP Status</label>
+                            <select id="filterFpStatus" class="filter-select">
+                                <option value="">All</option>
+                                <option value="Current User">Current User</option>
+                                <option value="Dropout">Dropout</option>
+                                <option value="Acceptor">Acceptor</option>
+                            </select>
+                        </div>
                         
                     </div>
                 </div>

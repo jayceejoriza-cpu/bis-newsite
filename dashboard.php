@@ -451,67 +451,7 @@
                 </div>
             </div>
 
-            <!-- Verification & Activity Status -->
-            <div class="report-section">
-                <h3 class="report-section-title">
-                    <i class="fas fa-check-circle"></i> Verification & Activity Status
-                </h3>
-                <div class="report-two-col">
-                    <div class="report-table-box">
-                        <div class="report-table-box-title">Verification Status</div>
-                        <table class="report-table">
-                            <thead>
-                                <tr>
-                                    <th>Status</th>
-                                    <th class="text-right">Count</th>
-                                    <th class="text-right">%</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <?php if (empty($verificationData)): ?>
-                                    <tr><td colspan="3"><div class="report-empty"><i class="fas fa-inbox"></i><p>No data</p></div></td></tr>
-                                <?php else: ?>
-                                    <?php foreach ($verificationData as $label => $count): ?>
-                                    <tr>
-                                        <td>
-                                            <span class="report-badge <?php echo strtolower($label); ?>">
-                                                <?php echo htmlspecialchars($label); ?>
-                                            </span>
-                                        </td>
-                                        <td class="text-right"><strong><?php echo number_format($count); ?></strong></td>
-                                        <td class="text-right"><?php echo pct($count, $totalResidents); ?>%</td>
-                                    </tr>
-                                    <?php endforeach; ?>
-                                <?php endif; ?>
-                            </tbody>
-                        </table>
-                    </div>
-                    <div class="report-table-box">
-                        <div class="report-table-box-title">Activity Status</div>
-                        <table class="report-table">
-                            <thead>
-                                <tr>
-                                    <th>Status</th>
-                                    <th class="text-right">Count</th>
-                                    <th class="text-right">%</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <?php
-                                $allResidents = array_sum($activityData);
-                                foreach ($activityData as $label => $count): ?>
-                                <tr>
-                                    <td><?php echo htmlspecialchars($label); ?></td>
-                                    <td class="text-right"><strong><?php echo number_format($count); ?></strong></td>
-                                    <td class="text-right"><?php echo pct($count, $allResidents); ?>%</td>
-                                </tr>
-                                <?php endforeach; ?>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-
+           
         </div><!-- end tab-population -->
 
         <!-- ============================
@@ -654,17 +594,6 @@
              ============================ -->
         <div class="report-tab-content" id="tab-certificates">
 
-            <!-- Revenue Highlight -->
-            <div class="revenue-highlight">
-                <div>
-                    <div class="revenue-highlight-label">Total Revenue Collected (Paid)</div>
-                    <div class="revenue-highlight-value">₱<?php echo number_format($totalRevenue, 2); ?></div>
-                </div>
-                <div class="revenue-highlight-icon">
-                    <i class="fas fa-peso-sign"></i>
-                </div>
-            </div>
-
             <!-- By Type + By Status -->
             <div class="report-section">
                 <h3 class="report-section-title">
@@ -687,7 +616,7 @@
                                 <tr>
                                     <th>Certificate</th>
                                     <th class="text-right">Requests</th>
-                                    <th class="text-right">Revenue</th>
+                                 
                                 </tr>
                             </thead>
                             <tbody>
@@ -698,13 +627,13 @@
                                     <tr>
                                         <td><?php echo htmlspecialchars($label); ?></td>
                                         <td class="text-right"><strong><?php echo number_format($count); ?></strong></td>
-                                        <td class="text-right">₱<?php echo number_format($certTypeRevenue[$label] ?? 0, 2); ?></td>
+                                       
                                     </tr>
                                     <?php endforeach; ?>
                                     <tr style="font-weight:600; border-top:2px solid var(--border-color);">
                                         <td>Total</td>
                                         <td class="text-right"><?php echo number_format($totalCertReqs); ?></td>
-                                        <td class="text-right">₱<?php echo number_format(array_sum($certTypeRevenue), 2); ?></td>
+                                    
                                     </tr>
                                 <?php endif; ?>
                             </tbody>
@@ -713,84 +642,6 @@
                 </div>
             </div>
 
-            <!-- Status + Payment -->
-            <div class="report-section">
-                <h3 class="report-section-title">
-                    <i class="fas fa-tasks"></i> Request Status & Payment
-                </h3>
-                <div class="report-two-col">
-                    <!-- Status Doughnut -->
-                    <div>
-                        <div class="report-chart-box">
-                            <div class="report-chart-box-title">Request Status</div>
-                            <div class="report-chart-canvas-wrap">
-                                <canvas id="certStatusChart"
-                                    data-labels="<?php echo jsonAttr(array_keys($certStatusData)); ?>"
-                                    data-values="<?php echo jsonAttr(array_values($certStatusData)); ?>">
-                                </canvas>
-                            </div>
-                        </div>
-                        <div class="report-table-box" style="margin-top:16px;">
-                            <div class="report-table-box-title">Status Breakdown</div>
-                            <table class="report-table">
-                                <thead>
-                                    <tr>
-                                        <th>Status</th>
-                                        <th class="text-right">Count</th>
-                                        <th class="text-right">%</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <?php foreach ($certStatusData as $label => $count): ?>
-                                    <tr>
-                                        <td>
-                                            <span class="report-badge <?php echo strtolower($label); ?>">
-                                                <?php echo htmlspecialchars($label); ?>
-                                            </span>
-                                        </td>
-                                        <td class="text-right"><strong><?php echo number_format($count); ?></strong></td>
-                                        <td class="text-right"><?php echo pct($count, $totalCertReqs); ?>%</td>
-                                    </tr>
-                                    <?php endforeach; ?>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-
-                    <!-- Payment Status -->
-                    <div class="report-table-box">
-                        <div class="report-table-box-title">Payment Status & Revenue</div>
-                        <table class="report-table">
-                            <thead>
-                                <tr>
-                                    <th>Payment Status</th>
-                                    <th class="text-right">Count</th>
-                                    <th class="text-right">Amount</th>
-                                    <th class="text-right">%</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <?php if (empty($certPaymentData)): ?>
-                                    <tr><td colspan="4"><div class="report-empty"><i class="fas fa-inbox"></i><p>No payment data</p></div></td></tr>
-                                <?php else: ?>
-                                    <?php foreach ($certPaymentData as $label => $data): ?>
-                                    <tr>
-                                        <td>
-                                            <span class="report-badge <?php echo strtolower($label); ?>">
-                                                <?php echo htmlspecialchars($label); ?>
-                                            </span>
-                                        </td>
-                                        <td class="text-right"><strong><?php echo number_format($data['count']); ?></strong></td>
-                                        <td class="text-right">₱<?php echo number_format($data['revenue'], 2); ?></td>
-                                        <td class="text-right"><?php echo pct($data['count'], $totalCertReqs); ?>%</td>
-                                    </tr>
-                                    <?php endforeach; ?>
-                                <?php endif; ?>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
 
         </div><!-- end tab-certificates -->
 
@@ -956,16 +807,17 @@
             'Total Residents': 'residents.php',
             'Total Households': 'households.php',
             'Blotter Records': 'blotter.php',
-            'Certificate Requests': 'certificates.php',
-            '4Ps Members': 'residents.php',
+            'Certificate Requests': 'requests.php',
+            '4Ps Members': 'residents.php?filter4ps=Yes',
             'Registered Voters': 'residents.php',
-            'PWD': 'residents.php',
-            'Senior Citizens': 'residents.php',
+            'PWD': 'residents.php?filterPwdStatus=Yes',
+            'Senior Citizens': 'residents.php?filterAgeGroup=60%2B',
             'Indigent': 'residents.php'
         };
 
         document.querySelectorAll('.report-stat-card, .special-group-card').forEach(card => {
             card.addEventListener('dblclick', () => {
+            
                 const label = card.querySelector('.report-stat-label, .special-group-label')?.textContent.trim();
                 if (label && cardLinks[label]) {
                     window.location.href = cardLinks[label];
@@ -974,6 +826,7 @@
             // Add visual cue
             card.style.cursor = 'pointer';
             card.setAttribute('title', 'Double-click to view details');
+
         });
 
         // Print Button Handler

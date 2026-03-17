@@ -19,6 +19,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // Apply saved view preference
     applySavedView();
     
+    // Check URL parameters for initial filters
+    applyUrlFilters();
+    
     console.log('Residents page loaded successfully');
 });
 
@@ -251,6 +254,39 @@ function initializeSearch() {
             gridCards.forEach(card => card.style.display = '');
             searchInput.focus();
         });
+    }
+}
+
+// ===================================
+// URL Filters
+// ===================================
+function applyUrlFilters() {
+    const urlParams = new URLSearchParams(window.location.search);
+    let hasFilters = false;
+    
+    // Maps URL param keys to DOM element IDs
+    const filterMappings = {
+        'filter4ps': 'filter4ps',
+        'filterPwdStatus': 'filterPwdStatus',
+        'filterAgeGroup': 'filterAgeGroup',
+        'filterCivilStatus': 'filterCivilStatus',
+        'filterEmploymentStatus': 'filterEmploymentStatus'
+    };
+
+    for (const [param, elementId] of Object.entries(filterMappings)) {
+        if (urlParams.has(param)) {
+            const val = urlParams.get(param);
+            const el = document.getElementById(elementId);
+            if (el) {
+                el.value = val;
+                hasFilters = true;
+            }
+        }
+    }
+    
+    if (hasFilters) {
+        // Apply the advanced filters directly
+        applyAdvancedFilters();
     }
 }
 
