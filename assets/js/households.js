@@ -913,7 +913,10 @@ function editHousehold(householdId) {
                             <td>${member.relationship_to_head}</td>
                             <td>${member.mobile_number || 'N/A'}</td>
                             <td>
-                                <button class="btn-delete-member" title="Remove member">
+                                <button type="button" class="btn-transfer-head" title="Transfer Head" style="margin-right: 8px; color: var(--primary-color, #3b82f6); background: none; border: none; cursor: pointer;">
+                                    <i class="fas fa-exchange-alt"></i>
+                                </button>
+                                <button type="button" class="btn-delete-member" title="Remove member">
                                     <i class="fas fa-trash"></i>
                                 </button>
                             </td>
@@ -1068,6 +1071,12 @@ function initializeModalEventListeners() {
             if (deleteBtn) {
                 const row = deleteBtn.closest('tr');
                 deleteMember(row);
+            }
+            
+            const transferBtn = e.target.closest('.btn-transfer-head');
+            if (transferBtn) {
+                const row = transferBtn.closest('tr');
+                transferHeadToMember(row);
             }
         });
     }
@@ -1408,7 +1417,10 @@ function addMemberToTable(member) {
         <td>${member.relationship}</td>
         <td>${member.mobileNumber || 'N/A'}</td>
         <td>
-            <button class="btn-delete-member" title="Remove member">
+            <button type="button" class="btn-transfer-head" title="Transfer Head" style="margin-right: 8px; color: var(--primary-color, #3b82f6); background: none; border: none; cursor: pointer;">
+                <i class="fas fa-exchange-alt"></i>
+            </button>
+            <button type="button" class="btn-delete-member" title="Remove member">
                 <i class="fas fa-trash"></i>
             </button>
         </td>
@@ -1416,6 +1428,55 @@ function addMemberToTable(member) {
     
     tbody.appendChild(newRow);
     showNotification('Member added successfully', 'success');
+}
+
+function transferHeadToMember(row) {
+    const memberName = row.cells[1].textContent.trim();
+    const memberResidentId = row.dataset.residentId;
+    const memberDob = row.cells[2].textContent.trim();
+    const memberSex = row.cells[3].textContent.trim();
+    
+    if (!memberResidentId) {
+        showNotification('Cannot transfer head to a member without a Resident ID.', 'error');
+        return;
+    }
+
+    if (confirm(`Are you sure you want to make ${memberName} the new household head?`)) {
+        // Current Head Info
+        const currentHeadId = document.getElementById('selectedResidentId').value;
+        const currentHeadName = document.getElementById('headFullName').textContent.trim();
+        const currentHeadDob = document.getElementById('headDateOfBirth').textContent.trim();
+        const currentHeadSex = document.getElementById('headSex').textContent.trim();
+        
+        // Determine relationship for old head
+        const oldHeadRelationship = prompt(`What is the relationship of the current head (${currentHeadName}) to the new head (${memberName})?`, 'Former Head') || 'Former Head';
+        
+        // 1. Set new head
+        document.getElementById('selectedResidentId').value = memberResidentId;
+        document.getElementById('headFullName').innerHTML = `<a href="resident_profile.php?id=${memberResidentId}" style="color: var(--text-primary); text-decoration: none; transition: color 0.2s;" onmouseover="this.style.color='var(--primary-color)'" onmouseout="this.style.color='var(--text-primary)'">${memberName}</a>`;
+        document.getElementById('headDateOfBirth').textContent = memberDob;
+        document.getElementById('headSex').textContent = memberSex;
+        
+        // 2. Remove the member from the table
+        row.remove();
+        
+        // 3. Add the old head to the table as a member
+        if (currentHeadId) {
+            const oldHeadNameHtml = `<a href="resident_profile.php?id=${currentHeadId}" style="color: var(--text-primary); text-decoration: none; transition: color 0.2s;" onmouseover="this.style.color='var(--primary-color)'" onmouseout="this.style.color='var(--text-primary)'">${currentHeadName}</a>`;
+            
+            addMemberToTable({
+                residentId: currentHeadId,
+                name: oldHeadNameHtml,
+                dateOfBirth: currentHeadDob,
+                sex: currentHeadSex,
+                relationship: oldHeadRelationship,
+                mobileNumber: 'N/A'
+            });
+        }
+        
+        renumberMembers();
+        showNotification(`${memberName} is now the household head.`, 'success');
+    }
 }
 
 function saveHousehold() {
