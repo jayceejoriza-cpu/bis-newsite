@@ -182,6 +182,11 @@ $age = calculateAge($resident['date_of_birth']);
 
     <!-- Dark Mode Init: must be in <head> to prevent flash of light mode -->
     <script src="assets/js/dark-mode-init.js"></script>
+    <style>
+        .edit-field, .edit-field-conditional {
+            font-size: 15px !important;
+        }
+    </style>
 </head>
 <body>
     <!-- Sidebar -->
@@ -226,14 +231,20 @@ $age = calculateAge($resident['date_of_birth']);
                     </div>
                 </div>
                 <div class="profile-header-actions">
-                    <button class="btn btn-secondary" onclick="window.print()">
+                    <button class="btn btn-secondary view-action" onclick="window.print()">
                         <i class="fas fa-print"></i>
                         Print Profile
                     </button>
                     <?php if (hasPermission('perm_resident_edit')): ?>
-                    <button class="btn btn-primary" onclick="editResident()">
+                    <button class="btn btn-primary view-action" type="button" onclick="toggleEditMode(true)">
                         <i class="fas fa-edit"></i>
                         Edit Profile
+                    </button>
+                    <button class="btn btn-secondary edit-action" type="button" onclick="toggleEditMode(false)" style="display:none;">
+                        <i class="fas fa-times"></i> Cancel
+                    </button>
+                    <button class="btn btn-success edit-action" type="button" onclick="saveProfile()" style="display:none;">
+                        <i class="fas fa-save"></i> Save Changes
                     </button>
                     <?php endif; ?>
                 </div>
@@ -287,6 +298,8 @@ $age = calculateAge($resident['date_of_birth']);
                 
                 <!-- Main Content Area -->
                 <div class="profile-main-content">
+                    <form id="inlineEditForm">
+                        <input type="hidden" name="resident_id" value="<?php echo $residentId; ?>">
                     <!-- Personal Information Section -->
                     <section id="personal-details" class="profile-section">
                         <div class="section-header">
@@ -297,27 +310,36 @@ $age = calculateAge($resident['date_of_birth']);
                             <div class="info-grid">
                                 <div class="info-item">
                                     <label>First Name</label>
-                                    <p><?php echo strtoupper($resident['first_name']); ?></p>
+                                    <p class="view-field"><?php echo strtoupper($resident['first_name']); ?></p>
+                                    <input type="text" name="first_name" class="form-control edit-field" value="<?php echo htmlspecialchars($resident['first_name']); ?>" style="display:none;" required>
                                 </div>
                                 <div class="info-item">
                                     <label>Middle Name</label>
-                                    <p><?php echo strtoupper($resident['middle_name'] ?: 'N/A'); ?></p>
+                                    <p class="view-field"><?php echo strtoupper($resident['middle_name'] ?: 'N/A'); ?></p>
+                                    <input type="text" name="middle_name" class="form-control edit-field" value="<?php echo htmlspecialchars($resident['middle_name']); ?>" style="display:none;">
                                 </div>
                                 <div class="info-item">
                                     <label>Last Name</label>
-                                    <p><?php echo strtoupper($resident['last_name']); ?></p>
+                                    <p class="view-field"><?php echo strtoupper($resident['last_name']); ?></p>
+                                    <input type="text" name="last_name" class="form-control edit-field" value="<?php echo htmlspecialchars($resident['last_name']); ?>" style="display:none;" required>
                                 </div>
                                 <div class="info-item">
                                     <label>Suffix</label>
-                                    <p><?php echo htmlspecialchars($resident['suffix'] ?: 'N/A'); ?></p>
+                                    <p class="view-field"><?php echo htmlspecialchars($resident['suffix'] ?: 'N/A'); ?></p>
+                                    <input type="text" name="suffix" class="form-control edit-field" value="<?php echo htmlspecialchars($resident['suffix']); ?>" style="display:none;">
                                 </div>
                                 <div class="info-item">
                                     <label>Sex</label>
-                                    <p><?php echo htmlspecialchars($resident['sex']); ?></p>
+                                    <p class="view-field"><?php echo htmlspecialchars($resident['sex']); ?></p>
+                                    <select name="sex" class="form-control edit-field" style="display:none;" required>
+                                        <option value="Male" <?php echo $resident['sex'] == 'Male' ? 'selected' : ''; ?>>Male</option>
+                                        <option value="Female" <?php echo $resident['sex'] == 'Female' ? 'selected' : ''; ?>>Female</option>
+                                    </select>
                                 </div>
                                 <div class="info-item">
                                     <label>Date of Birth</label>
-                                    <p><?php echo htmlspecialchars($resident['date_of_birth'] ? date('F d, Y', strtotime($resident['date_of_birth'])) : 'N/A'); ?></p>
+                                    <p class="view-field"><?php echo htmlspecialchars($resident['date_of_birth'] ? date('F d, Y', strtotime($resident['date_of_birth'])) : 'N/A'); ?></p>
+                                    <input type="date" name="date_of_birth" class="form-control edit-field" value="<?php echo htmlspecialchars($resident['date_of_birth']); ?>" style="display:none;" required>
                                 </div>
                                 <div class="info-item">
                                     <label>Age</label>
@@ -326,11 +348,37 @@ $age = calculateAge($resident['date_of_birth']);
                                
                                 <div class="info-item">
                                     <label>Religion</label>
-                                    <p><?php echo htmlspecialchars($resident['religion'] ?: 'N/A'); ?></p>
+                                    <p class="view-field"><?php echo htmlspecialchars($resident['religion'] ?: 'N/A'); ?></p>
+                                    <?php 
+                                    $religions = [
+                                        "Roman Catholic", "Christian", "Iglesia ni Cristo", "Catholic", "Islam", 
+                                        "Baptist", "Buddhism", "Born Again", "Church of God", "Jehovahs Witness", 
+                                        "Protestant", "Seventh Day Adventist", "LDS-Mormons", "Evangelical", 
+                                        "Pentecostal", "Unknown"
+                                    ];
+                                    $isOtherReligion = !in_array($resident['religion'], $religions) && !empty($resident['religion']);
+                                    ?>
+                                    <select name="religion_select" id="religionSelect" class="form-control edit-field" style="display:none;" onchange="toggleOtherReligion()">
+                                        <option value="">Select Religion</option>
+                                        <?php foreach($religions as $rel): ?>
+                                            <option value="<?php echo htmlspecialchars($rel); ?>" <?php echo ($resident['religion'] === $rel) ? 'selected' : ''; ?>><?php echo htmlspecialchars($rel); ?></option>
+                                        <?php endforeach; ?>
+                                        <option value="Other" <?php echo $isOtherReligion ? 'selected' : ''; ?>>Other (pls. Specify)</option>
+                                    </select>
+                                    <input type="text" name="religion_other" id="religionOther" class="form-control mt-2 edit-field-conditional" placeholder="Specify Religion" value="<?php echo $isOtherReligion ? htmlspecialchars($resident['religion']) : ''; ?>" style="display: none;">
                                 </div>
                                 <div class="info-item">
                                     <label>Ethnicity</label>
-                                    <p><?php echo htmlspecialchars($resident['ethnicity'] ?: 'N/A'); ?></p>
+                                    <p class="view-field"><?php echo htmlspecialchars($resident['ethnicity'] ?: 'N/A'); ?></p>
+                                    <?php 
+                                    $isOtherEthnicity = !in_array($resident['ethnicity'], ['IPS', 'Non-IPS']) && !empty($resident['ethnicity']);
+                                    ?>
+                                    <select name="ethnicity_select" id="ethnicitySelect" class="form-control edit-field" style="display:none;" onchange="toggleOtherEthnicity()">
+                                        <option value="">Select Ethnicity</option>
+                                        <option value="IPS" <?php echo ($resident['ethnicity'] === 'IPS') ? 'selected' : ''; ?>>IPS (Indigenous People)</option>
+                                        <option value="Non-IPS" <?php echo ($resident['ethnicity'] === 'Non-IPS') ? 'selected' : ''; ?>>Non-IPS</option>
+                                    </select>
+                                    <input type="text" name="ethnicity_other" id="ethnicityOther" class="form-control mt-2 edit-field-conditional" placeholder="Specify Ethnicity" value="<?php echo $isOtherEthnicity ? htmlspecialchars($resident['ethnicity']) : ''; ?>" style="display: none;">
                                 </div>
                             </div>
                         </div>
@@ -346,15 +394,18 @@ $age = calculateAge($resident['date_of_birth']);
                             <div class="info-grid">
                                 <div class="info-item full-width">
                                     <label>Complete Address</label>
-                                    <p><?php echo htmlspecialchars($resident['current_address'] ?: 'N/A'); ?></p>
+                                    <p class="view-field"><?php echo htmlspecialchars($resident['current_address'] ?: 'N/A'); ?></p>
+                                    <input type="text" name="current_address" class="form-control edit-field" value="<?php echo htmlspecialchars($resident['current_address']); ?>" style="display:none;">
                                 </div>
                                 <div class="info-item">
                                     <label>Mobile Number</label>
-                                    <p>+63 <?php echo htmlspecialchars($resident['mobile_number'] ?: 'N/A'); ?></p>
+                                    <p class="view-field">+63 <?php echo htmlspecialchars($resident['mobile_number'] ?: 'N/A'); ?></p>
+                                    <input type="text" name="mobile_number" class="form-control edit-field"  placeholder="XXX XXX XXXX" pattern="[0-9 ]+" maxlength="12" oninput="let v=this.value.replace(/\D/g,'').substring(0,10);if(v.length>6)this.value=v.slice(0,3)+' '+v.slice(3,6)+' '+v.slice(6);else if(v.length>3)this.value=v.slice(0,3)+' '+v.slice(3);else this.value=v;" value="<?php echo htmlspecialchars($resident['mobile_number']); ?>" style="display:none;">
                                 </div>
                                 <div class="info-item">
                                     <label>Email Address</label>
-                                    <p><?php echo htmlspecialchars($resident['email'] ?: 'N/A'); ?></p>
+                                    <p class="view-field"><?php echo htmlspecialchars($resident['email'] ?: 'N/A'); ?></p>
+                                    <input type="email" name="email" class="form-control edit-field" value="<?php echo htmlspecialchars($resident['email']); ?>" style="display:none;">
                                 </div>
                             </div>
                         </div>
@@ -370,23 +421,34 @@ $age = calculateAge($resident['date_of_birth']);
                             <div class="info-grid">
                                  <div class="info-item">
                                     <label>Civil Status</label>
-                                    <p><?php echo htmlspecialchars($resident['civil_status'] ?: 'N/A'); ?></p>
+                                    <p class="view-field"><?php echo htmlspecialchars($resident['civil_status'] ?: 'N/A'); ?></p>
+                                    <select name="civil_status" id="civilStatusSelect" class="form-control edit-field" style="display:none;" onchange="handleCivilStatusChange()">
+                                        <option value="Single" <?php echo $resident['civil_status'] == 'Single' ? 'selected' : ''; ?>>Single</option>
+                                        <option value="Married" <?php echo $resident['civil_status'] == 'Married' ? 'selected' : ''; ?>>Married</option>
+                                        <option value="Widow/er" <?php echo $resident['civil_status'] == 'Widow/er' ? 'selected' : ''; ?>>Widow/er</option>
+                                        <option value="Separated" <?php echo $resident['civil_status'] == 'Separated' ? 'selected' : ''; ?>>Separated</option>
+                                          <option value="Cohabitation" <?php echo $resident['civil_status'] == 'Cohabitation' ? 'selected' : ''; ?>>Cohabitation</option>
+                                    </select>
                                 </div>
                                 <div class="info-item">
-                                    <label>Spouse Name</label>
-                                    <p><?php echo htmlspecialchars($resident['spouse_name'] ?: 'N/A'); ?></p>
+                                    <label id="spouseNameLabel">Spouse Name</label>
+                                    <p class="view-field"><?php echo htmlspecialchars($resident['spouse_name'] ?: 'N/A'); ?></p>
+                                    <input type="text" name="spouse_name" id="spouseNameInput" class="form-control edit-field" value="<?php echo htmlspecialchars($resident['spouse_name']); ?>" style="display:none;">
                                 </div>
                                 <div class="info-item">
                                     <label>Father's Name</label>
-                                    <p><?php echo htmlspecialchars($resident['father_name'] ?: 'N/A'); ?></p>
+                                    <p class="view-field"><?php echo htmlspecialchars($resident['father_name'] ?: 'N/A'); ?></p>
+                                    <input type="text" name="father_name" class="form-control edit-field" value="<?php echo htmlspecialchars($resident['father_name']); ?>" style="display:none;">
                                 </div>
                                 <div class="info-item">
                                     <label>Mother's Name</label>
-                                    <p><?php echo htmlspecialchars($resident['mother_name'] ?: 'N/A'); ?></p>
+                                    <p class="view-field"><?php echo htmlspecialchars($resident['mother_name'] ?: 'N/A'); ?></p>
+                                    <input type="text" name="mother_name" class="form-control edit-field" value="<?php echo htmlspecialchars($resident['mother_name']); ?>" style="display:none;">
                                 </div>
                                 <div class="info-item">
                                     <label>Number of Children</label>
-                                    <p><?php echo htmlspecialchars($resident['number_of_children'] ?: '0'); ?></p>
+                                    <p class="view-field"><?php echo htmlspecialchars($resident['number_of_children'] ?: '0'); ?></p>
+                                    <input type="number" name="number_of_children" class="form-control edit-field" value="<?php echo htmlspecialchars($resident['number_of_children']); ?>" style="display:none;">
                                 </div>
                             </div>
                         </div>
@@ -403,19 +465,36 @@ $age = calculateAge($resident['date_of_birth']);
                             <div class="info-grid">
                                 <div class="info-item">
                                     <label>Educational Attainment</label>
-                                    <p><?php echo htmlspecialchars($resident['educational_attainment'] ?: 'N/A'); ?></p>
+                                    <p class="view-field"><?php echo htmlspecialchars($resident['educational_attainment'] ?: 'N/A'); ?></p>
+                                    <select name="educational_attainment" class="form-control edit-field" style="display:none;">
+                                        <option value="" <?php echo empty($resident['educational_attainment']) ? 'selected' : ''; ?>>Select</option>
+                                        <option value="No Formal Education" <?php echo $resident['educational_attainment'] == 'No Formal Education' ? 'selected' : ''; ?>>No Formal Education</option>
+                                        <option value="Elementary Level" <?php echo $resident['educational_attainment'] == 'Elementary Level' ? 'selected' : ''; ?>>Elementary Level</option>
+                                        <option value="Elementary Graduate" <?php echo $resident['educational_attainment'] == 'Elementary Graduate' ? 'selected' : ''; ?>>Elementary Graduate</option>
+                                        <option value="High School Level" <?php echo $resident['educational_attainment'] == 'High School Level' ? 'selected' : ''; ?>>High School Level</option>
+                                        <option value="High School Graduate" <?php echo $resident['educational_attainment'] == 'High School Graduate' ? 'selected' : ''; ?>>High School Graduate</option>
+                                        <option value="College Level" <?php echo $resident['educational_attainment'] == 'College Level' ? 'selected' : ''; ?>>College Level</option>
+                                        <option value="College Graduate" <?php echo $resident['educational_attainment'] == 'College Graduate' ? 'selected' : ''; ?>>College Graduate</option>
+                                        <option value="Vocational" <?php echo $resident['educational_attainment'] == 'Vocational' ? 'selected' : ''; ?>>Vocational</option>
+                                        <option value="Post Graduate" <?php echo $resident['educational_attainment'] == 'Post Graduate' ? 'selected' : ''; ?>>Post Graduate</option>
+                                    </select>
                                 </div>
                                 <div class="info-item">
                                     <label>Employment Status</label>
-                                    <p><?php echo htmlspecialchars($resident['employment_status'] ?: 'N/A'); ?></p>
+                                    <p class="view-field"><?php echo htmlspecialchars($resident['employment_status'] ?: 'N/A'); ?></p>
+                                    <select name="employment_status" class="form-control edit-field" style="display:none;">
+                                        <option value="" <?php echo empty($resident['employment_status']) ? 'selected' : ''; ?>>Select</option>
+                                        <option value="Employed" <?php echo $resident['employment_status'] == 'Employed' ? 'selected' : ''; ?>>Employed</option>
+                                        <option value="Unemployed" <?php echo $resident['employment_status'] == 'Unemployed' ? 'selected' : ''; ?>>Unemployed</option>
+                                        <option value="Self-Employed" <?php echo $resident['employment_status'] == 'Self-Employed' ? 'selected' : ''; ?>>Self-Employed</option>
+                                        <option value="Student" <?php echo $resident['employment_status'] == 'Student' ? 'selected' : ''; ?>>Student</option>
+                                        <option value="Retired" <?php echo $resident['employment_status'] == 'Retired' ? 'selected' : ''; ?>>Retired</option>
+                                    </select>
                                 </div>
                                 <div class="info-item">
                                     <label>Occupation</label>
-                                    <p><?php echo htmlspecialchars($resident['occupation'] ?: 'N/A'); ?></p>
-                                </div>
-                                <div class="info-item">
-                                    <label>Monthly Income</label>
-                                    <p><?php echo htmlspecialchars($resident['monthly_income'] ?: 'N/A'); ?></p>
+                                    <p class="view-field"><?php echo htmlspecialchars($resident['occupation'] ?: 'N/A'); ?></p>
+                                    <input type="text" name="occupation" class="form-control edit-field" value="<?php echo htmlspecialchars($resident['occupation']); ?>" style="display:none;">
                                 </div>
                             </div>
                         </div>
@@ -432,19 +511,29 @@ $age = calculateAge($resident['date_of_birth']);
                             <div class="info-grid">
                                 <div class="info-item">
                                     <label>4Ps Member</label>
-                                    <p><?php echo htmlspecialchars($resident['fourps_member'] ?: 'No'); ?></p>
+                                    <p class="view-field"><?php echo htmlspecialchars($resident['fourps_member'] ?: 'No'); ?></p>
+                                    <select name="fourps_member" class="form-control edit-field" style="display:none;">
+                                        <option value="Yes" <?php echo $resident['fourps_member'] == 'Yes' ? 'selected' : ''; ?>>Yes</option>
+                                        <option value="No" <?php echo $resident['fourps_member'] == 'No' ? 'selected' : ''; ?>>No</option>
+                                    </select>
                                 </div>
                                 <div class="info-item">
                                     <label>4Ps ID Number</label>
-                                    <p><?php echo htmlspecialchars($resident['fourps_id'] ?: 'N/A'); ?></p>
+                                    <p class="view-field"><?php echo htmlspecialchars($resident['fourps_id'] ?: 'N/A'); ?></p>
+                                    <input type="text" name="fourps_id" class="form-control edit-field" placeholder="XX-YYYY-ZZZZ" maxlength="12" oninput="let v=this.value.replace(/[^a-zA-Z0-9]/g,'').toUpperCase().substring(0,10);if(v.length > 6) this.value = v.slice(0,2) + '-' + v.slice(2,6) + '-' + v.slice(6);else if(v.length > 2) this.value = v.slice(0,2) + '-' + v.slice(2);else this.value = v;" value="<?php echo htmlspecialchars($resident['fourps_id']); ?>" style="display:none;">
                                 </div>
                                 <div class="info-item">
                                     <label>Voter Status</label>
-                                    <p><?php echo htmlspecialchars($resident['voter_status'] ?: 'No'); ?></p>
+                                    <p class="view-field"><?php echo htmlspecialchars($resident['voter_status'] ?: 'No'); ?></p>
+                                    <select name="voter_status" class="form-control edit-field" style="display:none;">
+                                        <option value="Yes" <?php echo $resident['voter_status'] == 'Yes' ? 'selected' : ''; ?>>Yes</option>
+                                        <option value="No" <?php echo $resident['voter_status'] == 'No' ? 'selected' : ''; ?>>No</option>
+                                    </select>
                                 </div>
                                 <div class="info-item">
                                     <label>Precinct Number</label>
-                                    <p><?php echo htmlspecialchars($resident['precinct_number'] ?: 'N/A'); ?></p>
+                                    <p class="view-field"><?php echo htmlspecialchars($resident['precinct_number'] ?: 'N/A'); ?></p>
+                                    <input type="text" name="precinct_number" class="form-control edit-field" value="<?php echo htmlspecialchars($resident['precinct_number']); ?>" style="display:none;">
                                 </div>
                             </div>
                             
@@ -452,73 +541,133 @@ $age = calculateAge($resident['date_of_birth']);
                             <div class="info-grid">
                                 <div class="info-item">
                                     <label>Philhealth ID</label>
-                                    <p><?php echo htmlspecialchars($resident['philhealth_id'] ?: 'N/A'); ?></p>
+                                    <p class="view-field"><?php echo htmlspecialchars($resident['philhealth_id'] ?: 'N/A'); ?></p>
+                                    <input type="text" name="philhealth_id" class="form-control edit-field" placeholder="1234-5678-9012" maxlength="14" oninput="let v=this.value.replace(/[^a-zA-Z0-9]/g,'').toUpperCase().substring(0,12);if(v.length > 8) this.value = v.slice(0,4) + '-' + v.slice(4,8) + '-' + v.slice(8);else if(v.length > 4) this.value = v.slice(0,4) + '-' + v.slice(4);else this.value = v;" value="<?php echo htmlspecialchars($resident['philhealth_id']); ?>" style="display:none;">
                                 </div>
                                 <div class="info-item">
                                     <label>Membership Type</label>
-                                    <p><?php echo htmlspecialchars($resident['membership_type'] ?: 'N/A'); ?></p>
+                                    <p class="view-field"><?php echo htmlspecialchars($resident['membership_type'] ?: 'N/A'); ?></p>
+                                    <select name="membership_type" class="form-control edit-field" style="display:none;">
+                                        <option value="" <?php echo empty($resident['membership_type']) ? 'selected' : ''; ?>>Select</option>
+                                        <option value="Member" <?php echo $resident['membership_type'] == 'Member' ? 'selected' : ''; ?>>Member</option>
+                                        <option value="Dependent" <?php echo $resident['membership_type'] == 'Dependent' ? 'selected' : ''; ?>>Dependent</option>
+                                        <option value="None" <?php echo $resident['membership_type'] == 'None' ? 'selected' : ''; ?>>None</option>
+                                    </select>
                                 </div>
                                 <div class="info-item">
                                     <label>Philhealth Category</label>
-                                    <p><?php echo htmlspecialchars($resident['philhealth_category'] ?: 'N/A'); ?></p>
+                                    <p class="view-field"><?php echo htmlspecialchars($resident['philhealth_category'] ?: 'N/A'); ?></p>
+                                    <select name="philhealth_category" class="form-control edit-field" style="display:none;">
+                                        <option value="" <?php echo empty($resident['philhealth_category']) ? 'selected' : ''; ?>>Select</option>
+                                        <option value="Direct Contributor" <?php echo $resident['philhealth_category'] == 'Direct Contributor' ? 'selected' : ''; ?>>Direct Contributor</option>
+                                        <option value="Indirect Contributor" <?php echo $resident['philhealth_category'] == 'Indirect Contributor' ? 'selected' : ''; ?>>Indirect Contributor</option>
+                                        <option value="Sponsored" <?php echo $resident['philhealth_category'] == 'Sponsored' ? 'selected' : ''; ?>>Sponsored</option>
+                                        <option value="None" <?php echo $resident['philhealth_category'] == 'None' ? 'selected' : ''; ?>>None</option>
+                                    </select>
                                 </div>
                                 <div class="info-item">
                                     <label>Age/Health Group</label>
-                                    <p><?php echo htmlspecialchars($resident['age_health_group'] ?: 'N/A'); ?></p>
+                                    <p class="view-field"><?php echo htmlspecialchars($resident['age_health_group'] ?: 'N/A'); ?></p>
+                                    <select name="age_health_group" class="form-control edit-field" style="display:none;">
+                                        <option value="" <?php echo empty($resident['age_health_group']) ? 'selected' : ''; ?>>Select</option>
+                                        <option value="Newborn (0-28 days)" <?php echo $resident['age_health_group'] == 'Newborn (0-28 days)' ? 'selected' : ''; ?>>Newborn (0-28 days)</option>
+                                        <option value="Infant (29 days - 1 year)" <?php echo $resident['age_health_group'] == 'Infant (29 days - 1 year)' ? 'selected' : ''; ?>>Infant (29 days - 1 year)</option>
+                                        <option value="Child (1-9 years)" <?php echo $resident['age_health_group'] == 'Child (1-9 years)' ? 'selected' : ''; ?>>Child (1-9 years)</option>
+                                        <option value="Adolescent (10-19 years)" <?php echo $resident['age_health_group'] == 'Adolescent (10-19 years)' ? 'selected' : ''; ?>>Adolescent (10-19 years)</option>
+                                        <option value="Adult (20-59 years)" <?php echo $resident['age_health_group'] == 'Adult (20-59 years)' ? 'selected' : ''; ?>>Adult (20-59 years)</option>
+                                        <option value="Senior Citizen (60+ years)" <?php echo $resident['age_health_group'] == 'Senior Citizen (60+ years)' ? 'selected' : ''; ?>>Senior Citizen (60+ years)</option>
+                                    </select>
                                 </div>
                                 <div class="info-item full-width">
                                     <label>Medical History</label>
-                                    <p><?php echo htmlspecialchars($resident['medical_history'] ?: 'N/A'); ?></p>
+                                    <p class="view-field"><?php echo htmlspecialchars($resident['medical_history'] ?: 'N/A'); ?></p>
+                                    <input type="text" name="medical_history" class="form-control edit-field" value="<?php echo htmlspecialchars($resident['medical_history']); ?>" style="display:none;">
                                 </div>
                             </div>
                             
-                            <?php if ($resident['sex'] === 'Female' && (!empty($resident['lmp_date']) || !empty($resident['using_fp_method']) || !empty($resident['fp_methods_used']) || !empty($resident['fp_status']))): ?>
+                            <?php if ($resident['sex'] === 'Female'): ?>
                                 <h3 class="subsection-title"><i class="fas fa-female"></i> Women's Reproductive Health</h3>
                                 <div class="info-grid">
-                                    <?php if (!empty($resident['lmp_date'])): ?>
                                         <div class="info-item">
                                             <label>Last Menstrual Period</label>
-                                            <p><?php echo htmlspecialchars($resident['lmp_date']); ?></p>
+                                            <p class="view-field"><?php echo htmlspecialchars($resident['lmp_date'] ?? 'N/A'); ?></p>
+                                            <input type="date" name="lmp_date" class="form-control edit-field" value="<?php echo htmlspecialchars($resident['lmp_date'] ?? ''); ?>" style="display:none;">
                                         </div>
-                                    <?php endif; ?>
-                                    <?php if (!empty($resident['using_fp_method'])): ?>
                                         <div class="info-item">
                                             <label>Using FP Method</label>
-                                            <p><?php echo htmlspecialchars($resident['using_fp_method']); ?></p>
+                                            <p class="view-field"><?php echo htmlspecialchars($resident['using_fp_method'] ?? 'N/A'); ?></p>
+                                            <select name="using_fp_method" class="form-control edit-field" style="display:none;">
+                                                <option value="" <?php echo empty($resident['using_fp_method']) ? 'selected' : ''; ?>>Select</option>
+                                                <option value="Yes" <?php echo ($resident['using_fp_method'] ?? '') == 'Yes' ? 'selected' : ''; ?>>Yes</option>
+                                                <option value="No" <?php echo ($resident['using_fp_method'] ?? '') == 'No' ? 'selected' : ''; ?>>No</option>
+                                            </select>
                                         </div>
-                                    <?php endif; ?>
-                                    <?php if (!empty($resident['fp_methods_used'])): ?>
                                         <div class="info-item">
                                             <label>FP Methods Used</label>
-                                            <p><?php echo htmlspecialchars($resident['fp_methods_used']); ?></p>
+                                            <p class="view-field"><?php echo htmlspecialchars($resident['fp_methods_used'] ?? 'N/A'); ?></p>
+                                            <?php 
+                                            $fpMethods = ["Pills", "Injectable", "IUD", "Condom", "Implant", "Natural"];
+                                            $isOtherFpMethod = !in_array($resident['fp_methods_used'], $fpMethods) && !empty($resident['fp_methods_used']);
+                                            ?>
+                                            <select name="fp_methods_select" id="fpMethodSelect" class="form-control edit-field" style="display:none;" onchange="toggleOtherFpMethod()">
+                                                <option value="">Select</option>
+                                                <?php foreach($fpMethods as $method): ?>
+                                                    <option value="<?php echo htmlspecialchars($method); ?>" <?php echo ($resident['fp_methods_used'] === $method) ? 'selected' : ''; ?>><?php echo htmlspecialchars($method); ?></option>
+                                                <?php endforeach; ?>
+                                                <option value="Other" <?php echo $isOtherFpMethod ? 'selected' : ''; ?>>Other</option>
+                                            </select>
+                                            <input type="text" name="fp_methods_other" id="fpMethodOther" class="form-control mt-2 edit-field-conditional" placeholder="Specify FP Method" value="<?php echo $isOtherFpMethod ? htmlspecialchars($resident['fp_methods_used']) : ''; ?>" style="display: none;">
                                         </div>
-                                    <?php endif; ?>
-                                    <?php if (!empty($resident['fp_status'])): ?>
                                         <div class="info-item">
                                             <label>FP Status</label>
-                                            <p><?php echo htmlspecialchars($resident['fp_status']); ?></p>
+                                            <p class="view-field"><?php echo htmlspecialchars($resident['fp_status'] ?? 'N/A'); ?></p>
+                                            <select name="fp_status" class="form-control edit-field" style="display:none;">
+                                                <option value="" <?php echo empty($resident['fp_status']) ? 'selected' : ''; ?>>Select</option>
+                                                <option value="Current User" <?php echo ($resident['fp_status'] ?? '') == 'Current User' ? 'selected' : ''; ?>>Current User</option>
+                                                <option value="Dropout" <?php echo ($resident['fp_status'] ?? '') == 'Dropout' ? 'selected' : ''; ?>>Dropout</option>
+                                                <option value="New Acceptor" <?php echo ($resident['fp_status'] ?? '') == 'New Acceptor' ? 'selected' : ''; ?>>New Acceptor</option>
+                                            </select>
                                         </div>
-                                    <?php endif; ?>
                                 </div>
                             <?php endif; ?>
                             
-                            <?php if (!empty($resident['remarks'])): ?>
-                                <h3 class="subsection-title"><i class="fas fa-sticky-note"></i> Additional Notes</h3>
-                                <div class="info-grid">
-                                    <div class="info-item full-width">
-                                        <label>Remarks</label>
-                                        <p><?php echo htmlspecialchars($resident['remarks']); ?></p>
-                                    </div>
+                            <h3 class="subsection-title"><i class="fas fa-sticky-note"></i> Additional Notes</h3>
+                            <div class="info-grid">
+                                <div class="info-item full-width">
+                                    <label>Remarks</label>
+                                    <p class="view-field"><?php echo nl2br(htmlspecialchars($resident['remarks'] ?: 'None')); ?></p>
+                                    <textarea name="remarks" class="form-control edit-field" style="display:none;"><?php echo htmlspecialchars($resident['remarks'] ?? ''); ?></textarea>
                                 </div>
-                            <?php endif; ?>
+                            </div>
                         </div>
                     </section>
+                    </form>
                     
                     <!-- Household Details Section -->
                     <section id="household-details" class="profile-section">
-                        <div class="section-header">
-                            <h2><i class="fas fa-home"></i> Household Details</h2>
-                            <p>Household information and members</p>
+                        <div class="section-header" style="display: flex; justify-content: space-between; align-items: flex-start;">
+                            <div>
+                                <h2><i class="fas fa-home"></i> Household Details</h2>
+                                <p>Household information and members</p>
+                            </div>
+                            <div class="household-actions" style="display: flex; gap: 8px;">
+                                <?php if ($householdInfo): ?>
+                                    <?php if (hasPermission('perm_household_edit')): ?>
+                                    <a href="households.php?edit=<?php echo $householdInfo['id']; ?>" class="btn btn-sm btn-primary" title="Edit Household">
+                                        <i class="fas fa-edit"></i> Edit
+                                    </a>
+                                    <button type="button" onclick="if(confirm('To remove this resident from the household, please edit the household and remove them from the members list. Go to Edit Household now?')) { window.location.href='households.php?edit=<?php echo $householdInfo['id']; ?>'; }" class="btn btn-sm btn-danger" title="Remove from Household">
+                                        <i class="fas fa-times"></i> Remove
+                                    </button>
+                                    <?php endif; ?>
+                                <?php else: ?>
+                                    <?php if (hasPermission('perm_household_create')): ?>
+                                    <a href="households.php?create=1" class="btn btn-sm btn-success" title="Add to Household">
+                                        <i class="fas fa-plus"></i> Add
+                                    </a>
+                                    <?php endif; ?>
+                                <?php endif; ?>
+                            </div>
                         </div>
                         <div class="section-content">
                             <?php if ($householdInfo): ?>
@@ -794,19 +943,266 @@ $age = calculateAge($resident['date_of_birth']);
                     householdDetailsNavItem.click();
                 }
             }
+            
+            // Check for edit parameter in URL on load
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('edit') === '1') {
+                const editBtn = document.querySelector('.btn-primary.view-action');
+                if (editBtn) { // Only trigger if they have permission to edit
+                    toggleEditMode(true);
+                }
+            }
         });
         
-        function editResident() {
-            // Get resident ID from URL
-            const urlParams = new URLSearchParams(window.location.search);
-            const residentId = urlParams.get('id');
+        function toggleEditMode(enable) {
+            const viewFields = document.querySelectorAll('.view-field');
+            const editFields = document.querySelectorAll('.edit-field');
+            const viewActions = document.querySelectorAll('.view-action');
+            const editActions = document.querySelectorAll('.edit-action');
             
-            if (residentId) {
-                // Redirect to edit resident page
-                window.location.href = `model/edit-resident.php?id=${residentId}`;
+            // Update URL parameter
+            const url = new URL(window.location);
+            if (enable) {
+                url.searchParams.set('edit', '1');
             } else {
-                alert('Resident ID not found');
+                url.searchParams.delete('edit');
             }
+            window.history.replaceState({}, '', url);
+            
+            if (enable) {
+                viewFields.forEach(f => f.style.display = 'none');
+                editFields.forEach(f => f.style.display = 'block');
+                viewActions.forEach(a => a.style.display = 'none');
+                editActions.forEach(a => a.style.display = 'inline-flex');
+                if (typeof toggleOtherReligion === 'function') toggleOtherReligion();
+                if (typeof toggleOtherEthnicity === 'function') toggleOtherEthnicity();
+                if (typeof handleCivilStatusChange === 'function') handleCivilStatusChange();
+                if (typeof toggleOtherFpMethod === 'function') toggleOtherFpMethod();
+            } else {
+                viewFields.forEach(f => f.style.display = 'block');
+                editFields.forEach(f => f.style.display = 'none');
+                viewActions.forEach(a => a.style.display = 'inline-flex');
+                editActions.forEach(a => a.style.display = 'none');
+                document.querySelectorAll('.edit-field-conditional').forEach(f => f.style.display = 'none');
+            }
+        }
+
+        function toggleOtherReligion() {
+            const select = document.getElementById('religionSelect');
+            const otherInput = document.getElementById('religionOther');
+            if (select && otherInput) {
+                if (select.value === 'Other') {
+                    otherInput.style.display = 'block';
+                } else {
+                    otherInput.style.display = 'none';
+                }
+            }
+        }
+
+        function toggleOtherEthnicity() {
+            const select = document.getElementById('ethnicitySelect');
+            const otherInput = document.getElementById('ethnicityOther');
+            if (select && otherInput) {
+                if (select.value === 'Other') {
+                    otherInput.style.display = 'block';
+                } else {
+                    otherInput.style.display = 'none';
+                }
+            }
+        }
+
+        function toggleOtherFpMethod() {
+            const select = document.getElementById('fpMethodSelect');
+            const otherInput = document.getElementById('fpMethodOther');
+            if (select && otherInput) {
+                if (select.value === 'Other') {
+                    otherInput.style.display = 'block';
+                } else {
+                    otherInput.style.display = 'none';
+                }
+            }
+        }
+
+        function handleCivilStatusChange() {
+            const civilStatusSelect = document.getElementById('civilStatusSelect');
+            const spouseLabel = document.getElementById('spouseNameLabel');
+            const spouseInput = document.getElementById('spouseNameInput');
+            
+            if (civilStatusSelect && spouseLabel && spouseInput) {
+                if (civilStatusSelect.value === 'Married') {
+                    spouseLabel.innerHTML = 'Spouse Name <span style="color:red;">*</span>';
+                    spouseInput.required = true;
+                } else {
+                    spouseLabel.innerHTML = 'Spouse Name';
+                    spouseInput.required = false;
+                }
+            }
+        }
+
+        function saveProfile() {
+            const form = document.getElementById('inlineEditForm');
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
+            
+            const rawData = new FormData(form);
+            const formData = new FormData();
+            
+            formData.append('mode', 'update');
+            formData.append('residentId', rawData.get('resident_id'));
+            
+            // Personal Details
+            formData.append('firstName', rawData.get('first_name') || '');
+            formData.append('middleName', rawData.get('middle_name') || '');
+            formData.append('lastName', rawData.get('last_name') || '');
+            formData.append('suffix', rawData.get('suffix') || '');
+            formData.append('sex', rawData.get('sex') || '');
+            formData.append('dateOfBirth', rawData.get('date_of_birth') || '');
+            
+            if (rawData.get('religion_select') === 'Other') {
+                formData.append('religion', rawData.get('religion_other') || '');
+            } else {
+                formData.append('religion', rawData.get('religion_select') || '');
+            }
+            
+            if (rawData.get('ethnicity_select') === 'Other') {
+                formData.append('ethnicity', rawData.get('ethnicity_other') || '');
+            } else {
+                formData.append('ethnicity', rawData.get('ethnicity_select') || '');
+            }
+            
+            // Contact
+            formData.append('mobileNumber', rawData.get('mobile_number') || '');
+            formData.append('email', rawData.get('email') || '');
+            formData.append('streetName', rawData.get('current_address') || '');
+            formData.append('houseNo', '');
+            formData.append('purok', '');
+            
+            // Family
+            formData.append('civilStatus', rawData.get('civil_status') || '');
+            formData.append('spouseName', rawData.get('spouse_name') || '');
+            formData.append('fatherName', rawData.get('father_name') || '');
+            formData.append('motherName', rawData.get('mother_name') || '');
+            formData.append('numberOfChildren', rawData.get('number_of_children') || '0');
+            
+            // Education & Employment
+            formData.append('educationalAttainment', rawData.get('educational_attainment') || '');
+            formData.append('employmentStatus', rawData.get('employment_status') || '');
+            formData.append('occupation', rawData.get('occupation') || '');
+            formData.append('monthlyIncome', rawData.get('monthly_income') || '');
+            
+            // Government Programs
+            formData.append('fourPs', rawData.get('fourps_member') || 'No');
+            formData.append('fourpsId', rawData.get('fourps_id') || '');
+            formData.append('voterStatus', rawData.get('voter_status') || 'No');
+            formData.append('precinctNumber', rawData.get('precinct_number') || '');
+            
+            // Health Info
+            formData.append('philhealthId', rawData.get('philhealth_id') || '');
+            formData.append('membershipType', rawData.get('membership_type') || '');
+            formData.append('philhealthCategory', rawData.get('philhealth_category') || '');
+            formData.append('ageHealthGroup', rawData.get('age_health_group') || '');
+            formData.append('medicalHistory', rawData.get('medical_history') || '');
+            
+            // WRA
+            formData.append('lmpDate', rawData.get('lmp_date') || '');
+            formData.append('usingFpMethod', rawData.get('using_fp_method') || '');
+            if (rawData.has('fp_methods_select')) {
+                formData.append('fpMethodsUsed', rawData.get('fp_methods_select') === 'Other' ? rawData.get('fp_methods_other') : rawData.get('fp_methods_select'));
+            } else {
+                formData.append('fpMethodsUsed', '');
+            }
+            formData.append('fpStatus', rawData.get('fp_status') || '');
+            
+            formData.append('remarks', rawData.get('remarks') || '');
+            
+            // Hidden required fields from original DB state
+            formData.append('pwdStatus', '<?php echo addslashes($resident["pwd_status"] ?? "No"); ?>');
+            formData.append('verificationStatus', '<?php echo addslashes($resident["verification_status"] ?? "Pending"); ?>');
+            formData.append('activityStatus', '<?php echo addslashes($resident["activity_status"] ?? "Active"); ?>');
+            formData.append('rejectionReason', '<?php echo addslashes($resident["rejection_reason"] ?? ""); ?>');
+            formData.append('statusRemarks', '<?php echo addslashes($resident["status_remarks"] ?? ""); ?>');
+            formData.append('guardianName', '<?php echo addslashes($resident["guardian_name"] ?? ""); ?>');
+            formData.append('guardianRelationship', '<?php echo addslashes($resident["guardian_relationship"] ?? ""); ?>');
+            formData.append('guardianContact', '<?php echo addslashes($resident["guardian_contact"] ?? ""); ?>');
+            formData.append('existingPhoto', '<?php echo addslashes($resident["photo"] ?? ""); ?>');
+            
+            const saveBtn = document.querySelector('.btn-success.edit-action');
+            const originalText = saveBtn.innerHTML;
+            saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+            saveBtn.disabled = true;
+            
+            fetch('model/save_resident.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showNotification('Resident profile updated successfully!', 'success');
+                    setTimeout(() => {
+                        const url = new URL(window.location);
+                        url.searchParams.delete('edit');
+                        window.location.href = url.toString();
+                    }, 1500);
+                } else {
+                    showNotification('Error updating profile: ' + data.message, 'error');
+                    saveBtn.innerHTML = originalText;
+                    saveBtn.disabled = false;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showNotification('An error occurred while saving the profile.', 'error');
+                saveBtn.innerHTML = originalText;
+                saveBtn.disabled = false;
+            });
+        }
+
+        function showNotification(message, type = 'info') {
+            document.querySelectorAll('.notification').forEach(n => n.remove());
+            
+            const notification = document.createElement('div');
+            notification.className = `notification notification-${type}`;
+            
+            let icon = 'info-circle';
+            let bgColor = '#3b82f6';
+            
+            if (type === 'success') {
+                icon = 'check-circle';
+                bgColor = '#10b981';
+            } else if (type === 'error') {
+                icon = 'exclamation-circle';
+                bgColor = '#ef4444';
+            }
+            
+            notification.innerHTML = `<i class="fas fa-${icon}"></i> <span>${message}</span>`;
+            notification.style.cssText = `position:fixed;top:20px;right:20px;background:${bgColor};color:white;padding:15px 20px;border-radius:8px;box-shadow:0 4px 6px rgba(0,0,0,0.1);display:flex;align-items:center;gap:10px;z-index:10000;animation:slideInRight 0.3s ease;`;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.animation = 'slideOutRight 0.3s ease forwards';
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
+        }
+
+        // Add notification animation keyframes
+        if (!document.getElementById('notification-animations')) {
+            const style = document.createElement('style');
+            style.id = 'notification-animations';
+            style.textContent = `
+                @keyframes slideInRight {
+                    from { transform: translateX(100%); opacity: 0; }
+                    to { transform: translateX(0); opacity: 1; }
+                }
+                @keyframes slideOutRight {
+                    from { transform: translateX(0); opacity: 1; }
+                    to { transform: translateX(100%); opacity: 0; }
+                }
+            `;
+            document.head.appendChild(style);
         }
     </script>
 </body>

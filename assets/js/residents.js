@@ -819,7 +819,7 @@ function handleAction(action, name, id, row) {
         case 'edit':
             if (residentId) {
                 // Navigate to edit resident page
-                window.location.href = `model/edit-resident.php?id=${residentId}`;
+                window.location.href = `resident_profile.php?id=${residentId}&edit=1`;
             } else {
                 showNotification('Unable to load resident details', 'error');
             }

@@ -656,6 +656,13 @@ function showActionMenu(row, button) {
             <span>Edit Household</span>
         </div>`;
     }
+    if (perms.household_edit) {
+        menuHtml += `
+        <div class="action-menu-item" data-action="transfer">
+            <i class="fas fa-exchange-alt"></i>
+            <span>Transfer Head</span>
+        </div>`;
+    }
     if (perms.household_delete) {
         menuHtml += `
         <div class="action-menu-divider"></div>
@@ -716,6 +723,11 @@ function handleAction(action, householdNumber, headName, memberCount, row) {
             
         case 'edit':
             editHousehold(householdId);
+            break;
+            
+        case 'transfer':
+            // Placeholder for transfer head functionality
+            alert(`Transfer household head for ${headName}. Open your modal here.`);
             break;
             
         case 'delete':
