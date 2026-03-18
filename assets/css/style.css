@@ -617,7 +617,6 @@ body.modal-open .main-content.expanded {
     font-size: 28px;
     font-weight: 700;
     color: var(--text-primary);
-    margin-bottom: 30px;
     transition: var(--color-transition);
 }
 
