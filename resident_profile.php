@@ -218,10 +218,6 @@ $age = calculateAge($resident['date_of_birth']);
                         <h1 class="profile-name"><?php echo strtoupper  ($fullName); ?></h1>
                         <p class="profile-id"><?php echo htmlspecialchars($resident['resident_id'] ?: 'N/A'); ?></p>
                         <div class="profile-badges">
-                            <span class="badge badge-<?php echo strtolower($resident['verification_status']); ?>">
-                                <i class="fas fa-<?php echo $resident['verification_status'] === 'Verified' ? 'check-circle' : 'clock'; ?>"></i>
-                                <?php echo htmlspecialchars($resident['verification_status']); ?>
-                            </span>
                             <span class="badge badge-<?php echo strtolower($resident['activity_status']); ?>">
                                 <i class="fas fa-circle"></i>
                                 <?php echo htmlspecialchars($resident['activity_status']); ?>
