@@ -59,6 +59,7 @@ function loadHouseholdsData() {
             if (data.success && data.data.length > 0) {
                 displayHouseholds(data.data);
                 initializeTable();
+                applyUrlFilters();
             } else {
                 tbody.innerHTML = `
                     <tr>
@@ -97,6 +98,8 @@ function displayHouseholds(households) {
         row.setAttribute('data-size', household.size);
         row.setAttribute('data-member-count', household.member_count);
         row.setAttribute('data-household-id', household.id);
+        row.setAttribute('data-water-source', household.water_source_type || '');
+        row.setAttribute('data-toilet-facility', household.toilet_facility_type || '');
         
         // Get initials for avatar
         const initials = household.head_first_name && household.head_last_name 
@@ -178,11 +181,76 @@ function initializeEventListeners() {
     
     // Action menu handlers
     initializeActionMenus();
+
+    // Advanced filter handlers
+    initializeAdvancedFilters();
+}
+
+function initializeAdvancedFilters() {
+    const filterBtn = document.getElementById('filterBtn');
+    const filterPanel = document.getElementById('filterPanel');
+    const applyBtn = document.getElementById('applyFiltersBtn');
+    const clearBtn = document.getElementById('clearFiltersBtn');
+
+    if (filterBtn && filterPanel) {
+        filterBtn.addEventListener('click', () => {
+            const isVisible = filterPanel.style.display !== 'none';
+            filterPanel.style.display = isVisible ? 'none' : 'block';
+            filterBtn.classList.toggle('active', !isVisible);
+        });
+
+        // Close on outside click
+        document.addEventListener('click', (e) => {
+            if (filterPanel.style.display !== 'none' && !filterPanel.contains(e.target) && !filterBtn.contains(e.target)) {
+                filterPanel.style.display = 'none';
+                filterBtn.classList.remove('active');
+            }
+        });
+    }
+
+    if (applyBtn) {
+        applyBtn.addEventListener('click', () => {
+            applyFilters();
+            if (filterPanel) filterPanel.style.display = 'none';
+            if (filterBtn) filterBtn.classList.remove('active');
+        });
+    }
+
+    if (clearBtn) {
+        clearBtn.addEventListener('click', () => {
+            const hSize = document.getElementById('filterFamilySize');
+            const hWat = document.getElementById('filterWaterSource');
+            const hToi = document.getElementById('filterToiletFacility');
+            if (hSize) hSize.value = '';
+            if (hWat) hWat.value = '';
+            if (hToi) hToi.value = '';
+            applyFilters();
+        });
+    }
+}
+
+function updateFilterNotification(count) {
+    const notification = document.getElementById('filterNotification');
+    const countSpan = document.getElementById('filterCount');
+    const filterBtn = document.getElementById('filterBtn');
+    
+    if (!notification || !countSpan || !filterBtn) return;
+    
+    if (count > 0) {
+        countSpan.textContent = count > 9 ? '9+' : count;
+        notification.style.display = 'flex';
+        filterBtn.classList.add('has-active-filters');
+    } else {
+        notification.style.display = 'none';
+        filterBtn.classList.remove('has-active-filters');
+    }
 }
 
 // ===================================
 // Filter Tabs
 // ===================================
+let currentTabFilter = 'all';
+
 function initializeFilterTabs() {
     const tabButtons = document.querySelectorAll('.tab-btn');
     
@@ -194,47 +262,89 @@ function initializeFilterTabs() {
             // Add active class to clicked tab
             btn.classList.add('active');
             
-            const filter = btn.getAttribute('data-filter');
-            applyFilter(filter);
+            currentTabFilter = btn.getAttribute('data-filter');
+            applyFilters();
         });
     });
 }
 
 function applyFilter(filterType) {
     console.log('Filter applied:', filterType);
+    currentTabFilter = filterType;
+    applyFilters();
+}
+
+function applyFilters() {
+    if (!householdsTable) return;
     
-    if (householdsTable) {
-        householdsTable.filter(row => {
-            let memberCount = 0;
-            // Get member count from attribute
-            if (row.hasAttribute('data-member-count')) {
-                memberCount = parseInt(row.getAttribute('data-member-count'));
-            } else {
-                // Fallback: try to parse from the badge
-                const countEl = row.querySelector('.member-count .count');
-                if (countEl) memberCount = parseInt(countEl.textContent);
-            }
-            
-            switch(filterType) {
-                case 'all':
-                    return true;
-                case 'single-person':
-                    return memberCount === 0;
-                case 'small':
-                    return memberCount >= 1 && memberCount <= 4;
-                case 'medium':
-                    return memberCount >= 5 && memberCount <= 7;
-                case 'large':
-                    return memberCount >= 8 && memberCount <= 10;
-                case 'very-large':
-                    return memberCount >= 11;
-                default:
-                    return true;
-            }
-        });
-        
-        updateTotalCount(householdsTable.getFilteredRows());
+    const filterFamilySize = document.getElementById('filterFamilySize')?.value.trim() || '';
+    const filterWaterSource = document.getElementById('filterWaterSource')?.value || '';
+    const filterToiletFacility = document.getElementById('filterToiletFacility')?.value || '';
+
+    // Update URL parameters
+    const url = new URL(window.location);
+    if (currentTabFilter !== 'all') {
+        url.searchParams.set('tab', currentTabFilter);
+    } else {
+        url.searchParams.delete('tab');
     }
+    
+    if (filterFamilySize) url.searchParams.set('size', filterFamilySize);
+    else url.searchParams.delete('size');
+    
+    if (filterWaterSource) url.searchParams.set('water', filterWaterSource);
+    else url.searchParams.delete('water');
+    
+    if (filterToiletFacility) url.searchParams.set('toilet', filterToiletFacility);
+    else url.searchParams.delete('toilet');
+    
+    window.history.replaceState({}, '', url);
+
+    let activeFiltersCount = 0;
+    if (filterFamilySize) activeFiltersCount++;
+    if (filterWaterSource) activeFiltersCount++;
+    if (filterToiletFacility) activeFiltersCount++;
+    
+    updateFilterNotification(activeFiltersCount);
+
+    householdsTable.filter(row => {
+        let memberCount = 0;
+        if (row.hasAttribute('data-member-count')) {
+            memberCount = parseInt(row.getAttribute('data-member-count'));
+        } else {
+            const countEl = row.querySelector('.member-count .count');
+            if (countEl) memberCount = parseInt(countEl.textContent);
+        }
+        
+        let tabMatch = true;
+        switch(currentTabFilter) {
+            case 'single-person': tabMatch = memberCount === 0; break;
+            case 'small': tabMatch = memberCount >= 1 && memberCount <= 4; break;
+            case 'medium': tabMatch = memberCount >= 5 && memberCount <= 7; break;
+            case 'large': tabMatch = memberCount >= 8 && memberCount <= 10; break;
+            case 'very-large': tabMatch = memberCount >= 11; break;
+        }
+        
+        if (!tabMatch) return false;
+
+        if (filterFamilySize) {
+            if ((memberCount + 1) !== parseInt(filterFamilySize)) return false;
+        }
+
+        if (filterWaterSource) {
+            const waterSource = row.getAttribute('data-water-source') || '';
+            if (waterSource !== filterWaterSource) return false;
+        }
+
+        if (filterToiletFacility) {
+            const toiletFacility = row.getAttribute('data-toilet-facility') || '';
+            if (toiletFacility !== filterToiletFacility) return false;
+        }
+
+        return true;
+    });
+    
+    updateTotalCount(householdsTable.getFilteredRows());
 }
 
 function updateTotalCount(count) {
@@ -246,6 +356,53 @@ function updateTotalCount(count) {
             const visibleRows = document.querySelectorAll('#householdsTableBody tr:not([style*="display: none"])');
             totalCountElement.textContent = visibleRows.length;
         }
+    }
+}
+
+// ===================================
+// URL Filters
+// ===================================
+function applyUrlFilters() {
+    const urlParams = new URLSearchParams(window.location.search);
+    let hasFilters = false;
+    
+    if (urlParams.has('tab')) {
+        const tab = urlParams.get('tab');
+        const tabBtn = document.querySelector(`.tab-btn[data-filter="${tab}"]`);
+        if (tabBtn) {
+            document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));
+            tabBtn.classList.add('active');
+            currentTabFilter = tab;
+            hasFilters = true;
+        }
+    }
+    
+    if (urlParams.has('size')) {
+        const el = document.getElementById('filterFamilySize');
+        if (el) {
+            el.value = urlParams.get('size');
+            hasFilters = true;
+        }
+    }
+    
+    if (urlParams.has('water')) {
+        const el = document.getElementById('filterWaterSource');
+        if (el) {
+            el.value = urlParams.get('water');
+            hasFilters = true;
+        }
+    }
+    
+    if (urlParams.has('toilet')) {
+        const el = document.getElementById('filterToiletFacility');
+        if (el) {
+            el.value = urlParams.get('toilet');
+            hasFilters = true;
+        }
+    }
+    
+    if (hasFilters) {
+        applyFilters();
     }
 }
 
@@ -407,6 +564,15 @@ function refreshData() {
             row.style.display = '';
         });
         
+        const hSize = document.getElementById('filterFamilySize');
+        const hWat = document.getElementById('filterWaterSource');
+        const hToi = document.getElementById('filterToiletFacility');
+        if (hSize) hSize.value = '';
+        if (hWat) hWat.value = '';
+        if (hToi) hToi.value = '';
+        currentTabFilter = 'all';
+        applyFilters();
+
         updateTotalCount();
         
         // Show success message

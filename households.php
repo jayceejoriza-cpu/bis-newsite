@@ -35,14 +35,6 @@ $pageTitle = 'Households';
     <link rel="stylesheet" href="assets/css/households.css">
     <!-- Dark Mode Init: must be in <head> to prevent flash of light mode -->
     <script src="assets/js/dark-mode-init.js"></script>
-    <style>
-        /* Center align Action column header and cells */
-        .households-table th:last-child,
-        .households-table td:last-child {
-            text-align: center !important;
-            vertical-align: middle;
-        }
-    </style>
 </head>
 <body>
     <!-- Sidebar -->
@@ -75,13 +67,69 @@ $pageTitle = 'Households';
             </div>
 
               <!-- Search and Filter Bar -->
-            <div class="search-filter-bar">
+            <div class="search-filter-bar" style="position: relative;">
                 <div class="search-box">
                     <i class="fas fa-search"></i>
                     <input type="text" placeholder="Search" id="searchInput">
                     <button class="btn-clear" id="clearSearch">
                         <i class="fas fa-times"></i>
                     </button>
+                </div>
+                
+                <!-- Filter Button and Panel Wrapper -->
+                <div style="position: relative; display: flex; align-items: center;">
+                    <button class="btn btn-icon" id="filterBtn" title="Filter" style="position: relative;">
+                        <i class="fas fa-filter"></i>
+                        <span class="filter-notification" id="filterNotification" style="display: none; position: absolute; top: -5px; right: -5px; background: #3b82f6; color: white; font-size: 10px; padding: 2px 6px; border-radius: 10px;">
+                            <span class="filter-count" id="filterCount">0</span>
+                        </span>
+                    </button>
+                
+                    <!-- Advanced Filter Panel -->
+                    <div class="filter-panel" id="filterPanel" style="display: none;">
+                        <div class="filter-panel-header">
+                            <h3><i class="fas fa-filter"></i> Select Filters</h3>
+                        </div>
+                        <div class="filter-panel-body">
+                            <div class="filter-grid">
+                                <div class="filter-item">
+                                    <label for="filterFamilySize">Household Family Size</label>
+                                    <input type="number" id="filterFamilySize" class="filter-select" placeholder="Enter Family Size" min="1">
+                                </div>
+                            <div class="filter-item">
+                                <label for="filterWaterSource">Water Source Type</label>
+                                <select id="filterWaterSource" class="filter-select">
+                                    <option value="">All</option>
+                                    <option value="Level I (Point Spring)">Level I (Point Spring)</option>
+                                    <option value="Level II (Communal Faucet system or stand post)">Level II (Communal Faucet system or stand post)</option>
+                                    <option value="Level III (Waterworks system or individual house connection)">Level III (Waterworks system or individual house connection)</option>
+                                    <option value="O (For doubtful sources, open dug well etc.)">O (For doubtful sources, open dug well etc.)</option>
+                                </select>
+                            </div>
+                            <div class="filter-item">
+                                <label for="filterToiletFacility">Toilet Facility Type</label>
+                                <select id="filterToiletFacility" class="filter-select">
+                                    <option value="">All</option>
+                                    <option value="P - Pour/Flush toilet connected to septic tank)">P - (Pour/Flush toilet connected to septic tank)</option>
+                                    <option value="PF - Pour/Flush toilet connected to septic tank and sewerage system">PF - Pour/Flush toilet connected to septic tank and sewerage system</option>
+                                    <option value="VIP - Ventilated impoved pit latrine (VIP) or composting">VIP - Ventilated impoved pit latrine (VIP) or composting</option>
+                                    <option value="WS - Water-sealed connected to open drain">WS - Water-sealed connected to open drain</option>
+                                    <option value="OH - Overhung Latrine">OH - Overhung Latrine</option>
+                                    <option value="OP - Overpit Latrine">OP - Overpit Latrine</option>
+                                    <option value="WO - Without Latrine">WO - Without Latrine</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="filter-panel-footer">
+                        <button class="btn btn-secondary" id="clearFiltersBtn">
+                            <i class="fas fa-times"></i> Clear
+                        </button>
+                        <button class="btn btn-primary" id="applyFiltersBtn">
+                            <i class="fas fa-check"></i> Apply Now
+                        </button>
+                    </div>
+                </div>
                 </div>
                 
                 <button class="btn btn-icon" id="refreshBtn">

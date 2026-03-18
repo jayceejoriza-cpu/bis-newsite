@@ -87,34 +87,37 @@ try {
 // ============================================
 // POPULATION: Age Groups
 // ============================================
+
 $ageGroupData = [
-    'Children (0-17)' => 0,
-    'Young Adults (18-29)' => 0,
-    'Adults (30-59)' => 0,
-    'Seniors (60+)' => 0
+    'Newborn (0-28 days)'        => 0,
+    'Infant (29 days - 1 year)'  => 0,
+    'Child (1-9 years)'          => 0,
+    'Adolescent (10-19 years)'   => 0,
+    'Adult (20-59 years)'        => 0,
+    'Senior Citizen (60+ years)' => 0
 ];
+
 try {
-    $rows = $pdo->query("
-        SELECT
-            CASE
-                WHEN TIMESTAMPDIFF(YEAR, date_of_birth, CURDATE()) < 18  THEN 'Children (0-17)'
-                WHEN TIMESTAMPDIFF(YEAR, date_of_birth, CURDATE()) BETWEEN 18 AND 29 THEN 'Young Adults (18-29)'
-                WHEN TIMESTAMPDIFF(YEAR, date_of_birth, CURDATE()) BETWEEN 30 AND 59 THEN 'Adults (30-59)'
-                ELSE 'Seniors (60+)'
-            END AS age_group,
-            COUNT(*) AS cnt
-        FROM residents
-        WHERE activity_status != 'Archived'
-        GROUP BY age_group
-        ORDER BY FIELD(age_group, 'Children (0-17)', 'Young Adults (18-29)', 'Adults (30-59)', 'Seniors (60+)')
-    ")->fetchAll();
+    // We select the existing column and count the occurrences
+    $stmt = $pdo->query("
+        SELECT age_health_group, COUNT(*) AS cnt 
+        FROM residents 
+        WHERE activity_status != 'Archived' 
+        AND age_health_group IS NOT NULL
+        GROUP BY age_health_group
+    ");
+    
+    $rows = $stmt->fetchAll();
+
     foreach ($rows as $r) {
-        if (isset($ageGroupData[$r['age_group']])) {
-            $ageGroupData[$r['age_group']] = (int)$r['cnt'];
+        // We check if the database value matches one of our predefined keys
+        if (isset($ageGroupData[$r['age_health_group']])) {
+            $ageGroupData[$r['age_health_group']] = (int)$r['cnt'];
         }
     }
-} catch (PDOException $e) { error_log($e->getMessage()); }
-
+} catch (PDOException $e) {
+    error_log("Database Error: " . $e->getMessage());
+}
 // ============================================
 // POPULATION: Civil Status
 // ============================================
@@ -158,7 +161,7 @@ try {
             SUM(CASE WHEN fourps_member  = 'Yes' THEN 1 ELSE 0 END) AS fourps,
             SUM(CASE WHEN voter_status   = 'Yes' THEN 1 ELSE 0 END) AS voters,
             SUM(CASE WHEN pwd_status     = 'Yes' THEN 1 ELSE 0 END) AS pwd,
-            SUM(CASE WHEN senior_citizen = 'Yes' THEN 1 ELSE 0 END) AS seniors,
+            SUM(CASE WHEN age_health_group = 'Senior Citizen (60+ years)' THEN 1 ELSE 0 END) AS seniors,
             SUM(CASE WHEN indigent       = 'Yes' THEN 1 ELSE 0 END) AS indigent
         FROM residents
         WHERE activity_status != 'Archived'
@@ -170,6 +173,30 @@ try {
             'pwd'     => (int)$row['pwd'],
             'seniors' => (int)$row['seniors'],
             'indigent'=> (int)$row['indigent'],
+        ];
+    }
+} catch (PDOException $e) { error_log($e->getMessage()); }
+
+// ============================================
+// POPULATION: By Purok
+// ============================================
+$purokCounts = ['p1' => 0, 'p2' => 0, 'p3' => 0, 'p4' => 0];
+try {
+    $row = $pdo->query("
+        SELECT
+            SUM(CASE WHEN purok = '1' THEN 1 ELSE 0 END) AS p1,
+            SUM(CASE WHEN purok = '2' THEN 1 ELSE 0 END) AS p2,
+            SUM(CASE WHEN purok = '3' THEN 1 ELSE 0 END) AS p3,
+            SUM(CASE WHEN purok = '4' THEN 1 ELSE 0 END) AS p4
+        FROM residents
+        WHERE activity_status != 'Archived'
+    ")->fetch();
+    if ($row) {
+        $purokCounts = [
+            'p1' => (int)$row['p1'],
+            'p2' => (int)$row['p2'],
+            'p3' => (int)$row['p3'],
+            'p4' => (int)$row['p4'],
         ];
     }
 } catch (PDOException $e) { error_log($e->getMessage()); }

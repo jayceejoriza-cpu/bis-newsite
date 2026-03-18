@@ -18,7 +18,7 @@
     <!-- Page Header -->
     <div class="reports-header">
         <div class="reports-header-left">
-            <h1 class="page-title">Dashboard & Analytics</h1>
+            <h1 class="page-title">Dashboard</h1>
             <p class="page-subtitle">Comprehensive barangay statistics and data summaries</p>
         </div>
         <div class="reports-header-right no-print">
@@ -54,6 +54,16 @@
         </div>
 
         <div class="report-stat-card">
+                    <div class="report-stat-icon purple">
+                        <i class="fas fa-certificate"></i>
+                    </div>
+                    <div class="report-stat-info">
+                        <div class="report-stat-value"><?php echo number_format($totalCertReqs); ?></div>
+                        <div class="report-stat-label">Certificate Requests</div>
+                    </div>
+                </div>
+                
+        <div class="report-stat-card">
             <div class="report-stat-icon orange">
                 <i class="fas fa-file-alt"></i>
             </div>
@@ -63,25 +73,8 @@
             </div>
         </div>
 
-        <div class="report-stat-card">
-            <div class="report-stat-icon purple">
-                <i class="fas fa-certificate"></i>
-            </div>
-            <div class="report-stat-info">
-                <div class="report-stat-value"><?php echo number_format($totalCertReqs); ?></div>
-                <div class="report-stat-label">Certificate Requests</div>
-            </div>
-        </div>
+        
 
-        <div class="report-stat-card">
-            <div class="report-stat-icon red">
-                <i class="fas fa-map-marker-alt"></i>
-            </div>
-            <div class="report-stat-info">
-                <div class="report-stat-value"><?php echo number_format($pendingRequests); ?></div>
-                <div class="report-stat-label">Purok</div>
-            </div>
-        </div>
     </div>
 
     <!-- ================================
@@ -97,15 +90,17 @@
             <button class="report-tab-btn" data-tab="population">
                 <i class="fas fa-users"></i> Population
             </button>
-            <button class="report-tab-btn" data-tab="blotter">
-                <i class="fas fa-file-alt"></i> Blotter Records
+            <button class="report-tab-btn" data-tab="households">
+                <i class="fas fa-home"></i> Households
             </button>
             <button class="report-tab-btn" data-tab="certificates">
                 <i class="fas fa-certificate"></i> Certificate Requests
             </button>
-            <button class="report-tab-btn" data-tab="households">
-                <i class="fas fa-home"></i> Households
+            <button class="report-tab-btn" data-tab="blotter">
+                <i class="fas fa-file-alt"></i> Blotter Records
             </button>
+            
+            
         </div>
 
         <!-- ============================
@@ -193,6 +188,44 @@
              ============================ -->
         <div class="report-tab-content" id="tab-population">
 
+          <!-- Purok -->
+            <div class="report-section">
+                <h3 class="report-section-title">
+                    <i class="fas fa-map-marker-alt"></i> By Purok
+                </h3>
+                <div class="special-groups-grid purok-cards">
+                    <div class="special-group-card">
+                        <div class="special-group-icon" style="background: linear-gradient(135deg,#ef4444,#dc2626);">
+                            <i class="fas fa-map-marker-alt"></i>
+                        </div>
+                        <div class="special-group-value"><?php echo number_format($purokCounts['p1']); ?></div>
+                        <div class="special-group-label">Purok 1</div>
+                    </div>
+                    <div class="special-group-card">
+                        <div class="special-group-icon" style="background: linear-gradient(135deg,#ef4444,#dc2626);">
+                            <i class="fas fa-map-marker-alt"></i>
+                        </div>
+                        <div class="special-group-value"><?php echo number_format($purokCounts['p2']); ?></div>
+                        <div class="special-group-label">Purok 2</div>
+                    </div>
+                    <div class="special-group-card">
+                        <div class="special-group-icon" style="background: linear-gradient(135deg,#ef4444,#dc2626);">
+                            <i class="fas fa-map-marker-alt"></i>
+                        </div>
+                        <div class="special-group-value"><?php echo number_format($purokCounts['p3']); ?></div>
+                        <div class="special-group-label">Purok 3</div>
+                    </div>
+                    <div class="special-group-card">
+                        <div class="special-group-icon" style="background: linear-gradient(135deg,#ef4444,#dc2626);">
+                            <i class="fas fa-map-marker-alt"></i>
+                        </div>
+                        <div class="special-group-value"><?php echo number_format($purokCounts['p4']); ?></div>
+                        <div class="special-group-label">Purok 4</div>
+                    </div>
+                    
+                </div>
+            </div>
+
             <!-- Special Groups -->
             <div class="report-section">
                 <h3 class="report-section-title">
@@ -271,7 +304,9 @@
                                     <?php else: ?>
                                         <?php foreach ($genderData as $label => $count): ?>
                                         <tr>
-                                            <td><?php echo htmlspecialchars($label); ?></td>
+                                            <td>
+                                                <a href="residents.php?filterSex=<?php echo urlencode($label); ?>" style="color: var(--primary-color); text-decoration: none; font-weight: 500;"><?php echo htmlspecialchars($label); ?></a>
+                                            </td>
                                             <td class="text-right"><strong><?php echo number_format($count); ?></strong></td>
                                             <td class="text-right"><?php echo pct($count, $totalResidents); ?>%</td>
                                         </tr>
@@ -311,14 +346,16 @@
                                 </thead>
                                 <tbody>
                                     <?php
-                                    $ageColors = ['green','blue','orange','red'];
+                                    $ageColors = ['pink','purple','green','blue','red','orange'];
                                     $ai = 0;
                                     foreach ($ageGroupData as $label => $count):
                                         $color = $ageColors[$ai % count($ageColors)];
                                         $ai++;
                                     ?>
                                     <tr>
-                                        <td><?php echo htmlspecialchars($label); ?></td>
+                                        <td>
+                                                <a href="residents.php?filterAgeHealthGroup=<?php echo urlencode($label); ?>" style="color: var(--primary-color); text-decoration: none; font-weight: 500;"><?php echo htmlspecialchars($label); ?></a>
+                                            </td>
                                         <td class="text-right"><strong><?php echo number_format($count); ?></strong></td>
                                         <td>
                                             <div class="report-bar-wrap">
@@ -360,7 +397,9 @@
                                 <?php else: ?>
                                     <?php $ci = 0; foreach ($civilStatusData as $label => $count): $color = barColor($ci++, $barColors); ?>
                                     <tr>
-                                        <td><?php echo htmlspecialchars($label); ?></td>
+                                         <td>
+                                                <a href="residents.php?filterCivilStatus=<?php echo urlencode($label); ?>" style="color: var(--primary-color); text-decoration: none; font-weight: 500;"><?php echo htmlspecialchars($label); ?></a>
+                                            </td>
                                         <td class="text-right"><strong><?php echo number_format($count); ?></strong></td>
                                         <td>
                                             <div class="report-bar-wrap">
@@ -393,7 +432,9 @@
                                 <?php else: ?>
                                     <?php $ei = 0; foreach ($employmentData as $label => $count): $color = barColor($ei++, $barColors); ?>
                                     <tr>
-                                        <td><?php echo htmlspecialchars($label); ?></td>
+                                         <td>
+                                                <a href="residents.php?filterEmploymentStatus=<?php echo urlencode($label); ?>" style="color: var(--primary-color); text-decoration: none; font-weight: 500;"><?php echo htmlspecialchars($label); ?></a>
+                                            </td>
                                         <td class="text-right"><strong><?php echo number_format($count); ?></strong></td>
                                         <td>
                                             <div class="report-bar-wrap">
@@ -433,7 +474,9 @@
                             <?php else: ?>
                                 <?php $edi = 0; foreach ($educationData as $label => $count): $color = barColor($edi++, $barColors); ?>
                                 <tr>
-                                    <td><?php echo htmlspecialchars($label); ?></td>
+                                     <td>
+                                                <a href="residents.php?filterEducation=<?php echo urlencode($label); ?>" style="color: var(--primary-color); text-decoration: none; font-weight: 500;"><?php echo htmlspecialchars($label); ?></a>
+                                            </td>
                                     <td class="text-right"><strong><?php echo number_format($count); ?></strong></td>
                                     <td>
                                         <div class="report-bar-wrap">
@@ -625,7 +668,9 @@
                                 <?php else: ?>
                                     <?php foreach ($certTypeData as $label => $count): ?>
                                     <tr>
-                                        <td><?php echo htmlspecialchars($label); ?></td>
+                                        <td>
+                                                <a href="requests.php?certificate=<?php echo urlencode($label); ?>" style="color: var(--primary-color); text-decoration: none; font-weight: 500;"><?php echo htmlspecialchars($label); ?></a>
+                                            </td>
                                         <td class="text-right"><strong><?php echo number_format($count); ?></strong></td>
                                        
                                     </tr>
@@ -723,7 +768,9 @@
                                     <?php else: ?>
                                         <?php foreach ($waterSourceData as $label => $count): ?>
                                         <tr>
-                                            <td><?php echo htmlspecialchars($label); ?></td>
+                                             <td>
+                                                <a href="households.php?water=<?php echo urlencode($label); ?>" style="color: var(--primary-color); text-decoration: none; font-weight: 500;"><?php echo htmlspecialchars($label); ?></a>
+                                            </td>
                                             <td class="text-right"><strong><?php echo number_format($count); ?></strong></td>
                                             <td class="text-right"><?php echo pct($count, $totalHouseholds); ?>%</td>
                                         </tr>
@@ -763,7 +810,9 @@
                                     <?php else: ?>
                                         <?php foreach ($toiletData as $label => $count): ?>
                                         <tr>
-                                            <td><?php echo htmlspecialchars($label); ?></td>
+                                            <td>
+                                                <a href="households.php?toilet=<?php echo urlencode($label); ?>" style="color: var(--primary-color); text-decoration: none; font-weight: 500;"><?php echo htmlspecialchars($label); ?></a>
+                                            </td>
                                             <td class="text-right"><strong><?php echo number_format($count); ?></strong></td>
                                             <td class="text-right"><?php echo pct($count, $totalHouseholds); ?>%</td>
                                         </tr>
@@ -808,8 +857,12 @@
             'Total Households': 'households.php',
             'Blotter Records': 'blotter.php',
             'Certificate Requests': 'requests.php',
+            'Purok 1': 'residents.php?filterPurok=1',
+            'Purok 2': 'residents.php?filterPurok=2',
+            'Purok 3': 'residents.php?filterPurok=3',
+            'Purok 4': 'residents.php?filterPurok=4',
             '4Ps Members': 'residents.php?filter4ps=Yes',
-            'Registered Voters': 'residents.php',
+            'Registered Voters': 'residents.php?filterVoterStatus=Yes',
             'PWD': 'residents.php?filterPwdStatus=Yes',
             'Senior Citizens': 'residents.php?filterAgeGroup=60%2B',
             'Indigent': 'residents.php'

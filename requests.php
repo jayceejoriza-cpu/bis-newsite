@@ -23,10 +23,54 @@ try {
         ]
     );
 
-    // Get total requests count
-    $totalRequests = $pdo->query("SELECT COUNT(*) FROM certificate_requests")->fetchColumn();
+    // Build filter conditions
+    $whereConditions = ['1=1'];
+    $params = [];
+    
+    if (!empty($_GET['certificate'])) {
+        $whereConditions[] = 'cr.certificate_name LIKE ?';
+        $params[] = '%' . $_GET['certificate'] . '%';
+    }
+    if (!empty($_GET['purpose'])) {
+        $whereConditions[] = 'cr.purpose LIKE ?';
+        $params[] = '%' . $_GET['purpose'] . '%';
+    }
+    if (!empty($_GET['date_requested'])) {
+        $whereConditions[] = 'DATE(cr.date_requested) = ?';
+        $params[] = $_GET['date_requested'];
+    }
+    
+    $whereClause = implode(' AND ', $whereConditions);
+    
+    // Get filtered total requests count
+    $countSql = "SELECT COUNT(*) FROM certificate_requests cr LEFT JOIN residents r ON cr.resident_id = r.id WHERE $whereClause";
+    $countStmt = $pdo->prepare($countSql);
+    $countStmt->execute($params);
+    $totalRequests = $countStmt->fetchColumn();
+    
+    // Get filtered requests data
+    $dataSql = "
+        SELECT 
+            cr.id,
+            r.resident_id,
+            r.id AS r_id,
+            CONCAT(r.first_name, ' ', IFNULL(CONCAT(r.middle_name, ' '), ''), r.last_name) AS resident_name,
+            cr.certificate_name,
+            cr.purpose,
+            cr.date_requested
+        FROM certificate_requests cr
+        LEFT JOIN residents r ON cr.resident_id = r.id
+        WHERE $whereClause
+        ORDER BY cr.date_requested DESC
+    ";
+    $dataStmt = $pdo->prepare($dataSql);
+    $dataStmt->execute($params);
+    $requestsData = $dataStmt->fetchAll();
 } catch (PDOException $e) {
+    $requestsError = true;
     $totalRequests = 0;
+    error_log('Requests load error: ' . $e->getMessage());
+    $requestsData = [];
 }
 ?>
 <!DOCTYPE html>
@@ -79,8 +123,11 @@ try {
                     </button>
                 </div>
                 
-                <button class="btn btn-icon" id="filterBtn" title="Filter">
+                <button class="btn btn-icon" id="filterBtn" title="Filter" style="position: relative;">
                     <i class="fas fa-filter"></i>
+                    <span class="filter-notification" id="filterNotification" style="display: none; position: absolute; top: -5px; right: -5px; background: #3b82f6; color: white; font-size: 10px; padding: 2px 6px; border-radius: 10px;">
+                        <span class="filter-count" id="filterCount">0</span>
+                    </span>
                 </button>
                 
                 <button class="btn btn-icon" id="refreshBtn" title="Refresh">
@@ -96,16 +143,6 @@ try {
                 <div class="filter-panel-body">
                     <div class="filter-grid-single">
                         <div class="filter-item">
-                            <label for="filterResidentID">Resident ID</label>
-                            <input type="text" id="filterResidentID" class="filter-select" placeholder="Enter Resident ID">
-                        </div>
-                        
-                        <div class="filter-item">
-                            <label for="filterResidentName">Resident Name</label>
-                            <input type="text" id="filterResidentName" class="filter-select" placeholder="Enter Resident Name">
-                        </div>
-                        
-                        <div class="filter-item">
                             <label for="filterCertificate">Certificate</label>
                             <select id="filterCertificate" class="filter-select">
                                 <option value="">All</option>
@@ -117,12 +154,17 @@ try {
                                 <option value="Barangay Clearance">Barangay Clearance</option>
                                 <option value="Barangay Business Clearance">Barangay Business Clearance</option>
                                 <option value="Business Permit">Business Permit</option>
-                                <option value="Fishing Clearance">Fishing Clearance</option>
-                                <option value="First Time Jobseeker Assistance">First Time Jobseeker Assistance</option>
+                                <option value="Barangay Fishing Clearance">Barangay Fishing Clearance</option>
+                                <option value="Certificate of First Time Jobseeker Assistance">Certificate of First Time Jobseeker Assistance</option>
                                 <option value="Certificate of Good Moral Character">Certificate of Good Moral Character</option>
-                                <option value="Oath of Undertaking">Oath of Undertaking</option>
+                                <option value="Certificate of Oath of Undertaking">Certificate of Oath of Undertaking</option>
                                 <option value="Certificate for Vessel Docking">Certificate for Vessel Docking</option>
                             </select>
+                        </div>
+                        
+                        <div class="filter-item">
+                            <label for="filterPurpose">Purpose</label>
+                            <input type="text" id="filterPurpose" class="filter-select" placeholder="Enter Purpose">
                         </div>
                         
                         <div class="filter-item">
@@ -156,33 +198,8 @@ try {
                     <tbody id="requestsTableBody">
                         <?php
                         ob_start();
+                        // Data already fetched above with filters
                         $requestsError = false;
-                        $requestsData = [];
-                        
-                        try {
-                            $sql = "
-                                SELECT 
-                                    cr.id,
-                                    r.resident_id,
-                                    r.id AS r_id,
-                                    CONCAT(r.first_name, ' ', IFNULL(CONCAT(r.middle_name, ' '), ''), r.last_name) AS resident_name,
-                                    cr.certificate_name,
-                                    cr.purpose,
-                                    cr.date_requested
-                                FROM certificate_requests cr
-                                LEFT JOIN residents r ON cr.resident_id = r.id
-                                ORDER BY cr.date_requested DESC
-                            ";
-                            $stmt = $pdo->query($sql);
-                            $requestsData = $stmt->fetchAll();
-                            
-                            // Update totalRequests to match
-                            $countSql = "SELECT COUNT(*) FROM certificate_requests cr LEFT JOIN residents r ON cr.resident_id = r.id";
-                            $totalRequests = $pdo->query($countSql)->fetchColumn();
-                        } catch (PDOException $e) {
-                            $requestsError = true;
-                            error_log('Requests load error: ' . $e->getMessage());
-                        }
                         
                         if ($requestsError) { ?>
                                 <tr>

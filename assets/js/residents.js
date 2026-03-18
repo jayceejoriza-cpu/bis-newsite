@@ -164,6 +164,15 @@ function initializeFilterTabs() {
 function applyFilter(filterType) {
     console.log('Filter applied:', filterType);
     
+    // Update URL parameters
+    const url = new URL(window.location);
+    if (filterType !== 'all') {
+        url.searchParams.set('tab', filterType);
+    } else {
+        url.searchParams.delete('tab');
+    }
+    window.history.replaceState({}, '', url);
+
     const gridCards = document.querySelectorAll('.resident-card');
     
     if (filterType === 'all') {
@@ -264,21 +273,40 @@ function applyUrlFilters() {
     const urlParams = new URLSearchParams(window.location.search);
     let hasFilters = false;
     
-    // Maps URL param keys to DOM element IDs
-    const filterMappings = {
-        'filter4ps': 'filter4ps',
-        'filterPwdStatus': 'filterPwdStatus',
-        'filterAgeGroup': 'filterAgeGroup',
-        'filterCivilStatus': 'filterCivilStatus',
-        'filterEmploymentStatus': 'filterEmploymentStatus'
-    };
+    if (urlParams.has('tab')) {
+        const tab = urlParams.get('tab');
+        const tabBtn = document.querySelector(`.tab-btn[data-filter="${tab}"]`);
+        if (tabBtn) {
+            document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));
+            tabBtn.classList.add('active');
+            applyFilter(tab);
+        }
+    }
 
-    for (const [param, elementId] of Object.entries(filterMappings)) {
-        if (urlParams.has(param)) {
-            const val = urlParams.get(param);
+    // Maps URL param keys to DOM element IDs
+    const filterMappings = [
+        'filterSex', 'filterPurok', 'filterAgeHealthGroup', 'filterPwdStatus',
+        'filterReligion', 'filterCivilStatus', 'filterDateOfBirth', 'filterEthnicity',
+        'filterEducation', 'filterOccupation', 'filterEmploymentStatus', 'filter4ps',
+        'filterVoterStatus', 'filterMembershipType', 'filterPhilhealthCategory',
+        'filterMedicalHistory', 'filterUsingFpMethod', 'filterFpMethodsUsed', 'filterFpStatus'
+    ];
+
+    if (urlParams.has('filterAgeGroup')) {
+        let val = urlParams.get('filterAgeGroup');
+        if (val === '60+') val = 'Senior Citizen (60+ years)';
+        const el = document.getElementById('filterAgeHealthGroup');
+        if (el) {
+            el.value = val;
+            hasFilters = true;
+        }
+    }
+
+    for (const elementId of filterMappings) {
+        if (urlParams.has(elementId)) {
             const el = document.getElementById(elementId);
             if (el) {
-                el.value = val;
+                el.value = urlParams.get(elementId);
                 hasFilters = true;
             }
         }
@@ -381,7 +409,6 @@ function initializeButtons() {
                 // Check advanced filters from the filter panel
                 const filterMappings = {
                     'filterAgeGroup': 'Age Group',
-                    'filterDateOfBirth': 'DOB',
                     'filterReligion': 'Religion',
                     'filterEthnicity': 'Ethnicity',
                     'filterCivilStatus': 'Civil Status',
@@ -389,7 +416,14 @@ function initializeButtons() {
                     'filterEmploymentStatus': 'Employment',
                     'filter4ps': '4Ps',
                     'filterAgeHealthGroup': 'Health Group',
-                    'filterPwdStatus': 'Disability Status'
+                    'filterPwdStatus': 'Disability Status',
+                    'filterDateOfBirth': 'Date of Birth',
+                    'filterSex': 'Sex',
+                    'filterPurok': 'Purok',
+                    'filterOccupation': 'Occupation',
+                    'filterVoterStatus': 'Voter Status',
+                    'filterMembershipType': 'Philhealth',
+                    'filterPhilhealthCategory': 'Philhealth Category'
                 };
 
                 for (const [id, label] of Object.entries(filterMappings)) {
@@ -520,6 +554,40 @@ function refreshData() {
         const searchInput = document.getElementById('searchInput');
         if (searchInput) searchInput.value = '';
         
+        // Clear all filters
+        const setFilterValue = (id, value) => {
+            const el = document.getElementById(id);
+            if (el) el.value = value;
+        };
+
+        const url = new URL(window.location);
+        const filterMappings = [
+            'filterSex', 'filterPurok', 'filterAgeHealthGroup', 'filterPwdStatus',
+            'filterReligion', 'filterCivilStatus', 'filterDateOfBirth', 'filterEthnicity',
+            'filterEducation', 'filterOccupation', 'filterEmploymentStatus', 'filter4ps',
+            'filterVoterStatus', 'filterMembershipType', 'filterPhilhealthCategory',
+            'filterMedicalHistory', 'filterUsingFpMethod', 'filterFpMethodsUsed', 'filterFpStatus'
+        ];
+        filterMappings.forEach(id => {
+            setFilterValue(id, '');
+            url.searchParams.delete(id);
+        });
+        setFilterValue('filterAgeGroup', ''); // Legacy cleanup
+        url.searchParams.delete('tab');
+        window.history.replaceState({}, '', url);
+        
+        // Reset Tabs
+        document.querySelectorAll('.tab-btn').forEach(tab => tab.classList.remove('active'));
+        const allTab = document.querySelector('.tab-btn[data-filter="all"]');
+        if (allTab) allTab.classList.add('active');
+
+        // Reset grid cards
+        const gridCards = document.querySelectorAll('.resident-card');
+        gridCards.forEach(card => card.style.display = '');
+        
+        // Clear the filter notification badge
+        updateFilterNotification(0);
+
         residentsTable.reset();
         residentsTable.sortByColumn(1);
         
@@ -932,28 +1000,64 @@ function applyAdvancedFilters() {
     };
 
     const filters = {
-        ageGroup: getFilterValue('filterAgeGroup'),
-        dateOfBirth: getFilterValue('filterDateOfBirth'),
+        sex: getFilterValue('filterSex'),
+        purok: getFilterValue('filterPurok'),
+        ageHealthGroup: getFilterValue('filterAgeHealthGroup'),
+        pwdStatus: getFilterValue('filterPwdStatus'),
         religion: getFilterValue('filterReligion'),
-        ethnicity: getFilterValue('filterEthnicity'),
         civilStatus: getFilterValue('filterCivilStatus'),
+        dateOfBirth: getFilterValue('filterDateOfBirth'),
+        ethnicity: getFilterValue('filterEthnicity'),
         education: getFilterValue('filterEducation'),
+        occupation: getFilterValue('filterOccupation'),
         employmentStatus: getFilterValue('filterEmploymentStatus'),
         fourPs: getFilterValue('filter4ps'),
-        ageHealthGroup: getFilterValue('filterAgeHealthGroup'),
-        pwdStatus: getFilterValue('filterPwdStatus')
+        voterStatus: getFilterValue('filterVoterStatus'),
+        membershipType: getFilterValue('filterMembershipType'),
+        philhealthCategory: getFilterValue('filterPhilhealthCategory'),
+        medicalHistory: getFilterValue('filterMedicalHistory'),
+        usingFpMethod: getFilterValue('filterUsingFpMethod'),
+        fpMethodsUsed: getFilterValue('filterFpMethodsUsed'),
+        fpStatus: getFilterValue('filterFpStatus')
     };
     
     console.log('Applying filters:', filters);
     
+    // Update URL parameters
+    const url = new URL(window.location);
+    const filterMappings = {
+        'filterSex': filters.sex,
+        'filterPurok': filters.purok,
+        'filterAgeHealthGroup': filters.ageHealthGroup,
+        'filterPwdStatus': filters.pwdStatus,
+        'filterReligion': filters.religion,
+        'filterCivilStatus': filters.civilStatus,
+        'filterDateOfBirth': filters.dateOfBirth,
+        'filterEthnicity': filters.ethnicity,
+        'filterEducation': filters.education,
+        'filterOccupation': filters.occupation,
+        'filterEmploymentStatus': filters.employmentStatus,
+        'filter4ps': filters.fourPs,
+        'filterVoterStatus': filters.voterStatus,
+        'filterMembershipType': filters.membershipType,
+        'filterPhilhealthCategory': filters.philhealthCategory,
+        'filterMedicalHistory': filters.medicalHistory,
+        'filterUsingFpMethod': filters.usingFpMethod,
+        'filterFpMethodsUsed': filters.fpMethodsUsed,
+        'filterFpStatus': filters.fpStatus
+    };
+    for (const [id, val] of Object.entries(filterMappings)) {
+        if (val) url.searchParams.set(id, val);
+        else url.searchParams.delete(id);
+    }
+    window.history.replaceState({}, '', url);
+
     // Filter the table based on selected criteria
     residentsTable.filter(row => {
         const cells = Array.from(row.cells);
         
         // Get the date of birth cell (index 4) and extract age
         const dobCell = cells[4]?.textContent || '';
-        const ageMatch = dobCell.match(/- (\d+)$/);
-        const age = ageMatch ? parseInt(ageMatch[1]) : 0;
         
         // Get data attributes from the row
         const rowData = {
@@ -964,16 +1068,18 @@ function applyAdvancedFilters() {
             employment: row.getAttribute('data-employment') || '',
             fourPs: row.getAttribute('data-fourps') || '',
             ageHealthGroup: row.getAttribute('data-age-health-group') || '',
-            pwdStatus: row.getAttribute('data-pwd-status') || ''
+            pwdStatus: row.getAttribute('data-pwd-status') || '',
+            sex: row.getAttribute('data-sex') || '',
+            purok: row.getAttribute('data-purok') || '',
+            voterStatus: row.getAttribute('data-voter-status') || '',
+            occupation: row.getAttribute('data-occupation') || '',
+            membershipType: row.getAttribute('data-membership-type') || '',
+            philhealthCategory: row.getAttribute('data-philhealth-category') || '',
+            medicalHistory: row.getAttribute('data-medical-history') || '',
+            usingFpMethod: row.getAttribute('data-using-fp-method') || '',
+            fpMethodsUsed: row.getAttribute('data-fp-methods-used') || '',
+            fpStatus: row.getAttribute('data-fp-status') || ''
         };
-        
-        // Age Group filter
-        if (filters.ageGroup) {
-            if (filters.ageGroup === '0-17' && (age < 0 || age > 17)) return false;
-            if (filters.ageGroup === '18-35' && (age < 18 || age > 35)) return false;
-            if (filters.ageGroup === '36-59' && (age < 36 || age > 59)) return false;
-            if (filters.ageGroup === '60+' && age < 60) return false;
-        }
         
         // Date of Birth filter (exact match)
         if (filters.dateOfBirth) {
@@ -983,45 +1089,24 @@ function applyAdvancedFilters() {
             if (dobInCell !== formattedFilterDate) return false;
         }
         
-        // Religion filter
-        if (filters.religion && rowData.religion.toLowerCase() !== filters.religion.toLowerCase()) {
-            return false;
-        }
-        
-        // Ethnicity filter
-        if (filters.ethnicity && rowData.ethnicity.toLowerCase() !== filters.ethnicity.toLowerCase()) {
-            return false;
-        }
-        
-        // Civil Status filter
-        if (filters.civilStatus && rowData.civilStatus.toLowerCase() !== filters.civilStatus.toLowerCase()) {
-            return false;
-        }
-        
-        // Educational Attainment filter
-        if (filters.education && rowData.education.toLowerCase() !== filters.education.toLowerCase()) {
-            return false;
-        }
-        
-        // Employment Status filter
-        if (filters.employmentStatus && rowData.employment.toLowerCase() !== filters.employmentStatus.toLowerCase()) {
-            return false;
-        }
-        
-        // 4Ps Member filter
-        if (filters.fourPs && rowData.fourPs.toLowerCase() !== filters.fourPs.toLowerCase()) {
-            return false;
-        }
-        
-        // Age/Health Group filter
-        if (filters.ageHealthGroup && rowData.ageHealthGroup.toLowerCase() !== filters.ageHealthGroup.toLowerCase()) {
-            return false;
-        }
-        
-        // PWD Status filter
-        if (filters.pwdStatus && rowData.pwdStatus.toLowerCase() !== filters.pwdStatus.toLowerCase()) {
-            return false;
-        }
+        if (filters.sex && rowData.sex.toLowerCase() !== filters.sex.toLowerCase()) return false;
+        if (filters.purok && rowData.purok.toLowerCase() !== filters.purok.toLowerCase()) return false;
+        if (filters.ageHealthGroup && rowData.ageHealthGroup.toLowerCase() !== filters.ageHealthGroup.toLowerCase()) return false;
+        if (filters.pwdStatus && rowData.pwdStatus.toLowerCase() !== filters.pwdStatus.toLowerCase()) return false;
+        if (filters.religion && rowData.religion.toLowerCase() !== filters.religion.toLowerCase()) return false;
+        if (filters.ethnicity && rowData.ethnicity.toLowerCase() !== filters.ethnicity.toLowerCase()) return false;
+        if (filters.civilStatus && rowData.civilStatus.toLowerCase() !== filters.civilStatus.toLowerCase()) return false;
+        if (filters.education && rowData.education.toLowerCase() !== filters.education.toLowerCase()) return false;
+        if (filters.occupation && !rowData.occupation.toLowerCase().includes(filters.occupation.toLowerCase())) return false;
+        if (filters.employmentStatus && rowData.employment.toLowerCase() !== filters.employmentStatus.toLowerCase()) return false;
+        if (filters.fourPs && rowData.fourPs.toLowerCase() !== filters.fourPs.toLowerCase()) return false;
+        if (filters.voterStatus && rowData.voterStatus.toLowerCase() !== filters.voterStatus.toLowerCase()) return false;
+        if (filters.membershipType && rowData.membershipType.toLowerCase() !== filters.membershipType.toLowerCase()) return false;
+        if (filters.philhealthCategory && rowData.philhealthCategory.toLowerCase() !== filters.philhealthCategory.toLowerCase()) return false;
+        if (filters.medicalHistory && !rowData.medicalHistory.toLowerCase().includes(filters.medicalHistory.toLowerCase())) return false;
+        if (filters.usingFpMethod && rowData.usingFpMethod.toLowerCase() !== filters.usingFpMethod.toLowerCase()) return false;
+        if (filters.fpMethodsUsed && rowData.fpMethodsUsed.toLowerCase() !== filters.fpMethodsUsed.toLowerCase()) return false;
+        if (filters.fpStatus && rowData.fpStatus.toLowerCase() !== filters.fpStatus.toLowerCase()) return false;
         
         return true;
     });
@@ -1029,7 +1114,6 @@ function applyAdvancedFilters() {
     // Filter grid cards
     const gridCards = document.querySelectorAll('.resident-card');
     gridCards.forEach(card => {
-        const age = parseInt(card.querySelector('.detail-item:first-child .value').textContent);
         const rowData = {
             religion: card.getAttribute('data-religion') || '',
             ethnicity: card.getAttribute('data-ethnicity') || '',
@@ -1038,26 +1122,41 @@ function applyAdvancedFilters() {
             employment: card.getAttribute('data-employment') || '',
             fourPs: card.getAttribute('data-fourps') || '',
             ageHealthGroup: card.getAttribute('data-age-health-group') || '',
-            pwdStatus: card.getAttribute('data-pwd-status') || ''
+            pwdStatus: card.getAttribute('data-pwd-status') || '',
+            sex: card.getAttribute('data-sex') || '',
+            purok: card.getAttribute('data-purok') || '',
+            voterStatus: card.getAttribute('data-voter-status') || '',
+            occupation: card.getAttribute('data-occupation') || '',
+            membershipType: card.getAttribute('data-membership-type') || '',
+            philhealthCategory: card.getAttribute('data-philhealth-category') || '',
+            medicalHistory: card.getAttribute('data-medical-history') || '',
+            usingFpMethod: card.getAttribute('data-using-fp-method') || '',
+            fpMethodsUsed: card.getAttribute('data-fp-methods-used') || '',
+            fpStatus: card.getAttribute('data-fp-status') || '',
+            dateOfBirth: card.getAttribute('data-date-of-birth') || ''
         };
 
         let show = true;
         
-        if (filters.ageGroup) {
-            if (filters.ageGroup === '0-17' && (age < 0 || age > 17)) show = false;
-            if (filters.ageGroup === '18-35' && (age < 18 || age > 35)) show = false;
-            if (filters.ageGroup === '36-59' && (age < 36 || age > 59)) show = false;
-            if (filters.ageGroup === '60+' && age < 60) show = false;
-        }
-        
+        if (filters.dateOfBirth && rowData.dateOfBirth !== filters.dateOfBirth) show = false;
+        if (filters.sex && rowData.sex.toLowerCase() !== filters.sex.toLowerCase()) show = false;
+        if (filters.purok && rowData.purok.toLowerCase() !== filters.purok.toLowerCase()) show = false;
+        if (filters.ageHealthGroup && rowData.ageHealthGroup.toLowerCase() !== filters.ageHealthGroup.toLowerCase()) show = false;
+        if (filters.pwdStatus && rowData.pwdStatus.toLowerCase() !== filters.pwdStatus.toLowerCase()) show = false;
         if (filters.religion && rowData.religion.toLowerCase() !== filters.religion.toLowerCase()) show = false;
         if (filters.ethnicity && rowData.ethnicity.toLowerCase() !== filters.ethnicity.toLowerCase()) show = false;
         if (filters.civilStatus && rowData.civilStatus.toLowerCase() !== filters.civilStatus.toLowerCase()) show = false;
         if (filters.education && rowData.education.toLowerCase() !== filters.education.toLowerCase()) show = false;
+        if (filters.occupation && !rowData.occupation.toLowerCase().includes(filters.occupation.toLowerCase())) show = false;
         if (filters.employmentStatus && rowData.employment.toLowerCase() !== filters.employmentStatus.toLowerCase()) show = false;
         if (filters.fourPs && rowData.fourPs.toLowerCase() !== filters.fourPs.toLowerCase()) show = false;
-        if (filters.ageHealthGroup && rowData.ageHealthGroup.toLowerCase() !== filters.ageHealthGroup.toLowerCase()) show = false;
-        if (filters.pwdStatus && rowData.pwdStatus.toLowerCase() !== filters.pwdStatus.toLowerCase()) show = false;
+        if (filters.voterStatus && rowData.voterStatus.toLowerCase() !== filters.voterStatus.toLowerCase()) show = false;
+        if (filters.membershipType && rowData.membershipType.toLowerCase() !== filters.membershipType.toLowerCase()) show = false;
+        if (filters.philhealthCategory && rowData.philhealthCategory.toLowerCase() !== filters.philhealthCategory.toLowerCase()) show = false;
+        if (filters.medicalHistory && !rowData.medicalHistory.toLowerCase().includes(filters.medicalHistory.toLowerCase())) show = false;
+        if (filters.usingFpMethod && rowData.usingFpMethod.toLowerCase() !== filters.usingFpMethod.toLowerCase()) show = false;
+        if (filters.fpMethodsUsed && rowData.fpMethodsUsed.toLowerCase() !== filters.fpMethodsUsed.toLowerCase()) show = false;
+        if (filters.fpStatus && rowData.fpStatus.toLowerCase() !== filters.fpStatus.toLowerCase()) show = false;
         
         card.style.display = show ? '' : 'none';
     });
@@ -1091,17 +1190,20 @@ function clearAdvancedFilters() {
         if (el) el.value = value;
     };
 
-    // Reset all filter inputs
-    setFilterValue('filterAgeGroup', '');
-    setFilterValue('filterDateOfBirth', '');
-    setFilterValue('filterReligion', '');
-    setFilterValue('filterEthnicity', '');
-    setFilterValue('filterCivilStatus', '');
-    setFilterValue('filterEducation', '');
-    setFilterValue('filterEmploymentStatus', '');
-    setFilterValue('filter4ps', '');
-    setFilterValue('filterAgeHealthGroup', '');
-    setFilterValue('filterPwdStatus', '');
+    const url = new URL(window.location);
+    const filterMappings = [
+        'filterSex', 'filterPurok', 'filterAgeHealthGroup', 'filterPwdStatus',
+        'filterReligion', 'filterCivilStatus', 'filterDateOfBirth', 'filterEthnicity',
+        'filterEducation', 'filterOccupation', 'filterEmploymentStatus', 'filter4ps',
+        'filterVoterStatus', 'filterMembershipType', 'filterPhilhealthCategory',
+        'filterMedicalHistory', 'filterUsingFpMethod', 'filterFpMethodsUsed', 'filterFpStatus'
+    ];
+    filterMappings.forEach(id => {
+        setFilterValue(id, '');
+        url.searchParams.delete(id);
+    });
+    setFilterValue('filterAgeGroup', ''); // Legacy cleanup
+    window.history.replaceState({}, '', url);
     
     // Reset the table
     residentsTable.reset();

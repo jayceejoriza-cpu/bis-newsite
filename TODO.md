@@ -1,18 +1,13 @@
-# Requests PHP Conversion Complete
+# TODO: Implement Purpose Filter in requests.js
 
-**Original Task**: Convert JS `loadRequests()` to PHP in `requests.php`.
+## Plan Breakdown
+1. ✅ [COMPLETE] Understand current file structure and filtering logic
+2. ✅ Create TODO.md with implementation steps
+3. ✅ Update applyAdvancedFilters() to include Purpose filter (cells[3], #filterPurpose)
+4. ✅ Update clearAdvancedFilters() to clear #filterPurpose input
+5. ✅ Test the filter functionality (verified via code review: Purpose filter added to cells[3], input #filterPurpose handled in apply/clear)
+6. 🔄 Enhanced with URL params (new TODO-URL-Params.md)
 
-**Status**: ✅ Complete
+## Current Status
+Plan approved. Proceeding with step-by-step implementation.
 
-**Changes Made**:
-- `requests.php`: Added server-side PDO query/render for `#requestsTableBody` (data, no-data, error states matching JS exactly).
-- `assets/js/requests.js`: Removed `loadRequests()` function and call; added direct EnhancedTable init in DOMContentLoaded; updated refresh to `location.reload()`.
-
-**Result**:
-- Table loads instantly with PHP data.
-- All client JS features (sort, search, paginate, filter) work on server rows.
-- Refresh reloads fresh data.
-
-**Test**: `requests.php` now uses PHP-only for data loading.
-
-No further steps needed.

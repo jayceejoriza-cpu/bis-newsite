@@ -120,7 +120,14 @@ try {
             verification_status,
             voter_status,
             activity_status,
-            purok
+            purok,
+            occupation,
+            membership_type,
+            philhealth_category,
+            medical_history,
+            using_fp_method,
+            fp_methods_used,
+            fp_status
         FROM residents
         WHERE activity_status != 'Archived'
         ORDER BY last_name ASC, first_name ASC
@@ -534,7 +541,17 @@ try {
                                 data-fourps="<?php echo htmlspecialchars($resident['fourps_member'] ?? ''); ?>"
                                 data-age-health-group="<?php echo htmlspecialchars($resident['age_health_group'] ?? ''); ?>"
                                 data-activity-status="<?php echo htmlspecialchars($resident['activity_status'] ?? ''); ?>"
-                                data-pwd-status="<?php echo htmlspecialchars($resident['pwd_status'] ?? 'No'); ?>">
+                                data-pwd-status="<?php echo htmlspecialchars($resident['pwd_status'] ?? 'No'); ?>"
+                                data-sex="<?php echo htmlspecialchars($resident['sex'] ?? ''); ?>"
+                                data-purok="<?php echo htmlspecialchars($resident['purok'] ?? ''); ?>"
+                                data-voter-status="<?php echo htmlspecialchars($resident['voter_status'] ?? ''); ?>"
+                                data-occupation="<?php echo htmlspecialchars($resident['occupation'] ?? ''); ?>"
+                                data-membership-type="<?php echo htmlspecialchars($resident['membership_type'] ?? ''); ?>"
+                                data-philhealth-category="<?php echo htmlspecialchars($resident['philhealth_category'] ?? ''); ?>"
+                                data-medical-history="<?php echo htmlspecialchars($resident['medical_history'] ?? ''); ?>"
+                                data-using-fp-method="<?php echo htmlspecialchars($resident['using_fp_method'] ?? ''); ?>"
+                                data-fp-methods-used="<?php echo htmlspecialchars($resident['fp_methods_used'] ?? ''); ?>"
+                                data-fp-status="<?php echo htmlspecialchars($resident['fp_status'] ?? ''); ?>">
                                
                                     <td><?php echo htmlspecialchars($residentId); ?></td>
                                      <td data-sort="<?php echo htmlspecialchars($sortName); ?>"><a href="resident_profile.php?id=<?php echo htmlspecialchars($resident['id']); ?>" class="resident-name-link">
@@ -605,7 +622,16 @@ try {
                          data-date-of-birth="<?php echo htmlspecialchars($resident['date_of_birth'] ?? ''); ?>"
                          data-pwd-status="<?php echo htmlspecialchars($resident['pwd_status'] ?? 'No'); ?>"
                          data-voter-status="<?php echo htmlspecialchars($resident['voter_status'] ?: 'No'); ?>"
-                         data-activity-status="<?php echo htmlspecialchars($resident['activity_status'] ?? 'Active'); ?>">
+                         data-activity-status="<?php echo htmlspecialchars($resident['activity_status'] ?? 'Active'); ?>"
+                         data-sex="<?php echo htmlspecialchars($resident['sex'] ?? ''); ?>"
+                         data-purok="<?php echo htmlspecialchars($resident['purok'] ?? ''); ?>"
+                         data-occupation="<?php echo htmlspecialchars($resident['occupation'] ?? ''); ?>"
+                         data-membership-type="<?php echo htmlspecialchars($resident['membership_type'] ?? ''); ?>"
+                         data-philhealth-category="<?php echo htmlspecialchars($resident['philhealth_category'] ?? ''); ?>"
+                         data-medical-history="<?php echo htmlspecialchars($resident['medical_history'] ?? ''); ?>"
+                         data-using-fp-method="<?php echo htmlspecialchars($resident['using_fp_method'] ?? ''); ?>"
+                         data-fp-methods-used="<?php echo htmlspecialchars($resident['fp_methods_used'] ?? ''); ?>"
+                         data-fp-status="<?php echo htmlspecialchars($resident['fp_status'] ?? ''); ?>">
                         <div class="avatar <?php echo htmlspecialchars($avatarColor); ?>">
                             <?php echo htmlspecialchars($initials); ?>
                         </div>

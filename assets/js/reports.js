@@ -84,6 +84,11 @@ function initTabs() {
                 // Render charts for the newly visible tab
                 renderChartsForTab(target);
             }
+
+            // Update URL parameter
+            const url = new URL(window.location);
+            url.searchParams.set('tab', target);
+            window.history.replaceState({}, '', url);
         });
     });
 }
@@ -282,7 +287,7 @@ function renderAgeGroupChart() {
             datasets: [{
                 label: 'Residents',
                 data: values,
-                backgroundColor: [COLORS.green, COLORS.blue, COLORS.orange, COLORS.red],
+                backgroundColor: [COLORS.pink, COLORS.purple, COLORS.green, COLORS.blue, COLORS.red, COLORS.orange ],
                 borderRadius: 6,
                 borderSkipped: false,
             }]
@@ -715,6 +720,22 @@ function watchDarkMode() {
 // Init
 // ============================================
 document.addEventListener('DOMContentLoaded', () => {
+    // Read URL param and set active tab initially
+    const urlParams = new URLSearchParams(window.location.search);
+    const tabParam = urlParams.get('tab');
+    if (tabParam) {
+        const tabBtn = document.querySelector(`.report-tab-btn[data-tab="${tabParam}"]`);
+        if (tabBtn) {
+            document.querySelectorAll('.report-tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.report-tab-content').forEach(c => c.classList.remove('active'));
+            tabBtn.classList.add('active');
+            const targetContent = document.getElementById('tab-' + tabParam);
+            if (targetContent) {
+                targetContent.classList.add('active');
+            }
+        }
+    }
+
     initTabs();
     initPrint();
     initYearFilter();

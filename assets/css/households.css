@@ -72,6 +72,68 @@
     color: white;
     border-color: var(--primary-color);
 }
+/* Center align Action column header and cells */
+        .households-table th:last-child,
+        .households-table td:last-child {
+            text-align: center !important;
+            vertical-align: middle;
+        }
+        
+        /* Filter Panel Popup Styles */
+        .filter-panel {
+            position: absolute;
+            top: calc(100% + 10px);
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            padding: 20px;
+            z-index: 1000;
+            width: 320px;
+            animation: fadeIn 0.2s ease;
+        }
+        .filter-panel-header {
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .filter-panel-header h3 {
+            font-size: 16px;
+            margin: 0;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .filter-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .filter-item label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+        .filter-select {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            font-size: 14px;
+        }
+        .filter-panel-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 20px;
+            padding-top: 15px;
+            border-top: 1px solid var(--border-color);
+        }
 
 /* Households Table */
 .households-table {
