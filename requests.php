@@ -155,7 +155,7 @@ try {
                                 <option value="Barangay Business Clearance">Barangay Business Clearance</option>
                                 <option value="Business Permit">Business Permit</option>
                                 <option value="Barangay Fishing Clearance">Barangay Fishing Clearance</option>
-                                <option value="Certificate of First Time Jobseeker Assistance">Certificate of First Time Jobseeker Assistance</option>
+                                <option value="Certificate of Job Seeker Assistance">Certificate of Job Seeker Assistance</option>
                                 <option value="Certificate of Good Moral Character">Certificate of Good Moral Character</option>
                                 <option value="Certificate of Oath of Undertaking">Certificate of Oath of Undertaking</option>
                                 <option value="Certificate for Vessel Docking">Certificate for Vessel Docking</option>

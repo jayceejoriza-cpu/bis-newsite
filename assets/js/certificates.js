@@ -241,7 +241,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // --- ORIGINAL: Search API ---
     function searchResidents(term, certType) {
-         fetch('model/search_residents.php?search=' + encodeURIComponent(term) + '&filter=adult')
+         fetch('model/search_residents.php?search=' + encodeURIComponent(term) + '&certificate_type=' + encodeURIComponent(certType) + '&filter=adult')
             .then(function (res) { return res.json(); })
             .then(function (data) {
                 const results = data.residents || data.data;
@@ -492,7 +492,7 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     function searchResidencyResidents(term, certType) {
-         fetch('model/search_residents.php?search=' + encodeURIComponent(term) + '&filter=adult')
+         fetch('model/search_residents.php?search=' + encodeURIComponent(term) + '&certificate_type=' + encodeURIComponent(certType) + '&filter=adult')
             .then(function (res) { return res.json(); })
             .then(function (data) {
                 const results = data.residents || data.data;
@@ -675,7 +675,7 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     function searchFishingResidents(term, certType) {
-         fetch('model/search_residents.php?search=' + encodeURIComponent(term) + '&filter=adult')
+         fetch('model/search_residents.php?search=' + encodeURIComponent(term) + '&certificate_type=' + encodeURIComponent(certType) + '&filter=adult')
             .then(function (res) { return res.json(); })
             .then(function (data) {
                 const results = data.residents || data.data;
@@ -831,7 +831,7 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     function searchFtJobseekerResidents(term, certType) {
-         fetch('model/search_residents.php?search=' + encodeURIComponent(term) + '&filter=adult')
+         fetch('model/search_residents.php?search=' + encodeURIComponent(term) + '&certificate_type=' + encodeURIComponent(certType) + '&filter=adult')
             .then(function (res) { return res.json(); })
             .then(function (data) {
                 var results = data.residents || data.data;
@@ -974,7 +974,7 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     function searchGmrcResidents(term, certType) {
-         fetch('model/search_residents.php?search=' + encodeURIComponent(term) + '&filter=adult')
+         fetch('model/search_residents.php?search=' + encodeURIComponent(term) + '&certificate_type=' + encodeURIComponent(certType) + '&filter=adult')
             .then(function (res) { return res.json(); })
             .then(function (data) {
                 var results = data.residents || data.data;
@@ -1117,7 +1117,7 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     function searchOathResidents(term, certType) {
-         fetch('model/search_residents.php?search=' + encodeURIComponent(term) + '&filter=adult')
+         fetch('model/search_residents.php?search=' + encodeURIComponent(term) + '&certificate_type=' + encodeURIComponent(certType) + '&filter=adult')
             .then(function (res) { return res.json(); })
             .then(function (data) {
                 var results = data.residents || data.data;
@@ -1294,7 +1294,7 @@ document.addEventListener('click', function (e) {
 
 // 5. Search API Call
 function searchLowIncomeResidents(term, certType) {
-    fetch('model/search_residents.php?search=' + encodeURIComponent(term) + '&filter=adult')
+    fetch('model/search_residents.php?search=' + encodeURIComponent(term) + '&certificate_type=' + encodeURIComponent(certType) + '&filter=adult')
         .then(function (res) { return res.json(); })
         .then(function (data) {
             var results = data.residents || data.data;
@@ -1501,7 +1501,7 @@ if (lowIncomePrintBtn) {
     });
 
     function searchSoloParentResidents(term, certType) {
-         fetch('model/search_residents.php?search=' + encodeURIComponent(term) + '&filter=adult')
+         fetch('model/search_residents.php?search=' + encodeURIComponent(term) + '&certificate_type=' + encodeURIComponent(certType) + '&filter=adult')
             .then(function (res) { return res.json(); })
             .then(function (data) {
                 var results = data.residents || data.data;
@@ -1592,13 +1592,27 @@ if (lowIncomePrintBtn) {
         rbcNameInput.addEventListener('input', function () {
             if (rbcIdInput) rbcIdInput.value = '';
             var term = this.value.trim();
+            clearTimeout(rbcSearchTimeout);
             if (term.length < 1) { hideRbcDropdown(); return; }
-            setTimeout(function () { searchRbcResidents(term, 'rbc'); }, 250);
+            rbcSearchTimeout = setTimeout(function () { searchRbcResidents(term, 'rbc'); }, 250);
         });
     }
 
+    if (rbcResidentBtn) {
+        rbcResidentBtn.addEventListener('click', function (e) {
+            e.stopPropagation();
+            if (rbcNameInput) { rbcNameInput.value = ''; rbcNameInput.focus(); }
+            if (rbcIdInput) rbcIdInput.value = '';
+            hideRbcDropdown();
+        });
+    }
+
+    document.addEventListener('click', function (e) {
+        if (rbcDropdown && rbcDropdown.parentElement && !rbcDropdown.parentElement.contains(e.target)) { hideRbcDropdown(); }
+    });
+
     function searchRbcResidents(term, certType) {
-         fetch('model/search_residents.php?search=' + encodeURIComponent(term) + '&filter=adult')
+         fetch('model/search_residents.php?search=' + encodeURIComponent(term) + '&certificate_type=' + encodeURIComponent(certType) + '&filter=adult')
             .then(function (res) { return res.json(); })
             .then(function (data) {
                 var results = data.residents || data.data;
@@ -1677,13 +1691,27 @@ if (lowIncomePrintBtn) {
         brgyClearanceNameInput.addEventListener('input', function () {
             if (brgyClearanceIdInput) brgyClearanceIdInput.value = '';
             var term = this.value.trim();
+            clearTimeout(brgyClearanceSearchTimeout);
             if (term.length < 1) { hideBrgyClearanceDropdown(); return; }
-            setTimeout(function () { searchBrgyClearanceResidents(term, 'brgyclearance'); }, 250);
+            brgyClearanceSearchTimeout = setTimeout(function () { searchBrgyClearanceResidents(term, 'brgyclearance'); }, 250);
         });
     }
 
+    if (brgyClearanceResidentBtn) {
+        brgyClearanceResidentBtn.addEventListener('click', function (e) {
+            e.stopPropagation();
+            if (brgyClearanceNameInput) { brgyClearanceNameInput.value = ''; brgyClearanceNameInput.focus(); }
+            if (brgyClearanceIdInput) brgyClearanceIdInput.value = '';
+            hideBrgyClearanceDropdown();
+        });
+    }
+
+    document.addEventListener('click', function (e) {
+        if (brgyClearanceDropdown && brgyClearanceDropdown.parentElement && !brgyClearanceDropdown.parentElement.contains(e.target)) { hideBrgyClearanceDropdown(); }
+    });
+
     function searchBrgyClearanceResidents(term, certType) {
-         fetch('model/search_residents.php?search=' + encodeURIComponent(term) + '&filter=adult')
+         fetch('model/search_residents.php?search=' + encodeURIComponent(term) + '&certificate_type=' + encodeURIComponent(certType) + '&filter=adult')
             .then(function (res) { return res.json(); })
             .then(function (data) {
                 var results = data.residents || data.data;
@@ -1760,13 +1788,27 @@ if (lowIncomePrintBtn) {
         brgyBusinessNameInput.addEventListener('input', function () {
             if (brgyBusinessIdInput) brgyBusinessIdInput.value = '';
             var term = this.value.trim();
+            clearTimeout(brgyBusinessSearchTimeout);
             if (term.length < 1) { hideBrgyBusinessDropdown(); return; }
-            setTimeout(function () { searchBrgyBusinessResidents(term, 'brgybusinessclearance'); }, 250);
+            brgyBusinessSearchTimeout = setTimeout(function () { searchBrgyBusinessResidents(term, 'brgybusinessclearance'); }, 250);
         });
     }
 
+    if (brgyBusinessResidentBtn) {
+        brgyBusinessResidentBtn.addEventListener('click', function (e) {
+            e.stopPropagation();
+            if (brgyBusinessNameInput) { brgyBusinessNameInput.value = ''; brgyBusinessNameInput.focus(); }
+            if (brgyBusinessIdInput) brgyBusinessIdInput.value = '';
+            hideBrgyBusinessDropdown();
+        });
+    }
+
+    document.addEventListener('click', function (e) {
+        if (brgyBusinessDropdown && brgyBusinessDropdown.parentElement && !brgyBusinessDropdown.parentElement.contains(e.target)) { hideBrgyBusinessDropdown(); }
+    });
+
     function searchBrgyBusinessResidents(term, certType) {
-         fetch('model/search_residents.php?search=' + encodeURIComponent(term) + '&filter=adult')
+         fetch('model/search_residents.php?search=' + encodeURIComponent(term) + '&certificate_type=' + encodeURIComponent(certType) + '&filter=adult')
             .then(function (res) { return res.json(); })
             .then(function (data) {
                 var results = data.residents || data.data;
@@ -1839,17 +1881,32 @@ if (lowIncomePrintBtn) {
         });
     }
 
+    var businessPermitResidentBtn = document.getElementById('businessPermitResidentBtn');
     if (businessPermitNameInput) {
         businessPermitNameInput.addEventListener('input', function () {
             if (businessPermitIdInput) businessPermitIdInput.value = '';
             var term = this.value.trim();
+            clearTimeout(businessPermitSearchTimeout);
             if (term.length < 1) { hideBusinessPermitDropdown(); return; }
-            setTimeout(function () { searchBusinessPermitResidents(term, 'businesspermit'); }, 250);
+            businessPermitSearchTimeout = setTimeout(function () { searchBusinessPermitResidents(term, 'businesspermit'); }, 250);
         });
     }
 
+    if (businessPermitResidentBtn) {
+        businessPermitResidentBtn.addEventListener('click', function (e) {
+            e.stopPropagation();
+            if (businessPermitNameInput) { businessPermitNameInput.value = ''; businessPermitNameInput.focus(); }
+            if (businessPermitIdInput) businessPermitIdInput.value = '';
+            hideBusinessPermitDropdown();
+        });
+    }
+
+    document.addEventListener('click', function (e) {
+        if (businessPermitDropdown && businessPermitDropdown.parentElement && !businessPermitDropdown.parentElement.contains(e.target)) { hideBusinessPermitDropdown(); }
+    });
+
     function searchBusinessPermitResidents(term, certType) {
-         fetch('model/search_residents.php?search=' + encodeURIComponent(term) + '&filter=adult')
+         fetch('model/search_residents.php?search=' + encodeURIComponent(term) + '&certificate_type=' + encodeURIComponent(certType) + '&filter=adult')
             .then(function (res) { return res.json(); })
             .then(function (data) {
                 var results = data.residents || data.data;
@@ -1937,13 +1994,27 @@ if (lowIncomePrintBtn) {
         vesselDockingNameInput.addEventListener('input', function () {
             if (vesselDockingIdInput) vesselDockingIdInput.value = '';
             var term = this.value.trim();
+            clearTimeout(vesselDockingSearchTimeout);
             if (term.length < 1) { hideVesselDockingDropdown(); return; }
-            setTimeout(function () { searchVesselDockingResidents(term, 'vesseldocking'); }, 250);
+            vesselDockingSearchTimeout = setTimeout(function () { searchVesselDockingResidents(term, 'vesseldocking'); }, 250);
         });
     }
 
+    if (vesselDockingResidentBtn) {
+        vesselDockingResidentBtn.addEventListener('click', function (e) {
+            e.stopPropagation();
+            if (vesselDockingNameInput) { vesselDockingNameInput.value = ''; vesselDockingNameInput.focus(); }
+            if (vesselDockingIdInput) vesselDockingIdInput.value = '';
+            hideVesselDockingDropdown();
+        });
+    }
+
+    document.addEventListener('click', function (e) {
+        if (vesselDockingDropdown && vesselDockingDropdown.parentElement && !vesselDockingDropdown.parentElement.contains(e.target)) { hideVesselDockingDropdown(); }
+    });
+
     function searchVesselDockingResidents(term, certType) {
-         fetch('model/search_residents.php?search=' + encodeURIComponent(term) + '&filter=adult')
+         fetch('model/search_residents.php?search=' + encodeURIComponent(term) + '&certificate_type=' + encodeURIComponent(certType) + '&filter=adult')
             .then(function (res) { return res.json(); })
             .then(function (data) {
                 var results = data.residents || data.data;
@@ -2062,7 +2133,7 @@ if (lowIncomePrintBtn) {
     }
 
     function searchBusinessPermitResidents(term, certType) {
-         fetch('model/search_residents.php?search=' + encodeURIComponent(term) + '&filter=adult')
+          fetch('model/search_residents.php?search=' + encodeURIComponent(term) + '&certificate_type=' + encodeURIComponent(certType) + '&filter=adult')
             .then(function (res) { return res.json(); })
             .then(function (data) {
                 var results = data.residents || data.data;
@@ -2181,7 +2252,7 @@ if (lowIncomePrintBtn) {
     }
 
     function searchBrgyBusinessResidents(term, certType) {
-         fetch('model/search_residents.php?search=' + encodeURIComponent(term) + '&filter=adult')
+         fetch('model/search_residents.php?search=' + encodeURIComponent(term) + '&certificate_type=' + encodeURIComponent(certType) + '&filter=adult')
             .then(function (res) { return res.json(); })
             .then(function (data) {
                 var results = data.residents || data.data;
@@ -2296,7 +2367,7 @@ if (lowIncomePrintBtn) {
     }
 
     function searchBrgyClearanceResidents(term, certType) {
-         fetch('model/search_residents.php?search=' + encodeURIComponent(term) + '&filter=adult')
+         fetch('model/search_residents.php?search=' + encodeURIComponent(term) + '&certificate_type=' + encodeURIComponent(certType) + '&filter=adult')
             .then(function (res) { return res.json(); })
             .then(function (data) {
                 var results = data.residents || data.data;
@@ -2416,7 +2487,7 @@ if (lowIncomePrintBtn) {
     }
 
     function searchRbcResidents(term, certType) {
-         fetch('model/search_residents.php?search=' + encodeURIComponent(term) + '&filter=adult')
+         fetch('model/search_residents.php?search=' + encodeURIComponent(term) + '&certificate_type=' + encodeURIComponent(certType) + '&filter=adult')
             .then(function (res) { return res.json(); })
             .then(function (data) {
                 var results = data.residents || data.data;
@@ -2479,10 +2550,25 @@ if (lowIncomePrintBtn) {
         rbcChildNameInput.addEventListener('input', function () {
             if (rbcChildIdInput) rbcChildIdInput.value = '';
             var term = this.value.trim();
+            clearTimeout(rbcChildSearchTimeout);
             if (term.length < 1) { hideRbcChildDropdown(); return; }
-            setTimeout(function () { searchRbcChildResidents(term); }, 250);
+            rbcChildSearchTimeout = setTimeout(function () { searchRbcChildResidents(term); }, 250);
         });
     }
+
+    var rbcChildResidentBtn = document.getElementById('rbcChildResidentBtn');
+    if (rbcChildResidentBtn) {
+        rbcChildResidentBtn.addEventListener('click', function (e) {
+            e.stopPropagation();
+            if (rbcChildNameInput) { rbcChildNameInput.value = ''; rbcChildNameInput.focus(); }
+            if (rbcChildIdInput) rbcChildIdInput.value = '';
+            hideRbcChildDropdown();
+        });
+    }
+
+    document.addEventListener('click', function (e) {
+        if (rbcChildDropdown && rbcChildDropdown.parentElement && !rbcChildDropdown.parentElement.contains(e.target)) { hideRbcChildDropdown(); }
+    });
 
     function searchRbcChildResidents(term) {
         // Build query with exclude_resident_id if parent is selected

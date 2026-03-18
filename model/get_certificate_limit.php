@@ -20,6 +20,24 @@ if ($resident_id <= 0 || empty($certificate_type)) {
     exit;
 }
 
+// Map JavaScript certificate types to database certificate names
+$certificateTypeMap = [
+    'indigency' => 'Certificate of Indigency',
+    'residency' => 'Certificate of Residency',
+    'fishing' => 'Barangay Fishing Clearance',
+    'gmrc' => 'Certificate of Good Moral Character',
+    'lowincome' => 'Certificate of Low-Income',
+    'soloparent' => 'Certificate of Solo Parent',
+    'rbc' => 'Registration of Birth Certificate',
+    'brgyclearance' => 'Barangay Clearance',
+    'brgybusinessclearance' => 'Barangay Business Clearance',
+    'businesspermit' => 'Business Permit',
+    'vesseldocking' => 'Certificate for Vessel Docking',
+    'ftjobseeker' => 'Certificate of Job Seeker Assistance',
+    'oath' => 'Certificate of Oath of Undertaking'
+];
+$db_certificate_name = isset($certificateTypeMap[$certificate_type]) ? $certificateTypeMap[$certificate_type] : $certificate_type;
+
 // Define certificate types that have 1-time only limit
 $oneTimeCertificates = [
     'certificate-ft-jobseeker-assistance.php',
@@ -67,7 +85,7 @@ try {
             AND certificate_name = ?
             AND DATE(date_requested) = ?
         ");
-        $stmt->bind_param("iss", $resident_id, $certificate_type, $today);
+        $stmt->bind_param("iss", $resident_id, $db_certificate_name, $today);
     }
     
     $stmt->execute();
@@ -98,4 +116,3 @@ try {
 
 $conn->close();
 ?>
-
