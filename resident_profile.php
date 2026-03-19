@@ -240,7 +240,7 @@ $age = calculateAge($resident['date_of_birth']);
                         <i class="fas fa-edit"></i>
                         Edit Profile
                     </button>
-                    <button class="btn btn-secondary edit-action" type="button" onclick="toggleEditMode(false)" style="display:none;">
+                    <button class="btn btn-secondary edit-action" type="button" onclick="cancelEditMode()" style="display:none;">
                         <i class="fas fa-times"></i> Cancel
                     </button>
                     <button class="btn btn-success edit-action" type="button" onclick="saveProfile()" style="display:none;">
@@ -392,10 +392,21 @@ $age = calculateAge($resident['date_of_birth']);
                         </div>
                         <div class="section-content">
                             <div class="info-grid">
-                                <div class="info-item full-width">
-                                    <label>Complete Address</label>
-                                    <p class="view-field"><?php echo htmlspecialchars($resident['current_address'] ?: 'N/A'); ?></p>
-                                    <input type="text" name="current_address" class="form-control edit-field" value="<?php echo htmlspecialchars($resident['current_address']); ?>" style="display:none;">
+                                <div class="info-item">
+                                    <label>Purok</label>
+                                    <p class="view-field"><?php echo htmlspecialchars($resident['purok'] ?: 'N/A'); ?></p>
+                                    <select name="purok" id="purokInput" class="form-control edit-field" style="display:none;">
+                                        <option value="">Select Purok</option>
+                                        <option value="1" <?php echo $resident['purok'] == '1' ? 'selected' : ''; ?>>Purok 1</option>
+                                        <option value="2" <?php echo $resident['purok'] == '2' ? 'selected' : ''; ?>>Purok 2</option>
+                                        <option value="3" <?php echo $resident['purok'] == '3' ? 'selected' : ''; ?>>Purok 3</option>
+                                        <option value="4" <?php echo $resident['purok'] == '4' ? 'selected' : ''; ?>>Purok 4</option>
+                                    </select>
+                                </div>
+                                <div class="info-item">
+                                    <label>Street Name</label>
+                                    <p class="view-field"><?php echo htmlspecialchars($resident['street_name'] ?: 'N/A'); ?></p>
+                                    <input type="text" name="street_name" id="streetNameInput" class="form-control edit-field" value="<?php echo htmlspecialchars($resident['street_name']); ?>" style="display:none;" >
                                 </div>
                                 <div class="info-item">
                                     <label>Mobile Number</label>
@@ -878,8 +889,50 @@ $age = calculateAge($resident['date_of_birth']);
     <!-- Custom JavaScript -->
     <script src="assets/js/script.js"></script>
     <script>
+        let isEditModeActive = false;
+        let formIsDirty = false;
+
         // Set active navigation
         document.addEventListener('DOMContentLoaded', () => {
+            // Track form changes
+            const form = document.getElementById('inlineEditForm');
+            if (form) {
+                form.addEventListener('input', () => {
+                    if (isEditModeActive) formIsDirty = true;
+                });
+                form.addEventListener('change', () => {
+                    if (isEditModeActive) formIsDirty = true;
+                });
+            }
+
+            // Navigation Guards
+            window.addEventListener('beforeunload', function(e) {
+                if (isEditModeActive && formIsDirty) {
+                    e.preventDefault();
+                    e.returnValue = 'You have unsaved changes. Are you sure you want to leave?';
+                    return 'You have unsaved changes. Are you sure you want to leave?';
+                }
+            });
+
+            document.addEventListener('click', function(e) {
+                const link = e.target.closest('a');
+                if (link && link.href && !link.href.startsWith('javascript') && !link.getAttribute('href').startsWith('#') && !link.hasAttribute('download') && !link.target) {
+                    if (isEditModeActive && formIsDirty) {
+                        const currentUrl = window.location.href.split('#')[0];
+                        const targetUrl = link.href.split('#')[0];
+                        if (currentUrl !== targetUrl) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            if (confirm('You have unsaved changes. Are you sure you want to leave?')) {
+                                isEditModeActive = false;
+                                formIsDirty = false;
+                                window.location.href = link.href;
+                            }
+                        }
+                    }
+                }
+            });
+
             // Smooth scroll for sidebar navigation
             document.querySelectorAll('.profile-nav-item').forEach(item => {
                 item.addEventListener('click', (e) => {
@@ -955,6 +1008,11 @@ $age = calculateAge($resident['date_of_birth']);
         });
         
         function toggleEditMode(enable) {
+            isEditModeActive = enable;
+            if (!enable) {
+                formIsDirty = false;
+            }
+
             const viewFields = document.querySelectorAll('.view-field');
             const editFields = document.querySelectorAll('.edit-field');
             const viewActions = document.querySelectorAll('.view-action');
@@ -985,6 +1043,17 @@ $age = calculateAge($resident['date_of_birth']);
                 editActions.forEach(a => a.style.display = 'none');
                 document.querySelectorAll('.edit-field-conditional').forEach(f => f.style.display = 'none');
             }
+        }
+
+        function cancelEditMode() {
+            if (formIsDirty) {
+                if (!confirm('You have unsaved changes. Are you sure you want to cancel?')) {
+                    return;
+                }
+            }
+            const url = new URL(window.location);
+            url.searchParams.delete('edit');
+            window.location.href = url.toString();
         }
 
         function toggleOtherReligion() {
@@ -1075,9 +1144,9 @@ $age = calculateAge($resident['date_of_birth']);
             // Contact
             formData.append('mobileNumber', rawData.get('mobile_number') || '');
             formData.append('email', rawData.get('email') || '');
-            formData.append('streetName', rawData.get('current_address') || '');
+            formData.append('streetName', rawData.get('street_name') || '');
             formData.append('houseNo', '');
-            formData.append('purok', '');
+            formData.append('purok', rawData.get('purok') || '');
             
             // Family
             formData.append('civilStatus', rawData.get('civil_status') || '');
@@ -1140,6 +1209,7 @@ $age = calculateAge($resident['date_of_birth']);
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
+                    formIsDirty = false;
                     showNotification('Resident profile updated successfully!', 'success');
                     setTimeout(() => {
                         const url = new URL(window.location);

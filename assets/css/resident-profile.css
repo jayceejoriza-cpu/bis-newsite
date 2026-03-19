@@ -224,6 +224,12 @@
     padding-bottom: 400px; /* Add space at bottom so last section can scroll into view */
 }
 
+#inlineEditForm {
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+}
+
 /* Profile Section */
 .profile-section {
     background-color: var(--bg-secondary);
