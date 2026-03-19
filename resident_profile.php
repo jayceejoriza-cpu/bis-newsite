@@ -667,15 +667,27 @@ $age = calculateAge($resident['date_of_birth']);
                                     <a href="households.php?edit=<?php echo $householdInfo['id']; ?>" class="btn btn-sm btn-primary" title="Edit Household">
                                         <i class="fas fa-edit"></i> Edit
                                     </a>
-                                    <button type="button" onclick="if(confirm('To remove this resident from the household, please edit the household and remove them from the members list. Go to Edit Household now?')) { window.location.href='households.php?edit=<?php echo $householdInfo['id']; ?>'; }" class="btn btn-sm btn-danger" title="Remove from Household">
+                                    <?php if ($householdInfo['household_head_id'] == $residentId): ?>
+                                        <?php if (empty($householdMembers)): ?>
+                                        <button type="button" onclick="deleteHousehold(<?php echo $householdInfo['id']; ?>)" class="btn btn-sm btn-danger" title="Remove from Household">
+                                            <i class="fas fa-times"></i> Remove
+                                        </button>
+                                        <?php else: ?>
+                                        <button type="button" onclick="if(confirm('To remove this resident from the household, please edit the household and transfer the head role to another member first. Go to Edit Household now?')) { window.location.href='households.php?edit=<?php echo $householdInfo['id']; ?>'; }" class="btn btn-sm btn-danger" title="Remove from Household">
+                                            <i class="fas fa-times"></i> Remove
+                                        </button>
+                                        <?php endif; ?>
+                                    <?php else: ?>
+                                    <button type="button" onclick="removeHouseholdMember(<?php echo $householdInfo['id']; ?>, <?php echo $residentId; ?>)" class="btn btn-sm btn-danger" title="Remove from Household">
                                         <i class="fas fa-times"></i> Remove
                                     </button>
                                     <?php endif; ?>
+                                    <?php endif; ?>
                                 <?php else: ?>
                                     <?php if (hasPermission('perm_household_create')): ?>
-                                    <a href="households.php?create=1" class="btn btn-sm btn-success" title="Add to Household">
+                                    <button type="button" class="btn btn-sm btn-success" onclick="openAddToHouseholdModal()" title="Add to Household">
                                         <i class="fas fa-plus"></i> Add
-                                    </a>
+                                    </button>
                                     <?php endif; ?>
                                 <?php endif; ?>
                             </div>
@@ -886,6 +898,125 @@ $age = calculateAge($resident['date_of_birth']);
         </div>
     </main>
     
+    <!-- Add to Household Modal -->
+    <div class="modal" id="addToHouseholdModal">
+        <div class="modal-content" style="max-width: 700px; width: 95%;">
+            <div class="modal-header">
+                <h3 class="modal-title"><i class="fas fa-home"></i> Add to Household</h3>
+                <button type="button" class="btn-close-modal" onclick="closeAddToHouseholdModal()"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body" style="padding: 24px;">
+                <form id="addToHouseholdForm">
+                    <input type="hidden" name="resident_id" value="<?php echo $residentId; ?>">
+                    
+                    <div class="form-group" style="margin-bottom: 24px;">
+                        <label style="font-size: 14px; font-weight: 600; color: var(--text-primary); margin-bottom: 12px; display: block;">Are you a Household Head? <span style="color: #ef4444;">*</span></label>
+                        <div style="display: flex; gap: 24px;">
+                            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-weight: 500; color: var(--text-primary); font-size: 14px;">
+                                <input type="radio" name="householdHead" id="householdHeadYes" value="Yes" style="width: 18px; height: 18px; cursor: pointer; accent-color: var(--primary-color);">
+                                Yes
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-weight: 500; color: var(--text-primary); font-size: 14px;">
+                                <input type="radio" name="householdHead" id="householdHeadNo" value="No" style="width: 18px; height: 18px; cursor: pointer; accent-color: var(--primary-color);">
+                                No
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- YES Panel: Create Household -->
+                    <div id="householdYesPanel" style="display: none; background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 10px; padding: 20px; margin-bottom: 15px;">
+                        <h6 style="margin: 0 0 20px 0; color: var(--primary-color); font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">
+                            <i class="fas fa-plus-circle"></i> Create New Household
+                        </h6>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                            <div class="form-group">
+                                <label for="householdNumber" style="font-size: 13px; font-weight: 500; color: var(--text-secondary); margin-bottom: 6px; display: block;">Household Number <span style="color: #ef4444;">*</span></label>
+                                <input type="text" id="householdNumber" name="householdNumber" class="form-control" placeholder="e.g. HH-00001">
+                            </div>
+                            <div class="form-group">
+                                <label for="householdContact" style="font-size: 13px; font-weight: 500; color: var(--text-secondary); margin-bottom: 6px; display: block;">Household Contact</label>
+                                <div style="display: flex;">
+                                    <span style="padding: 10px 12px; background-color: var(--bg-secondary); border: 1px solid var(--border-color); border-right: 0; border-radius: 8px 0 0 8px; font-size: 14px; font-weight: 500; color: var(--text-primary); display: flex; align-items: center; gap: 6px;">
+                                        <img src="assets/image/contactph.png" alt="PH" style="height: 14px; border-radius: 2px;"> +63
+                                    </span>
+                                    <input type="tel" id="householdContact" name="householdContact" class="form-control" placeholder="XXX XXX XXXX" maxlength="12" style="border-radius: 0 8px 8px 0;" value="<?php echo htmlspecialchars($resident['mobile_number'] ?? ''); ?>">
+                                </div>
+                            </div>
+                            <div class="form-group" style="grid-column: 1 / -1;">
+                                <label for="householdAddress" style="font-size: 13px; font-weight: 500; color: var(--text-secondary); margin-bottom: 6px; display: block;">Household Address</label>
+                                <input type="text" id="householdAddress" name="householdAddress" class="form-control" placeholder="Enter household address" value="<?php echo htmlspecialchars($resident['current_address'] ?? ''); ?>" style="width: 100%;">
+                            </div>
+                            <div class="form-group" style="grid-column: 1 / -1;">
+                                <label for="waterSourceType" style="font-size: 13px; font-weight: 500; color: var(--text-secondary); margin-bottom: 6px; display: block;">Water Source Type</label>
+                                <select id="waterSourceType" name="waterSourceType" class="form-control">
+                                    <option value="">Select Water Source</option>
+                                    <option value="Level I (Point Spring)">Level I (Point Spring)</option>
+                                    <option value="Level II (Communal Faucet system or stand post)">Level II (Communal Faucet system or stand post)</option>
+                                    <option value="Level III (Waterworks system or individual house connection)">Level III (Waterworks system or individual house connection)</option>
+                                    <option value="O (For doubtful sources, open dug well etc.)">O (For doubtful sources, open dug well etc.)</option>
+                                </select>
+                            </div>
+                            <div class="form-group" style="grid-column: 1 / -1;">
+                                <label for="toiletFacilityType" style="font-size: 13px; font-weight: 500; color: var(--text-secondary); margin-bottom: 6px; display: block;">Toilet Facility Type</label>
+                                <select id="toiletFacilityType" name="toiletFacilityType" class="form-control">
+                                    <option value="">Select Toilet Facility</option>
+                                    <option value="" disabled>----Sanitary Toilet----</option>
+                                    <option value="P - Pour/Flush toilet connected to septic tank)">P - (Pour/Flush toilet connected to septic tank)</option>
+                                    <option value="PF - Pour/Flush toilet connected to septic tank and sewerage system">PF - Pour/Flush toilet connected to septic tank and sewerage system</option>
+                                    <option value="VIP - Ventilated impoved pit latrine (VIP) or composting">VIP - Ventilated impoved pit latrine (VIP) or composting</option>
+                                    <option value="" disabled>----Unsanitary Toilet----</option>
+                                    <option value="WS - Water-sealed connected to open drain">WS - Water-sealed connected to open drain</option>
+                                    <option value="OH - Overhung Latrine">OH - Overhung Latrine</option>
+                                    <option value="OP - Overpit Latrine">OP - Overpit Latrine</option>
+                                    <option value="WO - Without Latrine">WO - Without Latrine</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- NO Panel: Find Existing Household -->
+                    <div id="householdNoPanel" style="display: none; background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 10px; padding: 20px; margin-bottom: 15px;">
+                        <h6 style="margin: 0 0 20px 0; color: var(--primary-color); font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">
+                            <i class="fas fa-search"></i> Find Existing Household
+                        </h6>
+                        <div class="form-group" style="margin-bottom: 16px;">
+                            <label for="householdSearch" style="font-size: 13px; font-weight: 500; color: var(--text-secondary); margin-bottom: 6px; display: block;">Search Household</label>
+                            <div style="display: flex; gap: 10px;">
+                                <input type="text" id="householdSearch" class="form-control" style="width: 100%;" placeholder="Search by household number, head name, or address..." >
+                                <button type="button" class="btn btn-primary" id="searchHouseholdBtn" style="white-space: nowrap; padding: 10px 20px; border-radius: 8px;">
+                                    <i class="fas fa-search"></i> Search
+                                </button>
+                            </div>
+                        </div>
+                        <div id="householdSearchResults" style="display: none; margin-top: 15px; background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px;">
+                            <div id="householdResultsList" style="max-height: 250px; overflow-y: auto;"></div>
+                        </div>
+                        <div id="selectedHouseholdCard" style="display: none; margin-top: 15px;">
+                            <div style="background: var(--bg-secondary); border: 2px solid var(--primary-color); border-radius: 10px; padding: 16px;">
+                                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid var(--border-color);">
+                                    <h6 style="margin: 0; color: var(--text-primary); font-weight: 600; font-size: 15px; display: flex; align-items: center; gap: 8px;">
+                                        <i class="fas fa-check-circle" style="color: #10b981; font-size: 18px;"></i> Selected Household
+                                    </h6>
+                                    <button type="button" class="btn btn-sm btn-secondary" id="clearHouseholdBtn" style="padding: 6px 12px; font-size: 12px; border-radius: 6px;">
+                                        <i class="fas fa-times"></i> Clear
+                                    </button>
+                                </div>
+                                <div id="selectedHouseholdInfo" style="margin: 0;"></div>
+                            </div>
+                        </div>
+                        <input type="hidden" id="selectedHouseholdId" name="selectedHouseholdId" value="">
+                        <input type="hidden" id="householdRelationship" name="householdRelationship" value="">
+                    </div>
+                    <input type="hidden" id="householdHeadValue" name="householdHeadValue" value="">
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeAddToHouseholdModal()" style="padding: 10px 20px; border-radius: 8px;">Cancel</button>
+                <button type="button" class="btn btn-success" id="saveAddToHouseholdBtn" onclick="submitAddToHousehold()" style="padding: 10px 24px; border-radius: 8px; font-weight: 600;"><i class="fas fa-save"></i> Save</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Custom JavaScript -->
     <script src="assets/js/script.js"></script>
     <script>
@@ -1230,6 +1361,61 @@ $age = calculateAge($resident['date_of_birth']);
             });
         }
 
+        function deleteHousehold(householdId) {
+            if (confirm('Since there are no other members in this household, removing the head will delete the entire household. Are you sure you want to proceed?')) {
+                const formData = new FormData();
+                formData.append('id', householdId);
+                
+                fetch('model/delete_household.php', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showNotification('Household removed successfully', 'success');
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 1500);
+                    } else {
+                        showNotification(data.message || 'Error removing household', 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showNotification('An error occurred while deleting', 'error');
+                });
+            }
+        }
+
+        function removeHouseholdMember(householdId, residentId) {
+            if (confirm('Are you sure you want to remove this resident from the household?')) {
+                const formData = new FormData();
+                formData.append('household_id', householdId);
+                formData.append('resident_id', residentId);
+                
+                fetch('model/remove_household_member.php', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showNotification('Resident removed from household successfully', 'success');
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 1500);
+                    } else {
+                        showNotification(data.message || 'Error removing resident from household', 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showNotification('An error occurred', 'error');
+                });
+            }
+        }
+
         function showNotification(message, type = 'info') {
             document.querySelectorAll('.notification').forEach(n => n.remove());
             
@@ -1258,6 +1444,169 @@ $age = calculateAge($resident['date_of_birth']);
             }, 3000);
         }
 
+        // Custom Modal Opening Functions
+        function openAddToHouseholdModal() {
+            document.getElementById('addToHouseholdModal').classList.add('active');
+            document.body.style.overflow = 'hidden'; // Prevent background scrolling
+        }
+        function closeAddToHouseholdModal() {
+            document.getElementById('addToHouseholdModal').classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        // Add to Household Modal Javascript
+        document.getElementById('householdHeadYes')?.addEventListener('change', function() {
+            if (this.checked) {
+                document.getElementById('householdYesPanel').style.display = 'block';
+                document.getElementById('householdNoPanel').style.display = 'none';
+                document.getElementById('householdHeadValue').value = 'Yes';
+            }
+        });
+
+        document.getElementById('householdHeadNo')?.addEventListener('change', function() {
+            if (this.checked) {
+                document.getElementById('householdYesPanel').style.display = 'none';
+                document.getElementById('householdNoPanel').style.display = 'block';
+                document.getElementById('householdHeadValue').value = 'No';
+            }
+        });
+
+        document.getElementById('searchHouseholdBtn')?.addEventListener('click', searchHouseholdsProfile);
+        document.getElementById('householdSearch')?.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                searchHouseholdsProfile();
+            }
+        });
+        document.getElementById('clearHouseholdBtn')?.addEventListener('click', clearSelectedHouseholdProfile);
+
+        let _profileHouseholdSearchResults = [];
+
+        function searchHouseholdsProfile() {
+            const query = document.getElementById('householdSearch').value.trim();
+            const searchBtn = document.getElementById('searchHouseholdBtn');
+            const resultsContainer = document.getElementById('householdSearchResults');
+            const resultsList = document.getElementById('householdResultsList');
+
+            if (!query) return;
+            searchBtn.disabled = true;
+            searchBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+
+            fetch('model/search_households_for_resident.php?search=' + encodeURIComponent(query))
+                .then(res => res.json())
+                .then(data => {
+                    searchBtn.disabled = false;
+                    searchBtn.innerHTML = '<i class="fas fa-search"></i> Search';
+                    resultsContainer.style.display = 'block';
+
+                    if (!data.success || data.data.length === 0) {
+                        resultsList.innerHTML = '<div style="text-align: center; padding: 10px; color: #64748b;">No households found.</div>';
+                        return;
+                    }
+
+                    _profileHouseholdSearchResults = data.data;
+                    let html = '<p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 10px;">Select a household:</p>';
+
+                    data.data.forEach((hh, index) => {
+                        html += `
+                        <div onclick="selectHouseholdProfile(${index})" style="background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 8px; padding: 14px 16px; margin-bottom: 10px; cursor: pointer; transition: all 0.2s;">
+                            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;"><strong style="color: var(--primary-color); font-size: 15px;">${hh.household_number}</strong><span style="font-size: 12px; color: var(--text-secondary); background: var(--bg-secondary); padding: 3px 8px; border-radius: 12px; border: 1px solid var(--border-color);">${hh.member_count !== undefined ? hh.member_count + ' members' : ''}</span></div>
+                            <div style="color: var(--text-primary); font-weight: 500; font-size: 14px; margin-bottom: 4px;"><i class="fas fa-user-tie" style="color: var(--text-secondary); width: 16px;"></i> ${hh.head_name || 'N/A'}</div>
+                            <div style="font-size: 13px; color: var(--text-secondary);"><i class="fas fa-map-marker-alt" style="color: var(--text-secondary); width: 16px;"></i> ${hh.address || 'No address'}</div>
+                        </div>`; 
+                    });
+                    resultsList.innerHTML = html;
+                })
+                .catch(err => {
+                    searchBtn.disabled = false;
+                    searchBtn.innerHTML = '<i class="fas fa-search"></i> Search';
+                    resultsContainer.style.display = 'block';
+                    resultsList.innerHTML = '<div style="color: #ef4444; padding: 10px;">Error searching households.</div>';
+                });
+        }
+
+        function selectHouseholdProfile(index) {
+            const hh = _profileHouseholdSearchResults[index];
+            document.getElementById('selectedHouseholdId').value = hh.id;
+            document.getElementById('householdSearchResults').style.display = 'none';
+            document.getElementById('householdSearch').value = '';
+
+            const selectedCard = document.getElementById('selectedHouseholdCard');
+            const selectedInfo = document.getElementById('selectedHouseholdInfo');
+
+            selectedInfo.innerHTML = `
+                <div class="form-group mb-2"><label style="font-size:12px;color:var(--text-secondary);font-weight:600;text-transform:uppercase;margin-bottom:4px;display:block;">Household Number</label><div style="font-weight:700;color:var(--primary-color);font-size:15px;">${hh.household_number}</div></div>
+                <div class="form-group mb-2" style="margin-top:12px;"><label style="font-size:12px;color:var(--text-secondary);font-weight:600;text-transform:uppercase;margin-bottom:4px;display:block;">Household Head</label><div style="font-weight:600;color:var(--text-primary);">${hh.head_name || 'N/A'}</div></div>
+                <div class="form-group full-width" style="margin-top:12px;"><label style="font-size:12px;color:var(--text-secondary);font-weight:600;text-transform:uppercase;margin-bottom:4px;display:block;">Address</label><div style="font-size:13px;color:var(--text-primary);">${hh.address || 'N/A'}</div></div>
+                <div class="form-group full-width" style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border-color);">
+                    <label for="relationshipToHead" style="font-size:13px;font-weight:600;margin-bottom:8px;color:var(--text-primary);display:block;">Relationship to Household Head <span style="color:#ef4444;">*</span></label>
+                    <input type="text" id="relationshipToHead" class="form-control" placeholder="e.g. Son, Daughter, Spouse, Sibling..." oninput="document.getElementById('householdRelationship').value=this.value;" style="max-width:400px;width:100%;">
+                </div>
+            `;
+            selectedCard.style.display = 'block';
+        }
+
+        function clearSelectedHouseholdProfile() {
+            document.getElementById('selectedHouseholdId').value = '';
+            document.getElementById('selectedHouseholdCard').style.display = 'none';
+            document.getElementById('householdSearch').value = '';
+            document.getElementById('householdSearchResults').style.display = 'none';
+            document.getElementById('householdRelationship').value = '';
+        }
+
+        function submitAddToHousehold() {
+            const form = document.getElementById('addToHouseholdForm');
+            const formData = new FormData(form);
+
+            const householdHeadValue = formData.get('householdHeadValue');
+            if (!householdHeadValue) {
+                showNotification('Please select whether the resident is a Household Head.', 'error');
+                return;
+            }
+
+            if (householdHeadValue === 'Yes' && !formData.get('householdNumber')) {
+                showNotification('Household number is required.', 'error');
+                return;
+            }
+
+            if (householdHeadValue === 'No') {
+                if (!formData.get('selectedHouseholdId')) {
+                    showNotification('Please select a household to join.', 'error');
+                    return;
+                }
+                if (!formData.get('householdRelationship')) {
+                    showNotification('Please specify the relationship to the household head.', 'error');
+                    return;
+                }
+            }
+
+            const btn = document.getElementById('saveAddToHouseholdBtn');
+            const origText = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+            btn.disabled = true;
+
+            fetch('model/add_resident_to_household.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    showNotification('Resident successfully added to household.', 'success');
+                    setTimeout(() => window.location.reload(), 1500);
+                } else {
+                    showNotification(data.message || 'An error occurred.', 'error');
+                    btn.innerHTML = origText;
+                    btn.disabled = false;
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                showNotification('Server error.', 'error');
+                btn.innerHTML = origText;
+                btn.disabled = false;
+            });
+        }
         // Add notification animation keyframes
         if (!document.getElementById('notification-animations')) {
             const style = document.createElement('style');

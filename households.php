@@ -418,6 +418,58 @@ $pageTitle = 'Households';
         </div>
     </div>
     
+    <!-- Transfer Head Modal -->
+    <div id="transferHeadModal" class="household-modal">
+        <div class="household-modal-content">
+            <div class="household-modal-header">
+                <h3><i class="fas fa-exchange-alt"></i> Transfer Household Head</h3>
+                <button type="button" class="btn-close-modal" onclick="closeTransferHeadModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="household-modal-body">
+                <form id="transferHeadForm">
+                    <input type="hidden" id="transferHouseholdId" name="householdId" value="">
+                    <input type="hidden" id="transferOldHeadId" name="oldHeadId" value="">
+                    
+                    <div class="form-group" style="margin-bottom: 15px;">
+                        <label>Current Household Head</label>
+                        <input type="text" id="transferCurrentHead" class="form-control" readonly style="background-color: #f3f4f6;">
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 15px;">
+                        <label for="transferNewHead">Select New Household Head</label>
+                        <select id="transferNewHead" name="newHeadId" class="form-control" onchange="updateTransferRelationships()" required>
+                            <option value="">Select a member</option>
+                        </select>
+                    </div>
+                    
+                    <div class="modal-section" id="transferRelationshipsSection" style="display: none; margin-top: 20px;">
+                        <h5 class="section-title">Update Relationships</h5>
+                        <p class="text-muted" style="font-size: 0.85rem; margin-bottom: 10px;">Please review and adjust the relationships of the members to the NEW household head.</p>
+                        
+                        <div class="members-table-container">
+                            <table class="members-table" style="width: 100%;">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Previous Relationship</th>
+                                        <th>New Relationship to Head</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="transferMembersBody">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="household-modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeTransferHeadModal()">Cancel</button>
+                <button type="button" class="btn btn-success" id="saveTransferHeadBtn" onclick="saveTransferHead()">Save Transfer</button>
+            </div>
+        </div>
+    </div>
     
     <!-- Bootstrap JS Bundle (includes Popper) -->
     <script src="assets/bootstrap/js/bootstrap.bundle.min.js"></script>

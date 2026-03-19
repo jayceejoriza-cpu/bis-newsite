@@ -1213,10 +1213,9 @@ textarea.form-control {
 }
 
 /* Delete Member Button */
-.btn-delete-member {
+.btn-delete-member, .btn-transfer-head {
     background-color: transparent;
     border: none;
-    color: #ef4444;
     cursor: pointer;
     padding: 6px 10px;
     border-radius: 6px;
@@ -1226,12 +1225,25 @@ textarea.form-control {
     justify-content: center;
 }
 
+.btn-delete-member {
+    color: #ef4444;
+}
+
 .btn-delete-member:hover {
     background-color: #fee2e2;
     color: #dc2626;
 }
 
-.btn-delete-member i {
+.btn-transfer-head {
+    color: var(--primary-color);
+}
+
+.btn-transfer-head:hover {
+    background-color: #dbeafe;
+    color: #2563eb;
+}
+
+.btn-delete-member i, .btn-transfer-head i {
     font-size: 14px;
 }
 

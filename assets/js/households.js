@@ -569,7 +569,9 @@ function resetHouseholdForm() {
     if (actionTh) actionTh.style.display = '';
     
     // Regenerate household number
-    generateHouseholdNumber();
+    if (typeof generateHouseholdNumber === 'function') {
+        generateHouseholdNumber();
+    }
 }
 
 function refreshData() {
@@ -912,8 +914,8 @@ function editHousehold(householdId) {
                             <td>${member.sex || 'N/A'}</td>
                             <td>${member.relationship_to_head}</td>
                             <td>${member.mobile_number || 'N/A'}</td>
-                            <td>
-                                <button type="button" class="btn-transfer-head" title="Transfer Head" style="margin-right: 8px; color: var(--primary-color, #3b82f6); background: none; border: none; cursor: pointer;">
+                            <td style="display: flex; gap: 5px;">
+                                <button type="button" class="btn-transfer-head" title="Set as New Household Head" data-household-id="${householdId}" data-member-id="${member.resident_id}">
                                     <i class="fas fa-exchange-alt"></i>
                                 </button>
                                 <button type="button" class="btn-delete-member" title="Remove member">
@@ -1063,7 +1065,7 @@ function initializeModalEventListeners() {
         });
     }
     
-    // Delete member buttons (event delegation)
+    // Delete and Transfer member buttons (event delegation)
     const membersTableBody = document.getElementById('membersTableBody');
     if (membersTableBody) {
         membersTableBody.addEventListener('click', (e) => {
@@ -1075,8 +1077,11 @@ function initializeModalEventListeners() {
             
             const transferBtn = e.target.closest('.btn-transfer-head');
             if (transferBtn) {
-                const row = transferBtn.closest('tr');
-                transferHeadToMember(row);
+                const householdId = transferBtn.getAttribute('data-household-id');
+                const memberId = transferBtn.getAttribute('data-member-id');
+                
+                closeCreateHouseholdModal();
+                openTransferHeadModal(householdId, memberId);
             }
         });
     }
@@ -1416,10 +1421,7 @@ function addMemberToTable(member) {
         <td>${member.sex}</td>
         <td>${member.relationship}</td>
         <td>${member.mobileNumber || 'N/A'}</td>
-        <td>
-            <button type="button" class="btn-transfer-head" title="Transfer Head" style="margin-right: 8px; color: var(--primary-color, #3b82f6); background: none; border: none; cursor: pointer;">
-                <i class="fas fa-exchange-alt"></i>
-            </button>
+        <td style="display: flex; gap: 5px;">
             <button type="button" class="btn-delete-member" title="Remove member">
                 <i class="fas fa-trash"></i>
             </button>
@@ -1428,55 +1430,6 @@ function addMemberToTable(member) {
     
     tbody.appendChild(newRow);
     showNotification('Member added successfully', 'success');
-}
-
-function transferHeadToMember(row) {
-    const memberName = row.cells[1].textContent.trim();
-    const memberResidentId = row.dataset.residentId;
-    const memberDob = row.cells[2].textContent.trim();
-    const memberSex = row.cells[3].textContent.trim();
-    
-    if (!memberResidentId) {
-        showNotification('Cannot transfer head to a member without a Resident ID.', 'error');
-        return;
-    }
-
-    if (confirm(`Are you sure you want to make ${memberName} the new household head?`)) {
-        // Current Head Info
-        const currentHeadId = document.getElementById('selectedResidentId').value;
-        const currentHeadName = document.getElementById('headFullName').textContent.trim();
-        const currentHeadDob = document.getElementById('headDateOfBirth').textContent.trim();
-        const currentHeadSex = document.getElementById('headSex').textContent.trim();
-        
-        // Determine relationship for old head
-        const oldHeadRelationship = prompt(`What is the relationship of the current head (${currentHeadName}) to the new head (${memberName})?`, 'Former Head') || 'Former Head';
-        
-        // 1. Set new head
-        document.getElementById('selectedResidentId').value = memberResidentId;
-        document.getElementById('headFullName').innerHTML = `<a href="resident_profile.php?id=${memberResidentId}" style="color: var(--text-primary); text-decoration: none; transition: color 0.2s;" onmouseover="this.style.color='var(--primary-color)'" onmouseout="this.style.color='var(--text-primary)'">${memberName}</a>`;
-        document.getElementById('headDateOfBirth').textContent = memberDob;
-        document.getElementById('headSex').textContent = memberSex;
-        
-        // 2. Remove the member from the table
-        row.remove();
-        
-        // 3. Add the old head to the table as a member
-        if (currentHeadId) {
-            const oldHeadNameHtml = `<a href="resident_profile.php?id=${currentHeadId}" style="color: var(--text-primary); text-decoration: none; transition: color 0.2s;" onmouseover="this.style.color='var(--primary-color)'" onmouseout="this.style.color='var(--text-primary)'">${currentHeadName}</a>`;
-            
-            addMemberToTable({
-                residentId: currentHeadId,
-                name: oldHeadNameHtml,
-                dateOfBirth: currentHeadDob,
-                sex: currentHeadSex,
-                relationship: oldHeadRelationship,
-                mobileNumber: 'N/A'
-            });
-        }
-        
-        renumberMembers();
-        showNotification(`${memberName} is now the household head.`, 'success');
-    }
 }
 
 function saveHousehold() {
@@ -1575,6 +1528,207 @@ function saveHousehold() {
     });
 }
 
+// ===================================
+// Transfer Household Head Functions
+// ===================================
+let transferHouseholdData = null;
+
+function openTransferHeadModal(householdId, preselectedNewHeadId = null) {
+    const modal = document.getElementById('transferHeadModal');
+    if (!modal) return;
+    
+    fetch(`model/get_household_details.php?id=${householdId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                transferHouseholdData = data;
+                
+                document.getElementById('transferHouseholdId').value = householdId;
+                document.getElementById('transferOldHeadId').value = data.household.household_head_id;
+                document.getElementById('transferCurrentHead').value = data.household.head_name;
+                
+                const newHeadSelect = document.getElementById('transferNewHead');
+                newHeadSelect.innerHTML = '<option value="">Select a member</option>';
+                
+                if (data.members && data.members.length > 0) {
+                    data.members.forEach(member => {
+                        if (member.resident_id) {
+                            const option = document.createElement('option');
+                            option.value = member.resident_id;
+                            option.textContent = member.full_name;
+                            option.dataset.rel = member.relationship_to_head;
+                            option.dataset.sex = member.sex;
+                            newHeadSelect.appendChild(option);
+                        }
+                    });
+                }
+                
+                document.getElementById('transferRelationshipsSection').style.display = 'none';
+                modal.classList.add('show');
+                
+                if (preselectedNewHeadId) {
+                    newHeadSelect.value = preselectedNewHeadId;
+                    updateTransferRelationships();
+                }
+            } else {
+                showNotification('Error loading household details', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showNotification('Error loading household details', 'error');
+        });
+}
+
+function closeTransferHeadModal() {
+    const modal = document.getElementById('transferHeadModal');
+    if (modal) {
+        modal.classList.remove('show');
+        document.getElementById('transferHeadForm').reset();
+        document.getElementById('transferRelationshipsSection').style.display = 'none';
+    }
+}
+
+function updateTransferRelationships() {
+    const newHeadSelect = document.getElementById('transferNewHead');
+    const newHeadId = newHeadSelect.value;
+    const section = document.getElementById('transferRelationshipsSection');
+    const tbody = document.getElementById('transferMembersBody');
+    
+    if (!newHeadId) {
+        section.style.display = 'none';
+        return;
+    }
+    
+    const selectedOption = newHeadSelect.options[newHeadSelect.selectedIndex];
+    const newHeadRelToOld = selectedOption && selectedOption.dataset.rel ? selectedOption.dataset.rel.toLowerCase() : '';
+    
+    tbody.innerHTML = '';
+    
+    const oldHeadRow = document.createElement('tr');
+    const oldHeadNewRel = guessRelationship(newHeadRelToOld, 'head', transferHouseholdData.household.head_sex);
+    
+    oldHeadRow.innerHTML = `
+        <td>${transferHouseholdData.household.head_name} <span style="font-size: 0.75rem; background: #e5e7eb; padding: 2px 6px; border-radius: 4px; margin-left: 5px;">Old Head</span></td>
+        <td>Head</td>
+        <td>
+            <input type="hidden" name="memberId[]" value="${transferHouseholdData.household.household_head_id}">
+            <input type="text" name="newRelationship[]" class="form-control" value="${oldHeadNewRel}" required>
+        </td>
+    `;
+    tbody.appendChild(oldHeadRow);
+    
+    if (transferHouseholdData.members) {
+        transferHouseholdData.members.forEach(member => {
+            if (member.resident_id != newHeadId) {
+                const memberRelToOld = member.relationship_to_head.toLowerCase();
+                const newRel = guessRelationship(newHeadRelToOld, memberRelToOld, member.sex);
+                
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${member.full_name}</td>
+                    <td>${member.relationship_to_head}</td>
+                    <td>
+                        <input type="hidden" name="memberId[]" value="${member.resident_id}">
+                        <input type="text" name="newRelationship[]" class="form-control" value="${newRel}" required>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            }
+        });
+    }
+    
+    section.style.display = 'block';
+}
+
+function guessRelationship(newHeadRelToOld, memberRelToOld, memberSex) {
+    newHeadRelToOld = newHeadRelToOld.toLowerCase().trim();
+    memberRelToOld = memberRelToOld.toLowerCase().trim();
+    const isMale = memberSex === 'Male';
+    const isFemale = memberSex === 'Female';
+    
+    if (['son', 'daughter', 'child'].includes(newHeadRelToOld)) {
+        if (memberRelToOld === 'head') return isMale ? 'Father' : (isFemale ? 'Mother' : 'Parent');
+        if (['spouse', 'wife', 'husband'].includes(memberRelToOld)) return isMale ? 'Father' : (isFemale ? 'Mother' : 'Parent');
+        if (['son', 'daughter', 'child'].includes(memberRelToOld)) return isMale ? 'Brother' : (isFemale ? 'Sister' : 'Sibling');
+        if (['father', 'mother', 'parent'].includes(memberRelToOld)) return isMale ? 'Grandfather' : (isFemale ? 'Grandmother' : 'Grandparent');
+        if (['brother', 'sister', 'sibling'].includes(memberRelToOld)) return isMale ? 'Uncle' : (isFemale ? 'Aunt' : 'Uncle/Aunt');
+    }
+    
+    if (['spouse', 'wife', 'husband'].includes(newHeadRelToOld)) {
+        if (memberRelToOld === 'head') return isMale ? 'Husband' : (isFemale ? 'Wife' : 'Spouse');
+        if (['son', 'daughter', 'child'].includes(memberRelToOld)) return isMale ? 'Son' : (isFemale ? 'Daughter' : 'Child');
+        if (['father', 'mother', 'parent'].includes(memberRelToOld)) return isMale ? 'Father-in-law' : (isFemale ? 'Mother-in-law' : 'Parent-in-law');
+    }
+    
+    if (['brother', 'sister', 'sibling'].includes(newHeadRelToOld)) {
+        if (memberRelToOld === 'head') return isMale ? 'Brother' : (isFemale ? 'Sister' : 'Sibling');
+        if (['father', 'mother', 'parent'].includes(memberRelToOld)) return isMale ? 'Father' : (isFemale ? 'Mother' : 'Parent');
+        if (['son', 'daughter', 'child'].includes(memberRelToOld)) return isMale ? 'Nephew' : (isFemale ? 'Niece' : 'Nephew/Niece');
+    }
+
+    if (!memberRelToOld || memberRelToOld === 'head') return '';
+    return memberRelToOld.charAt(0).toUpperCase() + memberRelToOld.slice(1);
+}
+
+function saveTransferHead() {
+    const form = document.getElementById('transferHeadForm');
+    if (!form.checkValidity()) {
+        form.reportValidity();
+        return;
+    }
+    
+    const formData = new FormData(form);
+    
+    const data = {
+        householdId: formData.get('householdId'),
+        newHeadId: formData.get('newHeadId'),
+        oldHeadId: formData.get('oldHeadId'),
+        members: []
+    };
+    
+    const memberIds = formData.getAll('memberId[]');
+    const newRelationships = formData.getAll('newRelationship[]');
+    
+    for (let i = 0; i < memberIds.length; i++) {
+        data.members.push({
+            residentId: memberIds[i],
+            relationship: newRelationships[i]
+        });
+    }
+    
+    const btn = document.getElementById('saveTransferHeadBtn');
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+    btn.disabled = true;
+    
+    fetch('model/transfer_household_head.php', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.success) {
+            showNotification('Household head transferred successfully', 'success');
+            closeTransferHeadModal();
+            refreshData();
+        } else {
+            showNotification(result.message || 'Error transferring household head', 'error');
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('An error occurred', 'error');
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+    });
+}
+
 // Export functions for external use
 window.householdsPage = {
     refresh: refreshData,
@@ -1588,3 +1742,7 @@ window.householdsPage = {
 window.closeCreateHouseholdModal = closeCreateHouseholdModal;
 window.closeSearchResidentModal = closeSearchResidentModal;
 window.closeAddMemberModal = closeAddMemberModal;
+window.openTransferHeadModal = openTransferHeadModal;
+window.closeTransferHeadModal = closeTransferHeadModal;
+window.updateTransferRelationships = updateTransferRelationships;
+window.saveTransferHead = saveTransferHead;
