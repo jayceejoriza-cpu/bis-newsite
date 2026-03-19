@@ -38,6 +38,24 @@ if ($isUpdate) {
 try {
     // Start transaction
     $conn->begin_transaction();
+
+    // Validate household head is not a minor
+    $headId = intval($data['householdHeadId']);
+    if ($headId > 0) {
+        $checkAgeSql = "SELECT date_of_birth FROM residents WHERE id = ?";
+        $checkAgeStmt = $conn->prepare($checkAgeSql);
+        $checkAgeStmt->bind_param('i', $headId);
+        $checkAgeStmt->execute();
+        $ageResult = $checkAgeStmt->get_result()->fetch_assoc();
+        $checkAgeStmt->close();
+        if ($ageResult && !empty($ageResult['date_of_birth'])) {
+            $dob = new DateTime($ageResult['date_of_birth']);
+            $now = new DateTime();
+            if ($now->diff($dob)->y < 18) {
+                throw new Exception('A minor cannot be assigned as a household head.');
+            }
+        }
+    }
     
     if ($isUpdate) {
         // UPDATE OPERATION

@@ -300,6 +300,18 @@ $age = calculateAge($resident['date_of_birth']);
                 <div class="profile-main-content">
                     <form id="inlineEditForm">
                         <input type="hidden" name="resident_id" value="<?php echo $residentId; ?>">
+                        
+                        <!-- Pending Household Actions -->
+                        <input type="hidden" name="pending_household_action" id="pendingHouseholdAction" value="">
+                        <input type="hidden" name="pending_household_head_value" id="pendingHouseholdHeadValue" value="">
+                        <input type="hidden" name="pending_household_number" id="pendingHouseholdNumber" value="">
+                        <input type="hidden" name="pending_household_contact" id="pendingHouseholdContact" value="">
+                        <input type="hidden" name="pending_household_address" id="pendingHouseholdAddress" value="">
+                        <input type="hidden" name="pending_water_source" id="pendingWaterSource" value="">
+                        <input type="hidden" name="pending_toilet_facility" id="pendingToiletFacility" value="">
+                        <input type="hidden" name="pending_selected_household_id" id="pendingSelectedHouseholdId" value="">
+                        <input type="hidden" name="pending_household_relationship" id="pendingHouseholdRelationship" value="">
+
                     <!-- Personal Information Section -->
                     <section id="personal-details" class="profile-section">
                         <div class="section-header">
@@ -413,11 +425,6 @@ $age = calculateAge($resident['date_of_birth']);
                                     <p class="view-field">+63 <?php echo htmlspecialchars($resident['mobile_number'] ?: 'N/A'); ?></p>
                                     <input type="text" name="mobile_number" class="form-control edit-field"  placeholder="XXX XXX XXXX" pattern="[0-9 ]+" maxlength="12" oninput="let v=this.value.replace(/\D/g,'').substring(0,10);if(v.length>6)this.value=v.slice(0,3)+' '+v.slice(3,6)+' '+v.slice(6);else if(v.length>3)this.value=v.slice(0,3)+' '+v.slice(3);else this.value=v;" value="<?php echo htmlspecialchars($resident['mobile_number']); ?>" style="display:none;">
                                 </div>
-                                <div class="info-item">
-                                    <label>Email Address</label>
-                                    <p class="view-field"><?php echo htmlspecialchars($resident['email'] ?: 'N/A'); ?></p>
-                                    <input type="email" name="email" class="form-control edit-field" value="<?php echo htmlspecialchars($resident['email']); ?>" style="display:none;">
-                                </div>
                             </div>
                         </div>
                     </section>
@@ -430,7 +437,7 @@ $age = calculateAge($resident['date_of_birth']);
                         </div>
                         <div class="section-content">
                             <div class="info-grid">
-                                 <div class="info-item">
+                                 <div class="info-item adult-only">
                                     <label>Civil Status</label>
                                     <p class="view-field"><?php echo htmlspecialchars($resident['civil_status'] ?: 'N/A'); ?></p>
                                     <select name="civil_status" id="civilStatusSelect" class="form-control edit-field" style="display:none;" onchange="handleCivilStatusChange()">
@@ -441,7 +448,7 @@ $age = calculateAge($resident['date_of_birth']);
                                           <option value="Cohabitation" <?php echo $resident['civil_status'] == 'Cohabitation' ? 'selected' : ''; ?>>Cohabitation</option>
                                     </select>
                                 </div>
-                                <div class="info-item">
+                                <div class="info-item adult-only" id="spouseNameGroup">
                                     <label id="spouseNameLabel">Spouse Name</label>
                                     <p class="view-field"><?php echo htmlspecialchars($resident['spouse_name'] ?: 'N/A'); ?></p>
                                     <input type="text" name="spouse_name" id="spouseNameInput" class="form-control edit-field" value="<?php echo htmlspecialchars($resident['spouse_name']); ?>" style="display:none;">
@@ -456,18 +463,46 @@ $age = calculateAge($resident['date_of_birth']);
                                     <p class="view-field"><?php echo htmlspecialchars($resident['mother_name'] ?: 'N/A'); ?></p>
                                     <input type="text" name="mother_name" class="form-control edit-field" value="<?php echo htmlspecialchars($resident['mother_name']); ?>" style="display:none;">
                                 </div>
-                                <div class="info-item">
+                                <div class="info-item adult-only">
                                     <label>Number of Children</label>
                                     <p class="view-field"><?php echo htmlspecialchars($resident['number_of_children'] ?: '0'); ?></p>
                                     <input type="number" name="number_of_children" class="form-control edit-field" value="<?php echo htmlspecialchars($resident['number_of_children']); ?>" style="display:none;">
                                 </div>
+                            </div>
+
+                            <div class="minor-only" style="grid-column: 1 / -1; width: 100%;">
+                            <h3 class="subsection-title" style="margin-top: 20px;"><i class="fas fa-user-shield"></i> Guardian Information</h3>
+                            <div class="info-grid">
+                                <div class="info-item">
+                                    <label>Guardian Name</label>
+                                    <p class="view-field"><?php echo htmlspecialchars($resident['guardian_name'] ?: 'N/A'); ?></p>
+                                    <input type="text" name="guardian_name" class="form-control edit-field" value="<?php echo htmlspecialchars($resident['guardian_name'] ?? ''); ?>" style="display:none;">
+                                </div>
+                                <div class="info-item">
+                                    <label>Relationship to Guardian</label>
+                                    <p class="view-field"><?php echo htmlspecialchars($resident['guardian_relationship'] ?: 'N/A'); ?></p>
+                                    <select name="guardian_relationship" class="form-control edit-field" style="display:none;">
+                                        <option value="">Select Relationship</option>
+                                        <option value="Father" <?php echo ($resident['guardian_relationship'] ?? '') == 'Father' ? 'selected' : ''; ?>>Father</option>
+                                        <option value="Mother" <?php echo ($resident['guardian_relationship'] ?? '') == 'Mother' ? 'selected' : ''; ?>>Mother</option>
+                                        <option value="Grandparent" <?php echo ($resident['guardian_relationship'] ?? '') == 'Grandparent' ? 'selected' : ''; ?>>Grandparent</option>
+                                        <option value="Legal Guardian" <?php echo ($resident['guardian_relationship'] ?? '') == 'Legal Guardian' ? 'selected' : ''; ?>>Legal Guardian</option>
+                                        <option value="Other" <?php echo ($resident['guardian_relationship'] ?? '') == 'Other' ? 'selected' : ''; ?>>Other</option>
+                                    </select>
+                                </div>
+                                <div class="info-item">
+                                    <label>Guardian Contact Number</label>
+                                    <p class="view-field"><?php echo htmlspecialchars($resident['guardian_contact'] ?: 'N/A'); ?></p>
+                                    <input type="text" name="guardian_contact" class="form-control edit-field" placeholder="XXX XXX XXXX" maxlength="12" value="<?php echo htmlspecialchars($resident['guardian_contact'] ?? ''); ?>" style="display:none;" oninput="let v=this.value.replace(/\D/g,'').substring(0,10);if(v.length>6)this.value=v.slice(0,3)+' '+v.slice(3,6)+' '+v.slice(6);else if(v.length>3)this.value=v.slice(0,3)+' '+v.slice(3);else this.value=v;">
+                                </div>
+                            </div>
                             </div>
                         </div>
                     </section>
                     
                  
                     <!-- Education & Employment Section -->
-                    <section id="education-employment" class="profile-section">
+                    <section id="education-employment" class="profile-section adult-only">
                         <div class="section-header">
                             <h2><i class="fas fa-graduation-cap"></i> Education & Employment</h2>
                             <p>Educational and employment information</p>
@@ -518,9 +553,9 @@ $age = calculateAge($resident['date_of_birth']);
                             <p>Government programs and health information</p>
                         </div>
                         <div class="section-content">
-                            <h3 class="subsection-title"><i class="fas fa-landmark"></i> Government Programs</h3>
-                            <div class="info-grid">
-                                <div class="info-item">
+                            <h3 class="subsection-title gov-programs-section"><i class="fas fa-landmark"></i> Government Programs</h3>
+                            <div class="info-grid gov-programs-section">
+                                <div class="info-item adult-only">
                                     <label>4Ps Member</label>
                                     <p class="view-field"><?php echo htmlspecialchars($resident['fourps_member'] ?: 'No'); ?></p>
                                     <select name="fourps_member" class="form-control edit-field" style="display:none;">
@@ -528,12 +563,12 @@ $age = calculateAge($resident['date_of_birth']);
                                         <option value="No" <?php echo $resident['fourps_member'] == 'No' ? 'selected' : ''; ?>>No</option>
                                     </select>
                                 </div>
-                                <div class="info-item">
+                                <div class="info-item adult-only">
                                     <label>4Ps ID Number</label>
                                     <p class="view-field"><?php echo htmlspecialchars($resident['fourps_id'] ?: 'N/A'); ?></p>
                                     <input type="text" name="fourps_id" class="form-control edit-field" placeholder="XX-YYYY-ZZZZ" maxlength="12" oninput="let v=this.value.replace(/[^a-zA-Z0-9]/g,'').toUpperCase().substring(0,10);if(v.length > 6) this.value = v.slice(0,2) + '-' + v.slice(2,6) + '-' + v.slice(6);else if(v.length > 2) this.value = v.slice(0,2) + '-' + v.slice(2);else this.value = v;" value="<?php echo htmlspecialchars($resident['fourps_id']); ?>" style="display:none;">
                                 </div>
-                                <div class="info-item">
+                                <div class="info-item voter-only">
                                     <label>Voter Status</label>
                                     <p class="view-field"><?php echo htmlspecialchars($resident['voter_status'] ?: 'No'); ?></p>
                                     <select name="voter_status" class="form-control edit-field" style="display:none;">
@@ -541,7 +576,7 @@ $age = calculateAge($resident['date_of_birth']);
                                         <option value="No" <?php echo $resident['voter_status'] == 'No' ? 'selected' : ''; ?>>No</option>
                                     </select>
                                 </div>
-                                <div class="info-item">
+                                <div class="info-item voter-only">
                                     <label>Precinct Number</label>
                                     <p class="view-field"><?php echo htmlspecialchars($resident['precinct_number'] ?: 'N/A'); ?></p>
                                     <input type="text" name="precinct_number" class="form-control edit-field" value="<?php echo htmlspecialchars($resident['precinct_number']); ?>" style="display:none;">
@@ -550,12 +585,12 @@ $age = calculateAge($resident['date_of_birth']);
                             
                             <h3 class="subsection-title"><i class="fas fa-heartbeat"></i> Health Information</h3>
                             <div class="info-grid">
-                                <div class="info-item">
+                                <div class="info-item adult-only">
                                     <label>Philhealth ID</label>
                                     <p class="view-field"><?php echo htmlspecialchars($resident['philhealth_id'] ?: 'N/A'); ?></p>
                                     <input type="text" name="philhealth_id" class="form-control edit-field" placeholder="1234-5678-9012" maxlength="14" oninput="let v=this.value.replace(/[^a-zA-Z0-9]/g,'').toUpperCase().substring(0,12);if(v.length > 8) this.value = v.slice(0,4) + '-' + v.slice(4,8) + '-' + v.slice(8);else if(v.length > 4) this.value = v.slice(0,4) + '-' + v.slice(4);else this.value = v;" value="<?php echo htmlspecialchars($resident['philhealth_id']); ?>" style="display:none;">
                                 </div>
-                                <div class="info-item">
+                                <div class="info-item adult-only">
                                     <label>Membership Type</label>
                                     <p class="view-field"><?php echo htmlspecialchars($resident['membership_type'] ?: 'N/A'); ?></p>
                                     <select name="membership_type" class="form-control edit-field" style="display:none;">
@@ -565,7 +600,7 @@ $age = calculateAge($resident['date_of_birth']);
                                         <option value="None" <?php echo $resident['membership_type'] == 'None' ? 'selected' : ''; ?>>None</option>
                                     </select>
                                 </div>
-                                <div class="info-item">
+                                <div class="info-item adult-only">
                                     <label>Philhealth Category</label>
                                     <p class="view-field"><?php echo htmlspecialchars($resident['philhealth_category'] ?: 'N/A'); ?></p>
                                     <select name="philhealth_category" class="form-control edit-field" style="display:none;">
@@ -661,7 +696,7 @@ $age = calculateAge($resident['date_of_birth']);
                                 <h2><i class="fas fa-home"></i> Household Details</h2>
                                 <p>Household information and members</p>
                             </div>
-                            <div class="household-actions" style="display: flex; gap: 8px;">
+                            <div class="household-actions edit-action" style="display: none; gap: 8px;">
                                 <?php if ($householdInfo): ?>
                                     <?php if (hasPermission('perm_household_edit')): ?>
                                     <a href="households.php?edit=<?php echo $householdInfo['id']; ?>" class="btn btn-sm btn-primary" title="Edit Household">
@@ -912,8 +947,8 @@ $age = calculateAge($resident['date_of_birth']);
                     <div class="form-group" style="margin-bottom: 24px;">
                         <label style="font-size: 14px; font-weight: 600; color: var(--text-primary); margin-bottom: 12px; display: block;">Are you a Household Head? <span style="color: #ef4444;">*</span></label>
                         <div style="display: flex; gap: 24px;">
-                            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-weight: 500; color: var(--text-primary); font-size: 14px;">
-                                <input type="radio" name="householdHead" id="householdHeadYes" value="Yes" style="width: 18px; height: 18px; cursor: pointer; accent-color: var(--primary-color);">
+                            <label style="display: flex; align-items: center; gap: 8px; <?php echo ($age < 18) ? 'opacity: 0.5; cursor: not-allowed;' : 'cursor: pointer;'; ?> font-weight: 500; color: var(--text-primary); font-size: 14px;">
+                                <input type="radio" name="householdHead" id="householdHeadYes" value="Yes" style="width: 18px; height: 18px; <?php echo ($age < 18) ? 'cursor: not-allowed;' : 'cursor: pointer;'; ?> accent-color: var(--primary-color);" <?php echo ($age < 18) ? 'disabled' : ''; ?>>
                                 Yes
                             </label>
                             <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-weight: 500; color: var(--text-primary); font-size: 14px;">
@@ -921,6 +956,9 @@ $age = calculateAge($resident['date_of_birth']);
                                 No
                             </label>
                         </div>
+                        <?php if ($age < 18): ?>
+                        <small style="color: #ef4444; display: block; margin-top: 8px;"><i class="fas fa-info-circle"></i> Minors cannot be registered as a Household Head.</small>
+                        <?php endif; ?>
                     </div>
 
                     <!-- YES Panel: Create Household -->
@@ -1063,6 +1101,14 @@ $age = calculateAge($resident['date_of_birth']);
                     }
                 }
             });
+            
+            // Add listener to DOB input for age visibility
+            const dobInput = document.querySelector('input[name="date_of_birth"]');
+            if (dobInput) {
+                dobInput.addEventListener('change', updateProfileAgeVisibility);
+            }
+            // Initial visibility update
+            updateProfileAgeVisibility();
 
             // Smooth scroll for sidebar navigation
             document.querySelectorAll('.profile-nav-item').forEach(item => {
@@ -1137,6 +1183,44 @@ $age = calculateAge($resident['date_of_birth']);
                 }
             }
         });
+
+        function updateProfileAgeVisibility() {
+            const dobInput = document.querySelector('input[name="date_of_birth"]');
+            let age = 0;
+            if (dobInput && dobInput.value) {
+                const dob = new Date(dobInput.value);
+                const today = new Date();
+                age = today.getFullYear() - dob.getFullYear();
+                const monthDiff = today.getMonth() - dob.getMonth();
+                if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
+                    age--;
+                }
+            } else {
+                age = <?php echo $age; ?>;
+            }
+
+            const isMinor = age < 18;
+            const is15Plus = age >= 15;
+
+            document.querySelectorAll('.adult-only').forEach(el => {
+                el.style.display = isMinor ? 'none' : '';
+                el.querySelectorAll('input, select, textarea').forEach(input => input.disabled = isMinor);
+            });
+
+            document.querySelectorAll('.minor-only').forEach(el => {
+                el.style.display = isMinor ? '' : 'none';
+                el.querySelectorAll('input, select, textarea').forEach(input => input.disabled = !isMinor);
+            });
+
+            document.querySelectorAll('.voter-only').forEach(el => {
+                el.style.display = is15Plus ? '' : 'none';
+                el.querySelectorAll('input, select, textarea').forEach(input => input.disabled = !is15Plus);
+            });
+
+            document.querySelectorAll('.gov-programs-section').forEach(el => {
+                el.style.display = is15Plus ? '' : 'none';
+            });
+        }
         
         function toggleEditMode(enable) {
             isEditModeActive = enable;
@@ -1274,7 +1358,6 @@ $age = calculateAge($resident['date_of_birth']);
             
             // Contact
             formData.append('mobileNumber', rawData.get('mobile_number') || '');
-            formData.append('email', rawData.get('email') || '');
             formData.append('streetName', rawData.get('street_name') || '');
             formData.append('houseNo', '');
             formData.append('purok', rawData.get('purok') || '');
@@ -1317,15 +1400,26 @@ $age = calculateAge($resident['date_of_birth']);
             
             formData.append('remarks', rawData.get('remarks') || '');
             
+            // Pending Household Fields
+            formData.append('pending_household_action', rawData.get('pending_household_action') || '');
+            formData.append('pending_household_head_value', rawData.get('pending_household_head_value') || '');
+            formData.append('pending_household_number', rawData.get('pending_household_number') || '');
+            formData.append('pending_household_contact', rawData.get('pending_household_contact') || '');
+            formData.append('pending_household_address', rawData.get('pending_household_address') || '');
+            formData.append('pending_water_source', rawData.get('pending_water_source') || '');
+            formData.append('pending_toilet_facility', rawData.get('pending_toilet_facility') || '');
+            formData.append('pending_selected_household_id', rawData.get('pending_selected_household_id') || '');
+            formData.append('pending_household_relationship', rawData.get('pending_household_relationship') || '');
+
             // Hidden required fields from original DB state
             formData.append('pwdStatus', '<?php echo addslashes($resident["pwd_status"] ?? "No"); ?>');
             formData.append('verificationStatus', '<?php echo addslashes($resident["verification_status"] ?? "Pending"); ?>');
             formData.append('activityStatus', '<?php echo addslashes($resident["activity_status"] ?? "Active"); ?>');
             formData.append('rejectionReason', '<?php echo addslashes($resident["rejection_reason"] ?? ""); ?>');
             formData.append('statusRemarks', '<?php echo addslashes($resident["status_remarks"] ?? ""); ?>');
-            formData.append('guardianName', '<?php echo addslashes($resident["guardian_name"] ?? ""); ?>');
-            formData.append('guardianRelationship', '<?php echo addslashes($resident["guardian_relationship"] ?? ""); ?>');
-            formData.append('guardianContact', '<?php echo addslashes($resident["guardian_contact"] ?? ""); ?>');
+            formData.append('guardianName', rawData.get('guardian_name') || '');
+            formData.append('guardianRelationship', rawData.get('guardian_relationship') || '');
+            formData.append('guardianContact', rawData.get('guardian_contact') || '');
             formData.append('existingPhoto', '<?php echo addslashes($resident["photo"] ?? ""); ?>');
             
             const saveBtn = document.querySelector('.btn-success.edit-action');
@@ -1362,57 +1456,43 @@ $age = calculateAge($resident['date_of_birth']);
         }
 
         function deleteHousehold(householdId) {
-            if (confirm('Since there are no other members in this household, removing the head will delete the entire household. Are you sure you want to proceed?')) {
-                const formData = new FormData();
-                formData.append('id', householdId);
+            if (!isEditModeActive) {
+                showNotification('Please click "Edit Profile" first.', 'warning');
+                return;
+            }
+            if (confirm('Since there are no other members in this household, removing the head will delete the entire household. This will be applied when you click "Save Changes". Proceed?')) {
+                document.getElementById('pendingHouseholdAction').value = 'delete_household';
+                document.getElementById('pendingSelectedHouseholdId').value = householdId;
                 
-                fetch('model/delete_household.php', {
-                    method: 'POST',
-                    body: formData
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        showNotification('Household removed successfully', 'success');
-                        setTimeout(() => {
-                            window.location.reload();
-                        }, 1500);
-                    } else {
-                        showNotification(data.message || 'Error removing household', 'error');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    showNotification('An error occurred while deleting', 'error');
-                });
+                const sectionContent = document.querySelector('#household-details .section-content');
+                if (sectionContent) {
+                    sectionContent.innerHTML = `
+                        <p class="no-data">This household is pending deletion.</p>
+                    `;
+                }
+                formIsDirty = true;
             }
         }
 
         function removeHouseholdMember(householdId, residentId) {
-            if (confirm('Are you sure you want to remove this resident from the household?')) {
-                const formData = new FormData();
-                formData.append('household_id', householdId);
-                formData.append('resident_id', residentId);
+            if (!isEditModeActive) {
+                showNotification('Please click "Edit Profile" first.', 'warning');
+                return;
+            }
+            if (confirm('Are you sure you want to remove this resident from the household? This will be applied when you click "Save Changes".')) {
+                document.getElementById('pendingHouseholdAction').value = 'remove';
+                document.getElementById('pendingSelectedHouseholdId').value = householdId;
                 
-                fetch('model/remove_household_member.php', {
-                    method: 'POST',
-                    body: formData
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        showNotification('Resident removed from household successfully', 'success');
-                        setTimeout(() => {
-                            window.location.reload();
-                        }, 1500);
-                    } else {
-                        showNotification(data.message || 'Error removing resident from household', 'error');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    showNotification('An error occurred', 'error');
-                });
+                const sectionContent = document.querySelector('#household-details .section-content');
+                if (sectionContent) {
+                    sectionContent.innerHTML = `
+                        <div class="alert alert-warning" style="margin-bottom: 15px; padding: 10px; border-radius: 5px; background-color: #fffbeb; color: #92400e; border: 1px solid #fde68a;">
+                            <i class="fas fa-exclamation-triangle"></i> Pending Household Removal. Click "Save Changes" at the top to apply.
+                        </div>
+                        <p class="no-data">This resident is pending removal from the household.</p>
+                    `;
+                }
+                formIsDirty = true;
             }
         }
 
@@ -1580,32 +1660,49 @@ $age = calculateAge($resident['date_of_birth']);
                 }
             }
 
-            const btn = document.getElementById('saveAddToHouseholdBtn');
-            const origText = btn.innerHTML;
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
-            btn.disabled = true;
+            document.getElementById('pendingHouseholdAction').value = 'add';
+            document.getElementById('pendingHouseholdHeadValue').value = householdHeadValue;
+            document.getElementById('pendingHouseholdNumber').value = formData.get('householdNumber') || '';
+            document.getElementById('pendingHouseholdContact').value = formData.get('householdContact') || '';
+            document.getElementById('pendingHouseholdAddress').value = formData.get('householdAddress') || '';
+            document.getElementById('pendingWaterSource').value = formData.get('waterSourceType') || '';
+            document.getElementById('pendingToiletFacility').value = formData.get('toiletFacilityType') || '';
+            document.getElementById('pendingSelectedHouseholdId').value = formData.get('selectedHouseholdId') || '';
+            document.getElementById('pendingHouseholdRelationship').value = formData.get('householdRelationship') || '';
 
-            fetch('model/add_resident_to_household.php', {
-                method: 'POST',
-                body: formData
-            })
-            .then(res => res.json())
-            .then(data => {
-                if (data.success) {
-                    showNotification('Resident successfully added to household.', 'success');
-                    setTimeout(() => window.location.reload(), 1500);
+            const sectionContent = document.querySelector('#household-details .section-content');
+            if (sectionContent) {
+                if (householdHeadValue === 'Yes') {
+                    sectionContent.innerHTML = `
+                        <div class="household-info-card">
+                            <h3 class="subsection-title"><i class="fas fa-info-circle"></i> Household Information (Pending)</h3>
+                            <div class="info-grid">
+                                <div class="info-item"><label>Household Number</label><p>${formData.get('householdNumber')}</p></div>
+                                <div class="info-item"><label>Household Contact</label><p>${formData.get('householdContact') || 'N/A'}</p></div>
+                                <div class="info-item full-width"><label>Address</label><p>${formData.get('householdAddress')}</p></div>
+                            </div>
+                        </div>
+                    `;
                 } else {
-                    showNotification(data.message || 'An error occurred.', 'error');
-                    btn.innerHTML = origText;
-                    btn.disabled = false;
+                    sectionContent.innerHTML = `
+                        <div class="alert alert-warning" style="margin-bottom: 15px; padding: 10px; border-radius: 5px; background-color: #fffbeb; color: #92400e; border: 1px solid #fde68a;">
+                            <i class="fas fa-exclamation-triangle"></i> Pending Household Addition. Click "Save Changes" at the top to apply.
+                        </div>
+                        <div class="household-info-card">
+                            <h3 class="subsection-title"><i class="fas fa-info-circle"></i> Household Information (Pending)</h3>
+                            <div class="info-grid">
+                                <div class="info-item"><label>Relationship</label><p>${formData.get('householdRelationship')}</p></div>
+                            </div>
+                        </div>
+                    `;
                 }
-            })
-            .catch(err => {
-                console.error(err);
-                showNotification('Server error.', 'error');
-                btn.innerHTML = origText;
-                btn.disabled = false;
-            });
+                const actions = document.querySelector('#household-details .household-actions');
+                if (actions) actions.style.display = 'none';
+            }
+
+            formIsDirty = true;
+            closeAddToHouseholdModal();
+            showNotification('Household details queued. Click "Save Changes" to apply.', 'info');
         }
         // Add notification animation keyframes
         if (!document.getElementById('notification-animations')) {
@@ -1623,6 +1720,7 @@ $age = calculateAge($resident['date_of_birth']);
             `;
             document.head.appendChild(style);
         }
+        
     </script>
 </body>
 </html>

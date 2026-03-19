@@ -374,6 +374,86 @@ try {
             $contactIndex++;
         }
         
+        // ============================================
+        // Handle Pending Household Actions
+        // ============================================
+        $pendingAction = $_POST['pending_household_action'] ?? '';
+        
+        if ($pendingAction === 'add') {
+            $householdHeadValue = $_POST['pending_household_head_value'] ?? '';
+            
+            if ($householdHeadValue === 'Yes') {
+                $householdNumber   = $conn->real_escape_string(trim($_POST['pending_household_number'] ?? ''));
+                $householdContact  = $conn->real_escape_string(trim($_POST['pending_household_contact'] ?? ''));
+                $householdAddress  = $conn->real_escape_string(trim($_POST['pending_household_address'] ?? ''));
+                $waterSourceType   = $conn->real_escape_string(trim($_POST['pending_water_source'] ?? ''));
+                $toiletFacilityType = $conn->real_escape_string(trim($_POST['pending_toilet_facility'] ?? ''));
+                
+                if (!empty($householdNumber)) {
+                    $checkHHSql = "SELECT id FROM households WHERE household_number = '$householdNumber'";
+                    $checkHHResult = $conn->query($checkHHSql);
+                    if ($checkHHResult && $checkHHResult->num_rows > 0) {
+                        throw new Exception("Household number '$householdNumber' already exists.");
+                    }
+                    
+                    $hhSql = "INSERT INTO households (
+                        household_number, household_head_id, household_contact, address, water_source_type, toilet_facility_type, created_at
+                    ) VALUES (
+                        '$householdNumber', $residentId, " . ($householdContact ? "'$householdContact'" : "NULL") . ", " . ($householdAddress ? "'$householdAddress'" : "''") . ", " . ($waterSourceType ? "'$waterSourceType'" : "NULL") . ", " . ($toiletFacilityType ? "'$toiletFacilityType'" : "NULL") . ", NOW()
+                    )";
+                    if (!$conn->query($hhSql)) {
+                        throw new Exception('Failed to create household: ' . $conn->error);
+                    }
+                }
+            } elseif ($householdHeadValue === 'No') {
+                $selectedHouseholdId = intval($_POST['pending_selected_household_id'] ?? 0);
+                $householdRelationship = $conn->real_escape_string(trim($_POST['pending_household_relationship'] ?? ''));
+                
+                if ($selectedHouseholdId > 0) {
+                    $checkMemberSql = "SELECT id FROM household_members WHERE household_id = $selectedHouseholdId AND resident_id = $residentId";
+                    $checkMemberResult = $conn->query($checkMemberSql);
+                    if (!$checkMemberResult || $checkMemberResult->num_rows === 0) {
+                        $memberSql = "INSERT INTO household_members (household_id, resident_id, relationship_to_head, is_head)
+                                      VALUES ($selectedHouseholdId, $residentId, " . ($householdRelationship ? "'$householdRelationship'" : "NULL") . ", 0)";
+                        if (!$conn->query($memberSql)) {
+                            throw new Exception('Failed to add resident to household: ' . $conn->error);
+                        }
+                    }
+                }
+            }
+        } elseif ($pendingAction === 'remove') {
+            $householdId = intval($_POST['pending_selected_household_id'] ?? 0);
+            if ($householdId > 0) {
+                $deleteSql = "DELETE FROM household_members WHERE household_id = $householdId AND resident_id = $residentId";
+                if (!$conn->query($deleteSql)) {
+                    throw new Exception('Failed to remove member: ' . $conn->error);
+                }
+            }
+        } elseif ($pendingAction === 'delete_household') {
+            $householdId = intval($_POST['pending_selected_household_id'] ?? 0);
+            if ($householdId > 0) {
+                $stmt = $conn->prepare("SELECT h.*, (SELECT CONCAT(first_name, ' ', last_name) FROM residents WHERE id = h.household_head_id) as head_name FROM households h WHERE h.id = ? AND h.household_head_id = ?");
+                $stmt->bind_param("ii", $householdId, $residentId);
+                $stmt->execute();
+                $res = $stmt->get_result();
+                if ($res->num_rows > 0) {
+                    $household = $res->fetch_assoc();
+                    $household['members'] = [];
+                    $conn->query("CREATE TABLE IF NOT EXISTS `archive` (`id` int(11) NOT NULL AUTO_INCREMENT, `archive_type` varchar(50) DEFAULT NULL, `record_id` varchar(50) DEFAULT NULL, `record_data` longtext DEFAULT NULL, `deleted_by` varchar(100) DEFAULT NULL, `deleted_at` datetime DEFAULT NULL, PRIMARY KEY (`id`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+                    $recordData = json_encode($household, JSON_PARTIAL_OUTPUT_ON_ERROR | JSON_UNESCAPED_UNICODE);
+                    $archiveType = 'household';
+                    $deletedBy = $_SESSION['username'] ?? 'Unknown';
+                    
+                    $archStmt = $conn->prepare("INSERT INTO archive (archive_type, record_id, record_data, deleted_by, deleted_at) VALUES (?, ?, ?, ?, NOW())");
+                    $archStmt->bind_param("ssss", $archiveType, $household['household_number'], $recordData, $deletedBy);
+                    $archStmt->execute();
+                    
+                    $conn->query("DELETE FROM household_members WHERE household_id = $householdId");
+                    $conn->query("DELETE FROM households WHERE id = $householdId AND household_head_id = $residentId");
+                }
+            }
+        }
+        
         // Get resident_id for response
         $result = $conn->query("SELECT resident_id FROM residents WHERE id = $residentId");
         $row = $result->fetch_assoc();
@@ -466,6 +546,10 @@ try {
     $householdHeadValue = trim($_POST['householdHeadValue'] ?? '');
 
     if ($householdHeadValue === 'Yes') {
+        if ($age !== null && $age < 18) {
+            throw new Exception('A minor cannot be a household head.');
+        }
+
         // Resident is a household head — create a new household
         $householdNumber   = $conn->real_escape_string(trim($_POST['householdNumber'] ?? ''));
         $householdContact  = $conn->real_escape_string(trim($_POST['householdContact'] ?? ''));

@@ -1150,8 +1150,15 @@ function loadResidents(searchTerm = '') {
         </div>
     `;
     
-    // Add filter_households parameter to exclude already assigned residents
-    fetch(`model/search_residents.php?search=${encodeURIComponent(searchTerm)}&filter_households=true`)
+    const searchModal = document.getElementById('searchResidentModal');
+    const isSelectingMember = searchModal && searchModal.getAttribute('data-search-for') === 'member';
+    
+    let url = `model/search_residents.php?search=${encodeURIComponent(searchTerm)}&filter_households=true`;
+    if (!isSelectingMember) {
+        url += '&filter=adult'; // Ensure head is an adult
+    }
+
+    fetch(url)
         .then(response => response.json())
         .then(data => {
             if (data.success && data.data.length > 0) {
@@ -1553,11 +1560,23 @@ function openTransferHeadModal(householdId, preselectedNewHeadId = null) {
                 if (data.members && data.members.length > 0) {
                     data.members.forEach(member => {
                         if (member.resident_id) {
+                            let age = 0;
+                            let isMinor = false;
+                            if (member.date_of_birth) {
+                                const dob = new Date(member.date_of_birth);
+                                const today = new Date();
+                                age = today.getFullYear() - dob.getFullYear();
+                                const m = today.getMonth() - dob.getMonth();
+                                if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) { age--; }
+                                isMinor = (age < 18);
+                            }
+                            
                             const option = document.createElement('option');
                             option.value = member.resident_id;
-                            option.textContent = member.full_name;
+                            option.textContent = member.full_name + (isMinor ? ' (Minor - Not Eligible)' : '');
                             option.dataset.rel = member.relationship_to_head;
                             option.dataset.sex = member.sex;
+                            if (isMinor) option.disabled = true;
                             newHeadSelect.appendChild(option);
                         }
                     });

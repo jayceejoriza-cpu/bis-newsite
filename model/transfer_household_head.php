@@ -23,6 +23,21 @@ try {
     $newHeadId = intval($data['newHeadId']);
     $oldHeadId = intval($data['oldHeadId']);
     
+    // Validate new head is not a minor
+    $checkAgeSql = "SELECT date_of_birth FROM residents WHERE id = ?";
+    $checkAgeStmt = $conn->prepare($checkAgeSql);
+    $checkAgeStmt->bind_param('i', $newHeadId);
+    $checkAgeStmt->execute();
+    $ageResult = $checkAgeStmt->get_result()->fetch_assoc();
+    $checkAgeStmt->close();
+    if ($ageResult && !empty($ageResult['date_of_birth'])) {
+        $dob = new DateTime($ageResult['date_of_birth']);
+        $now = new DateTime();
+        if ($now->diff($dob)->y < 18) {
+            throw new Exception('A minor cannot be assigned as a household head.');
+        }
+    }
+
     // Update the household head in the households table
     $updateHouseholdSql = "UPDATE households SET household_head_id = ?, updated_at = NOW() WHERE id = ?";
     $updateHouseholdStmt = $conn->prepare($updateHouseholdSql);
