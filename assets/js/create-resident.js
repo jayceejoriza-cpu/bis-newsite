@@ -132,6 +132,25 @@ function initializeForm() {
         updateMinorStatus();
     }
     
+    // Religion Other toggle handler
+    const religionSelect = document.getElementById('religion');
+    const religionOtherInput = document.getElementById('religionOther');
+    if (religionSelect && religionOtherInput) {
+        const toggleReligion = () => {
+            if (religionSelect.value === 'Other') {
+                religionOtherInput.style.display = 'block';
+                religionOtherInput.setAttribute('required', 'required');
+            } else {
+                religionOtherInput.style.display = 'none';
+                religionOtherInput.removeAttribute('required');
+                religionOtherInput.value = '';
+                religionOtherInput.classList.remove('error');
+            }
+        };
+        religionSelect.addEventListener('change', toggleReligion);
+        toggleReligion(); // Initialize on load
+    }
+
     // Civil status change handler
     const civilStatusSelect = document.getElementById('civilStatus');
     if (civilStatusSelect) {
@@ -143,24 +162,28 @@ function initializeForm() {
     // Voter status change handler
     const voterStatusSelect = document.getElementById('voterStatus');
     if (voterStatusSelect) {
+        handleVoterStatusChange();
         voterStatusSelect.addEventListener('change', handleVoterStatusChange);
     }
     
     // 4Ps change handler
     const fourPsSelect = document.getElementById('fourPs');
     if (fourPsSelect) {
+        handleFourPsChange();
         fourPsSelect.addEventListener('change', handleFourPsChange);
     }
     
     // Sex change handler (for WRA section)
     const sexSelect = document.getElementById('sex');
     if (sexSelect) {
+        handleSexChange();
         sexSelect.addEventListener('change', handleSexChange);
     }
     
     // FP Method change handler
     const usingFpMethodSelect = document.getElementById('usingFpMethod');
     if (usingFpMethodSelect) {
+        handleFpMethodChange();
         usingFpMethodSelect.addEventListener('change', handleFpMethodChange);
     }
 }
@@ -549,26 +572,13 @@ function updateMinorStatus() {
     }
 
     // ==============================================
-    // 2. WORKING & VOTER MILESTONE (Age 15+)
-    // Voter Status, Employment Status, Occupation, Income
-    // are visible starting at age 15
+    // 2. VOTER MILESTONE (Age 15+)
+    // Voter Status is visible starting at age 15
     // ==============================================
     if (age >= 15) {
         // Show voter status container
         if (voterStatusContainer) voterStatusContainer.style.display = 'block';
         if (voterStatusSelect) voterStatusSelect.removeAttribute('disabled');
-        
-        // Show employment container
-        if (employmentContainer) employmentContainer.style.display = 'block';
-        if (employmentStatusSelect) employmentStatusSelect.removeAttribute('disabled');
-        
-        // Show occupation container
-        if (occupationContainer) occupationContainer.style.display = 'block';
-        if (occupationInput) occupationInput.removeAttribute('disabled');
-        
-        // Show income container
-        if (incomeContainer) incomeContainer.style.display = 'block';
-        if (monthlyIncomeSelect) monthlyIncomeSelect.removeAttribute('disabled');
     } else {
         // Hide and disable for age < 15
         if (voterStatusContainer) voterStatusContainer.style.display = 'none';
@@ -576,24 +586,6 @@ function updateMinorStatus() {
             voterStatusSelect.value = 'No';
             voterStatusSelect.setAttribute('disabled', 'disabled');
             voterStatusSelect.dispatchEvent(new Event('change'));
-        }
-        
-        if (employmentContainer) employmentContainer.style.display = 'none';
-        if (employmentStatusSelect) {
-            employmentStatusSelect.value = 'Student';
-            employmentStatusSelect.setAttribute('disabled', 'disabled');
-        }
-        
-        if (occupationContainer) occupationContainer.style.display = 'none';
-        if (occupationInput) {
-            occupationInput.value = '';
-            occupationInput.setAttribute('disabled', 'disabled');
-        }
-        
-        if (incomeContainer) incomeContainer.style.display = 'none';
-        if (monthlyIncomeSelect) {
-            monthlyIncomeSelect.value = '';
-            monthlyIncomeSelect.setAttribute('disabled', 'disabled');
         }
     }
 
@@ -639,6 +631,33 @@ function updateMinorStatus() {
         if (philhealthIdInput) philhealthIdInput.setAttribute('disabled', 'disabled');
         if (membershipTypeSelect) membershipTypeSelect.setAttribute('disabled', 'disabled');
         if (philhealthCategorySelect) philhealthCategorySelect.setAttribute('disabled', 'disabled');
+        
+        // Hide and disable Employment and Occupation for minors
+        if (employmentContainer) employmentContainer.style.display = 'none';
+        if (employmentStatusSelect) {
+            employmentStatusSelect.value = '';
+            employmentStatusSelect.setAttribute('disabled', 'disabled');
+        }
+        
+        if (occupationContainer) occupationContainer.style.display = 'none';
+        if (occupationInput) {
+            occupationInput.value = '';
+            occupationInput.setAttribute('disabled', 'disabled');
+        }
+        
+        if (incomeContainer) incomeContainer.style.display = 'none';
+        if (monthlyIncomeSelect) {
+            monthlyIncomeSelect.value = '';
+            monthlyIncomeSelect.setAttribute('disabled', 'disabled');
+        }
+        
+        // Disable 4Ps for minors
+        const fourPsSelect = document.getElementById('fourPs');
+        if (fourPsSelect) {
+            fourPsSelect.value = 'No';
+            fourPsSelect.setAttribute('disabled', 'disabled');
+            fourPsSelect.dispatchEvent(new Event('change'));
+        }
 
         // Prevent minor from being household head
         const yesRadio = document.getElementById('householdHeadYes');
@@ -685,7 +704,13 @@ function updateMinorStatus() {
     // ==============================================
     if (age >= 18) {
         // Show adult-only fields
-        adultOnlyElements.forEach(el => el.style.display = 'block');
+        adultOnlyElements.forEach(el => {
+            // Don't forcefully show conditionally hidden elements
+            if (el.id === 'spouseNameGroup' || el.id === 'fourpsIdGroup' || el.id === 'precinctNumberGroup') {
+                return;
+            }
+            el.style.display = 'block';
+        });
 
         // Enable and require Civil Status
         if (civilStatusSelect) {
@@ -703,6 +728,25 @@ function updateMinorStatus() {
         if (philhealthIdInput) philhealthIdInput.removeAttribute('disabled');
         if (membershipTypeSelect) membershipTypeSelect.removeAttribute('disabled');
         if (philhealthCategorySelect) philhealthCategorySelect.removeAttribute('disabled');
+        
+        // Enable 4Ps for adults
+        const fourPsSelect = document.getElementById('fourPs');
+        if (fourPsSelect) {
+            fourPsSelect.removeAttribute('disabled');
+            handleFourPsChange();
+        }
+        
+        // Enable Employment & Occupation
+        if (employmentContainer) employmentContainer.style.display = 'block';
+        if (employmentStatusSelect) employmentStatusSelect.removeAttribute('disabled');
+        
+        if (occupationContainer) occupationContainer.style.display = 'block';
+        if (occupationInput) occupationInput.removeAttribute('disabled');
+        
+        if (incomeContainer) incomeContainer.style.display = 'block';
+        if (monthlyIncomeSelect) monthlyIncomeSelect.removeAttribute('disabled');
+        
+        handleVoterStatusChange();
     } else {
         // Age < 18 - Adult fields already hidden above
         // But we need to ensure they're disabled
@@ -1864,7 +1908,13 @@ function populateReviewModal() {
     personalInfoHTML += createField('Suffix', getValue('suffix'));
     personalInfoHTML += createField('Sex', getValue('sex'));
     personalInfoHTML += createField('Date of Birth', getValue('dateOfBirth'));
-    personalInfoHTML += createField('Religion', getValue('religion'));
+    personalInfoHTML += createField('Place of Birth', getValue('placeOfBirth'));
+    
+    let religionValue = getValue('religion');
+    if (religionValue === 'Other') {
+        religionValue = getValue('religion_other') || 'Other';
+    }
+    personalInfoHTML += createField('Religion', religionValue);
     personalInfoHTML += createField('Ethnicity', getValue('ethnicity'));
     personalInfoHTML += '</div>';
     

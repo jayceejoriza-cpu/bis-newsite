@@ -527,8 +527,13 @@ function resetHouseholdForm() {
     
     document.getElementById('householdContact').removeAttribute('readonly');
     document.getElementById('householdAddress').removeAttribute('readonly');
-    document.getElementById('waterSource').removeAttribute('disabled');
-    document.getElementById('toiletFacility').removeAttribute('disabled');
+    
+    const waterSourceInput = document.getElementById('waterSource');
+    if (waterSourceInput) { waterSourceInput.removeAttribute('disabled'); waterSourceInput.style.cursor = ''; }
+    
+    const toiletFacilityInput = document.getElementById('toiletFacility');
+    if (toiletFacilityInput) { toiletFacilityInput.removeAttribute('disabled'); toiletFacilityInput.style.cursor = ''; }
+    
     document.getElementById('householdNotes').removeAttribute('readonly');
     
     // Show all buttons (in case they were hidden in view mode)
@@ -886,9 +891,22 @@ function editHousehold(householdId) {
                 document.getElementById('headSex').textContent = data.household.head_sex || 'N/A';
                 document.getElementById('selectedResidentId').value = data.household.household_head_id;
              
+                // Ensure all fields are editable in edit mode
+                document.getElementById('householdContact').removeAttribute('readonly');
+                document.getElementById('householdAddress').removeAttribute('readonly');
+                document.getElementById('householdNotes').removeAttribute('readonly');
                 
-                // Hide search resident button - household head cannot be changed during edit
-                document.getElementById('searchResidentBtn').style.display = 'none';
+                const waterSourceEl = document.getElementById('waterSource');
+                if (waterSourceEl) {
+                    waterSourceEl.removeAttribute('disabled');
+                    waterSourceEl.style.cursor = 'auto';
+                }
+                
+                const toiletFacilityEl = document.getElementById('toiletFacility');
+                if (toiletFacilityEl) {
+                    toiletFacilityEl.removeAttribute('disabled');
+                    toiletFacilityEl.style.cursor = 'auto';
+                }
                 
                 document.getElementById('createHouseholdForm').setAttribute('data-household-id', householdId);
                 document.getElementById('saveHouseholdBtn').innerHTML = '<i class="fas fa-save"></i> Update';

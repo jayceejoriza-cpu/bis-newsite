@@ -131,9 +131,13 @@ try {
     $suffix = $conn->real_escape_string(trim($_POST['suffix'] ?? ''));
     $sex = $conn->real_escape_string($_POST['sex'] ?? '');
     $dateOfBirth = $conn->real_escape_string($_POST['dateOfBirth'] ?? '');
-    $religion = $conn->real_escape_string(trim($_POST['religion'] ?? ''));
+    $placeOfBirth = $conn->real_escape_string(trim($_POST['placeOfBirth'] ?? ''));
     $ethnicity = $conn->real_escape_string($_POST['ethnicity'] ?? '');
     
+    $religionSelect = $_POST['religion'] ?? '';
+    $religion = ($religionSelect === 'Other') ? ($_POST['religion_other'] ?? '') : $religionSelect;
+    $religion = $conn->real_escape_string(trim($religion));
+
     // Calculate age from date of birth
     $age = null;
     if (!empty($dateOfBirth)) {
@@ -207,7 +211,7 @@ try {
 
     // Validation
     $isMinor = ($age !== null && $age < 18);
-    if (empty($firstName) || empty($lastName) || empty($sex) || empty($dateOfBirth) || 
+    if (empty($firstName) || empty($lastName) || empty($sex) || empty($dateOfBirth) || empty($placeOfBirth) ||
         (!$isMinor && empty($mobileNumber)) || empty($currentAddress) || 
         (!$isMinor && empty($civilStatus)) || empty($pwdStatus)) {
         throw new Exception('Please fill in all required fields.');
@@ -301,6 +305,7 @@ try {
             suffix = " . ($suffix ? "'$suffix'" : "NULL") . ",
             sex = '$sex',
             date_of_birth = '$dateOfBirth',
+            place_of_birth = " . ($placeOfBirth ? "'$placeOfBirth'" : "NULL") . ",
             age = " . ($age !== null ? $age : "NULL") . ",
             religion = " . ($religion ? "'$religion'" : "NULL") . ",
             ethnicity = " . ($ethnicity ? "'$ethnicity'" : "NULL") . ",
@@ -489,7 +494,7 @@ try {
         // ============================================
     
     $sql = "INSERT INTO residents (
-        photo, first_name, middle_name, last_name, suffix, sex, date_of_birth, age, religion, ethnicity,
+        photo, first_name, middle_name, last_name, suffix, sex, date_of_birth, place_of_birth, age, religion, ethnicity,
         mobile_number, email, house_no, purok, street_name, current_address,
         civil_status, spouse_name, father_name, mother_name, number_of_children,
         guardian_name, guardian_relationship, guardian_contact,
@@ -501,7 +506,7 @@ try {
     ) VALUES (
         " . ($photoPath ? "'" . $conn->real_escape_string($photoPath) . "'" : "NULL") . ",
         '$firstName', " . ($middleName ? "'$middleName'" : "NULL") . ", '$lastName', " . ($suffix ? "'$suffix'" : "NULL") . ",
-        '$sex', '$dateOfBirth', " . ($age !== null ? $age : "NULL") . ", " . ($religion ? "'$religion'" : "NULL") . ", " . ($ethnicity ? "'$ethnicity'" : "NULL") . ",
+        '$sex', '$dateOfBirth', " . ($placeOfBirth ? "'$placeOfBirth'" : "NULL") . ", " . ($age !== null ? $age : "NULL") . ", " . ($religion ? "'$religion'" : "NULL") . ", " . ($ethnicity ? "'$ethnicity'" : "NULL") . ",
         '$mobileNumber', " . ($email ? "'$email'" : "NULL") . ", " . ($houseNo ? "'$houseNo'" : "NULL") . ", 
         " . ($purok ? "'$purok'" : "NULL") . ", " . ($streetName ? "'$streetName'" : "NULL") . ", '$currentAddress',
         '$civilStatus', " . ($spouseName ? "'$spouseName'" : "NULL") . ", " . ($fatherName ? "'$fatherName'" : "NULL") . ", 

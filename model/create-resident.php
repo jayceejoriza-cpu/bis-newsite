@@ -216,7 +216,6 @@ if (isset($conn)) {
                                     <div class="form-group">
                                         <label>Resident ID</label>
                                         <input type="text" class="form-control" value="<?php echo $nextResidentId; ?>" disabled>
-                                        <small class="form-text text-muted">Auto-generated (Format: W-XXXXX)</small>
                                     </div>
                                 </div>
                                 <div class="col-md-4">
@@ -264,6 +263,12 @@ if (isset($conn)) {
                                 </div>
                                 <div class="col-md-4">
                                     <div class="form-group">
+                                        <label for="placeOfBirth">Place of Birth <span class="required"></span></label>
+                                        <input type="text" id="placeOfBirth" name="placeOfBirth" class="form-control" placeholder="Enter Place of Birth" >
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-group">
                                         <label for="religion">Religion<span class="required">*</span></label>
                                         <select id="religion" name="religion" class="form-control" required>
                                             <option value="">Select Religion</option>
@@ -283,8 +288,9 @@ if (isset($conn)) {
                                             <option value="Evangelical">Evangelical</option>
                                             <option value="Pentecostal">Pentecostal</option>
                                             <option value="Unknown">Unknown</option>
-                                            <option value="">Other (pls. Specify)</option>
+                                            <option value="Other">Other (pls. Specify)</option>
                                         </select>
+                                        <input type="text" id="religionOther" name="religion_other" class="form-control mt-2" placeholder="Specify Religion" style="display: none;">
                                         <small class="form-hint">Religion is required</small>
                                     </div>
                                 </div>
@@ -317,12 +323,6 @@ if (isset($conn)) {
                                             </span>
                                             <input type="tel" id="mobileNumber" name="mobileNumber" class="form-control phone-input" placeholder="XXX XXX XXXX" pattern="[0-9 ]+" maxlength="12" oninput="let v=this.value.replace(/\D/g,'').substring(0,10);if(v.length>6)this.value=v.slice(0,3)+' '+v.slice(3,6)+' '+v.slice(6);else if(v.length>3)this.value=v.slice(0,3)+' '+v.slice(3);else this.value=v;" autocomplete="tel" required>
                                         </div>
-                                    </div>
-                                </div>
-                                <div class="col-md-4">
-                                    <div class="form-group">
-                                        <label for="email">Email Address</label>
-                                        <input type="email" id="email" name="email" class="form-control" placeholder="example@email.com" autocomplete="email">
                                     </div>
                                 </div>
                                 <div class="col-md-4">
@@ -382,7 +382,7 @@ if (isset($conn)) {
                                         <input type="text" id="motherName" name="motherName" class="form-control">
                                     </div>
                                 </div>
-                                <div class="col-md-4">
+                                <div class="col-md-4  adult-only">
                                     <div class="form-group">
                                         <label for="numberOfChildren">Number of Children</label>
                                         <input type="number" id="numberOfChildren" name="numberOfChildren" class="form-control" min="0" value="0">
@@ -443,7 +443,7 @@ if (isset($conn)) {
 
                             <!-- Household Head Question -->
                             <div class="form-group" style="margin-bottom: 20px;">
-                                <label style="font-weight: 600; font-size: 15px;">Are you a Household Head? <span class="required">*</span></label>
+                                <label style="font-weight: 600; font-size: 15px;">Are you a Household Head? <span class="required"></span></label>
                                 <div style="display: flex; gap: 20px; margin-top: 10px;">
                                     <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-weight: 500;">
                                         <input type="radio" name="householdHead" id="householdHeadYes" value="Yes" style="width: 18px; height: 18px; cursor: pointer;">
@@ -465,7 +465,7 @@ if (isset($conn)) {
                                     <div class="form-grid">
                                         <div class="form-group">
                                             <label for="householdNumber">Household Number <span class="required">*</span></label>
-                                            <input type="text" id="householdNumber" name="householdNumber" class="form-control" placeholder="e.g. HH-00001">
+                                            <input type="text" id="householdNumber" name="householdNumber" class="form-control" placeholder="e.g. HH-00001" required>
                                             <small class="form-hint">Household number is required</small>
                                         </div>
 
@@ -607,20 +607,7 @@ if (isset($conn)) {
                                         <input type="text" id="occupation" name="occupation" class="form-control">
                                     </div>
                                 </div>
-                                <div id="incomeContainer" class="col-md-4">
-                                    <div class="form-group">
-                                        <label for="monthlyIncome">Monthly Income</label>
-                                        <select id="monthlyIncome" name="monthlyIncome" class="form-control">
-                                            <option value="">Select</option>
-                                            <option value="Below 5000">Below ₱5,000</option>
-                                            <option value="5000-10000">₱5,000 - ₱10,000</option>
-                                            <option value="10000-20000">₱10,000 - ₱20,000</option>
-                                            <option value="20000-30000">₱20,000 - ₱30,000</option>
-                                            <option value="30000-50000">₱30,000 - ₱50,000</option>
-                                            <option value="Above 50000">Above ₱50,000</option>
-                                        </select>
-                                    </div>
-                                </div>
+        
                             </div>
                         </div>
                     </div>
@@ -652,9 +639,9 @@ if (isset($conn)) {
                                     <div class="form-group">
                                         <label for="voterStatus">Registered Voter</label>
                                         <select id="voterStatus" name="voterStatus" class="form-control">
-                                            <option value="">Select</option>
-                                            <option value="Yes">Yes</option>
-                                            <option value="No">No</option>
+                                              <option value="No">No</option>
+                                              <option value="Yes">Yes</option>
+                                          
                                         </select>
                                     </div>
                                 </div>

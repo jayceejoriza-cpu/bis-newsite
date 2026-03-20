@@ -357,7 +357,11 @@ $age = calculateAge($resident['date_of_birth']);
                                     <label>Age</label>
                                     <p><?php echo $age; ?> years old</p>
                                 </div>
-                               
+                                <div class="info-item">
+                                    <label>Place of Birth</label>
+                                    <p class="view-field"><?php echo htmlspecialchars($resident['place_of_birth'] ?: 'N/A'); ?></p>
+                                    <input type="text" name="place_of_birth" class="form-control edit-field" value="<?php echo htmlspecialchars($resident['place_of_birth']); ?>" style="display:none;" required>
+                                </div>
                                 <div class="info-item">
                                     <label>Religion</label>
                                     <p class="view-field"><?php echo htmlspecialchars($resident['religion'] ?: 'N/A'); ?></p>
@@ -988,6 +992,7 @@ $age = calculateAge($resident['date_of_birth']);
                                 <label for="waterSourceType" style="font-size: 13px; font-weight: 500; color: var(--text-secondary); margin-bottom: 6px; display: block;">Water Source Type</label>
                                 <select id="waterSourceType" name="waterSourceType" class="form-control">
                                     <option value="">Select Water Source</option>
+                                    <option value="" disabled>Select Water Source</option>
                                     <option value="Level I (Point Spring)">Level I (Point Spring)</option>
                                     <option value="Level II (Communal Faucet system or stand post)">Level II (Communal Faucet system or stand post)</option>
                                     <option value="Level III (Waterworks system or individual house connection)">Level III (Waterworks system or individual house connection)</option>
@@ -1343,6 +1348,7 @@ $age = calculateAge($resident['date_of_birth']);
             formData.append('suffix', rawData.get('suffix') || '');
             formData.append('sex', rawData.get('sex') || '');
             formData.append('dateOfBirth', rawData.get('date_of_birth') || '');
+            formData.append('placeOfBirth', rawData.get('place_of_birth') || '');
             
             if (rawData.get('religion_select') === 'Other') {
                 formData.append('religion', rawData.get('religion_other') || '');
