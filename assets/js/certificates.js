@@ -12,7 +12,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const searchInput      = document.getElementById('searchInput');
     const clearSearchBtn   = document.getElementById('clearSearch');
     const refreshBtn       = document.getElementById('refreshBtn');
-    const certificatesGrid = document.getElementById('certificatesGrid');
+    const certificatesGridContainer = document.getElementById('certificatesGridContainer');
 
     // Certificate types with their limits (daily)
     const CERTIFICATE_LIMITS = {
@@ -65,12 +65,24 @@ document.addEventListener('DOMContentLoaded', function () {
             card.classList.toggle('hidden', !matches);
             if (matches) visible++;
         });
+        
+        // Hide empty categories
+        const categories = document.querySelectorAll('.category-section');
+        categories.forEach(category => {
+            const visibleCards = category.querySelectorAll('.certificate-card:not(.hidden)');
+            if (visibleCards.length === 0) {
+                category.style.display = 'none';
+            } else {
+                category.style.display = 'block';
+            }
+        });
+
         showEmptyState(visible === 0 && cards.length > 0);
     }
 
     function showEmptyState(show) {
-        let emptyState = certificatesGrid ? certificatesGrid.querySelector('.empty-state-search') : null;
-        if (show && !emptyState && certificatesGrid) {
+        let emptyState = certificatesGridContainer ? certificatesGridContainer.querySelector('.empty-state-search') : null;
+        if (show && !emptyState && certificatesGridContainer) {
             emptyState = document.createElement('div');
             emptyState.className = 'empty-state empty-state-search';
             emptyState.innerHTML = `
@@ -78,7 +90,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 <p>No certificates found</p>
                 <p class="empty-subtitle">Try a different search term</p>
             `;
-            certificatesGrid.appendChild(emptyState);
+            certificatesGridContainer.appendChild(emptyState);
         } else if (!show && emptyState) {
             emptyState.remove();
         }

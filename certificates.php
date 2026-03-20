@@ -20,80 +20,103 @@ $certificateTypes = [
         'description' => 'For residents who need proof of indigency',
         'icon'        => 'fa-file-alt',
         'modal'       => 'indigencyModal',
+        'category'    => 'Social Services & Financial Assistance'
     ],
     [
         'title'       => 'Certificate of Residency',
         'description' => 'For residents who need proof of residency',
         'icon'        => 'fa-home',
         'modal'       => 'residencyModal',
+        'category'    => 'Personal Identification & Records'
     ],
     [
         'title'       => 'Certificate of Low Income',
         'description' => 'For residents who need proof of low income',
         'icon'        => 'fa-money-bill-wave',
         'modal'       => 'lowIncomeModal',
+        'category'    => 'Social Services & Financial Assistance'
     ],
     [
         'title'       => 'Certificate of Solo Parent',
         'description' => 'For residents who need proof of solo parent status',
         'icon'        => 'fa-user-friends',
         'modal'       => 'soloParentModal',
+        'category'    => 'Social Services & Financial Assistance'
     ],
     [
         'title'       => 'Registration of Birth Certificate',
         'description' => 'For late registration of birth',
         'icon'        => 'fa-baby',
         'modal'       => 'rbcModal',
+        'category'    => 'Personal Identification & Records'
     ],
     [
         'title'       => 'Barangay Clearance',
         'description' => 'For residents who need barangay clearance',
         'icon'        => 'fa-file-signature',
         'modal'       => 'brgyClearanceModal',
+        'category'    => 'Personal Identification & Records'
     ],
     [
         'title'       => 'Barangay Business Clearance',
         'description' => 'For business owners who need clearance',
         'icon'        => 'fa-briefcase',
         'modal'       => 'brgyBusinessClearanceModal',
+        'category'    => 'Business & Livelihood'
     ],
     [
         'title'       => 'Business Permit',
         'description' => 'For business permit endorsement',
         'icon'        => 'fa-store',
         'modal'       => 'businessPermitModal',
+        'category'    => 'Business & Livelihood'
     ],
     [
         'title'       => 'Fishing Clearance',
         'description' => 'For residents who need fishing clearance',
         'icon'        => 'fa-fish',
         'modal'       => 'fishingClearanceModal',
+        'category'    => 'Business & Livelihood'
     ],
     [
         'title'       => 'First Time Jobseeker Assistance',
         'description' => 'For residents availing RA 11261 benefits',
         'icon'        => 'fa-briefcase',
         'modal'       => 'ftJobseekerModal',
+        'category'    => 'Employment & Education'
     ],
     [
         'title'       => 'Certificate of Good Moral Character',
         'description' => 'For residents who need proof of good moral character',
         'icon'        => 'fa-id-card',
         'modal'       => 'gmrcModal',
+        'category'    => 'Employment & Education'
     ],
     [
         'title'       => 'Oath of Undertaking',
         'description' => 'For First-Time Jobseeker applicants',
         'icon'        => 'fa-file-signature',
         'modal'       => 'oathModal',
+        'category'    => 'Employment & Education'
     ],
     [
         'title'       => 'Certificate for Vessel Docking',
         'description' => 'For vessel owners who need docking certification',
         'icon'        => 'fa-anchor',
         'modal'       => 'vesselDockingModal',
+        'category'    => 'Business & Livelihood'
     ],
 ];
+
+// Group certificates by category
+$groupedCertificates = [];
+foreach ($certificateTypes as $cert) {
+    $category = $cert['category'] ?? 'Other';
+    if (!isset($groupedCertificates[$category])) {
+        $groupedCertificates[$category] = [];
+    }
+    $groupedCertificates[$category][] = $cert;
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -114,6 +137,48 @@ $certificateTypes = [
     <!-- Custom CSS -->
     <link rel="stylesheet" href="assets/css/style.css">
     <link rel="stylesheet" href="assets/css/certificates.css">
+    <style>
+        .certificate-card .card-body {
+            position: relative;
+            min-height: 120px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+        .certificate-photo {
+            width: 100%;
+            height: 120px;
+            background-size: cover;
+            background-position: center;
+            transition: transform 0.3s ease;
+        }
+        .certificate-card:hover .certificate-photo {
+            transform: scale(1.1); /* hover preview effect */
+        }
+        .edit-photo-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+        }
+        body.edit-mode-active .certificate-card-clickable {
+            cursor: default; /* Disable normal click navigation */
+        }
+        body.edit-mode-active .edit-photo-overlay {
+            display: flex !important;
+        }
+        #editCertPhotoBtn.active {
+            background-color: var(--primary-color);
+            color: white;
+        }
+    </style>
     <!-- Dark Mode Init: must be in <head> to prevent flash of light mode -->
     <script src="assets/js/dark-mode-init.js"></script>
 </head>
@@ -145,13 +210,16 @@ $certificateTypes = [
                     </button>
                 </div>
 
+                <button class="btn btn-icon" id="editCertPhotoBtn" title="Edit Photos">
+                    <i class="fas fa-edit"></i>
+                </button>
                 <button class="btn btn-icon" id="refreshBtn" title="Refresh">
                     <i class="fas fa-sync-alt"></i>
                 </button>
             </div>
 
-            <!-- Certificates Grid -->
-            <div class="certificates-grid" id="certificatesGrid">
+            <!-- Certificates Container -->
+            <div id="certificatesGridContainer">
                 <?php if (empty($certificateTypes)): ?>
                     <div class="empty-state">
                         <i class="fas fa-certificate"></i>
@@ -159,31 +227,54 @@ $certificateTypes = [
                         <p class="empty-subtitle">Add certificate entries to the <code>$certificateTypes</code> array in <code>certificates.php</code></p>
                     </div>
                 <?php else: ?>
-                    <?php foreach ($certificateTypes as $cert): ?>
-                    <div class="certificate-card certificate-card-clickable"
-                         data-title="<?php echo htmlspecialchars(strtolower($cert['title'])); ?>"
-                         <?php if (!empty($cert['modal'])): ?>
-                         data-modal="<?php echo htmlspecialchars($cert['modal']); ?>"
-                         <?php elseif (!empty($cert['link'])): ?>
-                         data-link="<?php echo htmlspecialchars($cert['link']); ?>"
-                         <?php endif; ?>>
-                        <div class="card-header">
-                            <h3 class="card-title"><?php echo htmlspecialchars($cert['title']); ?></h3>
-                        </div>
-
-                        <div class="card-body">
-                            <div class="certificate-icon">
-                                <i class="fas <?php echo htmlspecialchars($cert['icon']); ?>"></i>
+                    <?php foreach ($groupedCertificates as $categoryName => $certs): ?>
+                        <div class="category-section" style="margin-bottom: 30px;">
+                            <h3 class="category-title" style="margin-bottom: 15px; font-size: 1.1rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid var(--border-color); padding-bottom: 8px;">
+                                <?php echo htmlspecialchars($categoryName); ?>
+                            </h3>
+                            <div class="certificates-grid" style="margin-bottom: 0;">
+                                <?php foreach ($certs as $cert): ?>
+                                <?php 
+                                    $certId = !empty($cert['modal']) ? $cert['modal'] : md5($cert['title']);
+                                    $photoPath = "assets/uploads/certificates/{$certId}.jpg";
+                                    $hasPhoto = file_exists($photoPath);
+                                    $photoUrl = $hasPhoto ? $photoPath . '?v=' . filemtime($photoPath) : '';
+                                ?>
+                                <div class="certificate-card certificate-card-clickable"
+                                     data-title="<?php echo htmlspecialchars(strtolower($cert['title'])); ?>"
+                                     <?php if (!empty($cert['modal'])): ?>
+                                     data-modal="<?php echo htmlspecialchars($cert['modal']); ?>"
+                                     <?php elseif (!empty($cert['link'])): ?>
+                                     data-link="<?php echo htmlspecialchars($cert['link']); ?>"
+                                     <?php endif; ?>>
+                                    <div class="card-header">
+                                        <h3 class="card-title"><?php echo htmlspecialchars($cert['title']); ?></h3>
+                                    </div>
+                                    <div class="card-body">
+                                        <?php if ($hasPhoto): ?>
+                                        <div class="certificate-photo" style="background-image: url('<?php echo htmlspecialchars($photoUrl); ?>');"></div>
+                                        <?php else: ?>
+                                        <div class="certificate-icon">
+                                            <i class="fas <?php echo htmlspecialchars($cert['icon']); ?>"></i>
+                                        </div>
+                                        <?php endif; ?>
+                                        
+                                        <div class="edit-photo-overlay" style="display: none;">
+                                            <button class="btn btn-light btn-sm upload-cert-btn" data-cert-id="<?php echo htmlspecialchars($certId); ?>">
+                                                <i class="fas fa-camera"></i> <?php echo $hasPhoto ? 'Change Photo' : 'Add Photo'; ?>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="card-footer">
+                                        <span class="cert-description"><?php echo htmlspecialchars($cert['description']); ?></span>
+                                        <span class="cert-open-hint">
+                                            <i class="fas fa-arrow-right"></i>
+                                        </span>
+                                    </div>
+                                </div>
+                                <?php endforeach; ?>
                             </div>
                         </div>
-
-                        <div class="card-footer">
-                            <span class="cert-description"><?php echo htmlspecialchars($cert['description']); ?></span>
-                            <span class="cert-open-hint">
-                                <i class="fas fa-arrow-right"></i>
-                            </span>
-                        </div>
-                    </div>
                     <?php endforeach; ?>
                 <?php endif; ?>
             </div>
@@ -941,6 +1032,31 @@ $certificateTypes = [
                 <div class="modal-footer cert-modal-footer">
                     <button type="button" class="btn btn-cancel" data-bs-dismiss="modal"><i class="fas fa-times"></i> Cancel</button>
                     <button type="button" class="btn btn-print-cert" id="vesselDockingPrintBtn"><i class="fas fa-print"></i> Generate Certificate</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Upload Certificate Photo Modal -->
+    <div class="modal fade" id="uploadCertPhotoModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Upload Certificate Photo</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="uploadCertPhotoForm">
+                        <input type="hidden" name="cert_id" id="uploadCertId">
+                        <div class="mb-3">
+                            <label class="form-label">Select Photo (JPG, PNG)</label>
+                            <input type="file" name="cert_photo" id="certPhotoInput" class="form-control" accept="image/jpeg, image/png, image/webp" required>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="saveCertPhotoBtn">Upload</button>
                 </div>
             </div>
         </div>
