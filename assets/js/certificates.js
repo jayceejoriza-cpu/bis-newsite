@@ -112,6 +112,10 @@ document.addEventListener('DOMContentLoaded', function () {
     // ============================================
     document.querySelectorAll('.certificate-card-clickable').forEach(function (card) {
         card.addEventListener('click', function () {
+            if (document.body.classList.contains('edit-mode-active')) {
+                return; // Prevent modal opening while in edit mode
+            }
+
             const modalId = this.getAttribute('data-modal');
             const link    = this.getAttribute('data-link');
 
@@ -126,6 +130,67 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         });
     });
+
+    // ============================================
+    // Preview Photos
+    // ============================================
+    document.querySelectorAll('.preview-cert-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.stopPropagation(); // Prevent triggering the card's click event
+            const photoUrl = this.getAttribute('data-photo-url');
+            const previewImg = document.getElementById('previewModalImage');
+            if (previewImg) {
+                previewImg.src = photoUrl;
+                const previewModal = new bootstrap.Modal(document.getElementById('imagePreviewModal'));
+                previewModal.show();
+            }
+        });
+    });
+
+    // ============================================
+    // Edit Photos Mode
+    // ============================================
+    const editCertPhotoBtn = document.getElementById('editCertPhotoBtn');
+    if (editCertPhotoBtn) {
+        editCertPhotoBtn.addEventListener('click', function () {
+            document.body.classList.toggle('edit-mode-active');
+            this.classList.toggle('active');
+        });
+    }
+
+    const uploadCertBtns = document.querySelectorAll('.upload-cert-btn');
+    uploadCertBtns.forEach(btn => {
+        btn.addEventListener('click', function (e) {
+            e.stopPropagation(); // prevent card click
+            const certId = this.getAttribute('data-cert-id');
+            document.getElementById('uploadCertId').value = certId;
+            const uploadModal = new bootstrap.Modal(document.getElementById('uploadCertPhotoModal'));
+            uploadModal.show();
+        });
+    });
+
+    const saveCertPhotoBtn = document.getElementById('saveCertPhotoBtn');
+    if (saveCertPhotoBtn) {
+        saveCertPhotoBtn.addEventListener('click', function () {
+            if (!document.getElementById('certPhotoInput').files.length) {
+                alert('Please select a file.');
+                return;
+            }
+            this.disabled = true;
+            this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Uploading...';
+
+            const form = document.getElementById('uploadCertPhotoForm');
+            const formData = new FormData(form);
+            
+            fetch('model/upload_cert_photo.php', { method: 'POST', body: formData })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) location.reload();
+                else alert('Error: ' + data.message);
+            })
+            .finally(() => { this.disabled = false; this.innerHTML = 'Upload'; });
+        });
+    }
 
     // ============================================
     // Helper: Get certificate limit

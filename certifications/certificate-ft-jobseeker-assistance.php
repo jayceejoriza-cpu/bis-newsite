@@ -168,7 +168,7 @@ $birthdateFmt = !empty($resident['birthdate'])
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Barangay Certification - <?= htmlspecialchars($brgy) ?></title>
+    <title>First Time Jobseeker Assistance Act - <?= htmlspecialchars($brgy) ?></title>
 
     <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="../assets/bootstrap/css/bootstrap.min.css">

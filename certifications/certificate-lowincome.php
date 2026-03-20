@@ -549,7 +549,7 @@ $birthdateFmt = !empty($resident['birthdate'])
                                        This further certifies that the above-mentioned name is a 
                                         <span class="bold"><?= strtoupper(htmlspecialchars($work_type)) ?></span> 
                                         since <span class="bold"><?= htmlspecialchars($work_year) ?></span> up to present 
-                                        with an estimated monthly income of <span class="bold">PHP <?= htmlspecialchars($income) ?></span> 
+                                        with an estimated monthly income of <span class="bold"><?= htmlspecialchars($income) ?> pesos</span> 
                                         and is hereby classified as a low income citizen.
                                     </p>
 

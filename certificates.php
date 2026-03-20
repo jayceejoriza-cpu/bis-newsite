@@ -148,13 +148,30 @@ foreach ($certificateTypes as $cert) {
         }
         .certificate-photo {
             width: 100%;
-            height: 120px;
+            height: 190px;
             background-size: cover;
             background-position: center;
             transition: transform 0.3s ease;
         }
         .certificate-card:hover .certificate-photo {
             transform: scale(1.1); /* hover preview effect */
+        }
+        .preview-photo-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 5;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        body:not(.edit-mode-active) .certificate-card:hover .preview-photo-overlay {
+            opacity: 1;
         }
         .edit-photo-overlay {
             position: absolute;
@@ -256,6 +273,14 @@ foreach ($certificateTypes as $cert) {
                                         <?php else: ?>
                                         <div class="certificate-icon">
                                             <i class="fas <?php echo htmlspecialchars($cert['icon']); ?>"></i>
+                                        </div>
+                                        <?php endif; ?>
+                                        
+                                        <?php if ($hasPhoto): ?>
+                                        <div class="preview-photo-overlay">
+                                            <button class="btn btn-primary btn-sm preview-cert-btn" data-photo-url="<?php echo htmlspecialchars($photoUrl); ?>">
+                                                <i class="fas fa-search-plus"></i> Preview
+                                            </button>
                                         </div>
                                         <?php endif; ?>
                                         
@@ -1057,6 +1082,20 @@ foreach ($certificateTypes as $cert) {
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                     <button type="button" class="btn btn-primary" id="saveCertPhotoBtn">Upload</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Image Preview Modal -->
+    <div class="modal fade" id="imagePreviewModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content bg-transparent border-0 shadow-none">
+                <div class="modal-header border-0 pb-0 justify-content-end">
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" style="filter: invert(1) grayscale(100%) brightness(200%);"></button>
+                </div>
+                <div class="modal-body text-center p-0">
+                    <img src="" id="previewModalImage" class="img-fluid rounded shadow-lg" alt="Certificate Preview">
                 </div>
             </div>
         </div>

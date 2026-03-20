@@ -580,7 +580,7 @@ $birthdateFmt = !empty($resident['birthdate'])
                                         
                                         <div class="signature-space-small"></div>
                                         
-                                        <div class="sig-name">FOR HON. RICKY ENCOMIO</div>
+                                        <div class="sig-name">FOR HON. JUAN DELA CRUZ</div>
                                         <div class="sig-title">Barangay Kagawad</div>
                                     </div>
 

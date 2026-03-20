@@ -225,12 +225,19 @@ try {
     // DUPLICATE PREVENTION CHECKS
     // ============================================
     
-    // Check 1: Exact Name Match (First Name + Last Name)
-    $duplicateCheckSql = "SELECT id, resident_id, CONCAT(first_name, ' ', IFNULL(middle_name, ''), ' ', last_name) as full_name, date_of_birth
+    // Check 1: Exact Name Match (First Name + Last Name + Suffix)
+    $duplicateCheckSql = "SELECT id, resident_id, CONCAT(first_name, ' ', IFNULL(middle_name, ''), ' ', last_name, IFNULL(CONCAT(' ', suffix), '')) as full_name, date_of_birth
                           FROM residents 
                           WHERE LOWER(first_name) = LOWER(?) 
-                          AND LOWER(last_name) = LOWER(?)
-                          AND activity_status != 'Deceased'";
+                          AND LOWER(last_name) = LOWER(?)";
+                          
+    if (!empty($suffix)) {
+        $duplicateCheckSql .= " AND LOWER(suffix) = LOWER(?)";
+    } else {
+        $duplicateCheckSql .= " AND (suffix IS NULL OR suffix = '')";
+    }
+    
+    $duplicateCheckSql .= " AND activity_status != 'Deceased'";
     
     if ($mode === 'update' && $residentId) {
         $duplicateCheckSql .= " AND id != ?";
@@ -239,9 +246,17 @@ try {
     $stmt = $conn->prepare($duplicateCheckSql);
     
     if ($mode === 'update' && $residentId) {
-        $stmt->bind_param("ssi", $firstName, $lastName, $residentId);
+        if (!empty($suffix)) {
+            $stmt->bind_param("sssi", $firstName, $lastName, $suffix, $residentId);
+        } else {
+            $stmt->bind_param("ssi", $firstName, $lastName, $residentId);
+        }
     } else {
-        $stmt->bind_param("ss", $firstName, $lastName);
+        if (!empty($suffix)) {
+            $stmt->bind_param("sss", $firstName, $lastName, $suffix);
+        } else {
+            $stmt->bind_param("ss", $firstName, $lastName);
+        }
     }
     
     $stmt->execute();
