@@ -135,9 +135,22 @@ try {
         ");
     }
     $officials = $stmt->fetchAll();
+
+    // Group officials by hierarchy level
+    $officialsByLevel = [
+        1 => [], // Top level (Captain)
+        2 => [], // Middle level (Kagawads)
+        3 => []  // Bottom level (SK, Secretary, Treasurer)
+    ];
+    
+    foreach ($officials as $official) {
+        $level = $official['hierarchy_level'] ?? 2;
+        $officialsByLevel[$level][] = $official;
+    }
 } catch (PDOException $e) {
     error_log("Error fetching officials: " . $e->getMessage());
     $officials = [];
+    $officialsByLevel = [1 => [], 2 => [], 3 => []];
 }
 ?>
 <!DOCTYPE html>
@@ -175,7 +188,117 @@ try {
                 <?php endif; ?>
             </div>
 
-            
+             <!-- Organizational Chart Section -->
+            <div class="org-chart-section">
+                <div class="org-chart-header">
+                    <h2 class="org-chart-title">
+                        <i class="fas fa-sitemap"></i>
+                        PRESENT OFFICIALS
+                    </h2>
+                </div>
+                
+                <?php if (empty($officials)): ?>
+                    <!-- Empty State -->
+                    <div class="empty-officials">
+                        <i class="fas fa-users-slash"></i>
+                        <h3>No Active Officials</h3>
+                        <p>Start by adding barangay officials to display the organizational structure</p>
+                    </div>
+                <?php else: ?>
+                    <!-- Organizational Hierarchy -->
+                    <div class="org-hierarchy">
+                        <!-- Top Level (Barangay Captain) -->
+                        <?php if (!empty($officialsByLevel[1])): ?>
+                        <div class="hierarchy-level top">
+                            <?php foreach ($officialsByLevel[1] as $official): 
+                                $fullName = !empty($official['first_name']) 
+                                    ? formatFullName($official['first_name'], $official['middle_name'], $official['last_name'], $official['suffix'])
+                                    : 'Vacant';
+                                $initials = !empty($official['first_name']) 
+                                    ? getInitials($official['first_name'], $official['last_name'])
+                                    : 'V';
+                                $photo = $official['photo'] ?? $official['resident_photo'] ?? null;
+                            ?>
+                            <div class="official-card captain" data-official-id="<?php echo $official['id']; ?>">
+                                <div class="official-photo <?php echo empty($photo) ? 'placeholder' : ''; ?>">
+                                    <?php if (!empty($photo)): ?>
+                                        <img src="<?php echo htmlspecialchars($photo); ?>" alt="<?php echo htmlspecialchars($fullName); ?>">
+                                    <?php else: ?>
+                                        <?php echo htmlspecialchars($initials); ?>
+                                    <?php endif; ?>
+                                </div>
+                                <div class="official-name"><?php echo htmlspecialchars($fullName); ?></div>
+                                <div class="official-position"><?php echo htmlspecialchars($official['position']); ?></div>
+                                <?php if (!empty($official['committee'])): ?>
+                                    <div class="official-committee"><?php echo htmlspecialchars($official['committee']); ?></div>
+                                <?php endif; ?>
+                            </div>
+                            <?php endforeach; ?>
+                        </div>
+                        <?php endif; ?>
+                        
+                        <!-- Middle Level (Kagawads) -->
+                        <?php if (!empty($officialsByLevel[2])): ?>
+                        <div class="hierarchy-level middle">
+                            <?php foreach ($officialsByLevel[2] as $official): 
+                                $fullName = !empty($official['first_name']) 
+                                    ? formatFullName($official['first_name'], $official['middle_name'], $official['last_name'], $official['suffix'])
+                                    : 'Vacant';
+                                $initials = !empty($official['first_name']) 
+                                    ? getInitials($official['first_name'], $official['last_name'])
+                                    : 'V';
+                                $photo = $official['photo'] ?? $official['resident_photo'] ?? null;
+                            ?>
+                            <div class="official-card" data-official-id="<?php echo $official['id']; ?>">
+                                <div class="official-photo <?php echo empty($photo) ? 'placeholder' : ''; ?>">
+                                    <?php if (!empty($photo)): ?>
+                                        <img src="<?php echo htmlspecialchars($photo); ?>" alt="<?php echo htmlspecialchars($fullName); ?>">
+                                    <?php else: ?>
+                                        <?php echo htmlspecialchars($initials); ?>
+                                    <?php endif; ?>
+                                </div>
+                                <div class="official-name"><?php echo htmlspecialchars($fullName); ?></div>
+                                <div class="official-position"><?php echo htmlspecialchars($official['position']); ?></div>
+                                <?php if (!empty($official['committee'])): ?>
+                                    <div class="official-committee"><?php echo htmlspecialchars($official['committee']); ?></div>
+                                <?php endif; ?>
+                            </div>
+                            <?php endforeach; ?>
+                        </div>
+                        <?php endif; ?>
+                        
+                        <!-- Bottom Level (SK Chairman, Secretary, Treasurer) -->
+                        <?php if (!empty($officialsByLevel[3])): ?>
+                        <div class="hierarchy-level bottom">
+                            <?php foreach ($officialsByLevel[3] as $official): 
+                                $fullName = !empty($official['first_name']) 
+                                    ? formatFullName($official['first_name'], $official['middle_name'], $official['last_name'], $official['suffix'])
+                                    : 'Vacant';
+                                $initials = !empty($official['first_name']) 
+                                    ? getInitials($official['first_name'], $official['last_name'])
+                                    : 'V';
+                                $photo = $official['photo'] ?? $official['resident_photo'] ?? null;
+                            ?>
+                            <div class="official-card" data-official-id="<?php echo $official['id']; ?>">
+                                <div class="official-photo <?php echo empty($photo) ? 'placeholder' : ''; ?>">
+                                    <?php if (!empty($photo)): ?>
+                                        <img src="<?php echo htmlspecialchars($photo); ?>" alt="<?php echo htmlspecialchars($fullName); ?>">
+                                    <?php else: ?>
+                                        <?php echo htmlspecialchars($initials); ?>
+                                    <?php endif; ?>
+                                </div>
+                                <div class="official-name"><?php echo htmlspecialchars($fullName); ?></div>
+                                <div class="official-position"><?php echo htmlspecialchars($official['position']); ?></div>
+                                <?php if (!empty($official['committee'])): ?>
+                                    <div class="official-committee"><?php echo htmlspecialchars($official['committee']); ?></div>
+                                <?php endif; ?>
+                            </div>
+                            <?php endforeach; ?>
+                        </div>
+                        <?php endif; ?>
+                    </div>
+                <?php endif; ?>
+            </div>
 
                 <!-- Filter Tabs -->
                 <div class="officials-filter-tabs">

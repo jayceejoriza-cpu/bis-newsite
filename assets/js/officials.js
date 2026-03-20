@@ -63,6 +63,52 @@ function initOfficials() {
             searchResidentsForPicker('');
         });
     }
+
+    // Organizational Chart double-click to view details
+    document.querySelectorAll('.official-card').forEach(card => {
+        card.addEventListener('dblclick', function() {
+            const id = this.getAttribute('data-official-id');
+            if (id) viewOfficialDetails(id);
+        });
+    });
+
+    // Modal close listeners for URL cleanup
+    const viewModal = document.getElementById('viewOfficialModal');
+    if (viewModal) {
+        viewModal.addEventListener('hidden.bs.modal', function () {
+            const url = new URL(window.location);
+            url.searchParams.delete('view');
+            window.history.replaceState({}, '', url);
+        });
+    }
+
+    const editModal = document.getElementById('editOfficialModal');
+    if (editModal) {
+        editModal.addEventListener('hidden.bs.modal', function () {
+            const url = new URL(window.location);
+            url.searchParams.delete('edit');
+            window.history.replaceState({}, '', url);
+        });
+    }
+
+    checkUrlParams();
+}
+
+// ── Check URL Params ──────────────────────────────────────────────────────────
+function checkUrlParams() {
+    const urlParams = new URLSearchParams(window.location.search);
+    
+    if (urlParams.has('status')) {
+        filterByStatus(urlParams.get('status'), null);
+    }
+    
+    if (urlParams.has('view')) {
+        const id = urlParams.get('view');
+        if (id && id !== 'all') viewOfficialDetails(id);
+    } else if (urlParams.has('edit')) {
+        const id = urlParams.get('edit');
+        if (id) editOfficial(id);
+    }
 }
 
 // ── Term Period Dropdown Toggle ───────────────────────────────────────────────
@@ -341,6 +387,12 @@ async function submitCreateOfficial() {
 function viewOfficialDetails(officialId) {
     console.log('Viewing official:', officialId);
 
+    // Update URL parameter
+    const url = new URL(window.location);
+    url.searchParams.set('view', officialId);
+    url.searchParams.delete('edit');
+    window.history.replaceState({}, '', url);
+
     const modalEl = document.getElementById('viewOfficialModal');
     if (!modalEl) return;
 
@@ -435,6 +487,12 @@ function populateViewModal(official, history) {
 // ── Edit Official ─────────────────────────────────────────────────────────────
 function editOfficial(officialId) {
     console.log('Editing official:', officialId);
+
+    // Update URL parameter
+    const url = new URL(window.location);
+    url.searchParams.set('edit', officialId);
+    url.searchParams.delete('view');
+    window.history.replaceState({}, '', url);
 
     const modalEl = document.getElementById('editOfficialModal');
     if (!modalEl) return;

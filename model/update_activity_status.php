@@ -36,9 +36,9 @@ if ($residentId <= 0) {
 }
 
 // Validate status value
-$allowedStatuses = ['Active', 'Inactive', 'Deceased'];
+$allowedStatuses = ['Alive', 'Deceased'];
 if (!in_array($newStatus, $allowedStatuses)) {
-    echo json_encode(['success' => false, 'message' => 'Invalid status value. Must be Active, Inactive, or Deceased.']);
+    echo json_encode(['success' => false, 'message' => 'Invalid status value. Must be Alive or Deceased.']);
     exit;
 }
 

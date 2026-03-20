@@ -83,7 +83,7 @@ try {
                 r.sex,
                 r.current_address
             FROM residents r
-            WHERE r.activity_status = 'Active'";
+            WHERE r.activity_status = 'Alive'";
     
     // If filtering for households, exclude residents already assigned
     if ($filterHouseholds) {

@@ -322,7 +322,7 @@ function getDemographicsData($conn) {
             END as age_group,
             COUNT(*) as count
         FROM residents
-        WHERE activity_status = 'Active' AND date_of_birth IS NOT NULL
+        WHERE activity_status = 'Alive' AND date_of_birth IS NOT NULL
         GROUP BY age_group
     ";
     

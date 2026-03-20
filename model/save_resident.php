@@ -200,7 +200,7 @@ try {
     
     // Status fields (for edit mode)
     $verificationStatus = $conn->real_escape_string($_POST['verificationStatus'] ?? 'Pending');
-    $activityStatus = $conn->real_escape_string($_POST['activityStatus'] ?? 'Active');
+    $activityStatus = $conn->real_escape_string($_POST['activityStatus'] ?? 'Alive');
     $rejectionReason = $conn->real_escape_string(trim($_POST['rejectionReason'] ?? ''));
     $statusRemarks = $conn->real_escape_string(trim($_POST['statusRemarks'] ?? ''));
     

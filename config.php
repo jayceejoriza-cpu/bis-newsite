@@ -48,7 +48,7 @@ $dashboard_stats = [
 ];
 
 // Fetch total residents (active only)
-$result = $conn->query("SELECT COUNT(*) as count FROM residents WHERE activity_status = 'Active'");
+$result = $conn->query("SELECT COUNT(*) as count FROM residents WHERE activity_status = 'Alive'");
 if ($result && $row = $result->fetch_assoc()) {
     $dashboard_stats['total_residents'] = (int)$row['count'];
 }

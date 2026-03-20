@@ -30,7 +30,7 @@ if ($conn->connect_error) {
 }
 
 // Get an existing resident for testing
-$result = $conn->query("SELECT * FROM residents WHERE activity_status = 'Active' LIMIT 1");
+$result = $conn->query("SELECT * FROM residents WHERE activity_status = 'Alive' LIMIT 1");
 if ($result->num_rows == 0) {
     die("No active residents found for testing\n");
 }

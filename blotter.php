@@ -94,7 +94,7 @@ try {
 // Fetch residents for dropdown
 $residents = [];
 try {
-    $residentStmt = $pdo->query("SELECT id, first_name, middle_name, last_name, suffix FROM residents WHERE activity_status = 'Active' ORDER BY last_name, first_name");
+    $residentStmt = $pdo->query("SELECT id, first_name, middle_name, last_name, suffix FROM residents WHERE activity_status = 'Alive' ORDER BY last_name, first_name");
     $residents = $residentStmt->fetchAll();
 
     // Fetch Barangay Info and Captain for Official Header/Footer

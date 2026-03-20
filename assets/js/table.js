@@ -349,6 +349,10 @@ class EnhancedTable {
                 this.tbody.appendChild(row);
             });
         }
+        
+        if (this.options.onDisplayUpdate) {
+            this.options.onDisplayUpdate(rowsToShow, this.filteredRows);
+        }
     }
     
     showNoResults() {

@@ -37,7 +37,7 @@ try {
                 IFNULL(CONCAT(' ', r.suffix), '')
             )) AS full_name
         FROM residents r
-        WHERE r.activity_status = 'Active'
+        WHERE r.activity_status = 'Alive'
     ";
 
     $params = [];

@@ -597,7 +597,9 @@ try {
                         <p style="color: #6b7280; font-size: 16px; margin: 0;">No residents found</p>
                     </div>
                 <?php else: ?>
-                    <?php foreach ($residents as $index => $resident): 
+                    <?php 
+                    foreach ($residents as $index => $resident): 
+                        
                         $fullName = formatFullName(
                             $resident['first_name'], 
                             $resident['middle_name'], 
@@ -611,6 +613,7 @@ try {
                         $sortName = $resident['last_name'] . ', ' . $resident['first_name'];
                     ?>
                     <div class="resident-card" 
+                         data-resident-id="<?php echo htmlspecialchars($resident['id']); ?>"
                          data-name="<?php echo htmlspecialchars($sortName); ?>"
                          data-religion="<?php echo htmlspecialchars($resident['religion'] ?? ''); ?>"
                          data-ethnicity="<?php echo htmlspecialchars($resident['ethnicity'] ?? ''); ?>"

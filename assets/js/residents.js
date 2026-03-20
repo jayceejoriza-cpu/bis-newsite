@@ -60,6 +60,37 @@ function initializeTable() {
             const nameEl = row.querySelector('.resident-name span:last-child');
             const name = nameEl ? nameEl.textContent.toLowerCase() : (row.cells[1]?.textContent.toLowerCase() || '');
             return id.includes(term) || name.includes(term);
+        },
+        onDisplayUpdate: (visibleRows) => {
+            // Sync grid view with visible table rows
+            const gridCards = document.querySelectorAll('.resident-card');
+            const gridContainer = document.getElementById('residentsGrid');
+            
+            gridCards.forEach(card => card.style.display = 'none'); // Hide all first
+            
+            const existingEmpty = gridContainer.querySelector('.dynamic-empty-state');
+            if (existingEmpty) existingEmpty.remove();
+            
+            if (visibleRows.length === 0 && gridCards.length > 0) {
+                gridContainer.insertAdjacentHTML('beforeend', `
+                    <div class="dynamic-empty-state" style="grid-column: 1/-1; text-align: center; padding: 40px; color: #6b7280;">
+                        <i class="fas fa-search" style="font-size: 48px; margin-bottom: 15px; opacity: 0.3;"></i>
+                        <p style="font-size: 16px; font-weight: 500;">No results found</p>
+                        <p style="font-size: 14px; margin-top: 5px;">Try adjusting your search or filter criteria</p>
+                    </div>
+                `);
+            } else {
+                visibleRows.forEach(row => {
+                    const btnAction = row.querySelector('.btn-action');
+                    if (btnAction) {
+                        const residentId = btnAction.getAttribute('data-resident-id');
+                        const card = document.querySelector(`.resident-card[data-resident-id="${residentId}"]`);
+                        if (card) {
+                            card.style.display = '';
+                        }
+                    }
+                });
+            }
         }
     });
     residentsTable.sortByColumn(1);
@@ -172,12 +203,9 @@ function applyFilter(filterType) {
         url.searchParams.delete('tab');
     }
     window.history.replaceState({}, '', url);
-
-    const gridCards = document.querySelectorAll('.resident-card');
     
     if (filterType === 'all') {
         residentsTable.reset();
-        gridCards.forEach(card => card.style.display = '');
         return;
     }
     
@@ -195,28 +223,11 @@ function applyFilter(filterType) {
                 
             case 'active':
                 const activityBadge = cells[6]?.querySelector('.badge');
-                return activityBadge?.textContent.trim().toLowerCase() === 'active';
+                return activityBadge?.textContent.trim().toLowerCase() === 'alive';
                 
             default:
                 return true;
         }
-    });
-
-    // Filter grid cards
-    gridCards.forEach(card => {
-        const voterStatus = card.getAttribute('data-voter-status').toLowerCase();
-        const activityStatus = card.getAttribute('data-activity-status').toLowerCase();
-        
-        let show = true;
-        switch(filterType) {
-            case 'voters':
-                show = voterStatus === 'yes';
-                break;
-            case 'active':
-                show = activityStatus === 'active';
-                break;
-        }
-        card.style.display = show ? '' : 'none';
     });
 }
 
@@ -239,15 +250,6 @@ function initializeSearch() {
                 } else {
                     residentsTable.search(e.target.value);
                 }
-                
-                // Filter grid cards
-                const query = e.target.value.toLowerCase();
-                const gridCards = document.querySelectorAll('.resident-card');
-                gridCards.forEach(card => {
-                    const name = card.querySelector('.resident-name').textContent.toLowerCase();
-                    const id = card.querySelector('.resident-id').textContent.toLowerCase();
-                    card.style.display = (name.includes(query) || id.includes(query)) ? '' : 'none';
-                });
             }, 300);
         });
     }
@@ -258,9 +260,6 @@ function initializeSearch() {
             residentsTable.reset();
             residentsTable.sortByColumn(1);
             
-            // Reset grid cards
-            const gridCards = document.querySelectorAll('.resident-card');
-            gridCards.forEach(card => card.style.display = '');
             searchInput.focus();
         });
     }
@@ -581,10 +580,6 @@ function refreshData() {
         const allTab = document.querySelector('.tab-btn[data-filter="all"]');
         if (allTab) allTab.classList.add('active');
 
-        // Reset grid cards
-        const gridCards = document.querySelectorAll('.resident-card');
-        gridCards.forEach(card => card.style.display = '');
-        
         // Clear the filter notification badge
         updateFilterNotification(0);
 
@@ -669,7 +664,7 @@ function showActionMenu(row, button) {
     let currentStatus = row.getAttribute('data-activity-status');
     if (!currentStatus) {
         const activityBadge = row.querySelectorAll('td')[6]?.querySelector('.badge');
-        currentStatus = activityBadge?.textContent.trim() || 'Active';
+        currentStatus = activityBadge?.textContent.trim() || 'Alive';
     }
     
     // Remove any existing action menus
@@ -697,15 +692,10 @@ function showActionMenu(row, button) {
             <span>Change Status</span>
             <i class="fas fa-chevron-right submenu-arrow"></i>
             <div class="action-submenu">
-                <div class="action-menu-item submenu-item ${currentStatus === 'Active' ? 'submenu-current' : ''}" data-status="Active">
-                    <i class="fas fa-circle status-dot status-dot-active"></i>
-                    <span>Active</span>
-                    ${currentStatus === 'Active' ? '<i class="fas fa-check submenu-check"></i>' : ''}
-                </div>
-                <div class="action-menu-item submenu-item ${currentStatus === 'Inactive' ? 'submenu-current' : ''}" data-status="Inactive">
-                    <i class="fas fa-circle status-dot status-dot-inactive"></i>
-                    <span>Inactive</span>
-                    ${currentStatus === 'Inactive' ? '<i class="fas fa-check submenu-check"></i>' : ''}
+                <div class="action-menu-item submenu-item ${currentStatus === 'Alive' ? 'submenu-current' : ''}" data-status="Alive">
+                    <i class="fas fa-circle status-dot status-dot-alive"></i>
+                    <span>Alive</span>
+                    ${currentStatus === 'Alive' ? '<i class="fas fa-check submenu-check"></i>' : ''}
                 </div>
                 <div class="action-menu-item submenu-item ${currentStatus === 'Deceased' ? 'submenu-current' : ''}" data-status="Deceased">
                     <i class="fas fa-circle status-dot status-dot-deceased"></i>
@@ -961,7 +951,7 @@ function updateActivityStatus(residentId, newStatus, row, currentStatus) {
                 const badge = statusCell.querySelector('.badge');
                 if (badge) {
                     // Remove old badge class
-                    badge.classList.remove('badge-active', 'badge-inactive', 'badge-deceased');
+                    badge.classList.remove('badge-alive', 'badge-deceased');
                     // Add new badge class
                     badge.classList.add('badge-' + newStatus.toLowerCase());
                     // Update text
@@ -1111,56 +1101,6 @@ function applyAdvancedFilters() {
         return true;
     });
 
-    // Filter grid cards
-    const gridCards = document.querySelectorAll('.resident-card');
-    gridCards.forEach(card => {
-        const rowData = {
-            religion: card.getAttribute('data-religion') || '',
-            ethnicity: card.getAttribute('data-ethnicity') || '',
-            civilStatus: card.getAttribute('data-civil-status') || '',
-            education: card.getAttribute('data-education') || '',
-            employment: card.getAttribute('data-employment') || '',
-            fourPs: card.getAttribute('data-fourps') || '',
-            ageHealthGroup: card.getAttribute('data-age-health-group') || '',
-            pwdStatus: card.getAttribute('data-pwd-status') || '',
-            sex: card.getAttribute('data-sex') || '',
-            purok: card.getAttribute('data-purok') || '',
-            voterStatus: card.getAttribute('data-voter-status') || '',
-            occupation: card.getAttribute('data-occupation') || '',
-            membershipType: card.getAttribute('data-membership-type') || '',
-            philhealthCategory: card.getAttribute('data-philhealth-category') || '',
-            medicalHistory: card.getAttribute('data-medical-history') || '',
-            usingFpMethod: card.getAttribute('data-using-fp-method') || '',
-            fpMethodsUsed: card.getAttribute('data-fp-methods-used') || '',
-            fpStatus: card.getAttribute('data-fp-status') || '',
-            dateOfBirth: card.getAttribute('data-date-of-birth') || ''
-        };
-
-        let show = true;
-        
-        if (filters.dateOfBirth && rowData.dateOfBirth !== filters.dateOfBirth) show = false;
-        if (filters.sex && rowData.sex.toLowerCase() !== filters.sex.toLowerCase()) show = false;
-        if (filters.purok && rowData.purok.toLowerCase() !== filters.purok.toLowerCase()) show = false;
-        if (filters.ageHealthGroup && rowData.ageHealthGroup.toLowerCase() !== filters.ageHealthGroup.toLowerCase()) show = false;
-        if (filters.pwdStatus && rowData.pwdStatus.toLowerCase() !== filters.pwdStatus.toLowerCase()) show = false;
-        if (filters.religion && rowData.religion.toLowerCase() !== filters.religion.toLowerCase()) show = false;
-        if (filters.ethnicity && rowData.ethnicity.toLowerCase() !== filters.ethnicity.toLowerCase()) show = false;
-        if (filters.civilStatus && rowData.civilStatus.toLowerCase() !== filters.civilStatus.toLowerCase()) show = false;
-        if (filters.education && rowData.education.toLowerCase() !== filters.education.toLowerCase()) show = false;
-        if (filters.occupation && !rowData.occupation.toLowerCase().includes(filters.occupation.toLowerCase())) show = false;
-        if (filters.employmentStatus && rowData.employment.toLowerCase() !== filters.employmentStatus.toLowerCase()) show = false;
-        if (filters.fourPs && rowData.fourPs.toLowerCase() !== filters.fourPs.toLowerCase()) show = false;
-        if (filters.voterStatus && rowData.voterStatus.toLowerCase() !== filters.voterStatus.toLowerCase()) show = false;
-        if (filters.membershipType && rowData.membershipType.toLowerCase() !== filters.membershipType.toLowerCase()) show = false;
-        if (filters.philhealthCategory && rowData.philhealthCategory.toLowerCase() !== filters.philhealthCategory.toLowerCase()) show = false;
-        if (filters.medicalHistory && !rowData.medicalHistory.toLowerCase().includes(filters.medicalHistory.toLowerCase())) show = false;
-        if (filters.usingFpMethod && rowData.usingFpMethod.toLowerCase() !== filters.usingFpMethod.toLowerCase()) show = false;
-        if (filters.fpMethodsUsed && rowData.fpMethodsUsed.toLowerCase() !== filters.fpMethodsUsed.toLowerCase()) show = false;
-        if (filters.fpStatus && rowData.fpStatus.toLowerCase() !== filters.fpStatus.toLowerCase()) show = false;
-        
-        card.style.display = show ? '' : 'none';
-    });
-    
     // Count active filters
     const activeFiltersCount = Object.values(filters).filter(v => v !== '').length;
     
@@ -1208,10 +1148,6 @@ function clearAdvancedFilters() {
     // Reset the table
     residentsTable.reset();
     residentsTable.sortByColumn(1);
-    
-    // Reset grid cards
-    const gridCards = document.querySelectorAll('.resident-card');
-    gridCards.forEach(card => card.style.display = '');
     
     // Clear the filter notification badge
     updateFilterNotification(0);
@@ -1391,8 +1327,7 @@ style.textContent = `
         flex-shrink: 0;
     }
 
-    .status-dot-active   { color: #22c55e; }
-    .status-dot-inactive { color: #f59e0b; }
+    .status-dot-alive    { color: #22c55e; }
     .status-dot-deceased { color: #ef4444; }
 
     .submenu-check {

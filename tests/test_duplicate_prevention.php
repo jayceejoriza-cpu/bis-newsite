@@ -83,7 +83,7 @@ echo "Test 4: Test Duplicate Check API\n";
 echo "---------------------------------\n";
 
 // Get a sample resident for testing
-$result = $conn->query("SELECT * FROM residents WHERE activity_status = 'Active' LIMIT 1");
+$result = $conn->query("SELECT * FROM residents WHERE activity_status = 'Alive' LIMIT 1");
 if ($result->num_rows > 0) {
     $testResident = $result->fetch_assoc();
     echo "Using test resident: {$testResident['first_name']} {$testResident['last_name']}\n";
@@ -133,7 +133,7 @@ $result = $conn->query("SELECT COUNT(*) as total FROM residents");
 $row = $result->fetch_assoc();
 echo "Total residents: " . $row['total'] . "\n";
 
-$result = $conn->query("SELECT COUNT(*) as total FROM residents WHERE activity_status = 'Active'");
+$result = $conn->query("SELECT COUNT(*) as total FROM residents WHERE activity_status = 'Alive'");
 $row = $result->fetch_assoc();
 echo "Active residents: " . $row['total'] . "\n";
 
