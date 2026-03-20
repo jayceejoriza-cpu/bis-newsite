@@ -138,6 +138,12 @@ foreach ($certificateTypes as $cert) {
     <link rel="stylesheet" href="assets/css/style.css">
     <link rel="stylesheet" href="assets/css/certificates.css">
     <style>
+        .modal-body {
+        max-height: 100vh;
+        overflow-y: auto;
+        background-color: var(--bg-primary);
+        transition: var(--color-transition);
+}
         .certificate-card .card-body {
             position: relative;
             min-height: 120px;
@@ -1089,13 +1095,11 @@ foreach ($certificateTypes as $cert) {
 
     <!-- Image Preview Modal -->
     <div class="modal fade" id="imagePreviewModal" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered modal-lg">
-            <div class="modal-content bg-transparent border-0 shadow-none">
-                <div class="modal-header border-0 pb-0 justify-content-end">
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" style="filter: invert(1) grayscale(100%) brightness(200%);"></button>
-                </div>
+        <div class="modal-dialog modal-dialog-centered" style="max-width: fit-content;">
+            <div class="modal-content bg-transparent border-0 shadow-none" style="position: relative;">
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" style="position: absolute; top: -35px; right: 0; filter: invert(1) grayscale(100%) brightness(200%); opacity: 0.8; z-index: 1060;"></button>
                 <div class="modal-body text-center p-0">
-                    <img src="" id="previewModalImage" class="img-fluid rounded shadow-lg" alt="Certificate Preview">
+                    <img src="" id="previewModalImage" class="img-fluid rounded shadow-lg" alt="Certificate Preview" style="max-height: 90vh; object-fit: contain;">
                 </div>
             </div>
         </div>
