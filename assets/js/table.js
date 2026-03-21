@@ -126,10 +126,14 @@ class EnhancedTable {
             const bValue = this.getCellValue(b, columnIndex);
             
             // Handle different data types
-            const aNum = parseFloat(aValue);
-            const bNum = parseFloat(bValue);
+            const cleanA = aValue.replace(/,/g, '').trim();
+            const cleanB = bValue.replace(/,/g, '').trim();
+            const aIsNum = cleanA !== '' && !isNaN(Number(cleanA));
+            const bIsNum = cleanB !== '' && !isNaN(Number(cleanB));
             
-            if (!isNaN(aNum) && !isNaN(bNum)) {
+            if (aIsNum && bIsNum) {
+                const aNum = Number(cleanA);
+                const bNum = Number(cleanB);
                 return this.sortDirection === 'asc' ? aNum - bNum : bNum - aNum;
             }
             

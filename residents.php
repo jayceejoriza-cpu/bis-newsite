@@ -526,6 +526,7 @@ try {
                                 $residentId = !empty($resident['resident_id']) ? $resident['resident_id'] : generateResidentId($resident['id']);
                                 $age = calculateAge($resident['date_of_birth']);
                                 $dob = !empty($resident['date_of_birth']) ? date('m/d/Y', strtotime($resident['date_of_birth'])) : 'N/A';
+                                $sortDob = !empty($resident['date_of_birth']) ? date('Y-m-d', strtotime($resident['date_of_birth'])) : '9999-12-31';
                                 
                                 // Badge classes
                                 $verificationBadge = 'badge-' . strtolower($resident['verification_status']);
@@ -570,7 +571,7 @@ try {
                                         <?php echo htmlspecialchars($resident['voter_status'] ?: 'No'); ?>
                                     </span>
                                 </td>
-                                <td><?php echo htmlspecialchars($dob . ' - ' . $age); ?></td>
+                                <td data-sort="<?php echo htmlspecialchars($sortDob); ?>"><?php echo htmlspecialchars($dob . ' - ' . $age); ?></td>
                                 <td><?php echo htmlspecialchars($resident['sex']); ?></td>
                                 <td>
                                     <span class="badge <?php echo htmlspecialchars($activityBadge); ?>">

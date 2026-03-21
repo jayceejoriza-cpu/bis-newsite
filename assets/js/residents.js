@@ -93,7 +93,10 @@ function initializeTable() {
             }
         }
     });
-    residentsTable.sortByColumn(1);
+    const urlParams = new URLSearchParams(window.location.search);
+    if (!urlParams.has('sort_residentsTable')) {
+        residentsTable.sortByColumn(1);
+    }
     console.log(`Total residents: ${residentsTable.getTotalRows()}`);
 }
 

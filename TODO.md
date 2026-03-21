@@ -1,13 +1,19 @@
-# TODO: Implement Purpose Filter in requests.js
+# Fix Cursor Issue in Household Edit Mode
 
-## Plan Breakdown
-1. ✅ [COMPLETE] Understand current file structure and filtering logic
-2. ✅ Create TODO.md with implementation steps
-3. ✅ Update applyAdvancedFilters() to include Purpose filter (cells[3], #filterPurpose)
-4. ✅ Update clearAdvancedFilters() to clear #filterPurpose input
-5. ✅ Test the filter functionality (verified via code review: Purpose filter added to cells[3], input #filterPurpose handled in apply/clear)
-6. 🔄 Enhanced with URL params (new TODO-URL-Params.md)
+## Task: Fix disabled cursor on "Type of Water Source" and "Type of Toilet Facility" when editing in households.php
 
-## Current Status
-Plan approved. Proceeding with step-by-step implementation.
+**Status**: Implemented ✅
+
+### Steps:
+- [x] 1. Plan approved by user
+- [x] 2. Edit assets/js/households.js - Added explicit enable for fields in editHousehold() (removeAttribute('disabled') for waterSource/toiletFacility)
+- [ ] 3. Test: Open households.php?edit=1 (or pick a household ID from table), hover/select fields - should show normal pointer cursor, no not-allowed
+- [ ] 4. Update values, save - verify backend accepts changes
+- [ ] 5. Complete task
+
+**Changes**:
+- assets/js/households.js: Inserted enable code in editHousehold() fetch.then()
+
+**Next**: Test then mark complete.
+
 
