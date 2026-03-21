@@ -409,9 +409,9 @@ try {
                             <label for="filterMembershipType">Philhealth Membership Type</label>
                             <select id="filterMembershipType" class="filter-select">
                                 <option value="">All</option>
-                                <option value="Direct Contributor">Direct Contributor</option>
-                                <option value="Indirect Contributor">Indirect Contributor</option>
+                                <option value="Member">Member</option>
                                 <option value="Dependent">Dependent</option>
+                                <option value="None">None</option>
                             </select>
                         </div>
                         
@@ -419,12 +419,10 @@ try {
                             <label for="filterPhilhealthCategory">Philhealth Category</label>
                             <select id="filterPhilhealthCategory" class="filter-select">
                                 <option value="">All</option>
-                                <option value="Employed Private">Employed Private</option>
-                                <option value="Employed Gov">Employed Government</option>
-                                <option value="Indigent">Indigent</option>
-                                <option value="Sponsored">Sponsored</option>
-                                <option value="Lifetime">Lifetime Member</option>
-                                <option value="Senior Citizen">Senior Citizen</option>
+                                <option value="Direct Contributor">Direct Contributor</option>
+                                 <option value="Indirect Contributor">Indirect Contributor</option>
+                                 <option value="Sponsored">Sponsored</option>
+                                  <option value="None">None</option>
                             </select>
                         </div>
                         
@@ -448,24 +446,21 @@ try {
                             <select id="filterFpMethodsUsed" class="filter-select">
                                 <option value="">All</option>
                                 <option value="Pills">Pills</option>
+                                <option value="Injectable">Injectable</option>
                                 <option value="IUD">IUD</option>
-                                <option value="Injectables">Injectables</option>
-                                <option value="Implant">Implant</option>
                                 <option value="Condom">Condom</option>
-                                <option value="BTL">BTL</option>
-                                <option value="NSV">NSV</option>
-                                <option value="LAM">LAM</option>
+                                <option value="Implant">Implant</option>
                                 <option value="Natural">Natural</option>
-                            </select>
+                            </select>   
                         </div>
                         
                         <div class="filter-item">
                             <label for="filterFpStatus">FP Status</label>
                             <select id="filterFpStatus" class="filter-select">
                                 <option value="">All</option>
-                                <option value="Current User">Current User</option>
-                                <option value="Dropout">Dropout</option>
-                                <option value="Acceptor">Acceptor</option>
+                                 <option value="Current User">Current User</option>
+                                 <option value="Dropout">Dropout</option>
+                                  <option value="New Acceptor">New Acceptor</option>
                             </select>
                         </div>
                         

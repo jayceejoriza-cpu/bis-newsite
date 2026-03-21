@@ -501,11 +501,11 @@ if (isset($conn)) {
                                             <label for="toiletFacilityType">Toilet Facility Type</label>
                                             <select id="toiletFacilityType" name="toiletFacilityType" class="form-control">
                                                 <option value="">Select Toilet Facility</option>
-                                                <option value="" readonly>----Sanitary Toilet----</option>
+                                                <option value="" disabled>----Sanitary Toilet----</option>
                                                 <option value="P - Pour/Flush toilet connected to septic tank)">P - (Pour/Flush toilet connected to septic tank)</option>
                                                 <option value="PF - Pour/Flush toilet connected to septic tank and sewerage system">PF - Pour/Flush toilet connected to septic tank and sewerage system</option>
                                                 <option value="VIP - Ventilated impoved pit latrine (VIP) or composting">VIP - Ventilated impoved pit latrine (VIP) or composting</option>
-                                                <option value="" readonly>----Unsanitary Toilet----</option>
+                                                <option value="" disabled>----Unsanitary Toilet----</option>
                                                 <option value="WS - Water-sealed connected to open drain">WS - Water-sealed connected to open drain</option>
                                                 <option value="OH - Overhung Latrine">OH - Overhung Latrine</option>
                                                 <option value="OP - Overpit Latrine">OP - Overpit Latrine</option>

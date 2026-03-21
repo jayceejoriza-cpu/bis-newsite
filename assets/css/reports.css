@@ -7,7 +7,6 @@
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    margin-bottom: 28px;
     flex-wrap: wrap;
     gap: 16px;
 }
@@ -156,7 +155,7 @@ body.dark-mode .year-select {
     display: flex;
     border-bottom: 2px solid var(--border-color);
     background-color: var(--bg-primary);
-    overflow-x: auto;
+
     transition: var(--color-transition);
 }
 

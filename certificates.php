@@ -236,9 +236,7 @@ foreach ($certificateTypes as $cert) {
                 <button class="btn btn-icon" id="editCertPhotoBtn" title="Edit Photos">
                     <i class="fas fa-edit"></i>
                 </button>
-                <button class="btn btn-icon" id="refreshBtn" title="Refresh">
-                    <i class="fas fa-sync-alt"></i>
-                </button>
+               
             </div>
 
             <!-- Certificates Container -->
@@ -326,8 +324,8 @@ foreach ($certificateTypes as $cert) {
                 </div>
 
                 <div class="cert-tabs-container">
-                    <button type="button" id="tabForSelf" class="cert-tab-btn active">FOR SELF</button>
-                    <button type="button" id="tabGuardian" class="cert-tab-btn">GUARDIAN CONSENT</button>
+                    <button type="button" id="tabForSelf" class="cert-tab-btn active">FOR LEGAL AGE</button>
+                    <button type="button" id="tabGuardian" class="cert-tab-btn">FOR MINORS</button>
                 </div>
 
                 <div class="modal-body cert-modal-body">

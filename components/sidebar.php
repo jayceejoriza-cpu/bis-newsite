@@ -68,7 +68,7 @@ $show_user_mgmt = $can_view_users || $can_view_roles;
 
             <!-- ── Resident Records ── -->
             <?php if (hasPermission('perm_resident_view')): ?>
-            <li class="nav-item <?php echo ($current_page === 'residents.php' || $current_page === 'create-resident.php' || $current_page === 'edit-resident.php' || $current_page === 'resident_profile.php') ? 'active' : ''; ?>">
+            <li class="nav-item <?php echo ($current_page === 'residents.php' || $current_page === 'create-resident.php' || $current_page === 'resident_profile.php') ? 'active' : ''; ?>">
                 <a href="residents.php" class="nav-link">
                     <i class="fas fa-address-book"></i>
                     <span>Resident Records</span>
@@ -87,7 +87,10 @@ $show_user_mgmt = $can_view_users || $can_view_roles;
             <?php endif; ?>
 
             <!-- ── Certificate Issuance (no specific perm yet — show to all) ── -->
-            <li class="nav-item <?php echo $current_page === 'certificates.php' ? 'active' : ''; ?>">
+            <li class="nav-item <?php echo ($current_page === 'certificates.php' || $current_page === 'certificate-barangayclearance.php' || $current_page === 'certificate-brgybusinessclearance.php' 
+            || $current_page === 'certificate-businesspermit.php' || $current_page === 'certificate-fishingclearance.php' || $current_page === 'certificate-ft-jobseeker-assistance.php' || $current_page === 'certificate-gmrc.php' 
+            || $current_page === 'certificate-indigency.php' || $current_page === 'certificate-lowincome.php' || $current_page === 'certificate-oathofundertaking.php'  || $current_page === 'certificate-RBC.php' 
+            || $current_page === 'certificate-soloparent.php' || $current_page === 'certificate-vesseldocking.php') ? 'active' : ''; ?>">
                 <a href="certificates.php" class="nav-link">
                     <i class="fas fa-certificate"></i>
                     <span>Certificate Issuance</span>

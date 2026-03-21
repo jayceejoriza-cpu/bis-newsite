@@ -506,14 +506,14 @@ $age = calculateAge($resident['date_of_birth']);
                     
                  
                     <!-- Education & Employment Section -->
-                    <section id="education-employment" class="profile-section adult-only">
+                    <section id="education-employment" class="profile-section age-10-plus" <?php echo $age < 10 ? 'style="display: none;"' : ''; ?>>
                         <div class="section-header">
                             <h2><i class="fas fa-graduation-cap"></i> Education & Employment</h2>
                             <p>Educational and employment information</p>
                         </div>
                         <div class="section-content">
                             <div class="info-grid">
-                                <div class="info-item">
+                                <div class="info-item age-10-plus" <?php echo $age < 10 ? 'style="display: none;"' : ''; ?>>
                                     <label>Educational Attainment</label>
                                     <p class="view-field"><?php echo htmlspecialchars($resident['educational_attainment'] ?: 'N/A'); ?></p>
                                     <select name="educational_attainment" class="form-control edit-field" style="display:none;">
@@ -529,7 +529,7 @@ $age = calculateAge($resident['date_of_birth']);
                                         <option value="Post Graduate" <?php echo $resident['educational_attainment'] == 'Post Graduate' ? 'selected' : ''; ?>>Post Graduate</option>
                                     </select>
                                 </div>
-                                <div class="info-item">
+                                <div class="info-item adult-only">
                                     <label>Employment Status</label>
                                     <p class="view-field"><?php echo htmlspecialchars($resident['employment_status'] ?: 'N/A'); ?></p>
                                     <select name="employment_status" class="form-control edit-field" style="display:none;">
@@ -541,7 +541,7 @@ $age = calculateAge($resident['date_of_birth']);
                                         <option value="Retired" <?php echo $resident['employment_status'] == 'Retired' ? 'selected' : ''; ?>>Retired</option>
                                     </select>
                                 </div>
-                                <div class="info-item">
+                                <div class="info-item adult-only">
                                     <label>Occupation</label>
                                     <p class="view-field"><?php echo htmlspecialchars($resident['occupation'] ?: 'N/A'); ?></p>
                                     <input type="text" name="occupation" class="form-control edit-field" value="<?php echo htmlspecialchars($resident['occupation']); ?>" style="display:none;">

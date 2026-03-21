@@ -227,6 +227,11 @@ function nextStep() {
         }
         
         currentStep++;
+
+         // Skip Step 5 if age < 10
+        if (currentStep === 5 && currentAge !== null && currentAge < 10) {
+            currentStep++;
+        }
         updateStep();
         saveCurrentStep(); // Save step to localStorage
     }
@@ -235,6 +240,10 @@ function nextStep() {
 function prevStep() {
     if (currentStep > 1) {
         currentStep--;
+         // Skip Step 5 if age < 10
+        if (currentStep === 5 && currentAge !== null && currentAge < 10) {
+            currentStep--;
+        }
         updateStep();
         saveCurrentStep();
     }
@@ -479,6 +488,13 @@ function updateMinorStatus() {
         if (minorAlert) minorAlert.style.display = 'none';
         if (ageHealthGroupSelect) ageHealthGroupSelect.value = '';
         
+        // Restore Step 5
+        const step5Indicator = document.querySelector('.step[data-step="5"]');
+        const stepLines = document.querySelectorAll('.step-line');
+        const step5Line = stepLines.length > 3 ? stepLines[3] : null;
+        if (step5Indicator) step5Indicator.style.display = '';
+        if (step5Line) step5Line.style.display = '';
+        
         // Show all containers by default
         minorOnlyElements.forEach(el => el.style.display = 'none');
         adultOnlyElements.forEach(el => el.style.display = 'block');
@@ -489,6 +505,9 @@ function updateMinorStatus() {
         if (employmentContainer) employmentContainer.style.display = 'block';
         if (occupationContainer) occupationContainer.style.display = 'block';
         if (incomeContainer) incomeContainer.style.display = 'block';
+        document.querySelectorAll('.gov-programs-section').forEach(el => el.style.display = '');
+        const govHeaderReset = Array.from(document.querySelectorAll('h5')).find(el => el.textContent.includes('Government Programs'));
+        if (govHeaderReset) govHeaderReset.style.display = '';
         
         // Enable all relevant fields
         if (civilStatusSelect) {
@@ -556,29 +575,65 @@ function updateMinorStatus() {
     currentAge = age;
 
     // ==============================================
+    // Hide/Show Step 5 (Education & Employment) entirely if age < 10
+    // ==============================================
+    const step5Indicator = document.querySelector('.step[data-step="5"]');
+    const stepLines = document.querySelectorAll('.step-line');
+    const step5Line = stepLines.length > 3 ? stepLines[3] : null;
+    
+    if (age < 10) {
+        if (step5Indicator) step5Indicator.style.display = 'none';
+        if (step5Line) step5Line.style.display = 'none';
+        
+        if (currentStep === 5) {
+            currentStep = 6;
+            updateStep();
+            saveCurrentStep();
+        }
+    } else {
+        if (step5Indicator) step5Indicator.style.display = '';
+        if (step5Line) step5Line.style.display = '';
+    }
+
+    // ==============================================
     // PROGRESSIVE MILESTONE SYSTEM
     // Each milestone is evaluated independently
     // ==============================================
 
     // ==============================================
-    // 1. EDUCATION MILESTONE (All Ages)
-    // Educational Attainment is visible for ALL ages
+    // 1. EDUCATION MILESTONE (Age 10+)
+    // Educational Attainment is visible for age >= 10
     // ==============================================
-    if (educationContainer) {
-        educationContainer.style.display = 'block';
-    }
-    if (educationalAttainmentSelect) {
-        educationalAttainmentSelect.removeAttribute('disabled');
+    if (age >= 10) {
+        if (educationContainer) {
+            educationContainer.style.display = 'block';
+        }
+        if (educationalAttainmentSelect) {
+            educationalAttainmentSelect.removeAttribute('disabled');
+        }
+    } else {
+        if (educationContainer) {
+            educationContainer.style.display = 'none';
+        }
+        if (educationalAttainmentSelect) {
+            educationalAttainmentSelect.value = '';
+            educationalAttainmentSelect.setAttribute('disabled', 'disabled');
+        }
     }
 
     // ==============================================
     // 2. VOTER MILESTONE (Age 15+)
     // Voter Status is visible starting at age 15
     // ==============================================
+    const govHeader = Array.from(document.querySelectorAll('h5')).find(el => el.textContent.includes('Government Programs'));
+
     if (age >= 15) {
         // Show voter status container
         if (voterStatusContainer) voterStatusContainer.style.display = 'block';
         if (voterStatusSelect) voterStatusSelect.removeAttribute('disabled');
+        
+        document.querySelectorAll('.gov-programs-section').forEach(el => el.style.display = '');
+        if (govHeader) govHeader.style.display = '';
     } else {
         // Hide and disable for age < 15
         if (voterStatusContainer) voterStatusContainer.style.display = 'none';
@@ -587,6 +642,9 @@ function updateMinorStatus() {
             voterStatusSelect.setAttribute('disabled', 'disabled');
             voterStatusSelect.dispatchEvent(new Event('change'));
         }
+        
+        document.querySelectorAll('.gov-programs-section').forEach(el => el.style.display = 'none');
+        if (govHeader) govHeader.style.display = 'none';
     }
 
     // ==============================================
@@ -1989,7 +2047,7 @@ function populateReviewModal() {
 
     // 5. Education & Employment
     let educationHTML = '<div class="review-fields-grid">';
-    if (currentAge >= 5) {
+    if (currentAge === null || currentAge >= 10) {
         educationHTML += createField('Educational Attainment', getValue('educationalAttainment'));
     }
     if (currentAge >= 15) {
