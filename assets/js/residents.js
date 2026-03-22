@@ -59,7 +59,18 @@ function initializeTable() {
             const id = row.cells[0]?.textContent.toLowerCase() || '';
             const nameEl = row.querySelector('.resident-name span:last-child');
             const name = nameEl ? nameEl.textContent.toLowerCase() : (row.cells[1]?.textContent.toLowerCase() || '');
-            return id.includes(term) || name.includes(term);
+            
+            if (id.includes(term) || name.includes(term)) {
+                return true;
+            }
+            
+            // Allow matching "First Last" to "Last, First" by checking each word
+            const searchWords = term.split(/\s+/).filter(word => word.length > 0);
+            if (searchWords.length > 0) {
+                return searchWords.every(word => name.includes(word));
+            }
+            
+            return false;
         },
         onDisplayUpdate: (visibleRows) => {
             // Sync grid view with visible table rows

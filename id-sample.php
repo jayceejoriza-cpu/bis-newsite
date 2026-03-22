@@ -16,17 +16,17 @@ try {
 // Fetch Barangay Info
 $brgy_logo = '';
 $municipal_logo = '';
-$province  = 'Province';
-$town      = 'Municipality';
-$brgy      = 'Barangay';
+$province  = 'Zambales';
+$town      = 'Subic';
+$brgy      = 'Wawandue';
 
 try {
     $biStmt = $pdo->query("SELECT * FROM barangay_info WHERE id = 1 LIMIT 1");
     $bi = $biStmt->fetch();
     if ($bi) {
-        $province  = $bi['province_name']  ?? 'Province';
-        $town      = $bi['town_name']      ?? 'Municipality';
-        $brgy      = $bi['barangay_name']  ?? 'Barangay';
+        $province  = $bi['province_name']  ?? $province;
+        $town      = $bi['town_name']      ?? $town;
+        $brgy      = $bi['barangay_name']  ?? $brgy;
         $brgy_logo = $bi['barangay_logo']  ?? '';
         $municipal_logo = $bi['municipal_logo'] ?? '';
     }
@@ -34,7 +34,7 @@ try {
     error_log("Error fetching barangay info: " . $e->getMessage());
 }
 
-// Optional: Fetch Resident Data if a resident_id is passed in the URL (e.g., id-sample.php?resident_id=1)
+// Fetch Resident Data if a resident_id is passed in the URL (e.g., id-sample.php?resident_id=1)
 $resident_id = isset($_GET['resident_id']) ? intval($_GET['resident_id']) : 0;
 $resident = null;
 
@@ -48,243 +48,306 @@ if ($resident_id > 0) {
     }
 }
 
-// Define variables with fallback sample data
-$pcn         = $resident['resident_id'] ?? '0000-0000-0000-0000';
-$lastName    = $resident['last_name'] ?? 'DELA CRUZ';
-$givenNames  = trim(($resident['first_name'] ?? 'JUAN ANTONIO') . ' ' . ($resident['middle_name'] ?? ''));
-$sex         = $resident['sex'] ?? 'MALE';
-$civilStatus = $resident['civil_status'] ?? 'SINGLE';
-$dob         = !empty($resident['date_of_birth']) ? date('F d, Y', strtotime($resident['date_of_birth'])) : 'JANUARY 1, 1990';
-$address     = $resident['current_address'] ?? '123 STREET NAME, BARANGAY, CITY, PROVINCE';
-$photo       = !empty($resident['photo']) ? $resident['photo'] : '';
+// Define variables to match the new ID design layout
+$residentIdNo = $resident['resident_id'] ?? 'WW-00001';
+$precinctNo   = $resident['precinct_no'] ?? 'WW-00001';
+
+// Format Name: Last Name, First Name, MI.
+$lastName     = $resident['last_name'] ?? 'CONSTANTINO';
+$firstName    = $resident['first_name'] ?? 'ALVINO';
+$middleName   = $resident['middle_name'] ?? 'C';
+$mi           = !empty($middleName) ? substr(trim($middleName), 0, 1) . '.' : '';
+$fullName     = strtoupper("$lastName, $firstName $mi");
+
+$dob          = !empty($resident['date_of_birth']) ? date('m/d/Y', strtotime($resident['date_of_birth'])) : '07/24/1994';
+$civilStatus  = $resident['civil_status'] ?? 'SINGLE';
+$sex          = $resident['sex'] ?? 'M';
+$address      = $resident['current_address'] ?? 'Purok 2, Barangay Sample';
+$photo        = !empty($resident['photo']) ? $resident['photo'] : '';
+
+// Calculate Issue/Validity Date
+$dateIssued   = isset($resident['date_issued']) ? date('m/d/Y', strtotime($resident['date_issued'])) : '07/20/2027'; 
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>ID Card Print Template</title>
-    <link rel="stylesheet" href="style.css">
+    <title>Barangay ID Card</title>
+    <style>
+        body {
+            font-family: "Segoe UI", Arial, sans-serif;
+            background-color: #f0f0f0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        /* Standard ID Card Size: 3.375" x 2.125" (Scaled up slightly for preview) */
+        .id-card {
+            width: 86mm;
+            height: 54mm;
+            background-color: #ffffff;
+            border: 3px solid #9D64FF; /* Purple Border */
+            box-sizing: border-box;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* --- Header Section --- */
+        .id-header {
+            background-color: #9D64FF;
+            color: #ffffff;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 2mm 3mm;
+            height: 16mm;
+            box-sizing: border-box;
+        }
+
+        .logo {
+            width: 12mm;
+            height: 12mm;
+            border-radius: 50%;
+            object-fit: cover;
+       
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            font-size: 3.5pt;
+            color: #000;
+            line-height: 1.1;
+        }
+
+        .header-text {
+            text-align: center;
+            flex-grow: 1;
+            font-size: 5pt;
+            line-height: 1.2;
+        }
+
+        .header-text .brgy-title {
+            font-size: 6pt;
+            text-transform: uppercase;
+            margin-top: 1mm;
+            letter-spacing: 0.5px;
+        }
+
+        /* --- Body Section --- */
+        .id-title {
+            text-align: center;
+            font-size: 8pt;
+            letter-spacing: 0.5px;
+            color: #1a1a1a;
+            margin: 1.5mm 0;
+            font-family: "Times New Roman", Georgia, serif ;
+        }
+
+        .id-body {
+            display: flex;
+            padding: 0 2.5mm;
+            gap: 2.5mm;
+            flex-grow: 1;
+        }
+
+        /* Left Column: Photo & Date */
+        .col-left {
+            width: 22mm;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .photo-container {
+            width: 22mm;
+            height: 22mm;
+            background-color: #808080;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            text-align: center;
+            font-size: 6pt;
+            line-height: 1.2;
+            overflow: hidden;
+        }
+
+        .photo-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .date-issued {
+            margin-top: 1.5mm;
+            text-align: center;
+            font-size: 4.5pt;
+            font-style: italic;
+            color: #333;
+        }
+
+        .date-issued span {
+            display: block;
+            font-size: 5.5pt;
+            font-weight: bold;
+            font-style: italic;
+            margin-top: 0.5mm;
+            color: #000;
+        }
+
+        /* Right Column: Information */
+        .col-right {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5mm;
+        }
+
+        .data-row {
+            display: flex;
+            gap: 1.5mm;
+        }
+
+        .data-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .w-50 { width: 50%; }
+        .w-100 { width: 100%; }
+        .w-33 { width: 33.33%; }
+
+        .label {
+            background-color: #D9D9D9;
+            font-size: 4.5pt;
+            font-style: italic;
+            color: #1a1a1a;
+            padding: 0.3mm 1mm;
+        }
+
+        .value {
+            font-size: 5.5pt;
+            font-weight: bold;
+            color: #000;
+            padding: 0.3mm 1mm;
+            text-transform: uppercase;
+        }
+
+        /* --- Print Specific Styles --- */
+        @media print {
+            body { 
+                background: none; 
+                display: block; 
+                padding: 0; 
+                margin: 0;
+            }
+            .id-card { 
+                box-shadow: none;
+                margin: 0;
+                /* Ensures colors print correctly in Chrome/Edge */
+                -webkit-print-color-adjust: exact; 
+                print-color-adjust: exact;
+            }
+            @page {
+                size: 86mm 54mm;
+                margin: 0;
+            }
+        }
+    </style>
 </head>
-<style>body {
-    font-family: Arial, sans-serif;
-    background-color: #f0f0f0;
-    display: flex;
-    justify-content: center;
-    padding: 50px;
-}
-
-.id-card-container {
-    width: 170mm; /* Two 85mm x 55mm cards side by side */
-    height: 55mm;
-    background: white;
-    border: 1px solid #ccc;
-    display: flex;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-    box-sizing: border-box;
-}
-
-.card-section {
-    width: 85mm;
-    padding: 3mm;
-    flex: 1;
-    box-sizing: border-box;
-}
-
-.left {
-    border-right: 1px dashed #ccc;
-    display: flex;
-    flex-direction: column;
-}
-
-.header {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 2mm;
-}
-
-.logo-img, .logo-placeholder-box {
-    width: 10mm;
-    height: 10mm;
-    object-fit: contain;
-    flex-shrink: 0;
-}
-
-.header-center {
-    flex: 1;
-    text-align: center;
-    padding: 0 2mm;
-}
-
-.header-center p {
-    margin: 0;
-    font-size: 4pt;
-    line-height: 1.3;
-}
-
-.header-center .brgy-name {
-    font-size: 5pt;
-    font-weight: bold;
-}
-
-.header-center .office-name {
-    font-size: 6pt;
-    font-weight: bold;
-    margin-top: 1mm;
-}
-
-.header > span {
-    width: 100%;
-    text-align: center;
-    display: block;
-    margin-top: 1px;
-    font-weight: bold;
-    font-size: 7pt;
-    text-transform: uppercase;
-    color: #333;
-    border-bottom: 1px solid #7708df;
-    padding-bottom: 1mm;
-}
-
-.id-details-row {
-    display: flex;
-    gap: 3mm;
-    align-items: flex-start;
-    margin-top: 2mm;
-    padding: 0 2mm 0 2mm;
-}
-
-.photo-placeholder {
-    width: 25mm;
-    height: 25mm;
-    border: 1px solid #000;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 6pt;
-    flex-shrink: 0;
-}
-
-label {
-    font-size: 5pt;
-    color: #555;
-    text-transform: uppercase;
-    display: block;
-    margin-top: 1.5mm;
-}
-
-.bold-text, .resident-number {
-    font-weight: bold;
-    font-size: 7pt;
-    margin: 0;
-}
-
-.personal-info {
-    flex: 1;
-}
-
-.details-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 2mm;
-}
-
-.details-grid p, .address-section p {
-    font-size: 7pt;
-    margin: 0;
-    font-weight: bold;
-}
-
-.address-section {
-    margin-top: 2mm;
-}
-
-/* Print Specific Styles */
-@media print {
-    body { background: none; padding: 0; }
-    .id-card-container { 
-        box-shadow: none; 
-        border: 1px solid #000; 
-        margin: 0;
-    }
-}</style>
 <body>
-    <div class="id-card-container">
-        <div class="card-section left">
-            <div class="header">
-                <?php if (!empty($brgy_logo)): ?>
-                    <img src="<?= htmlspecialchars($brgy_logo) ?>" class="logo-img" alt="Barangay Logo">
-                <?php else: ?>
-                    <div class="logo-placeholder-box"></div>
-                <?php endif; ?>
 
-                <div class="header-center">
-                    <p>Republic of the Philippines</p>
-                    <p>Province of <?= ucwords($province) ?></p>
-                    <p>Municipality of <?= ucwords($town) ?></p>
-                    <p class="brgy-name"><?= strtoupper($brgy) ?></p>
-                </div>
+    <div class="id-card">
+        <div class="id-header">
+            <?php if (!empty($municipal_logo)): ?>
+                <img src="<?= htmlspecialchars($municipal_logo) ?>" class="logo" alt="Municipal Logo">
+            <?php else: ?>
+                <div class="logo">MUNICIPAL<br>LOGO</div>
+            <?php endif; ?>
 
-                <?php if (!empty($municipal_logo)): ?>
-                    <img src="<?= htmlspecialchars($municipal_logo) ?>" class="logo-img" alt="Bagong Pilipinas Logo">
-                <?php else: ?>
-                    <div class="logo-placeholder-box"></div>
-                <?php endif; ?>
-                <span>Barangay Resident ID </span>
+            <div class="header-text">
+                Republic of the Philippines<br>
+                Province of <?= htmlspecialchars($province) ?><br>
+                Municipality of <?= htmlspecialchars($town) ?><br>
+                <div class="brgy-title"> <?= htmlspecialchars($brgy) ?></div>
             </div>
-            
-            <div class="id-details-row">
-               
-                
-                <div class="personal-info">
-                    <label style="margin-top: -5px;">Resident ID:</label>
-                    <p class="resident-number"><?= htmlspecialchars($resident_id) ?></p>
-                    
-                    <label>Last Name</label>
-                    <p class="bold-text"><?= htmlspecialchars(strtoupper($lastName)) ?></p>
-                    
-                    <label>Given Names</label>
-                    <p class="bold-text"><?= htmlspecialchars(strtoupper($givenNames)) ?></p>
 
-                    <label>Middle Name</label>
-                    <p class="bold-text"><?= htmlspecialchars(strtoupper($givenNames)) ?></p>
-
-                    <label>Suffix</label>
-                    <p class="bold-text"><?= htmlspecialchars(strtoupper($givenNames)) ?></p>
-                </div> 
-                <div class="photo-placeholder">
-                    <?php if ($photo): ?>
-                        <img src="<?= htmlspecialchars($photo) ?>" style="width: 100%; height: 100%; object-fit: cover;" alt="Resident Photo">
-                    <?php else: ?>
-                        PHOTO
-                    <?php endif; ?>
-                </div>
-            </div>
+            <?php if (!empty($brgy_logo)): ?>
+                <img src="<?= htmlspecialchars($brgy_logo) ?>" class="logo" alt="Barangay Logo">
+            <?php else: ?>
+                <div class="logo">BARANGAY<br>LOGO</div>
+            <?php endif; ?>
         </div>
 
-        <div class="card-section right">
+        <div class="id-title">BARANGAY RESIDENCE ID</div>
+
+        <div class="id-body">
             
-            <div class="details-grid">
-                <div>
-                    <label>Sex</label>
-                    <p><?= htmlspecialchars(strtoupper($sex)) ?></p>
+            <div class="col-left">
+                <div class="photo-container">
+                    <?php if ($photo): ?>
+                        <img src="<?= htmlspecialchars($photo) ?>" alt="Resident Photo">
+                    <?php else: ?>
+                        RESIDENT<br>PHOTO
+                    <?php endif; ?>
                 </div>
-                <div>
-                    <label>Marital Status</label>
-                    <p><?= htmlspecialchars(strtoupper($civilStatus)) ?></p>
-                </div>
-                <div>
-                    <label>Date of Birth</label>
-                    <p><?= htmlspecialchars(strtoupper($dob)) ?></p>
+                <div class="date-issued">
+                    Date Issued:
+                    <span><?= htmlspecialchars($dateIssued) ?></span>
                 </div>
             </div>
-            
-            <div class="address-section">
-                <label>Address</label>
-                <p><?= htmlspecialchars(strtoupper($address)) ?></p>
+
+            <div class="col-right">
+                
+                <div class="data-row">
+                    <div class="data-group w-50">
+                        <div class="label">Resident Id No.</div>
+                        <div class="value"><?= htmlspecialchars($residentIdNo) ?></div>
+                    </div>
+                    <div class="data-group w-50">
+                        <div class="label">Precint No.</div>
+                        <div class="value"><?= htmlspecialchars($precinctNo) ?></div>
+                    </div>
+                </div>
+
+                <div class="data-row">
+                    <div class="data-group w-100">
+                        <div class="label">Last Name, First Name, MI.</div>
+                        <div class="value" style="font-size: 6pt;"><?= htmlspecialchars($fullName) ?></div>
+                    </div>
+                </div>
+
+                <div class="data-row">
+                    <div class="data-group w-33">
+                        <div class="label">Date of Birth</div>
+                        <div class="value"><?= htmlspecialchars($dob) ?></div>
+                    </div>
+                    <div class="data-group w-33">
+                        <div class="label">Civil Status</div>
+                        <div class="value"><?= htmlspecialchars($civilStatus) ?></div>
+                    </div>
+                    <div class="data-group w-33">
+                        <div class="label">Sex</div>
+                        <div class="value"><?= htmlspecialchars($sex) ?></div>
+                    </div>
+                </div>
+
+                <div class="data-row">
+                    <div class="data-group w-100">
+                        <div class="label">Address:</div>
+                        <div class="value"><?= htmlspecialchars($address) ?></div>
+                    </div>
+                </div>
+
             </div>
         </div>
     </div>
+
 </body>
 </html>

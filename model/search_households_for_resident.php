@@ -32,12 +32,15 @@ try {
             LEFT JOIN residents r ON h.household_head_id = r.id";
 
     if (!empty($search)) {
-        $searchEscaped = $conn->real_escape_string($search);
-        $sql .= " WHERE h.household_number LIKE '%{$searchEscaped}%'
-                  OR r.first_name LIKE '%{$searchEscaped}%'
-                  OR r.last_name LIKE '%{$searchEscaped}%'
-                  OR CONCAT(r.first_name, ' ', r.last_name) LIKE '%{$searchEscaped}%'
-                  OR h.address LIKE '%{$searchEscaped}%'";
+        $words = array_filter(explode(' ', $search));
+        if (!empty($words)) {
+            $wordConditions = [];
+            foreach ($words as $word) {
+                $searchEscaped = $conn->real_escape_string($word);
+                $wordConditions[] = "CONCAT(IFNULL(h.household_number, ''), ' ', IFNULL(r.first_name, ''), ' ', IFNULL(r.middle_name, ''), ' ', IFNULL(r.last_name, ''), ' ', IFNULL(h.address, ''), ' ', IFNULL(h.household_contact, '')) LIKE '%{$searchEscaped}%'";
+            }
+            $sql .= " WHERE (" . implode(" AND ", $wordConditions) . ")";
+        }
     }
 
     $sql .= " ORDER BY h.household_number ASC LIMIT 20";

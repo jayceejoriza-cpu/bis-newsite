@@ -112,13 +112,20 @@ try {
         $sql .= " AND r.date_of_birth IS NOT NULL AND TIMESTAMPDIFF(YEAR, r.date_of_birth, CURDATE()) >= 18";
     }
     
-    // Add search condition - ONLY search by name and resident_id
+    // Add search condition - split by spaces to allow out-of-order matching
+    $searchParams = [];
+    $types = '';
     if (!empty($searchTerm)) {
-        $searchParam = "%{$searchTerm}%";
-        $sql .= " AND (
-            CONCAT(r.first_name, ' ', IFNULL(r.middle_name, ''), ' ', r.last_name) LIKE ?
-            OR r.resident_id LIKE ?
-        )";
+        $words = array_filter(explode(' ', $searchTerm));
+        if (!empty($words)) {
+            $wordConditions = [];
+            foreach ($words as $word) {
+                $wordConditions[] = "CONCAT(r.first_name, ' ', IFNULL(r.middle_name, ''), ' ', r.last_name, ' ', IFNULL(r.resident_id, '')) LIKE ?";
+                $searchParams[] = "%{$word}%";
+                $types .= 's';
+            }
+            $sql .= " AND (" . implode(" AND ", $wordConditions) . ")";
+        }
     }
     
     $sql .= " ORDER BY r.last_name, r.first_name LIMIT 100";
@@ -126,8 +133,8 @@ try {
     // Prepare statement using mysqli
     $stmt = $conn->prepare($sql);
     
-    if (!empty($searchTerm)) {
-        $stmt->bind_param('ss', $searchParam, $searchParam);
+    if (!empty($searchParams)) {
+        $stmt->bind_param($types, ...$searchParams);
     }
     
     $stmt->execute();

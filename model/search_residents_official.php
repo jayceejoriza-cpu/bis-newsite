@@ -43,12 +43,16 @@ try {
     $params = [];
 
     if (!empty($search)) {
-        $sql .= " AND (
-            CONCAT(r.first_name, ' ', IFNULL(r.middle_name, ''), ' ', r.last_name) LIKE :search
-            OR r.mobile_number LIKE :search2
-        )";
-        $params[':search']  = '%' . $search . '%';
-        $params[':search2'] = '%' . $search . '%';
+        $words = array_filter(explode(' ', $search));
+        if (!empty($words)) {
+            $wordConditions = [];
+            foreach ($words as $index => $word) {
+                $paramName = ":search" . $index;
+                $wordConditions[] = "CONCAT(r.first_name, ' ', IFNULL(r.middle_name, ''), ' ', r.last_name, ' ', IFNULL(r.mobile_number, '')) LIKE " . $paramName;
+                $params[$paramName] = '%' . $word . '%';
+            }
+            $sql .= " AND (" . implode(" AND ", $wordConditions) . ")";
+        }
     }
 
     $sql .= " ORDER BY r.last_name, r.first_name LIMIT 50";
