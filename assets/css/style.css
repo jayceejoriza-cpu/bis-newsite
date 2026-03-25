@@ -161,13 +161,16 @@ body.modal-open .sidebar.collapsed {
 
 .sidebar.collapsed .nav-link {
     justify-content: center;
-    padding: 12px 0;
     gap: 0;
+}
+
+.sidebar.collapsed .sidebar-nav{
+    padding: 0;
 }
 
 .sidebar.collapsed .nav-link i:first-child {
     margin: 0 auto;
-    width: 36px;
+    width: 46px;
     height: 36px;
     font-size: 18px;
     display: flex;
