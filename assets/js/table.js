@@ -229,19 +229,53 @@ class EnhancedTable {
         const totalRows = this.filteredRows.length;
         const totalPages = Math.ceil(totalRows / this.options.pageSize);
         
+        const halfRows = Math.max(1, Math.ceil(totalRows / 2));
+        const allRows = Math.max(1, totalRows);
+        
+        // Define and sort size options numerically to prevent out-of-order lists
+        let optionsHtml = '';
+        const sizeOptions = [
+            { val: 10, text: '10' },
+            { val: 100, text: '100' },
+            { val: halfRows, text: `${halfRows}` },
+            { val: allRows, text: `${allRows}` }
+        ];
+        
+        sizeOptions.sort((a, b) => a.val - b.val);
+        
+        const seen = new Set();
+        sizeOptions.forEach(opt => {
+            if (!seen.has(opt.val)) {
+                seen.add(opt.val);
+                const isSelected = this.options.pageSize === opt.val ? 'selected' : '';
+                optionsHtml += `<option value="${opt.val}" ${isSelected}>${opt.text}</option>`;
+            }
+        });
+        
         // Update pagination info
-        const paginationInfo = document.querySelector('.pagination-info');
-        if (paginationInfo) {
-            paginationInfo.innerHTML = `
-                <span>Showing <strong>${this.getStartRow()}-${this.getEndRow()}</strong> of <strong>${totalRows}</strong></span>
+        const paginationInfos = document.querySelectorAll('.pagination-info');
+        paginationInfos.forEach(info => {
+            info.innerHTML = `
+                <span>Showing <strong>${this.getStartRow()}-${this.getEndRow()}</strong> 
+                <select class="form-select form-select-sm page-size-select" style="display: inline-block; width: auto; margin: 0 5px; padding: 2px 24px 2px 8px; cursor: pointer; min-height: 26px;">
+                    ${optionsHtml}
+                </select>
+                of <strong>${totalRows}</strong></span>
             `;
-        }
+            
+            const sizeSelect = info.querySelector('.page-size-select');
+            if (sizeSelect) {
+                sizeSelect.addEventListener('change', (e) => {
+                    this.setPageSize(parseInt(e.target.value));
+                });
+            }
+        });
         
         // Update pagination buttons
-        const pagination = document.querySelector('.pagination');
-        if (pagination) {
-            this.renderPaginationButtons(pagination, totalPages);
-        }
+        const paginations = document.querySelectorAll('.pagination');
+        paginations.forEach(container => {
+            this.renderPaginationButtons(container, totalPages);
+        });
     }
     
     renderPaginationButtons(container, totalPages) {
@@ -442,6 +476,13 @@ class EnhancedTable {
     
     getFilteredRows() {
         return this.filteredRows.length;
+    }
+    
+    setPageSize(size) {
+        this.options.pageSize = parseInt(size);
+        this.currentPage = 1;
+        this.updateDisplay();
+        this.updatePagination();
     }
     
     reset() {

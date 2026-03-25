@@ -8,6 +8,7 @@ require_once '../config.php';
 header('Content-Type: application/json');
 
 $search = trim($_GET['search'] ?? '');
+$excludeOfficialId = intval($_GET['exclude_official_id'] ?? 0);
 
 try {
     $pdo = new PDO(
@@ -41,6 +42,19 @@ try {
     ";
 
     $params = [];
+
+    if ($excludeOfficialId > 0) {
+        $sql .= " AND NOT EXISTS (
+            SELECT 1 FROM barangay_officials bo 
+            WHERE bo.resident_id = r.id AND bo.status = 'Active' AND bo.id != :exclude_official_id
+        )";
+        $params[':exclude_official_id'] = $excludeOfficialId;
+    } else {
+        $sql .= " AND NOT EXISTS (
+            SELECT 1 FROM barangay_officials bo 
+            WHERE bo.resident_id = r.id AND bo.status = 'Active'
+        )";
+    }
 
     if (!empty($search)) {
         $words = array_filter(explode(' ', $search));

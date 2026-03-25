@@ -8,6 +8,9 @@ require_once '../auth_check.php';
 // Set header for JSON response
 header('Content-Type: application/json');
 
+// Disable display errors to prevent JSON corruption
+ini_set('display_errors', 0);
+
 // Get household ID from query parameter
 $householdId = isset($_GET['id']) ? intval($_GET['id']) : 0;
 

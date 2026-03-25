@@ -368,16 +368,18 @@ async function submitCreateOfficial() {
         const result   = await response.json();
 
         if (result.success) {
-            alert('Official created successfully!');
+            showNotification('Official created successfully!', 'success');
             const modal = bootstrap.Modal.getInstance(document.getElementById('createOfficialModal'));
             if (modal) modal.hide();
-            location.reload();
+            setTimeout(() => location.reload(), 1500);
         } else {
-            throw new Error(result.message || 'Failed to create official');
+            showNotification(result.message || 'Failed to create official', 'danger');
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fas fa-check"></i> Create';
         }
     } catch (error) {
         console.error('Error creating official:', error);
-        alert('Error: ' + error.message);
+        showNotification('An error occurred while creating the official.', 'danger');
         submitBtn.disabled = false;
         submitBtn.innerHTML = '<i class="fas fa-check"></i> Create';
     }
@@ -641,7 +643,9 @@ function searchResidentsForEditPicker(term) {
 
     resultsEl.innerHTML = '<div class="picker-loading"><i class="fas fa-spinner fa-spin"></i> Searching...</div>';
 
-    fetch('model/search_residents_official.php?search=' + encodeURIComponent(term))
+    const officialId = document.getElementById('editOfficialId')?.value || '';
+
+    fetch('model/search_residents_official.php?search=' + encodeURIComponent(term) + '&exclude_official_id=' + encodeURIComponent(officialId))
         .then(r => r.json())
         .then(data => {
             if (!data.success || !data.residents || data.residents.length === 0) {
@@ -770,16 +774,18 @@ async function submitEditOfficial() {
         const result   = await response.json();
 
         if (result.success) {
-            alert('Official updated successfully!');
+            showNotification('Official updated successfully!', 'success');
             const modal = bootstrap.Modal.getInstance(document.getElementById('editOfficialModal'));
             if (modal) modal.hide();
-            location.reload();
+            setTimeout(() => location.reload(), 1500);
         } else {
-            throw new Error(result.message || 'Failed to update official');
+            showNotification(result.message || 'Failed to update official', 'danger');
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fas fa-save"></i> Update';
         }
     } catch (error) {
         console.error('Error updating official:', error);
-        alert('Error: ' + error.message);
+        showNotification('An error occurred while updating the official.', 'danger');
         submitBtn.disabled = false;
         submitBtn.innerHTML = '<i class="fas fa-save"></i> Update';
     }
@@ -805,10 +811,10 @@ function deleteOfficial(officialId) {
     .then(r => r.json())
     .then(data => {
         if (data.success) {
-            alert(data.message || 'Official moved to archive successfully');
-            location.reload();
+            showNotification(data.message || 'Official moved to archive successfully', 'success');
+            setTimeout(() => location.reload(), 1500);
         } else {
-            alert('Error: ' + (data.message || 'Failed to archive official'));
+            showNotification(data.message || 'Failed to archive official', 'danger');
             if (deleteBtn) {
                 deleteBtn.disabled = false;
                 deleteBtn.innerHTML = '<i class="fas fa-trash"></i> Delete';
@@ -817,7 +823,7 @@ function deleteOfficial(officialId) {
     })
     .catch(error => {
         console.error('Error:', error);
-        alert('An error occurred while archiving the official');
+        showNotification('An error occurred while archiving the official', 'danger');
         if (deleteBtn) {
             deleteBtn.disabled = false;
             deleteBtn.innerHTML = '<i class="fas fa-trash"></i> Delete';
@@ -844,6 +850,52 @@ function escapeJs(str) {
         .replace(/"/g, '\\"')
         .replace(/\n/g, '\\n')
         .replace(/\r/g, '\\r');
+}
+
+function showNotification(message, type = 'info') {
+    document.querySelectorAll('.notification').forEach(n => n.remove());
+    
+    const notification = document.createElement('div');
+    notification.className = `notification notification-${type}`;
+    
+    let icon = 'info-circle';
+    let bgColor = '#3b82f6';
+    
+    if (type === 'success') {
+        icon = 'check-circle';
+        bgColor = '#10b981';
+    } else if (type === 'danger' || type === 'error') {
+        icon = 'exclamation-circle';
+        bgColor = '#ef4444';
+    }
+    
+    notification.innerHTML = `
+        <i class="fas fa-${icon}"></i>
+        <span>${message}</span>
+    `;
+    
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: ${bgColor};
+        color: white;
+        padding: 15px 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        z-index: 10000;
+        animation: slideInRight 0.3s ease;
+    `;
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.style.animation = 'slideOutRight 0.3s ease forwards';
+        setTimeout(() => notification.remove(), 300);
+    }, 3000);
 }
 
 // ===================================
@@ -1027,13 +1079,14 @@ function updateOfficialStatus(officialId, newStatus, row, currentStatus) {
                     badge.textContent = newStatus;
                 }
             }
+            showNotification('Status updated successfully', 'success');
         } else {
-            alert('Error: ' + (data.message || 'Failed to update status'));
+            showNotification(data.message || 'Failed to update status', 'danger');
         }
     })
     .catch(error => {
         console.error('Error updating status:', error);
-        alert('An error occurred while updating the status');
+        showNotification('An error occurred while updating the status', 'danger');
     });
 }
 
@@ -1086,6 +1139,14 @@ function updateOfficialStatus(officialId, newStatus, row, currentStatus) {
             from { opacity: 0; transform: translateY(-10px); }
             to { opacity: 1; transform: translateY(0); }
         }
+        @keyframes slideInRight {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes slideOutRight {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(100%); opacity: 0; }
+        }
         /* ── Change Status Submenu ── */
         .action-menu-item.has-submenu { position: relative; }
         .action-menu-item.has-submenu .submenu-arrow {
@@ -1098,7 +1159,7 @@ function updateOfficialStatus(officialId, newStatus, row, currentStatus) {
             min-width: 160px; z-index: 10000; animation: fadeIn 0.15s ease;
         }
         .action-menu-item.has-submenu.show-submenu .action-submenu { display: block; }
-        .submenu-item { gap: 10px; padding: 9px 12px; }
+        .submenu-item { gap: 10px; }
         .submenu-item.submenu-current { background-color: #f0f9ff; font-weight: 600; }
         .status-dot { font-size: 8px !important; width: 8px !important; flex-shrink: 0; }
         .status-dot-active   { color: #22c55e; }

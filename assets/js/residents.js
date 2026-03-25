@@ -364,6 +364,7 @@ function initializeButtons() {
     if (printBtn) {
         printBtn.addEventListener('click', () => {
             if (!residentsTable || !residentsTable.filteredRows) {
+                fetch('model/log_print_masterlist.php', { method: 'POST' }).catch(e => console.error(e));
                 window.print();
                 return;
             }
@@ -503,6 +504,7 @@ function initializeButtons() {
 
             // Trigger print after a short delay to ensure styles/content are loaded
             setTimeout(() => {
+                fetch('model/log_print_masterlist.php', { method: 'POST' }).catch(e => console.error(e));
                 printFrame.contentWindow.focus();
                 printFrame.contentWindow.print();
             }, 500);
@@ -1327,7 +1329,7 @@ style.textContent = `
 
     .submenu-item {
         gap: 10px;
-        padding: 9px 12px;
+
     }
 
     .submenu-item.submenu-current {

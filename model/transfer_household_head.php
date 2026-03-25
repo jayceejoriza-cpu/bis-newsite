@@ -8,6 +8,9 @@ require_once '../auth_check.php';
 // Set header for JSON response
 header('Content-Type: application/json');
 
+// Disable error display so that warnings don't corrupt the JSON response
+ini_set('display_errors', 0);
+
 // Get POST data
 $data = json_decode(file_get_contents('php://input'), true);
 
@@ -24,12 +27,15 @@ try {
     $oldHeadId = intval($data['oldHeadId']);
     
     // Validate new head is not a minor
-    $checkAgeSql = "SELECT date_of_birth FROM residents WHERE id = ?";
+    $checkAgeSql = "SELECT date_of_birth, CONCAT(first_name, ' ', IFNULL(CONCAT(middle_name, ' '), ''), last_name, IFNULL(CONCAT(' ', suffix), '')) AS full_name FROM residents WHERE id = ?";
     $checkAgeStmt = $conn->prepare($checkAgeSql);
     $checkAgeStmt->bind_param('i', $newHeadId);
     $checkAgeStmt->execute();
     $ageResult = $checkAgeStmt->get_result()->fetch_assoc();
     $checkAgeStmt->close();
+    
+    $newHeadName = $ageResult['full_name'] ?? "Resident ID $newHeadId";
+
     if ($ageResult && !empty($ageResult['date_of_birth'])) {
         $dob = new DateTime($ageResult['date_of_birth']);
         $now = new DateTime();
@@ -37,6 +43,15 @@ try {
             throw new Exception('A minor cannot be assigned as a household head.');
         }
     }
+
+    // Get Household Number
+    $hhStmt = $conn->prepare("SELECT household_number FROM households WHERE id = ?");
+    $hhStmt->bind_param('i', $householdId);
+    $hhStmt->execute();
+    $hhResult = $hhStmt->get_result()->fetch_assoc();
+    $hhStmt->close();
+    
+    $householdNumber = $hhResult['household_number'] ?? "Household ID $householdId";
 
     // Update the household head in the households table
     $updateHouseholdSql = "UPDATE households SET household_head_id = ?, updated_at = NOW() WHERE id = ?";
@@ -91,7 +106,7 @@ try {
     if (isset($_SESSION['username'])) {
         $log_user = $_SESSION['username'];
         $log_action = 'Transfer Household Head';
-        $log_desc = "Transferred household head for Household ID $householdId to Resident ID $newHeadId";
+        $log_desc = "Transferred household head for $householdNumber to $newHeadName";
         $log_stmt = $conn->prepare("INSERT INTO activity_logs (user, action, description) VALUES (?, ?, ?)");
         $log_stmt->bind_param("sss", $log_user, $log_action, $log_desc);
         $log_stmt->execute();

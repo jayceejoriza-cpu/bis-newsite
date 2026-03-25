@@ -64,6 +64,30 @@ try {
         ]
     );
 
+    // ── Check Position Limits for Active Officials ───────────
+    if ($status === 'Active') {
+        $limitMap = [
+            'Barangay Captain' => 1,
+            'SK Chairman' => 1,
+            'Barangay Secretary' => 1,
+            'Barangay Treasurer' => 1,
+            'Barangay Administator' => 1,
+            'Bookkeeper' => 1,
+            'Kagawad' => 7
+        ];
+
+        if (isset($limitMap[$position])) {
+            $limit = $limitMap[$position];
+            $countStmt = $pdo->prepare("SELECT COUNT(*) FROM barangay_officials WHERE position = :position AND status = 'Active' AND id != :id");
+            $countStmt->execute([':position' => $position, ':id' => $id]);
+            $currentCount = $countStmt->fetchColumn();
+
+            if ($currentCount >= $limit) {
+                throw new Exception("Cannot set this official as active $position. The limit of $limit has been reached.");
+            }
+        }
+    }
+
     // Build photo value: use new path if provided, else keep existing
     $photoValue = null;
     if (!empty($photoPath)) {
@@ -108,6 +132,14 @@ try {
         ':id'               => $id,
     ]);
 
+    if (isset($_SESSION['username'])) {
+        $log_user = $_SESSION['username'];
+        $log_action = 'Update Barangay Official';
+        $log_desc = "Updated details for barangay official: $fullname ($position)";
+        $log_stmt = $pdo->prepare("INSERT INTO activity_logs (user, action, description) VALUES (?, ?, ?)");
+        $log_stmt->execute([$log_user, $log_action, $log_desc]);
+    }
+
     echo json_encode([
         'success' => true,
         'message' => 'Official updated successfully'
@@ -116,5 +148,7 @@ try {
 } catch (PDOException $e) {
     error_log("Error updating official: " . $e->getMessage());
     echo json_encode(['success' => false, 'message' => 'Database error: ' . $e->getMessage()]);
+} catch (Exception $e) {
+    echo json_encode(['success' => false, 'message' => $e->getMessage()]);
 }
 ?>

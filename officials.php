@@ -436,7 +436,6 @@ try {
                                             <button class="btn-action" data-official-id="<?= $official['id'] ?>">
                                         <i class="fas fa-ellipsis-h"></i>
                                     </button>
-                                            </ul>
                                         </div>
                                     </td>
                                 </tr>
@@ -489,7 +488,7 @@ try {
                                         <i class="fas fa-user-circle"></i>
                                     </div>
                                     <div class="resident-placeholder-text">No resident selected</div>
-                                    <button type="button" class="btn btn-primary btn-sm" id="selectResidentBtn" onclick="openResidentPicker()">
+                                    <button type="button" class="btn btn-primary btn-sm" onclick="openResidentPicker()">
                                         <i class="fas fa-search"></i> SELECT RESIDENT
                                     </button>
                                 </div>
@@ -749,6 +748,7 @@ try {
                                 <option value="Barangay Treasurer">Barangay Treasurer</option>
                                 <option value="Barangay Administator">Barangay Administator</option>
                                 <option value="Bookkeeper">Bookkeeper</option>
+                            </select>
                         </div>
 
                         <!-- Term Start -->

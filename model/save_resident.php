@@ -438,6 +438,21 @@ try {
                         if (!$conn->query($memberSql)) {
                             throw new Exception('Failed to add resident to household: ' . $conn->error);
                         }
+                        
+                        if (isset($_SESSION['username'])) {
+                            $resStmt = $conn->query("SELECT CONCAT(first_name, ' ', last_name) AS fname FROM residents WHERE id = $residentId");
+                            $resName = $resStmt->fetch_assoc()['fname'] ?? "Resident ID $residentId";
+                            $hhStmt = $conn->query("SELECT household_number FROM households WHERE id = $selectedHouseholdId");
+                            $hhNum = $hhStmt->fetch_assoc()['household_number'] ?? "Household ID $selectedHouseholdId";
+                            
+                            $log_user = $_SESSION['username'];
+                            $log_action = 'Add Household Members';
+                            $log_desc = "Added $resName to household $hhNum";
+                            $log_stmt = $conn->prepare("INSERT INTO activity_logs (user, action, description) VALUES (?, ?, ?)");
+                            $log_stmt->bind_param("sss", $log_user, $log_action, $log_desc);
+                            $log_stmt->execute();
+                            $log_stmt->close();
+                        }
                     }
                 }
             }
@@ -447,6 +462,21 @@ try {
                 $deleteSql = "DELETE FROM household_members WHERE household_id = $householdId AND resident_id = $residentId";
                 if (!$conn->query($deleteSql)) {
                     throw new Exception('Failed to remove member: ' . $conn->error);
+                }
+                
+                if (isset($_SESSION['username'])) {
+                    $resStmt = $conn->query("SELECT CONCAT(first_name, ' ', last_name) AS fname FROM residents WHERE id = $residentId");
+                    $resName = $resStmt->fetch_assoc()['fname'] ?? "Resident ID $residentId";
+                    $hhStmt = $conn->query("SELECT household_number FROM households WHERE id = $householdId");
+                    $hhNum = $hhStmt->fetch_assoc()['household_number'] ?? "Household ID $householdId";
+                    
+                    $log_user = $_SESSION['username'];
+                    $log_action = 'Delete Household Members';
+                    $log_desc = "Deleted $resName from household $hhNum";
+                    $log_stmt = $conn->prepare("INSERT INTO activity_logs (user, action, description) VALUES (?, ?, ?)");
+                    $log_stmt->bind_param("sss", $log_user, $log_action, $log_desc);
+                    $log_stmt->execute();
+                    $log_stmt->close();
                 }
             }
         } elseif ($pendingAction === 'delete_household') {
@@ -631,6 +661,19 @@ try {
                               VALUES ($selectedHouseholdId, $residentId, " . ($householdRelationship ? "'$householdRelationship'" : "NULL") . ", 0)";
                 if (!$conn->query($memberSql)) {
                     throw new Exception('Failed to add resident to household: ' . $conn->error);
+                }
+                
+                if (isset($_SESSION['username'])) {
+                    $hhStmt = $conn->query("SELECT household_number FROM households WHERE id = $selectedHouseholdId");
+                    $hhNum = $hhStmt->fetch_assoc()['household_number'] ?? "Household ID $selectedHouseholdId";
+                    
+                    $log_user = $_SESSION['username'];
+                    $log_action = 'Add Household Members';
+                    $log_desc = "Added $firstName $lastName to household $hhNum";
+                    $log_stmt = $conn->prepare("INSERT INTO activity_logs (user, action, description) VALUES (?, ?, ?)");
+                    $log_stmt->bind_param("sss", $log_user, $log_action, $log_desc);
+                    $log_stmt->execute();
+                    $log_stmt->close();
                 }
             }
         }

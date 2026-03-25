@@ -90,6 +90,14 @@ try {
 
     $fullName = trim($resident['first_name'] . ' ' . $resident['last_name']);
 
+    if (isset($_SESSION['username'])) {
+        $log_user = $_SESSION['username'];
+        $log_action = 'Update Resident Status';
+        $log_desc = "Changed activity status of $fullName to $newStatus";
+        $log_stmt = $pdo->prepare("INSERT INTO activity_logs (user, action, description) VALUES (?, ?, ?)");
+        $log_stmt->execute([$log_user, $log_action, $log_desc]);
+    }
+
     echo json_encode([
         'success'    => true,
         'message'    => "Activity status of {$fullName} updated to {$newStatus}",

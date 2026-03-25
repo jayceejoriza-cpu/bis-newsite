@@ -8,6 +8,9 @@ require_once '../auth_check.php';
 // Set header for JSON response
 header('Content-Type: application/json');
 
+// Disable error display so that warnings don't corrupt the JSON response
+ini_set('display_errors', 0);
+
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     echo json_encode(['success' => false, 'message' => 'Invalid request method']);
     exit;
@@ -48,6 +51,28 @@ try {
         throw new Exception('Failed to remove member: ' . $deleteStmt->error);
     }
     $deleteStmt->close();
+    
+    if (isset($_SESSION['username'])) {
+        $resStmt = $conn->prepare("SELECT CONCAT(first_name, ' ', last_name) AS fname FROM residents WHERE id = ?");
+        $resStmt->bind_param('i', $residentId);
+        $resStmt->execute();
+        $resName = $resStmt->get_result()->fetch_assoc()['fname'] ?? "Resident ID $residentId";
+        $resStmt->close();
+        
+        $hhStmt = $conn->prepare("SELECT household_number FROM households WHERE id = ?");
+        $hhStmt->bind_param('i', $householdId);
+        $hhStmt->execute();
+        $hhNum = $hhStmt->get_result()->fetch_assoc()['household_number'] ?? "Household ID $householdId";
+        $hhStmt->close();
+        
+        $log_user = $_SESSION['username'];
+        $log_action = 'Delete Household Members';
+        $log_desc = "Deleted $resName from household $hhNum";
+        $log_stmt = $conn->prepare("INSERT INTO activity_logs (user, action, description) VALUES (?, ?, ?)");
+        $log_stmt->bind_param("sss", $log_user, $log_action, $log_desc);
+        $log_stmt->execute();
+        $log_stmt->close();
+    }
     
     echo json_encode(['success' => true, 'message' => 'Member removed successfully']);
     

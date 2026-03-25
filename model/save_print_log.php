@@ -26,6 +26,24 @@ $stmt = $conn->prepare("INSERT INTO certificate_requests (reference_no, resident
 $stmt->bind_param("sisss", $ref_no, $resident_id, $cert_title, $purpose, $date_requested);
 
 if ($stmt->execute()) {
+    $resStmt = $conn->prepare("SELECT CONCAT(first_name, ' ', IFNULL(CONCAT(middle_name, ' '), ''), last_name, IFNULL(CONCAT(' ', suffix), '')) AS full_name FROM residents WHERE id = ?");
+    $resStmt->bind_param('i', $resident_id);
+    $resStmt->execute();
+    $resResult = $resStmt->get_result()->fetch_assoc();
+    $resStmt->close();
+    $residentName = $resResult['full_name'] ?? "Resident ID $resident_id";
+
+    if (isset($_SESSION['username'])) {
+        $certNameDisplay = str_ireplace('Certificate of ', '', $cert_title);
+        $log_user = $_SESSION['username'];
+        $log_action = 'Generate Certificate';
+        $log_desc = "Generate a certificate of $certNameDisplay to $residentName";
+        $log_stmt = $conn->prepare("INSERT INTO activity_logs (user, action, description) VALUES (?, ?, ?)");
+        $log_stmt->bind_param("sss", $log_user, $log_action, $log_desc);
+        $log_stmt->execute();
+        $log_stmt->close();
+    }
+
     echo json_encode(['success' => true]);
 } else {
     echo json_encode(['success' => false, 'message' => $conn->error]);

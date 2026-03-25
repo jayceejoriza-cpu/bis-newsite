@@ -53,6 +53,30 @@ try {
         throw new Exception('Term end date must be after term start date');
     }
 
+    // ── Check Position Limits for Active Officials ───────────
+    if ($status === 'Active') {
+        $limitMap = [
+            'Barangay Captain' => 1,
+            'SK Chairman' => 1,
+            'Barangay Secretary' => 1,
+            'Barangay Treasurer' => 1,
+            'Barangay Administator' => 1,
+            'Bookkeeper' => 1,
+            'Kagawad' => 7
+        ];
+
+        if (isset($limitMap[$position])) {
+            $limit = $limitMap[$position];
+            $countStmt = $pdo->prepare("SELECT COUNT(*) FROM barangay_officials WHERE position = :position AND status = 'Active'");
+            $countStmt->execute([':position' => $position]);
+            $currentCount = $countStmt->fetchColumn();
+
+            if ($currentCount >= $limit) {
+                throw new Exception("Cannot add another active $position. The limit of $limit has been reached.");
+            }
+        }
+    }
+
     // ── If resident_id provided, fetch resident data ─────────
     $photoPath = null;
     if ($residentId) {
@@ -161,6 +185,14 @@ try {
     ]);
 
     $officialId = $pdo->lastInsertId();
+
+    if (isset($_SESSION['username'])) {
+        $log_user = $_SESSION['username'];
+        $log_action = 'Add Barangay Official';
+        $log_desc = "Added new barangay official: $fullname as $position";
+        $log_stmt = $pdo->prepare("INSERT INTO activity_logs (user, action, description) VALUES (?, ?, ?)");
+        $log_stmt->execute([$log_user, $log_action, $log_desc]);
+    }
 
     echo json_encode([
         'success'     => true,

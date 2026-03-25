@@ -66,6 +66,22 @@ try {
         if (!$conn->query($sql)) {
             throw new Exception("Failed to add resident to household: " . $conn->error);
         }
+
+        if (isset($_SESSION['username'])) {
+            $resStmt = $conn->query("SELECT CONCAT(first_name, ' ', last_name) AS fname FROM residents WHERE id = $residentId");
+            $resName = $resStmt->fetch_assoc()['fname'] ?? "Resident ID $residentId";
+            
+            $hhStmt = $conn->query("SELECT household_number FROM households WHERE id = $selectedHouseholdId");
+            $hhNum = $hhStmt->fetch_assoc()['household_number'] ?? "Household ID $selectedHouseholdId";
+            
+            $log_user = $_SESSION['username'];
+            $log_action = 'Add Household Members';
+            $log_desc = "Added $resName to household $hhNum";
+            $log_stmt = $conn->prepare("INSERT INTO activity_logs (user, action, description) VALUES (?, ?, ?)");
+            $log_stmt->bind_param("sss", $log_user, $log_action, $log_desc);
+            $log_stmt->execute();
+            $log_stmt->close();
+        }
     } else {
         throw new Exception("Please specify if the resident is a household head.");
     }

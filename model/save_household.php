@@ -8,6 +8,9 @@ require_once '../auth_check.php';
 // Set header for JSON response
 header('Content-Type: application/json');
 
+// Disable error display so that warnings don't corrupt the JSON response
+ini_set('display_errors', 0);
+
 // Get POST data
 $data = json_decode(file_get_contents('php://input'), true);
 
@@ -94,6 +97,18 @@ try {
         }
         $updateStmt->close();
         
+        // Fetch existing members for logging
+        $existingMembersSql = "SELECT hm.resident_id, CONCAT(r.first_name, ' ', r.last_name) as name FROM household_members hm JOIN residents r ON hm.resident_id = r.id WHERE hm.household_id = ?";
+        $existingMembersStmt = $conn->prepare($existingMembersSql);
+        $existingMembersStmt->bind_param('i', $householdId);
+        $existingMembersStmt->execute();
+        $res = $existingMembersStmt->get_result();
+        $oldMembers = [];
+        while($row = $res->fetch_assoc()) {
+            $oldMembers[$row['resident_id']] = $row['name'];
+        }
+        $existingMembersStmt->close();
+
         // Delete existing members for this household
         $deleteMembersSql = "DELETE FROM household_members WHERE household_id = ?";
         $deleteMembersStmt = $conn->prepare($deleteMembersSql);
@@ -112,6 +127,8 @@ try {
             
             $memberStmt = $conn->prepare($memberSql);
             
+            $addedMembers = [];
+
             foreach ($data['members'] as $member) {
                 // Only insert if resident_id exists (from database)
                 if (!empty($member['residentId'])) {
@@ -134,15 +151,74 @@ try {
                     if (!$memberStmt->execute()) {
                         throw new Exception('Failed to insert household member: ' . $memberStmt->error);
                     }
+                    $addedMembers[] = $member['name'] ?? "Resident ID " . $member['residentId'];
                 }
             }
             
             $memberStmt->close();
+            
+            if (isset($_SESSION['username'])) {
+                $hhStmt = $conn->prepare("SELECT household_number FROM households WHERE id = ?");
+                $hhStmt->bind_param('i', $householdId);
+                $hhStmt->execute();
+                $hhRes = $hhStmt->get_result()->fetch_assoc();
+                $hhNum = $hhRes['household_number'] ?? "ID $householdId";
+                $hhStmt->close();
+
+                $log_user = $_SESSION['username'];
+                
+                $newMembers = [];
+                foreach ($data['members'] as $m) {
+                    if (!empty($m['residentId'])) {
+                        $newMembers[$m['residentId']] = $m['name'] ?? "Resident ID " . $m['residentId'];
+                    }
+                }
+                
+                $addedIds = array_diff(array_keys($newMembers), array_keys($oldMembers));
+                $removedIds = array_diff(array_keys($oldMembers), array_keys($newMembers));
+                
+                foreach ($addedIds as $addId) {
+                    $resName = $newMembers[$addId];
+                    $log_action = 'Add Household Members';
+                    $log_desc = "Added $resName to household $hhNum";
+                    $log_stmt = $conn->prepare("INSERT INTO activity_logs (user, action, description) VALUES (?, ?, ?)");
+                    $log_stmt->bind_param("sss", $log_user, $log_action, $log_desc);
+                    $log_stmt->execute();
+                    $log_stmt->close();
+                }
+                
+                foreach ($removedIds as $remId) {
+                    $resName = $oldMembers[$remId];
+                    $log_action = 'Delete Household Members';
+                    $log_desc = "Deleted $resName from household $hhNum";
+                    $log_stmt = $conn->prepare("INSERT INTO activity_logs (user, action, description) VALUES (?, ?, ?)");
+                    $log_stmt->bind_param("sss", $log_user, $log_action, $log_desc);
+                    $log_stmt->execute();
+                    $log_stmt->close();
+                }
+            }
         }
         
         // Commit transaction
         $conn->commit();
         
+        if (isset($_SESSION['username'])) {
+            $hhStmt = $conn->prepare("SELECT household_number FROM households WHERE id = ?");
+            $hhStmt->bind_param('i', $householdId);
+            $hhStmt->execute();
+            $hhRes = $hhStmt->get_result()->fetch_assoc();
+            $hhNum = $hhRes['household_number'] ?? "ID $householdId";
+            $hhStmt->close();
+
+            $log_user = $_SESSION['username'];
+            $log_action = 'Update Household';
+            $log_desc = "Updated household details for $hhNum";
+            $log_stmt = $conn->prepare("INSERT INTO activity_logs (user, action, description) VALUES (?, ?, ?)");
+            $log_stmt->bind_param("sss", $log_user, $log_action, $log_desc);
+            $log_stmt->execute();
+            $log_stmt->close();
+        }
+
         // Return success response
         echo json_encode([
             'success' => true,
@@ -295,6 +371,16 @@ try {
         
         // Commit transaction
         $conn->commit();
+        
+        if (isset($_SESSION['username'])) {
+            $log_user = $_SESSION['username'];
+            $log_action = 'Create Household';
+            $log_desc = "Created new household " . $data['householdNumber'];
+            $log_stmt = $conn->prepare("INSERT INTO activity_logs (user, action, description) VALUES (?, ?, ?)");
+            $log_stmt->bind_param("sss", $log_user, $log_action, $log_desc);
+            $log_stmt->execute();
+            $log_stmt->close();
+        }
         
         // Return success response
         echo json_encode([

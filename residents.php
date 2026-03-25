@@ -665,7 +665,14 @@ try {
             <!-- Pagination -->
             <div class="pagination-container">
                 <div class="pagination-info">
-                    <span>Showing <strong>1-10</strong> of <strong><?php echo number_format($totalResidents); ?></strong></span>
+                    <span>Showing 
+                        <select class="form-select form-select-sm" id="pageSizeList" style="display: inline-block; width: auto; margin: 0 5px;">
+                            <option value="10">10</option>
+                            <option value="100">100</option>
+                            <option value="<?php echo max(1, ceil($totalResidents / 2)); ?>"><?php echo max(1, ceil($totalResidents / 2)); ?></option>
+                            <option value="<?php echo max(1, $totalResidents); ?>"><?php echo max(1, $totalResidents); ?></option>
+                        </select>
+                        of <strong><?php echo number_format($totalResidents); ?></strong></span>
                 </div>
                 <div class="pagination">
                     <button class="page-btn" disabled>
