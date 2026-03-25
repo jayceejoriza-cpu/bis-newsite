@@ -1,19 +1,26 @@
-# Fix Cursor Issue in Household Edit Mode
+# Sidebar Hover Collapse Task
 
-## Task: Fix disabled cursor on "Type of Water Source" and "Type of Toilet Facility" when editing in households.php
+**Plan approved by user.**
 
-**Status**: Implemented ✅
-
-### Steps:
-- [x] 1. Plan approved by user
-- [x] 2. Edit assets/js/households.js - Added explicit enable for fields in editHousehold() (removeAttribute('disabled') for waterSource/toiletFacility)
-- [ ] 3. Test: Open households.php?edit=1 (or pick a household ID from table), hover/select fields - should show normal pointer cursor, no not-allowed
-- [ ] 4. Update values, save - verify backend accepts changes
-- [ ] 5. Complete task
-
-**Changes**:
-- assets/js/households.js: Inserted enable code in editHousehold() fetch.then()
-
-**Next**: Test then mark complete.
-
+## TODO Steps:
+- [x] Step 1: Create TODO.md ✅
+- [x] Step 1: Create TODO.md ✅
+- [x] Step 2: Update assets/js/script.js with hover logic ✅
+- [x] Step 3: Update assets/css/style.css with .hover-expanded styles ✅
+- [ ] Step 4: Test hover functionality on desktop
+- [ ] Step 5: Verify mobile behavior (no hover)
+- [ ] Step 6: Confirm manual toggle persistence
+- [ ] Step 7: Test submenus, dark mode, modals
+- [ ] Step 8: Demo on index.php & attempt_completion
+- [ ] Step 4: Test hover functionality on desktop
+- [ ] Step 5: Verify mobile behavior (no hover)
+- [ ] Step 6: Confirm manual toggle persistence
+- [ ] Step 7: Test submenus, dark mode, modals
+- [ ] Step 8: Demo on index.php & attempt_completion
+- [ ] Step 3: Update assets/css/style.css with .hovered styles  
+- [ ] Step 4: Test hover functionality on desktop
+- [ ] Step 5: Verify mobile behavior (no hover)
+- [ ] Step 6: Confirm manual toggle persistence
+- [ ] Step 7: Test submenus, dark mode, modals
+- [ ] Step 8: Demo on index.php & attempt_completion
 

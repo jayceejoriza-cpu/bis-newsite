@@ -401,6 +401,7 @@ body.modal-open .submenu-item.active .submenu-link {
     position: relative;
 }
 
+/* Collapsed sidebar submenu - HOVER mode (existing) */
 .sidebar.collapsed .submenu {
     display: none;
     position: fixed;
@@ -444,6 +445,98 @@ body.modal-open .submenu-item.active .submenu-link {
 
 .sidebar.collapsed .nav-item.has-submenu .nav-arrow {
     display: none;
+}
+
+/* Hover expansion for collapsed sidebar */
+.sidebar.collapsed.hover-expanded {
+    width: var(--sidebar-width);
+    box-shadow: var(--shadow-lg);
+}
+
+.sidebar.collapsed.hover-expanded .sidebar-title,
+.sidebar.collapsed.hover-expanded .sidebar-brand,
+.sidebar.collapsed.hover-expanded .nav-link span,
+.sidebar.collapsed.hover-expanded .nav-arrow,
+.sidebar.collapsed.hover-expanded .nav-section-title,
+.sidebar.collapsed.hover-expanded .sidebar-footer p {
+    opacity: 1;
+    visibility: visible;
+    width: auto;
+    overflow: visible;
+}
+
+.sidebar.collapsed.hover-expanded .nav-section-title {
+    padding: 8px 20px;
+    margin-top: 8px;
+}
+
+.sidebar.collapsed.hover-expanded .sidebar-footer p {
+    margin-bottom: 5px;
+}
+
+.sidebar.collapsed.hover-expanded .nav-divider {
+    margin: 10px 20px;
+}
+
+.sidebar.collapsed.hover-expanded .nav-link {
+    justify-content: flex-start;
+    gap: 12px;
+}
+
+.sidebar.collapsed.hover-expanded .sidebar-nav {
+    padding: 20px 0;
+}
+
+.sidebar.collapsed.hover-expanded .nav-link i:first-child {
+    margin: 0;
+    width: 20px;
+    height: auto;
+}
+
+.sidebar.collapsed.hover-expanded .sidebar-header {
+    justify-content: flex-start;
+    padding: 18px 20px;
+}
+
+.sidebar.collapsed.hover-expanded .sidebar-footer {
+    padding: 20px;
+}
+
+.sidebar.collapsed.hover-expanded .nav-item.active .nav-link {
+    background-color: #dbeafe;
+}
+
+.sidebar.collapsed.hover-expanded .nav-item.active .nav-link i:first-child {
+    background-color: transparent;
+}
+
+.sidebar.collapsed.hover-expanded .submenu {
+    display: block !important;
+    position: static;
+    width: auto;
+    background-color: transparent;
+    border: none;
+    box-shadow: none;
+    border-radius: 0;
+    padding-left: 0;
+    max-height: 0 !important;
+    margin: 0;
+}
+
+.sidebar.collapsed.hover-expanded .submenu::before {
+    display: none;
+}
+
+.sidebar.collapsed.hover-expanded .nav-item.has-submenu.open .submenu {
+    max-height: 500px !important;
+}
+
+.sidebar.collapsed.hover-expanded .nav-item.has-submenu .nav-arrow {
+    display: block;
+}
+
+.sidebar.collapsed.hover-expanded .submenu-link {
+    padding: 8px 12px 8px 42px;
 }
 
 /* Ensure collapsed sidebar doesn't cause page overflow */

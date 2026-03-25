@@ -141,6 +141,7 @@ function updateProfileAgeVisibility() {
 
     const isMinor = age < 18;
     const is15Plus = age >= 15;
+    const is10Plus = age >= 10;
 
     document.querySelectorAll('.adult-only').forEach(el => {
         el.style.display = isMinor ? 'none' : '';
@@ -155,6 +156,11 @@ function updateProfileAgeVisibility() {
     document.querySelectorAll('.voter-only').forEach(el => {
         el.style.display = is15Plus ? '' : 'none';
         el.querySelectorAll('input, select, textarea').forEach(input => input.disabled = !is15Plus);
+    });
+
+    document.querySelectorAll('.age-10-plus').forEach(el => {
+        el.style.display = is10Plus ? '' : 'none';
+        el.querySelectorAll('input, select, textarea').forEach(input => input.disabled = !is10Plus);
     });
 
     document.querySelectorAll('.gov-programs-section').forEach(el => {

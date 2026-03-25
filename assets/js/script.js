@@ -63,6 +63,7 @@ if (menuToggle) {
         if (window.innerWidth > 768) {
             // Desktop behavior - collapse/expand sidebar
             sidebar.classList.toggle('collapsed');
+            sidebar.classList.remove('hover-expanded');
             mainContent.classList.toggle('expanded');
             
             // Save state to localStorage
@@ -72,6 +73,19 @@ if (menuToggle) {
             // Mobile behavior - close the sidebar
             closeMobileSidebar();
         }
+    });
+}
+
+// Hover expansion for collapsed sidebar
+if (sidebar) {
+    sidebar.addEventListener('mouseenter', () => {
+        if (sidebar.classList.contains('collapsed') && window.innerWidth > 768) {
+            sidebar.classList.add('hover-expanded');
+        }
+    });
+
+    sidebar.addEventListener('mouseleave', () => {
+        sidebar.classList.remove('hover-expanded');
     });
 }
 
