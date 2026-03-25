@@ -579,7 +579,7 @@ $birthdateFmt = !empty($resident['birthdate'])
             const formData = new FormData();
             formData.append('resident_id', '<?php echo $resident_id; ?>');
             formData.append('certificate_type', 'Certificate of Solo Parent');
-            formData.append('purpose', 'Solo Parent Verification');
+            formData.append('purpose', 'Solo Parent');
 
             fetch('../model/save_print_log.php', {
                 method: 'POST',

@@ -348,7 +348,7 @@ foreach ($certificateTypes as $cert) {
                                 <input type="hidden" id="indigencyResidentId">
                                 <button type="button" class="btn btn-primary btn-resident" id="indigencyResidentBtn">
                                     <i class="fas fa-user"></i>
-                                    RESIDENT
+                                    
                                 </button>
                             </div>
                             <div class="resident-dropdown" id="indigencyResidentDropdown" style="display:none;"></div>
@@ -391,6 +391,7 @@ foreach ($certificateTypes as $cert) {
                     <div class="cert-field-group">
                         <label class="cert-field-label">TYPE OF ASSISTANCE<span class="required-star">*</span></label>
                         <select id="indigencyAssistance" class="cert-input" required>
+                              <option value="" disabled>Select assistance type</option>
                             <option value="FINANCIAL">FINANCIAL</option>
                             <option value="MEDICAL">MEDICAL</option>
                             <option value="BURIAL">BURIAL</option>
@@ -448,7 +449,7 @@ foreach ($certificateTypes as $cert) {
                                 <input type="hidden" id="residencyResidentId">
                                 <button type="button" class="btn btn-primary btn-resident" id="residencyResidentBtn">
                                     <i class="fas fa-user"></i>
-                                    RESIDENT
+                                    
                                 </button>
                             </div>
                             <!-- Autocomplete Dropdown -->
@@ -470,9 +471,9 @@ foreach ($certificateTypes as $cert) {
 
                     <!-- Purpose -->
                     <div class="cert-field-group">
-                        <label class="cert-field-label">PURPOSE</label>
-                        <select id="residencyPurpose" class="form-control cert-input">
-                            <option value="">Select assistance type</option>
+                        <label class="cert-field-label">PURPOSE <span class="required-star">*</span></label>
+                        <select id="residencyPurpose" class="form-control cert-input" required>
+                            <option value="" disabled>Select assistance type</option>
                             <option value="DEPED RANKING">DEPED RANKING</option>
                             <option value="BANK PURPOSES">BANK PURPOSES</option>
                             <option value="SCHOOL PURPOSES">SCHOOL PURPOSES</option>
@@ -550,7 +551,8 @@ foreach ($certificateTypes as $cert) {
 
                 <div class="cert-field-group">
                     <label class="cert-field-label">PURPOSE <span class="required-star">*</span></label>
-                    <select id="lowIncomePurpose" class="form-control cert-input" required>
+                    <select id="lowIncomePurpose" class="form-control cert-input" required> 
+                        <option value="" disabled>Select purpose type</option>
                         <option value="MEDICAL">MEDICAL</option>
                         <option value="FINANCIAL">FINANCIAL</option>
                         <option value="SCHOLARSHIP">SCHOLARSHIP</option>
@@ -590,7 +592,7 @@ foreach ($certificateTypes as $cert) {
                             <div class="resident-input-group">
                                 <input type="text" id="soloParentResidentName" class="form-control cert-input" placeholder="Select resident" autocomplete="off" required>
                                 <input type="hidden" id="soloParentResidentId">
-                                <button type="button" class="btn btn-primary btn-resident" id="soloParentResidentBtn"><i class="fas fa-user"></i> RESIDENT</button>
+                                <button type="button" class="btn btn-primary btn-resident" id="soloParentResidentBtn"><i class="fas fa-user"></i></button>
                             </div>
                             <div class="resident-dropdown" id="soloParentResidentDropdown" style="display:none;"></div>
                         </div>
@@ -601,7 +603,7 @@ foreach ($certificateTypes as $cert) {
                     </div>
                     <div class="cert-field-group">
                         <label class="cert-field-label">PURPOSE</label>
-                        <input type="text" id="soloParentPurpose" class="form-control cert-input" value="Solo Parent Verification" placeholder="e.g., Financial Assistance">
+                        <input type="text" id="soloParentPurpose" class="form-control cert-input" value="Solo Parent" disabled>
                     </div>
                 </div>
                 <div class="modal-footer cert-modal-footer">
@@ -633,7 +635,7 @@ foreach ($certificateTypes as $cert) {
                             <div class="resident-input-group">
 <input type="text" id="rbcResidentName" class="form-control cert-input" placeholder="Select parent/applicant" autocomplete="off" required>
                                 <input type="hidden" id="rbcResidentId">
-                                <button type="button" class="btn btn-primary btn-resident" id="rbcResidentBtn"><i class="fas fa-user"></i> RESIDENT</button>
+                                <button type="button" class="btn btn-primary btn-resident" id="rbcResidentBtn"><i class="fas fa-user"></i></button>
                             </div>
                             <div class="resident-dropdown" id="rbcResidentDropdown" style="display:none;"></div>
                         </div>
@@ -645,7 +647,7 @@ foreach ($certificateTypes as $cert) {
                             <div class="resident-input-group">
 <input type="text" id="rbcChildName" class="form-control cert-input" placeholder="Select child" autocomplete="off" required>
                                 <input type="hidden" id="rbcChildId">
-                                <button type="button" class="btn btn-primary btn-resident" id="rbcChildBtn"><i class="fas fa-child"></i> CHILD</button>
+                                <button type="button" class="btn btn-secondary btn-resident" id="rbcChildBtn"><i class="fas fa-child"></i> CHILD</button>
                             </div>
                             <div class="resident-dropdown" id="rbcChildDropdown" style="display:none;"></div>
                         </div>
@@ -656,7 +658,7 @@ foreach ($certificateTypes as $cert) {
                     </div>
                     <div class="cert-field-group">
                         <label class="cert-field-label">PURPOSE</label>
-                        <input type="text" id="rbcPurpose" class="form-control cert-input" value="Birth Certificate Registration" placeholder="e.g., Late Registration">
+                        <input type="text" id="rbcPurpose" class="form-control cert-input" value="Birth Certificate Registration" disabled>
                     </div>
                 </div>
                 <div class="modal-footer cert-modal-footer">
@@ -687,7 +689,7 @@ foreach ($certificateTypes as $cert) {
                             <div class="resident-input-group">
 <input type="text" id="fishingResidentName" class="form-control cert-input" placeholder="Select resident" autocomplete="off" required>
                                 <input type="hidden" id="fishingResidentId">
-                                <button type="button" class="btn btn-primary btn-resident" id="fishingResidentBtn"><i class="fas fa-user"></i> RESIDENT</button>
+                                <button type="button" class="btn btn-primary btn-resident" id="fishingResidentBtn"><i class="fas fa-user"></i> </button>
                             </div>
                             <div class="resident-dropdown" id="fishingResidentDropdown" style="display:none;"></div>
                         </div>
@@ -702,7 +704,7 @@ foreach ($certificateTypes as $cert) {
                     </div>
                     <div class="cert-field-group">
                         <label class="cert-field-label">PURPOSE</label>
-                        <input type="text" id="fishingPurpose" class="form-control cert-input" value="Boat Registration" placeholder="e.g., Boat Registration">
+                        <input type="text" id="fishingPurpose" class="form-control cert-input" value="Boat Registration" disabled>
                     </div>
                 </div>
                 <div class="modal-footer cert-modal-footer">
@@ -733,7 +735,7 @@ foreach ($certificateTypes as $cert) {
                             <div class="resident-input-group">
 <input type="text" id="ftJobseekerResidentName" class="form-control cert-input" placeholder="Select resident" autocomplete="off" required>
                                 <input type="hidden" id="ftJobseekerResidentId">
-                                <button type="button" class="btn btn-primary btn-resident" id="ftJobseekerResidentBtn"><i class="fas fa-user"></i> RESIDENT</button>
+                                <button type="button" class="btn btn-primary btn-resident" id="ftJobseekerResidentBtn"><i class="fas fa-user"></i> </button>
                             </div>
                             <div class="resident-dropdown" id="ftJobseekerResidentDropdown" style="display:none;"></div>
                         </div>
@@ -744,7 +746,7 @@ foreach ($certificateTypes as $cert) {
                     </div>
                     <div class="cert-field-group">
                         <label class="cert-field-label">PURPOSE</label>
-                        <input type="text" id="ftJobseekerPurpose" class="form-control cert-input" value="First Time Jobseeker Assistance (RA 11261)" placeholder="e.g., Employment" readonly>
+                        <input type="text" id="ftJobseekerPurpose" class="form-control cert-input" value="First Time Jobseeker Assistance (RA 11261)" disabled>
                     </div>
                 </div>
                 <div class="modal-footer cert-modal-footer">
@@ -775,7 +777,7 @@ foreach ($certificateTypes as $cert) {
                             <div class="resident-input-group">
 <input type="text" id="gmrcResidentName" class="form-control cert-input" placeholder="Select resident" autocomplete="off" required>
                                 <input type="hidden" id="gmrcResidentId">
-                                <button type="button" class="btn btn-primary btn-resident" id="gmrcResidentBtn"><i class="fas fa-user"></i> RESIDENT</button>
+                                <button type="button" class="btn btn-primary btn-resident" id="gmrcResidentBtn"><i class="fas fa-user"></i> </button>
                             </div>
                             <div class="resident-dropdown" id="gmrcResidentDropdown" style="display:none;"></div>
                         </div>
@@ -785,8 +787,9 @@ foreach ($certificateTypes as $cert) {
                         <input type="date" id="gmrcDate" class="form-control cert-input" value="<?php echo date('Y-m-d'); ?>" required>
                     </div>
                     <div class="cert-field-group">
-                        <label class="cert-field-label">PURPOSE</label>
-                        <select id="gmrcPurpose" class="form-control cert-input">
+                        <label class="cert-field-label">PURPOSE <span class="required-star">*</span></label>
+                        <select id="gmrcPurpose" class="form-control cert-input" required>
+                              <option value="" disabled>Select purpose type</option>
                             <option value="EDUCATIONAL">EDUCATIONAL</option>
                             <option value="DEPED RANKING">DEPED RANKING</option>
                             <option value="BOARD EXAMINATION">BOARD EXAMINATION</option>
@@ -821,7 +824,7 @@ foreach ($certificateTypes as $cert) {
                             <div class="resident-input-group">
 <input type="text" id="oathResidentName" class="form-control cert-input" placeholder="Select resident" autocomplete="off" required>
                                 <input type="hidden" id="oathResidentId">
-                                <button type="button" class="btn btn-primary btn-resident" id="oathResidentBtn"><i class="fas fa-user"></i> RESIDENT</button>
+                                <button type="button" class="btn btn-primary btn-resident" id="oathResidentBtn"><i class="fas fa-user"></i> </button>
                             </div>
                             <div class="resident-dropdown" id="oathResidentDropdown" style="display:none;"></div>
                         </div>
@@ -863,7 +866,7 @@ foreach ($certificateTypes as $cert) {
                             <div class="resident-input-group">
 <input type="text" id="brgyClearanceResidentName" class="form-control cert-input" placeholder="Select resident" autocomplete="off" required>
                                 <input type="hidden" id="brgyClearanceResidentId">
-                                <button type="button" class="btn btn-primary btn-resident" id="brgyClearanceResidentBtn"><i class="fas fa-user"></i> RESIDENT</button>
+                                <button type="button" class="btn btn-primary btn-resident" id="brgyClearanceResidentBtn"><i class="fas fa-user"></i> </button>
                             </div>
                             <div class="resident-dropdown" id="brgyClearanceResidentDropdown" style="display:none;"></div>
                         </div>
@@ -873,8 +876,8 @@ foreach ($certificateTypes as $cert) {
                         <input type="date" id="brgyClearanceDate" class="form-control cert-input" value="<?php echo date('Y-m-d'); ?>" required>
                     </div>
                     <div class="cert-field-group">
-                        <label class="cert-field-label">PURPOSE</label>
-                        <select id="brgyClearancePurpose" class="form-control cert-input">
+                        <label class="cert-field-label">PURPOSE <span class="required-star">*</span></label>
+                        <select id="brgyClearancePurpose" class="form-control cert-input" required>
                             <option value="">Select purpose</option>
                             <option value="FISHING PERMIT">FISHING PERMIT</option>
                             <option value="FOR EMPLOYMENT">FOR EMPLOYMENT</option>
@@ -917,7 +920,7 @@ foreach ($certificateTypes as $cert) {
                             <div class="resident-input-group">
                                 <input type="text" id="brgyBusinessClearanceResidentName" class="form-control cert-input" placeholder="Select resident" autocomplete="off" required>
                                 <input type="hidden" id="brgyBusinessClearanceResidentId">
-                                <button type="button" class="btn btn-primary btn-resident" id="brgyBusinessClearanceResidentBtn"><i class="fas fa-user"></i> RESIDENT</button>
+                                <button type="button" class="btn btn-primary btn-resident" id="brgyBusinessClearanceResidentBtn"><i class="fas fa-user"></i> </button>
                             </div>
                             <div class="resident-dropdown" id="brgyBusinessClearanceResidentDropdown" style="display:none;"></div>
                         </div>
@@ -927,12 +930,12 @@ foreach ($certificateTypes as $cert) {
                         <input type="text" id="brgyBusinessClearanceBusinessName" class="form-control cert-input" placeholder="Enter business name" required>
                     </div>
                     <div class="cert-field-group">
-                        <label class="cert-field-label">BUSINESS ADDRESS</label>
-                        <input type="text" id="brgyBusinessClearanceBusinessAddress" class="form-control cert-input" placeholder="Enter business address">
+                        <label class="cert-field-label">BUSINESS ADDRESS <span class="required-star">*</span></label>
+                        <input type="text" id="brgyBusinessClearanceBusinessAddress" class="form-control cert-input" placeholder="Enter business address" required>
                     </div>
                     <div class="cert-field-group">
-                        <label class="cert-field-label">NATURE OF BUSINESS</label>
-                        <select id="brgyBusinessClearanceNature" class="form-control cert-input">
+                        <label class="cert-field-label">NATURE OF BUSINESS <span class="required-star">*</span></label>
+                        <select id="brgyBusinessClearanceNature" class="form-control cert-input" required>
                             <option value="">Select nature of business</option>
                             <option value="RETAIL">RETAIL</option>
                             <option value="WHOLESALE">WHOLESALE</option>
@@ -976,7 +979,7 @@ foreach ($certificateTypes as $cert) {
                             <div class="resident-input-group">
                                 <input type="text" id="businessPermitResidentName" class="form-control cert-input" placeholder="Select resident" autocomplete="off" required>
                                 <input type="hidden" id="businessPermitResidentId">
-                                <button type="button" class="btn btn-primary btn-resident" id="businessPermitResidentBtn"><i class="fas fa-user"></i> RESIDENT</button>
+                                <button type="button" class="btn btn-primary btn-resident" id="businessPermitResidentBtn"><i class="fas fa-user"></i> </button>
                             </div>
                             <div class="resident-dropdown" id="businessPermitResidentDropdown" style="display:none;"></div>
                         </div>
@@ -987,12 +990,12 @@ foreach ($certificateTypes as $cert) {
 
                     </div>
                     <div class="cert-field-group">
-                        <label class="cert-field-label">BUSINESS ADDRESS</label>
-                        <input type="text" id="businessPermitBusinessAddress" class="form-control cert-input" placeholder="Enter business address">
+                        <label class="cert-field-label">BUSINESS ADDRESS <span class="required-star">*</span></label>
+                        <input type="text" id="businessPermitBusinessAddress" class="form-control cert-input" placeholder="Enter business address"  required>
                     </div>
                     <div class="cert-field-group">
-                        <label class="cert-field-label">NATURE OF BUSINESS</label>
-                        <select id="businessPermitNature" class="form-control cert-input">
+                        <label class="cert-field-label">NATURE OF BUSINESS <span class="required-star">*</span></label>
+                        <select id="businessPermitNature" class="form-control cert-input" required>
                             <option value="">Select nature of business</option>
                             <option value="RETAIL">RETAIL</option>
                             <option value="WHOLESALE">WHOLESALE</option>
@@ -1036,7 +1039,7 @@ foreach ($certificateTypes as $cert) {
                             <div class="resident-input-group">
 <input type="text" id="vesselDockingResidentName" class="form-control cert-input" placeholder="Select resident" autocomplete="off" required>
                                 <input type="hidden" id="vesselDockingResidentId">
-                                <button type="button" class="btn btn-primary btn-resident" id="vesselDockingResidentBtn"><i class="fas fa-user"></i> RESIDENT</button>
+                                <button type="button" class="btn btn-primary btn-resident" id="vesselDockingResidentBtn"><i class="fas fa-user"></i> </button>
                             </div>
                             <div class="resident-dropdown" id="vesselDockingResidentDropdown" style="display:none;"></div>
                         </div>

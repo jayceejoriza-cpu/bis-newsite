@@ -356,7 +356,7 @@ document.addEventListener('DOMContentLoaded', function () {
             if (remaining > 0) {
                 limitBadge = `<span class="resident-dropdown-limit">${remaining}/${limit} available</span>`;
             } else {
-                limitBadge = '<span class="resident-dropdown-limit">Limit reached</span>';
+                limitBadge = '<span class="resident-dropdown-limit badge bg-danger text-white">Limit reached</span>';
             }
 
             item.innerHTML = `
@@ -479,6 +479,10 @@ document.addEventListener('DOMContentLoaded', function () {
             // NEW: Grab tab selection and minor ID
             const requestType = requestTypeInput ? requestTypeInput.value : 'self';
             const minorId     = minorIdInput     ? minorIdInput.value.trim()  : '';
+
+            if (!residentId) { alert('Please select a resident from the list.'); return; }
+            if (!date) { alert('Please select a date.'); return; }
+            if (!assistance) { alert('Please enter the assistance type.'); return; }
 
             if (!residentId) {
                 // Ensure this original error function is still called
@@ -603,7 +607,7 @@ document.addEventListener('DOMContentLoaded', function () {
             if (remaining > 0) {
                 limitBadge = `<span class="resident-dropdown-limit">${remaining}/${limit} available</span>`;
             } else {
-                limitBadge = '<span class="resident-dropdown-limit">Limit reached</span>';
+                limitBadge = '<span class="resident-dropdown-limit badge bg-danger text-white">Limit reached</span>';
             }
 
             item.innerHTML = `
@@ -638,6 +642,10 @@ document.addEventListener('DOMContentLoaded', function () {
             const residentId = residencyIdInput      ? residencyIdInput.value.trim()      : '';
             const date       = residencyDateInput    ? residencyDateInput.value.trim()    : '';
             const purpose    = residencyPurposeInput ? residencyPurposeInput.value.trim() : '';
+            
+            if (!residentId) { alert('Please select a resident from the list.'); return; }
+            if (!date) { alert('Please select a date.'); return; }
+            if (!purpose) { alert('Please enter the purpose type.'); return; }
 
             if (!residentId) { showResidencyError('Please select a resident from the list.'); if (residencyNameInput) residencyNameInput.focus(); return; }
             if (!date) { if (residencyDateInput) { residencyDateInput.classList.add('is-invalid'); residencyDateInput.focus(); } return; }
@@ -785,7 +793,7 @@ document.addEventListener('DOMContentLoaded', function () {
             if (remaining > 0) {
                 limitBadge = `<span class="resident-dropdown-limit">${remaining}/${limit} available</span>`;
             } else {
-                limitBadge = '<span class="resident-dropdown-limit">Limit reached</span>';
+                limitBadge = '<span class="resident-dropdown-limit badge bg-danger text-white">Limit reached</span>';
             }
 
             item.innerHTML = `
@@ -837,6 +845,11 @@ document.addEventListener('DOMContentLoaded', function () {
             var boatName   = fishingBoatNameInput ? fishingBoatNameInput.value.trim() : '';
             var date       = fishingDateInput    ? fishingDateInput.value.trim()    : '';
             var purpose    = fishingPurposeInput ? fishingPurposeInput.value.trim() : '';
+
+            if (!residentId) { alert('Please select a resident from the list.'); return; }
+            if (!boatName) { alert('Please enter the boat name.'); return; }
+            if (!date) { alert('Please select a date.'); return; }
+            if (!purpose) { alert('Please enter the purpose type.'); return; }
 
             if (!residentId) {
                 showFishingError('Please select a resident from the list.');
@@ -937,7 +950,7 @@ document.addEventListener('DOMContentLoaded', function () {
             if (remaining > 0) {
                 limitBadge = `<span class="resident-dropdown-limit">${remaining}/${limit} available</span>`;
             } else {
-                limitBadge = '<span class="resident-dropdown-limit">Limit reached</span>';
+                limitBadge = '<span class="resident-dropdown-limit badge bg-danger text-white">Limit reached</span>';
             }
 
             item.innerHTML = `
@@ -989,9 +1002,8 @@ document.addEventListener('DOMContentLoaded', function () {
             var date       = ftJobseekerDateInput    ? ftJobseekerDateInput.value.trim()    : '';
             var purpose    = ftJobseekerPurposeInput ? ftJobseekerPurposeInput.value.trim() : '';
 
-            if (!residentId) { showFtJobseekerError('Please select a resident from the list.'); if (ftJobseekerNameInput) ftJobseekerNameInput.focus(); return; }
-            if (!date) { if (ftJobseekerDateInput) { ftJobseekerDateInput.classList.add('is-invalid'); ftJobseekerDateInput.focus(); } return; }
-            else { if (ftJobseekerDateInput) ftJobseekerDateInput.classList.remove('is-invalid'); }
+            if (!residentId) { alert('Please select a resident from the list.'); return; }
+            if (!date) { alert('Please select a date.'); return; }
 
             var params = new URLSearchParams({ resident_id: residentId, date: date, purpose: purpose });
             logCertificateRequest(residentId, 'ftjobseeker', purpose, function() {
@@ -1020,7 +1032,7 @@ document.addEventListener('DOMContentLoaded', function () {
             if (gmrcIdInput)      gmrcIdInput.value      = '';
             if (gmrcDropdown)     { gmrcDropdown.innerHTML = ''; gmrcDropdown.style.display = 'none'; }
             if (gmrcDateInput)    gmrcDateInput.value    = getTodayDate();
-            if (gmrcPurposeInput)  gmrcPurposeInput.value = 'Good Moral Character Verification';
+            if (gmrcPurposeInput)  gmrcPurposeInput.value = '';
             clearGmrcError();
         });
     }
@@ -1080,7 +1092,7 @@ document.addEventListener('DOMContentLoaded', function () {
             if (remaining > 0) {
                 limitBadge = `<span class="resident-dropdown-limit">${remaining}/${limit} available</span>`;
             } else {
-                limitBadge = '<span class="resident-dropdown-limit">Limit reached</span>';
+                limitBadge = '<span class="resident-dropdown-limit badge bg-danger text-white">Limit reached</span>';
             }
 
             item.innerHTML = `
@@ -1132,9 +1144,9 @@ document.addEventListener('DOMContentLoaded', function () {
             var date       = gmrcDateInput    ? gmrcDateInput.value.trim()    : '';
             var purpose    = gmrcPurposeInput ? gmrcPurposeInput.value.trim() : '';
 
-            if (!residentId) { showGmrcError('Please select a resident from the list.'); if (gmrcNameInput) gmrcNameInput.focus(); return; }
-            if (!date) { if (gmrcDateInput) { gmrcDateInput.classList.add('is-invalid'); gmrcDateInput.focus(); } return; }
-            else { if (gmrcDateInput) gmrcDateInput.classList.remove('is-invalid'); }
+             if (!residentId) { alert('Please select a resident from the list.'); return; }
+            if (!date) { alert('Please select a date.'); return; }
+            if (!purpose) { alert('Please enter the purpose type.'); return; }
 
             var params = new URLSearchParams({ resident_id: residentId, date: date, purpose: purpose });
             logCertificateRequest(residentId, 'gmrc', purpose, function() {
@@ -1223,7 +1235,7 @@ document.addEventListener('DOMContentLoaded', function () {
             if (remaining > 0) {
                 limitBadge = `<span class="resident-dropdown-limit">${remaining}/${limit} available</span>`;
             } else {
-                limitBadge = '<span class="resident-dropdown-limit">Limit reached</span>';
+                limitBadge = '<span class="resident-dropdown-limit badge bg-danger text-white">Limit reached</span>';
             }
 
             item.innerHTML = `
@@ -1274,10 +1286,10 @@ document.addEventListener('DOMContentLoaded', function () {
             var residentId = oathIdInput      ? oathIdInput.value.trim()      : '';
             var date       = oathDateInput    ? oathDateInput.value.trim()    : '';
             var purpose    = oathPurposeInput ? oathPurposeInput.value.trim() : '';
-
-            if (!residentId) { showOathError('Please select a resident from the list.'); if (oathNameInput) oathNameInput.focus(); return; }
-            if (!date) { if (oathDateInput) { oathDateInput.classList.add('is-invalid'); oathDateInput.focus(); } return; }
-            else { if (oathDateInput) oathDateInput.classList.remove('is-invalid'); }
+            
+            if (!residentId) { alert('Please select a resident from the list.'); return; }
+            if (!date) { alert('Please select a date.'); return; }
+            if (!purpose) { alert('Please enter the purpose type.'); return; }
 
             var params = new URLSearchParams({ resident_id: residentId, date: date, purpose: purpose });
             logCertificateRequest(residentId, 'oath', purpose, function() {
@@ -1314,7 +1326,7 @@ if (lowIncomeModalEl) {
         if (lowIncomeWorkInput)    lowIncomeWorkInput.value    = '';
         if (lowIncomeAmountInput)  lowIncomeAmountInput.value  = '';
         if (lowIncomeYearInput)    lowIncomeYearInput.value    = new Date().getFullYear();
-        if (lowIncomePurposeInput) lowIncomePurposeInput.value = 'MEDICAL';
+        if (lowIncomePurposeInput) lowIncomePurposeInput.value = '';
         
         if (lowIncomeDropdown) { 
             lowIncomeDropdown.innerHTML = ''; 
@@ -1408,7 +1420,7 @@ function renderLowIncomeDropdown(residents, certType) {
         
         var limitBadge = remaining > 0 
             ? `<span class="resident-dropdown-limit">${remaining}/${limit} available</span>`
-            : `<span class="resident-dropdown-limit text-danger">Limit reached</span>`;
+            : `<span class="resident-dropdown-limit badge bg-danger text-white">Limit reached</span>`;
 
         var safeEscape = (typeof escapeHtml === 'function') ? escapeHtml : function(str) { return str; };
 
@@ -1479,36 +1491,13 @@ if (lowIncomePrintBtn) {
         var purpose    = lowIncomePurposeInput ? lowIncomePurposeInput.value.trim() : '';
         var date       = lowIncomeDateInput    ? lowIncomeDateInput.value.trim()    : '';
 
-        // Validation Checks
-        if (!residentId) { 
-            showLowIncomeError('Please select a resident from the list.'); 
-            if (lowIncomeNameInput) lowIncomeNameInput.focus(); 
-            return; 
-        }
-        
-        if (!workType) { 
-            if (lowIncomeWorkInput) { 
-                lowIncomeWorkInput.classList.add('is-invalid'); 
-                lowIncomeWorkInput.focus(); 
-            } 
-            return; 
-        }
+         if (!residentId) { alert('Please select a resident from the list.'); return; }
+         if (!workType) { alert('Please enter the work type.'); return; }
+         if (!workYear) { alert('Please enter the work year.'); return; }
+         if (!income) { alert('Please enter the income.'); return; }
+         if (!date) { alert('Please select a date.'); return; }
+         if (!purpose) { alert('Please enter the purpose type.'); return; }
 
-        if (!income) { 
-            if (lowIncomeAmountInput) { 
-                lowIncomeAmountInput.classList.add('is-invalid'); 
-                lowIncomeAmountInput.focus(); 
-            } 
-            return; 
-        }
-        
-        if (!date) { 
-            if (lowIncomeDateInput) { 
-                lowIncomeDateInput.classList.add('is-invalid'); 
-                lowIncomeDateInput.focus(); 
-            } 
-            return; 
-        }
 
         // Create URL Parameters including ALL new fields
         var params = new URLSearchParams({
@@ -1550,7 +1539,7 @@ if (lowIncomePrintBtn) {
             if (soloParentIdInput) soloParentIdInput.value = '';
             if (soloParentDropdown) { soloParentDropdown.innerHTML = ''; soloParentDropdown.style.display = 'none'; }
             if (soloParentDateInput) soloParentDateInput.value = getTodayDate();
-            if (soloParentPurposeInput) soloParentPurposeInput.value = 'Solo Parent Verification';
+            if (soloParentPurposeInput) soloParentPurposeInput.value = 'Solo Parent';
         });
     }
 
@@ -1605,7 +1594,7 @@ if (lowIncomePrintBtn) {
             if (remaining > 0) {
                 limitBadge = `<span class="resident-dropdown-limit">${remaining}/${limit} available</span>`;
             } else {
-                limitBadge = '<span class="resident-dropdown-limit">Limit reached</span>';
+                limitBadge = '<span class="resident-dropdown-limit badge bg-danger text-white">Limit reached</span>';
             }
 
             item.innerHTML = `
@@ -1639,404 +1628,17 @@ if (lowIncomePrintBtn) {
             var residentId = soloParentIdInput ? soloParentIdInput.value.trim() : '';
             var date = soloParentDateInput ? soloParentDateInput.value.trim() : '';
             var purpose = soloParentPurposeInput ? soloParentPurposeInput.value.trim() : '';
+
             if (!residentId) { alert('Please select a resident from the list.'); return; }
+            if (!date) { alert('Please select a date.'); return; }
+            if (!purpose) { alert('Please enter the purpose type.'); return; }
+            
+            
             var params = new URLSearchParams({ resident_id: residentId, date: date, purpose: purpose });
             logCertificateRequest(residentId, 'soloparent', purpose, function() {
                 window.location.href = 'certifications/certificate-soloparent.php?' + params.toString();
             });
         });
-    }
-
-    // ============================================
-    // Registration of Birth Certificate (RBC) Modal Logic
-    // ============================================
-    var rbcNameInput = document.getElementById('rbcResidentName');
-    var rbcIdInput = document.getElementById('rbcResidentId');
-    var rbcDropdown = document.getElementById('rbcResidentDropdown');
-    var rbcResidentBtn = document.getElementById('rbcResidentBtn');
-    var rbcPrintBtn = document.getElementById('rbcPrintBtn');
-    var rbcModalEl = document.getElementById('rbcModal');
-
-    if (rbcModalEl) {
-        rbcModalEl.addEventListener('show.bs.modal', function () {
-            if (rbcNameInput) rbcNameInput.value = '';
-            if (rbcIdInput) rbcIdInput.value = '';
-            if (rbcDropdown) { rbcDropdown.innerHTML = ''; rbcDropdown.style.display = 'none'; }
-        });
-    }
-
-    if (rbcNameInput) {
-        rbcNameInput.addEventListener('input', function () {
-            if (rbcIdInput) rbcIdInput.value = '';
-            var term = this.value.trim();
-            clearTimeout(rbcSearchTimeout);
-            if (term.length < 1) { hideRbcDropdown(); return; }
-            rbcSearchTimeout = setTimeout(function () { searchRbcResidents(term, 'rbc'); }, 250);
-        });
-    }
-
-    if (rbcResidentBtn) {
-        rbcResidentBtn.addEventListener('click', function (e) {
-            e.stopPropagation();
-            if (rbcNameInput) { rbcNameInput.value = ''; rbcNameInput.focus(); }
-            if (rbcIdInput) rbcIdInput.value = '';
-            hideRbcDropdown();
-        });
-    }
-
-    document.addEventListener('click', function (e) {
-        if (rbcDropdown && rbcDropdown.parentElement && !rbcDropdown.parentElement.contains(e.target)) { hideRbcDropdown(); }
-    });
-
-    function searchRbcResidents(term, certType) {
-         fetch('model/search_residents.php?search=' + encodeURIComponent(term) + '&certificate_type=' + encodeURIComponent(certType) + '&filter=adult')
-            .then(function (res) { return res.json(); })
-            .then(function (data) {
-                var results = data.residents || data.data;
-                if (data.success && results) { renderRbcDropdown(results, certType); }
-                else { hideRbcDropdown(); }
-            })
-            .catch(function () { hideRbcDropdown(); });
-    }
-
-    function renderRbcDropdown(residents, certType) {
-        if (!rbcDropdown) return;
-        var limit = getCertificateLimit(certType);
-        if (residents.length === 0) { rbcDropdown.innerHTML = '<div class="resident-dropdown-empty">No resident found.</div>'; rbcDropdown.style.display = 'block'; return; }
-        rbcDropdown.innerHTML = '';
-        residents.forEach(function (r) {
-            var limitInfo = r.resident_limits ? r.resident_limits[certType] : null;
-            var used = limitInfo ? limitInfo.used : 0;
-            var remaining = limit - used;
-            var isDisabled = remaining <= 0;
-            var item = document.createElement('div');
-            item.className = 'resident-dropdown-item' + (isDisabled ? ' disabled' : '');
-            
-            var limitBadge = '';
-            if (remaining > 0) {
-                limitBadge = `<span class="resident-dropdown-limit">${remaining}/${limit} available</span>`;
-            } else {
-                limitBadge = '<span class="resident-dropdown-limit">Limit reached</span>';
-            }
-
-            item.innerHTML = `
-                <div class="resident-dropdown-info">
-                    <span class="resident-dropdown-id">${escapeHtml(r.resident_id || '')}</span>
-                    <span class="resident-dropdown-name">${escapeHtml(r.full_name.trim())}</span>
-                </div>
-                ${limitBadge}
-            `;
-            
-            if (!isDisabled) {
-                item.addEventListener('mousedown', function (e) { e.preventDefault(); selectRbcResident(r); });
-            }
-            rbcDropdown.appendChild(item);
-        });
-        rbcDropdown.style.display = 'block';
-    }
-
-    function selectRbcResident(resident) {
-        if (rbcNameInput) rbcNameInput.value = resident.full_name.trim();
-        if (rbcIdInput) rbcIdInput.value = resident.id;
-        // Store the selected parent ID to exclude from child search
-        rbcSelectedParentId = resident.id;
-        hideRbcDropdown();
-    }
-
-    function hideRbcDropdown() {
-        if (rbcDropdown) { rbcDropdown.style.display = 'none'; rbcDropdown.innerHTML = ''; }
-    }
-
-    // ============================================
-    // Barangay Clearance Modal Logic
-    // ============================================
-    var brgyClearanceNameInput = document.getElementById('brgyClearanceResidentName');
-    var brgyClearanceIdInput = document.getElementById('brgyClearanceResidentId');
-    var brgyClearanceDropdown = document.getElementById('brgyClearanceResidentDropdown');
-    var brgyClearancePrintBtn = document.getElementById('brgyClearancePrintBtn');
-    var brgyClearanceModalEl = document.getElementById('brgyClearanceModal');
-
-    if (brgyClearanceModalEl) {
-        brgyClearanceModalEl.addEventListener('show.bs.modal', function () {
-            if (brgyClearanceNameInput) brgyClearanceNameInput.value = '';
-            if (brgyClearanceIdInput) brgyClearanceIdInput.value = '';
-            if (brgyClearanceDropdown) { brgyClearanceDropdown.innerHTML = ''; brgyClearanceDropdown.style.display = 'none'; }
-        });
-    }
-
-    if (brgyClearanceNameInput) {
-        brgyClearanceNameInput.addEventListener('input', function () {
-            if (brgyClearanceIdInput) brgyClearanceIdInput.value = '';
-            var term = this.value.trim();
-            clearTimeout(brgyClearanceSearchTimeout);
-            if (term.length < 1) { hideBrgyClearanceDropdown(); return; }
-            brgyClearanceSearchTimeout = setTimeout(function () { searchBrgyClearanceResidents(term, 'brgyclearance'); }, 250);
-        });
-    }
-
-    if (brgyClearanceResidentBtn) {
-        brgyClearanceResidentBtn.addEventListener('click', function (e) {
-            e.stopPropagation();
-            if (brgyClearanceNameInput) { brgyClearanceNameInput.value = ''; brgyClearanceNameInput.focus(); }
-            if (brgyClearanceIdInput) brgyClearanceIdInput.value = '';
-            hideBrgyClearanceDropdown();
-        });
-    }
-
-    document.addEventListener('click', function (e) {
-        if (brgyClearanceDropdown && brgyClearanceDropdown.parentElement && !brgyClearanceDropdown.parentElement.contains(e.target)) { hideBrgyClearanceDropdown(); }
-    });
-
-    function searchBrgyClearanceResidents(term, certType) {
-         fetch('model/search_residents.php?search=' + encodeURIComponent(term) + '&certificate_type=' + encodeURIComponent(certType) + '&filter=adult')
-            .then(function (res) { return res.json(); })
-            .then(function (data) {
-                var results = data.residents || data.data;
-                if (data.success && results) { renderBrgyClearanceDropdown(results, certType); }
-                else { hideBrgyClearanceDropdown(); }
-            })
-            .catch(function () { hideBrgyClearanceDropdown(); });
-    }
-
-    function renderBrgyClearanceDropdown(residents, certType) {
-        if (!brgyClearanceDropdown) return;
-        var limit = getCertificateLimit(certType);
-        if (residents.length === 0) { brgyClearanceDropdown.innerHTML = '<div class="resident-dropdown-empty">No resident found.</div>'; brgyClearanceDropdown.style.display = 'block'; return; }
-        brgyClearanceDropdown.innerHTML = '';
-        residents.forEach(function (r) {
-            var limitInfo = r.resident_limits ? r.resident_limits[certType] : null;
-            var used = limitInfo ? limitInfo.used : 0;
-            var remaining = limit - used;
-            var isDisabled = remaining <= 0;
-            var item = document.createElement('div');
-            item.className = 'resident-dropdown-item' + (isDisabled ? ' disabled' : '');
-            
-            var limitBadge = '';
-            if (remaining > 0) {
-                limitBadge = `<span class="resident-dropdown-limit">${remaining}/${limit} available</span>`;
-            } else {
-                limitBadge = '<span class="resident-dropdown-limit">Limit reached</span>';
-            }
-
-            item.innerHTML = `
-                <div class="resident-dropdown-info">
-                    <span class="resident-dropdown-id">${escapeHtml(r.resident_id || '')}</span>
-                    <span class="resident-dropdown-name">${escapeHtml(r.full_name.trim())}</span>
-                </div>
-                ${limitBadge}
-            `;
-            
-            if (!isDisabled) {
-                item.addEventListener('mousedown', function (e) { e.preventDefault(); selectBrgyClearanceResident(r); });
-            }
-            brgyClearanceDropdown.appendChild(item);
-        });
-        brgyClearanceDropdown.style.display = 'block';
-    }
-
-    function selectBrgyClearanceResident(resident) {
-        if (brgyClearanceNameInput) brgyClearanceNameInput.value = resident.full_name.trim();
-        if (brgyClearanceIdInput) brgyClearanceIdInput.value = resident.id;
-        hideBrgyClearanceDropdown();
-    }
-
-    function hideBrgyClearanceDropdown() {
-        if (brgyClearanceDropdown) { brgyClearanceDropdown.style.display = 'none'; brgyClearanceDropdown.innerHTML = ''; }
-    }
-
-    // ============================================
-    // Barangay Business Clearance Modal Logic
-    // ============================================
-    var brgyBusinessNameInput = document.getElementById('brgyBusinessClearanceResidentName');
-    var brgyBusinessIdInput = document.getElementById('brgyBusinessClearanceResidentId');
-    var brgyBusinessDropdown = document.getElementById('brgyBusinessClearanceResidentDropdown');
-    var brgyBusinessPrintBtn = document.getElementById('brgyBusinessClearancePrintBtn');
-    var brgyBusinessModalEl = document.getElementById('brgyBusinessClearanceModal');
-
-    if (brgyBusinessModalEl) {
-        brgyBusinessModalEl.addEventListener('show.bs.modal', function () {
-            if (brgyBusinessNameInput) brgyBusinessNameInput.value = '';
-            if (brgyBusinessIdInput) brgyBusinessIdInput.value = '';
-            if (brgyBusinessDropdown) { brgyBusinessDropdown.innerHTML = ''; brgyBusinessDropdown.style.display = 'none'; }
-        });
-    }
-
-    if (brgyBusinessNameInput) {
-        brgyBusinessNameInput.addEventListener('input', function () {
-            if (brgyBusinessIdInput) brgyBusinessIdInput.value = '';
-            var term = this.value.trim();
-            clearTimeout(brgyBusinessSearchTimeout);
-            if (term.length < 1) { hideBrgyBusinessDropdown(); return; }
-            brgyBusinessSearchTimeout = setTimeout(function () { searchBrgyBusinessResidents(term, 'brgybusinessclearance'); }, 250);
-        });
-    }
-
-    if (brgyBusinessResidentBtn) {
-        brgyBusinessResidentBtn.addEventListener('click', function (e) {
-            e.stopPropagation();
-            if (brgyBusinessNameInput) { brgyBusinessNameInput.value = ''; brgyBusinessNameInput.focus(); }
-            if (brgyBusinessIdInput) brgyBusinessIdInput.value = '';
-            hideBrgyBusinessDropdown();
-        });
-    }
-
-    document.addEventListener('click', function (e) {
-        if (brgyBusinessDropdown && brgyBusinessDropdown.parentElement && !brgyBusinessDropdown.parentElement.contains(e.target)) { hideBrgyBusinessDropdown(); }
-    });
-
-    function searchBrgyBusinessResidents(term, certType) {
-         fetch('model/search_residents.php?search=' + encodeURIComponent(term) + '&certificate_type=' + encodeURIComponent(certType) + '&filter=adult')
-            .then(function (res) { return res.json(); })
-            .then(function (data) {
-                var results = data.residents || data.data;
-                if (data.success && results) { renderBrgyBusinessDropdown(results, certType); }
-                else { hideBrgyBusinessDropdown(); }
-            })
-            .catch(function () { hideBrgyBusinessDropdown(); });
-    }
-
-    function renderBrgyBusinessDropdown(residents, certType) {
-        if (!brgyBusinessDropdown) return;
-        var limit = getCertificateLimit(certType);
-        if (residents.length === 0) { brgyBusinessDropdown.innerHTML = '<div class="resident-dropdown-empty">No resident found.</div>'; brgyBusinessDropdown.style.display = 'block'; return; }
-        brgyBusinessDropdown.innerHTML = '';
-        residents.forEach(function (r) {
-            var limitInfo = r.resident_limits ? r.resident_limits[certType] : null;
-            var used = limitInfo ? limitInfo.used : 0;
-            var remaining = limit - used;
-            var isDisabled = remaining <= 0;
-            var item = document.createElement('div');
-            item.className = 'resident-dropdown-item' + (isDisabled ? ' disabled' : '');
-            
-            var limitBadge = '';
-            if (remaining > 0) {
-                limitBadge = `<span class="resident-dropdown-limit">${remaining}/${limit} available</span>`;
-            } else {
-                limitBadge = '<span class="resident-dropdown-limit">Limit reached</span>';
-            }
-
-            item.innerHTML = `
-                <div class="resident-dropdown-info">
-                    <span class="resident-dropdown-id">${escapeHtml(r.resident_id || '')}</span>
-                    <span class="resident-dropdown-name">${escapeHtml(r.full_name.trim())}</span>
-                </div>
-                ${limitBadge}
-            `;
-            
-            if (!isDisabled) {
-                item.addEventListener('mousedown', function (e) { e.preventDefault(); selectBrgyBusinessResident(r); });
-            }
-            brgyBusinessDropdown.appendChild(item);
-        });
-        brgyBusinessDropdown.style.display = 'block';
-    }
-
-    function selectBrgyBusinessResident(resident) {
-        if (brgyBusinessNameInput) brgyBusinessNameInput.value = resident.full_name.trim();
-        if (brgyBusinessIdInput) brgyBusinessIdInput.value = resident.id;
-        hideBrgyBusinessDropdown();
-    }
-
-    function hideBrgyBusinessDropdown() {
-        if (brgyBusinessDropdown) { brgyBusinessDropdown.style.display = 'none'; brgyBusinessDropdown.innerHTML = ''; }
-    }
-
-    // ============================================
-    // Business Permit Modal Logic
-    // ============================================
-    var businessPermitNameInput = document.getElementById('businessPermitResidentName');
-    var businessPermitIdInput = document.getElementById('businessPermitResidentId');
-    var businessPermitDropdown = document.getElementById('businessPermitResidentDropdown');
-    var businessPermitPrintBtn = document.getElementById('businessPermitPrintBtn');
-    var businessPermitModalEl = document.getElementById('businessPermitModal');
-
-    if (businessPermitModalEl) {
-        businessPermitModalEl.addEventListener('show.bs.modal', function () {
-            if (businessPermitNameInput) businessPermitNameInput.value = '';
-            if (businessPermitIdInput) businessPermitIdInput.value = '';
-            if (businessPermitDropdown) { businessPermitDropdown.innerHTML = ''; businessPermitDropdown.style.display = 'none'; }
-        });
-    }
-
-    var businessPermitResidentBtn = document.getElementById('businessPermitResidentBtn');
-    if (businessPermitNameInput) {
-        businessPermitNameInput.addEventListener('input', function () {
-            if (businessPermitIdInput) businessPermitIdInput.value = '';
-            var term = this.value.trim();
-            clearTimeout(businessPermitSearchTimeout);
-            if (term.length < 1) { hideBusinessPermitDropdown(); return; }
-            businessPermitSearchTimeout = setTimeout(function () { searchBusinessPermitResidents(term, 'businesspermit'); }, 250);
-        });
-    }
-
-    if (businessPermitResidentBtn) {
-        businessPermitResidentBtn.addEventListener('click', function (e) {
-            e.stopPropagation();
-            if (businessPermitNameInput) { businessPermitNameInput.value = ''; businessPermitNameInput.focus(); }
-            if (businessPermitIdInput) businessPermitIdInput.value = '';
-            hideBusinessPermitDropdown();
-        });
-    }
-
-    document.addEventListener('click', function (e) {
-        if (businessPermitDropdown && businessPermitDropdown.parentElement && !businessPermitDropdown.parentElement.contains(e.target)) { hideBusinessPermitDropdown(); }
-    });
-
-    function searchBusinessPermitResidents(term, certType) {
-         fetch('model/search_residents.php?search=' + encodeURIComponent(term) + '&certificate_type=' + encodeURIComponent(certType) + '&filter=adult')
-            .then(function (res) { return res.json(); })
-            .then(function (data) {
-                var results = data.residents || data.data;
-                if (data.success && results) { renderBusinessPermitDropdown(results, certType); }
-                else { hideBusinessPermitDropdown(); }
-            })
-            .catch(function () { hideBusinessPermitDropdown(); });
-    }
-
-    function renderBusinessPermitDropdown(residents, certType) {
-        if (!businessPermitDropdown) return;
-        var limit = getCertificateLimit(certType);
-        if (residents.length === 0) { businessPermitDropdown.innerHTML = '<div class="resident-dropdown-empty">No resident found.</div>'; businessPermitDropdown.style.display = 'block'; return; }
-        businessPermitDropdown.innerHTML = '';
-        residents.forEach(function (r) {
-            var limitInfo = r.resident_limits ? r.resident_limits[certType] : null;
-            var used = limitInfo ? limitInfo.used : 0;
-            var remaining = limit - used;
-            var isDisabled = remaining <= 0;
-            var item = document.createElement('div');
-            item.className = 'resident-dropdown-item' + (isDisabled ? ' disabled' : '');
-            
-            var limitBadge = '';
-            if (remaining > 0) {
-                limitBadge = `<span class="resident-dropdown-limit">${remaining}/${limit} available</span>`;
-            } else {
-                limitBadge = '<span class="resident-dropdown-limit">Limit reached</span>';
-            }
-
-            item.innerHTML = `
-                <div class="resident-dropdown-info">
-                    <span class="resident-dropdown-id">${escapeHtml(r.resident_id || '')}</span>
-                    <span class="resident-dropdown-name">${escapeHtml(r.full_name.trim())}</span>
-                </div>
-                ${limitBadge}
-            `;
-            
-            if (!isDisabled) {
-                item.addEventListener('mousedown', function (e) { e.preventDefault(); selectBusinessPermitResident(r); });
-            }
-            businessPermitDropdown.appendChild(item);
-        });
-        businessPermitDropdown.style.display = 'block';
-    }
-
-    function selectBusinessPermitResident(resident) {
-        if (businessPermitNameInput) businessPermitNameInput.value = resident.full_name.trim();
-        if (businessPermitIdInput) businessPermitIdInput.value = resident.id;
-        hideBusinessPermitDropdown();
-    }
-
-    function hideBusinessPermitDropdown() {
-        if (businessPermitDropdown) { businessPermitDropdown.style.display = 'none'; businessPermitDropdown.innerHTML = ''; }
     }
 
     // ============================================
@@ -2118,7 +1720,7 @@ if (lowIncomePrintBtn) {
             if (remaining > 0) {
                 limitBadge = `<span class="resident-dropdown-limit">${remaining}/${limit} available</span>`;
             } else {
-                limitBadge = '<span class="resident-dropdown-limit">Limit reached</span>';
+                limitBadge = '<span class="resident-dropdown-limit badge bg-danger text-white">Limit reached</span>';
             }
 
             item.innerHTML = `
@@ -2157,6 +1759,8 @@ if (lowIncomePrintBtn) {
 
             if (!residentId) { alert('Please select a resident from the list.'); return; }
             if (!vesselName) { alert('Please enter the vessel name.'); return; }
+            if (!fromDate) { alert('Please select a from date.'); return; }
+            if (!toDate) { alert('Please select a to date.'); return; }
             if (!date) { alert('Please select a date.'); return; }
 
             var params = new URLSearchParams({ 
@@ -2237,7 +1841,7 @@ if (lowIncomePrintBtn) {
             if (remaining > 0) {
                 limitBadge = `<span class="resident-dropdown-limit">${remaining}/${limit} available</span>`;
             } else {
-                limitBadge = '<span class="resident-dropdown-limit">Limit reached</span>';
+                limitBadge = '<span class="resident-dropdown-limit badge bg-danger text-white">Limit reached</span>';
             }
 
             item.innerHTML = `
@@ -2276,6 +1880,8 @@ if (lowIncomePrintBtn) {
 
             if (!residentId) { alert('Please select a resident from the list.'); return; }
             if (!businessName) { alert('Please enter the business name.'); return; }
+            if (!businessAddress) { alert('Please enter the business address.'); return; }
+            if (!nature) { alert('Please enter the nature of business.'); return; }
             if (!date) { alert('Please select a date.'); return; }
 
             var params = new URLSearchParams({ 
@@ -2356,7 +1962,7 @@ if (lowIncomePrintBtn) {
             if (remaining > 0) {
                 limitBadge = `<span class="resident-dropdown-limit">${remaining}/${limit} available</span>`;
             } else {
-                limitBadge = '<span class="resident-dropdown-limit">Limit reached</span>';
+                limitBadge = '<span class="resident-dropdown-limit badge bg-danger text-white">Limit reached</span>';
             }
 
             item.innerHTML = `
@@ -2395,6 +2001,8 @@ if (lowIncomePrintBtn) {
 
             if (!residentId) { alert('Please select a resident from the list.'); return; }
             if (!businessName) { alert('Please enter the business name.'); return; }
+            if (!businessAddress) { alert('Please enter the business address.'); return; }
+            if (!nature) { alert('Please enter the nature of business.'); return; }
             if (!date) { alert('Please select a date.'); return; }
 
             var params = new URLSearchParams({ 
@@ -2471,7 +2079,7 @@ if (lowIncomePrintBtn) {
             if (remaining > 0) {
                 limitBadge = `<span class="resident-dropdown-limit">${remaining}/${limit} available</span>`;
             } else {
-                limitBadge = '<span class="resident-dropdown-limit">Limit reached</span>';
+                limitBadge = '<span class="resident-dropdown-limit badge bg-danger text-white">Limit reached</span>';
             }
 
             item.innerHTML = `
@@ -2508,6 +2116,8 @@ if (lowIncomePrintBtn) {
 
             if (!residentId) { alert('Please select a resident from the list.'); return; }
             if (!date) { alert('Please select a date.'); return; }
+            if (!purpose) { alert('Please enter the purpose type.'); return; }
+
 
             var params = new URLSearchParams({ 
                 resident_id: residentId, 

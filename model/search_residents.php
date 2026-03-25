@@ -48,7 +48,9 @@ $oneTimeCertificates = [
     'certificate-ft-jobseeker-assistance.php',
     'certificate-oathofundertaking.php',
     'First Time Jobseeker',
-    'Oath of Undertaking'
+    'Oath of Undertaking',
+    'ftjobseeker',
+    'oath'
 ];
 
 // Determine if this is a 1-time only certificate
@@ -150,18 +152,19 @@ try {
         if ($isOneTime) {
             $placeholders = str_repeat('?,', count($residentIds) - 1) . '?';
             $searchTerm1 = '%First Time Jobseeker%';
-            $searchTerm2 = '%Jobseeker%';
+            $searchTerm2 = '%Job%Seeker%';
             $searchTerm3 = '%Oath%';
+            $searchTerm4 = 'ftjobseeker';
             
             $limitSql = "SELECT resident_id, COUNT(*) as used 
                         FROM certificate_requests 
                         WHERE resident_id IN ($placeholders)
-                        AND (certificate_name LIKE ? OR certificate_name LIKE ? OR certificate_name LIKE ?)
+                        AND (certificate_name LIKE ? OR certificate_name LIKE ? OR certificate_name LIKE ? OR certificate_name LIKE ?)
                         GROUP BY resident_id";
             
             $limitStmt = $conn->prepare($limitSql);
-            $params = array_merge($residentIds, [$searchTerm1, $searchTerm2, $searchTerm3]);
-            $limitStmt->bind_param(str_repeat('i', count($residentIds)) . 'sss', ...$params);
+            $params = array_merge($residentIds, [$searchTerm1, $searchTerm2, $searchTerm3, $searchTerm4]);
+            $limitStmt->bind_param(str_repeat('i', count($residentIds)) . 'ssss', ...$params);
         } else {
             $placeholders = str_repeat('?,', count($residentIds) - 1) . '?';
             
