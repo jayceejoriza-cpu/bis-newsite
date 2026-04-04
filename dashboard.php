@@ -260,13 +260,7 @@
                         <div class="special-group-value"><?php echo number_format($specialGroups['seniors']); ?></div>
                         <div class="special-group-label">Senior Citizens</div>
                     </div>
-                    <div class="special-group-card">
-                        <div class="special-group-icon" style="background: linear-gradient(135deg,#ef4444,#dc2626);">
-                            <i class="fas fa-hand-holding-usd"></i>
-                        </div>
-                        <div class="special-group-value"><?php echo number_format($specialGroups['indigent']); ?></div>
-                        <div class="special-group-label">Indigent</div>
-                    </div>
+                    
                 </div>
             </div>
 
@@ -287,39 +281,6 @@
                                 </canvas>
                             </div>
                         </div>
-                        <!-- Gender Table -->
-                        <div class="report-table-box" style="margin-top:16px;">
-                            <div class="report-table-box-title">Gender Breakdown</div>
-                            <table class="report-table">
-                                <thead>
-                                    <tr>
-                                        <th>Gender</th>
-                                        <th class="text-right">Count</th>
-                                        <th class="text-right">%</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <?php if (empty($genderData)): ?>
-                                        <tr><td colspan="3" class="report-empty"><i class="fas fa-inbox"></i><p>No data</p></td></tr>
-                                    <?php else: ?>
-                                        <?php foreach ($genderData as $label => $count): ?>
-                                        <tr>
-                                            <td>
-                                                <a href="residents.php?filterSex=<?php echo urlencode($label); ?>" style="color: var(--primary-color); text-decoration: none; font-weight: 500;"><?php echo htmlspecialchars($label); ?></a>
-                                            </td>
-                                            <td class="text-right"><strong><?php echo number_format($count); ?></strong></td>
-                                            <td class="text-right"><?php echo pct($count, $totalResidents); ?>%</td>
-                                        </tr>
-                                        <?php endforeach; ?>
-                                        <tr style="font-weight:600; border-top: 2px solid var(--border-color);">
-                                            <td>Total</td>
-                                            <td class="text-right"><?php echo number_format($totalResidents); ?></td>
-                                            <td class="text-right">100%</td>
-                                        </tr>
-                                    <?php endif; ?>
-                                </tbody>
-                            </table>
-                        </div>
                     </div>
 
                     <!-- Age Group Chart -->
@@ -333,55 +294,18 @@
                                 </canvas>
                             </div>
                         </div>
-                        <!-- Age Group Table -->
-                        <div class="report-table-box" style="margin-top:16px;">
-                            <div class="report-table-box-title">Age Group Breakdown</div>
-                            <table class="report-table">
-                                <thead>
-                                    <tr>
-                                        <th>Age Group</th>
-                                        <th class="text-right">Count</th>
-                                        <th>Distribution</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <?php
-                                    $ageColors = ['pink','purple','green','blue','red','orange'];
-                                    $ai = 0;
-                                    foreach ($ageGroupData as $label => $count):
-                                        $color = $ageColors[$ai % count($ageColors)];
-                                        $ai++;
-                                    ?>
-                                    <tr>
-                                        <td>
-                                                <a href="residents.php?filterAgeHealthGroup=<?php echo urlencode($label); ?>" style="color: var(--primary-color); text-decoration: none; font-weight: 500;"><?php echo htmlspecialchars($label); ?></a>
-                                            </td>
-                                        <td class="text-right"><strong><?php echo number_format($count); ?></strong></td>
-                                        <td>
-                                            <div class="report-bar-wrap">
-                                                <div class="report-bar">
-                                                    <div class="report-bar-fill <?php echo $color; ?>" style="width:<?php echo pct($count, $totalResidents); ?>%"></div>
-                                                </div>
-                                                <span class="report-bar-pct"><?php echo pct($count, $totalResidents); ?>%</span>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                    <?php endforeach; ?>
-                                </tbody>
-                            </table>
-                        </div>
                     </div>
                 </div>
             </div>
 
+            <div class="report-two-col" style="align-items: flex-start;">
             <!-- Civil Status + Employment -->
-            <div class="report-section">
+            <div class="report-section" style="margin-bottom: 0;">
                 <h3 class="report-section-title">
                     <i class="fas fa-briefcase"></i> Civil Status & Employment
                 </h3>
-                <div class="report-two-col">
-                    <!-- Civil Status -->
-                    <div class="report-table-box">
+                <!-- Civil Status -->
+                <div class="report-table-box" style="margin-bottom: 20px;">
                         <div class="report-table-box-title">Civil Status</div>
                         <table class="report-table">
                             <thead>
@@ -449,12 +373,11 @@
                                 <?php endif; ?>
                             </tbody>
                         </table>
-                    </div>
                 </div>
             </div>
 
             <!-- Educational Attainment -->
-            <div class="report-section">
+            <div class="report-section" style="margin-bottom: 0;">
                 <h3 class="report-section-title">
                     <i class="fas fa-graduation-cap"></i> Educational Attainment
                 </h3>
@@ -492,6 +415,7 @@
                         </tbody>
                     </table>
                 </div>
+            </div>
             </div>
 
            
@@ -752,33 +676,6 @@
                             </div>
                         </div>
                         <?php endif; ?>
-                        <div class="report-table-box" style="margin-top:<?php echo !empty($waterSourceData) ? '16px' : '0'; ?>;">
-                            <div class="report-table-box-title">Water Source Breakdown</div>
-                            <table class="report-table">
-                                <thead>
-                                    <tr>
-                                        <th>Water Source</th>
-                                        <th class="text-right">Households</th>
-                                        <th class="text-right">%</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <?php if (empty($waterSourceData)): ?>
-                                        <tr><td colspan="3"><div class="report-empty"><i class="fas fa-tint-slash"></i><p>No water source data recorded</p></div></td></tr>
-                                    <?php else: ?>
-                                        <?php foreach ($waterSourceData as $label => $count): ?>
-                                        <tr>
-                                             <td>
-                                                <a href="households.php?water=<?php echo urlencode($label); ?>" style="color: var(--primary-color); text-decoration: none; font-weight: 500;"><?php echo htmlspecialchars($label); ?></a>
-                                            </td>
-                                            <td class="text-right"><strong><?php echo number_format($count); ?></strong></td>
-                                            <td class="text-right"><?php echo pct($count, $totalHouseholds); ?>%</td>
-                                        </tr>
-                                        <?php endforeach; ?>
-                                    <?php endif; ?>
-                                </tbody>
-                            </table>
-                        </div>
                     </div>
 
                     <!-- Toilet Facility -->
@@ -794,33 +691,6 @@
                             </div>
                         </div>
                         <?php endif; ?>
-                        <div class="report-table-box" style="margin-top:<?php echo !empty($toiletData) ? '16px' : '0'; ?>;">
-                            <div class="report-table-box-title">Toilet Facility Breakdown</div>
-                            <table class="report-table">
-                                <thead>
-                                    <tr>
-                                        <th>Facility Type</th>
-                                        <th class="text-right">Households</th>
-                                        <th class="text-right">%</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <?php if (empty($toiletData)): ?>
-                                        <tr><td colspan="3"><div class="report-empty"><i class="fas fa-toilet"></i><p>No toilet facility data recorded</p></div></td></tr>
-                                    <?php else: ?>
-                                        <?php foreach ($toiletData as $label => $count): ?>
-                                        <tr>
-                                            <td>
-                                                <a href="households.php?toilet=<?php echo urlencode($label); ?>" style="color: var(--primary-color); text-decoration: none; font-weight: 500;"><?php echo htmlspecialchars($label); ?></a>
-                                            </td>
-                                            <td class="text-right"><strong><?php echo number_format($count); ?></strong></td>
-                                            <td class="text-right"><?php echo pct($count, $totalHouseholds); ?>%</td>
-                                        </tr>
-                                        <?php endforeach; ?>
-                                    <?php endif; ?>
-                                </tbody>
-                            </table>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -865,7 +735,7 @@
             'Registered Voters': 'residents.php?filterVoterStatus=Yes',
             'PWD': 'residents.php?filterPwdStatus=Yes',
             'Senior Citizens': 'residents.php?filterAgeGroup=60%2B',
-            'Indigent': 'residents.php'
+          
         };
 
         document.querySelectorAll('.report-stat-card, .special-group-card').forEach(card => {

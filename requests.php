@@ -35,9 +35,13 @@ try {
         $whereConditions[] = 'cr.purpose LIKE ?';
         $params[] = '%' . $_GET['purpose'] . '%';
     }
-    if (!empty($_GET['date_requested'])) {
-        $whereConditions[] = 'DATE(cr.date_requested) = ?';
-        $params[] = $_GET['date_requested'];
+    if (!empty($_GET['from_date'])) {
+        $whereConditions[] = 'DATE(cr.date_requested) >= ?';
+        $params[] = $_GET['from_date'];
+    }
+    if (!empty($_GET['to_date'])) {
+        $whereConditions[] = 'DATE(cr.date_requested) <= ?';
+        $params[] = $_GET['to_date'];
     }
     
     $whereClause = implode(' AND ', $whereConditions);
@@ -168,8 +172,13 @@ try {
                         </div>
                         
                         <div class="filter-item">
-                            <label for="filterDateRequest">Date Request</label>
-                            <input type="date" id="filterDateRequest" class="filter-select">
+                            <label for="filterFromDate">From Request Date</label>
+                            <input type="date" id="filterFromDate" class="filter-select">
+                        </div>
+                        
+                        <div class="filter-item">
+                            <label for="filterToDate">To Request Date</label>
+                            <input type="date" id="filterToDate" class="filter-select">
                         </div>
                     </div>
                 </div>

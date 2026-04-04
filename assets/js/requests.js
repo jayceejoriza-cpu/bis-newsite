@@ -41,12 +41,14 @@ function loadFiltersFromUrl() {
     
     setVal('filterCertificate', urlParams.get('certificate') || '');
     setVal('filterPurpose', urlParams.get('purpose') || '');
-    setVal('filterDateRequest', urlParams.get('date_requested') || '');
+    setVal('filterFromDate', urlParams.get('from_date') || '');
+    setVal('filterToDate', urlParams.get('to_date') || '');
     
     let activeFiltersCount = 0;
     if (urlParams.get('certificate')) activeFiltersCount++;
     if (urlParams.get('purpose')) activeFiltersCount++;
-    if (urlParams.get('date_requested')) activeFiltersCount++;
+    if (urlParams.get('from_date')) activeFiltersCount++;
+    if (urlParams.get('to_date')) activeFiltersCount++;
     
     updateFilterNotification(activeFiltersCount);
     
@@ -191,12 +193,14 @@ function applyAdvancedFilters() {
     // Sync filters to URL params for server-side filtering (reloads page)
     const certificate = document.getElementById('filterCertificate')?.value || '';
     const purpose = document.getElementById('filterPurpose')?.value || '';
-    const dateRequest = document.getElementById('filterDateRequest')?.value || '';
+    const fromDate = document.getElementById('filterFromDate')?.value || '';
+    const toDate = document.getElementById('filterToDate')?.value || '';
 
     let count = 0;
     if (certificate) count++;
     if (purpose) count++;
-    if (dateRequest) count++;
+    if (fromDate) count++;
+    if (toDate) count++;
 
     if (count > 0) {
         sessionStorage.setItem('requests_filter_alert', `${count} filter(s) applied successfully`);
@@ -207,7 +211,8 @@ function applyAdvancedFilters() {
     const params = new URLSearchParams();
     if (certificate) params.set('certificate', certificate);
     if (purpose) params.set('purpose', purpose);
-    if (dateRequest) params.set('date_requested', dateRequest);
+    if (fromDate) params.set('from_date', fromDate);
+    if (toDate) params.set('to_date', toDate);
 
     // Reload with params (server filters)
     const queryString = params.toString();
@@ -219,7 +224,8 @@ function clearAdvancedFilters() {
     const setVal = (id, val) => { const el = document.getElementById(id); if (el) el.value = val; };
     setVal('filterCertificate', '');
     setVal('filterPurpose', '');
-    setVal('filterDateRequest', '');
+    setVal('filterFromDate', '');
+    setVal('filterToDate', '');
 
     sessionStorage.setItem('requests_filter_alert', 'Filters cleared');
 

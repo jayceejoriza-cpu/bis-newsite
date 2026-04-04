@@ -528,6 +528,7 @@ try {
                                 $voterBadge = ($resident['voter_status'] === 'Yes') ? 'badge-yes' : 'badge-no';
                                 $activityBadge = 'badge-' . strtolower($resident['activity_status']);
                                 $sortName = $resident['last_name'] . ', ' . $resident['first_name'];
+                                $photo = !empty($resident['photo']) ? htmlspecialchars($resident['photo']) : null;
                             ?>
                             <tr data-religion="<?php echo htmlspecialchars($resident['religion'] ?? ''); ?>"
                                 data-ethnicity="<?php echo htmlspecialchars($resident['ethnicity'] ?? ''); ?>"
@@ -552,9 +553,13 @@ try {
                                     <td><?php echo htmlspecialchars($residentId); ?></td>
                                      <td data-sort="<?php echo htmlspecialchars($sortName); ?>"><a href="resident_profile.php?id=<?php echo htmlspecialchars($resident['id']); ?>" class="resident-name-link">
                                         <div class="resident-name">
-                                            <span class="avatar <?php echo htmlspecialchars($avatarColor); ?>">
-                                                <?php echo htmlspecialchars($initials); ?>
-                                            </span>
+                                            <?php if ($photo): ?>
+                                                <img src="<?php echo $photo; ?>" alt="Photo" class="avatar" style="object-fit: cover;">
+                                            <?php else: ?>
+                                                <span class="avatar <?php echo htmlspecialchars($avatarColor); ?>">
+                                                    <?php echo htmlspecialchars($initials); ?>
+                                                </span>
+                                            <?php endif; ?>
                                             <span><?php echo htmlspecialchars($fullName); ?></span>
                                         </div>
                                     </a>
@@ -607,6 +612,7 @@ try {
                         $residentId = !empty($resident['resident_id']) ? $resident['resident_id'] : generateResidentId($resident['id']);
                         $age = calculateAge($resident['date_of_birth']);
                         $sortName = $resident['last_name'] . ', ' . $resident['first_name'];
+                        $photo = !empty($resident['photo']) ? htmlspecialchars($resident['photo']) : null;
                     ?>
                     <div class="resident-card" 
                          data-resident-id="<?php echo htmlspecialchars($resident['id']); ?>"
@@ -631,9 +637,13 @@ try {
                          data-using-fp-method="<?php echo htmlspecialchars($resident['using_fp_method'] ?? ''); ?>"
                          data-fp-methods-used="<?php echo htmlspecialchars($resident['fp_methods_used'] ?? ''); ?>"
                          data-fp-status="<?php echo htmlspecialchars($resident['fp_status'] ?? ''); ?>">
-                        <div class="avatar <?php echo htmlspecialchars($avatarColor); ?>">
-                            <?php echo htmlspecialchars($initials); ?>
-                        </div>
+                        <?php if ($photo): ?>
+                            <img src="<?php echo $photo; ?>" alt="Photo" class="avatar" style="object-fit: cover;">
+                        <?php else: ?>
+                            <div class="avatar <?php echo htmlspecialchars($avatarColor); ?>">
+                                <?php echo htmlspecialchars($initials); ?>
+                            </div>
+                        <?php endif; ?>
                         <h3 class="resident-name"><?php echo htmlspecialchars($fullName); ?></h3>
                         <p class="resident-id"><?php echo htmlspecialchars($residentId); ?></p>
                         <div class="details">

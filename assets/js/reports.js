@@ -258,7 +258,28 @@ function renderGenderChart() {
                     labels: {
                         color: getTextColor(),
                         padding: 16,
-                        font: { family: 'Inter', size: 12 }
+                        font: { family: 'Inter', size: 12 },
+                        generateLabels: function(chart) {
+                            const data = chart.data;
+                            if (data.labels.length && data.datasets.length) {
+                                return data.labels.map(function(label, i) {
+                                    const meta = chart.getDatasetMeta(0);
+                                    const style = meta.controller.getStyle(i);
+                                    const value = data.datasets[0].data[i];
+                                    const total = data.datasets[0].data.reduce((a, b) => a + b, 0);
+                                    const percentage = total > 0 ? ((value / total) * 100).toFixed(1) + '%' : '0%';
+                                    return {
+                                        text: `${label}: ${value} (${percentage})`,
+                                        fillStyle: style.backgroundColor,
+                                        strokeStyle: style.borderColor,
+                                        lineWidth: style.borderWidth,
+                                        hidden: isNaN(data.datasets[0].data[i]) || meta.data[i].hidden,
+                                        index: i
+                                    };
+                                });
+                            }
+                            return [];
+                        }
                     }
                 },
                 tooltip: {
@@ -598,7 +619,33 @@ function renderWaterSourceChart() {
                     labels: {
                         color: getTextColor(),
                         padding: 12,
-                        font: { family: 'Inter', size: 12 }
+                        font: { family: 'Inter', size: 12 },
+                        generateLabels: function(chart) {
+                            const data = chart.data;
+                            if (data.labels.length && data.datasets.length) {
+                                return data.labels.map(function(label, i) {
+                                    const meta = chart.getDatasetMeta(0);
+                                    const style = meta.controller.getStyle(i);
+                                    const value = data.datasets[0].data[i];
+                                    const total = data.datasets[0].data.reduce((a, b) => a + b, 0);
+                                    const percentage = total > 0 ? ((value / total) * 100).toFixed(1) + '%' : '0%';
+                                    return {
+                                        text: `${label}: ${value} (${percentage})`,
+                                        fillStyle: style.backgroundColor,
+                                        strokeStyle: style.borderColor,
+                                        lineWidth: style.borderWidth,
+                                        hidden: isNaN(data.datasets[0].data[i]) || meta.data[i].hidden,
+                                        index: i
+                                    };
+                                });
+                            }
+                            return [];
+                        }
+                    }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: ctx => ` ${ctx.label}: ${ctx.parsed.toLocaleString()} (${((ctx.parsed / values.reduce((a,b)=>a+b,0))*100).toFixed(1)}%)`
                     }
                 }
             },
@@ -637,7 +684,33 @@ function renderToiletChart() {
                     labels: {
                         color: getTextColor(),
                         padding: 12,
-                        font: { family: 'Inter', size: 12 }
+                        font: { family: 'Inter', size: 12 },
+                        generateLabels: function(chart) {
+                            const data = chart.data;
+                            if (data.labels.length && data.datasets.length) {
+                                return data.labels.map(function(label, i) {
+                                    const meta = chart.getDatasetMeta(0);
+                                    const style = meta.controller.getStyle(i);
+                                    const value = data.datasets[0].data[i];
+                                    const total = data.datasets[0].data.reduce((a, b) => a + b, 0);
+                                    const percentage = total > 0 ? ((value / total) * 100).toFixed(1) + '%' : '0%';
+                                    return {
+                                        text: `${label}: ${value} (${percentage})`,
+                                        fillStyle: style.backgroundColor,
+                                        strokeStyle: style.borderColor,
+                                        lineWidth: style.borderWidth,
+                                        hidden: isNaN(data.datasets[0].data[i]) || meta.data[i].hidden,
+                                        index: i
+                                    };
+                                });
+                            }
+                            return [];
+                        }
+                    }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: ctx => ` ${ctx.label}: ${ctx.parsed.toLocaleString()} (${((ctx.parsed / values.reduce((a,b)=>a+b,0))*100).toFixed(1)}%)`
                     }
                 }
             },

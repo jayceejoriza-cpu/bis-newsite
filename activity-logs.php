@@ -9,7 +9,8 @@ $pageTitle = 'Activity Logs';
 $search = isset($_GET['search']) ? trim($_GET['search']) : '';
 $filter_user = isset($_GET['filter_user']) ? trim($_GET['filter_user']) : '';
 $filter_action = isset($_GET['filter_action']) ? trim($_GET['filter_action']) : '';
-$filter_date = isset($_GET['filter_date']) ? trim($_GET['filter_date']) : '';
+$filter_from_date = isset($_GET['filter_from_date']) ? trim($_GET['filter_from_date']) : '';
+$filter_to_date = isset($_GET['filter_to_date']) ? trim($_GET['filter_to_date']) : '';
 
 $page = isset($_GET['page']) && is_numeric($_GET['page']) ? (int)$_GET['page'] : 1;
 $limit = isset($_GET['limit']) && is_numeric($_GET['limit']) ? (int)$_GET['limit'] : 10;
@@ -48,9 +49,14 @@ if (isset($conn)) {
         $params[] = "%$filter_action%";
         $types .= "s";
     }
-    if (!empty($filter_date)) {
-        $where_sql .= " AND DATE(timestamp) = ?";
-        $params[] = $filter_date;
+    if (!empty($filter_from_date)) {
+        $where_sql .= " AND DATE(timestamp) >= ?";
+        $params[] = $filter_from_date;
+        $types .= "s";
+    }
+    if (!empty($filter_to_date)) {
+        $where_sql .= " AND DATE(timestamp) <= ?";
+        $params[] = $filter_to_date;
         $types .= "s";
     }
 
@@ -250,7 +256,7 @@ if (isset($conn)) {
                     <div class="search-box">
                         <i class="fas fa-search"></i>
                         <input type="text" name="search" placeholder="Search description..." value="<?php echo htmlspecialchars($search); ?>" autocomplete="off">
-                        <?php if($search || $filter_user || $filter_action || $filter_date): ?>
+                        <?php if($search || $filter_user || $filter_action || $filter_from_date || $filter_to_date): ?>
                             <a href="activity-logs.php" class="btn-clear" style="display: flex; align-items: center; justify-content: center; text-decoration: none;" title="Clear">
                                 <i class="fas fa-times"></i>
                             </a>
@@ -268,7 +274,8 @@ if (isset($conn)) {
                             $activeFilters = 0;
                             if($filter_user) $activeFilters++;
                             if($filter_action) $activeFilters++;
-                            if($filter_date) $activeFilters++;
+                            if($filter_from_date) $activeFilters++;
+                            if($filter_to_date) $activeFilters++;
                             if($activeFilters > 0): 
                             ?>
                             <span class="filter-notification" style="position: absolute; top: -5px; right: -5px; background: #3b82f6; color: white; font-size: 10px; padding: 2px 6px; border-radius: 10px; line-height: 1;">
@@ -300,8 +307,12 @@ if (isset($conn)) {
                                         <input type="text" name="filter_action" id="filterAction" class="form-control" style="font-size: 13px; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border-color); background-color: var(--bg-primary); color: var(--text-primary);" placeholder="e.g. Login, Update" value="<?php echo htmlspecialchars($filter_action); ?>">
                                     </div>
                                     <div style="display: flex; flex-direction: column; gap: 5px;">
-                                        <label for="filterDate" style="font-size: 13px; font-weight: 500; color: var(--text-secondary); margin: 0;">Date</label>
-                                        <input type="date" name="filter_date" id="filterDate" class="form-control" style="font-size: 13px; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border-color); background-color: var(--bg-primary); color: var(--text-primary);" value="<?php echo htmlspecialchars($filter_date); ?>">
+                                        <label for="filterFromDate" style="font-size: 13px; font-weight: 500; color: var(--text-secondary); margin: 0;">From Date</label>
+                                        <input type="date" name="filter_from_date" id="filterFromDate" class="form-control" style="font-size: 13px; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border-color); background-color: var(--bg-primary); color: var(--text-primary);" value="<?php echo htmlspecialchars($filter_from_date); ?>">
+                                    </div>
+                                    <div style="display: flex; flex-direction: column; gap: 5px;">
+                                        <label for="filterToDate" style="font-size: 13px; font-weight: 500; color: var(--text-secondary); margin: 0;">To Date</label>
+                                        <input type="date" name="filter_to_date" id="filterToDate" class="form-control" style="font-size: 13px; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border-color); background-color: var(--bg-primary); color: var(--text-primary);" value="<?php echo htmlspecialchars($filter_to_date); ?>">
                                     </div>
                                 </div>
                             </div>
@@ -357,7 +368,7 @@ if (isset($conn)) {
             <div class="pagination-container">
                 <div class="pagination-info">
                     <span>Showing 
-                        <select class="form-select form-select-sm" id="pageSizeList" style="display: inline-block; width: auto; margin: 0 5px; padding: 2px 24px 2px 8px; cursor: pointer; min-height: 26px;" onchange="window.location.href='?limit='+this.value+'&search=<?php echo urlencode($search); ?>&filter_user=<?php echo urlencode($filter_user); ?>&filter_action=<?php echo urlencode($filter_action); ?>&filter_date=<?php echo urlencode($filter_date); ?>'">
+                        <select class="form-select form-select-sm" id="pageSizeList" style="display: inline-block; width: auto; margin: 0 5px; padding: 2px 24px 2px 8px; cursor: pointer; min-height: 26px;" onchange="window.location.href='?limit='+this.value+'&search=<?php echo urlencode($search); ?>&filter_user=<?php echo urlencode($filter_user); ?>&filter_action=<?php echo urlencode($filter_action); ?>&filter_from_date=<?php echo urlencode($filter_from_date); ?>&filter_to_date=<?php echo urlencode($filter_to_date); ?>'">
                             <option value="10" <?php echo $limit == 10 ? 'selected' : ''; ?>>10</option>
                             <option value="100" <?php echo $limit == 100 ? 'selected' : ''; ?>>100</option>
                             <?php $half = max(1, ceil($total_records / 2)); ?>
@@ -373,14 +384,14 @@ if (isset($conn)) {
                 </div>
                 <?php if ($total_pages > 1 || $page > 1): ?>
                 <div class="pagination">
-                    <a href="?page=<?php echo max(1, $page - 1); ?>&limit=<?php echo $limit; ?>&search=<?php echo urlencode($search); ?>&filter_user=<?php echo urlencode($filter_user); ?>&filter_action=<?php echo urlencode($filter_action); ?>&filter_date=<?php echo urlencode($filter_date); ?>" 
+                    <a href="?page=<?php echo max(1, $page - 1); ?>&limit=<?php echo $limit; ?>&search=<?php echo urlencode($search); ?>&filter_user=<?php echo urlencode($filter_user); ?>&filter_action=<?php echo urlencode($filter_action); ?>&filter_from_date=<?php echo urlencode($filter_from_date); ?>&filter_to_date=<?php echo urlencode($filter_to_date); ?>" 
                        class="page-btn <?php echo ($page <= 1) ? 'disabled' : ''; ?>" title="Previous">
                         <i class="fas fa-chevron-left"></i>
                     </a>
                     
                     <button class="page-btn active"><?php echo $page; ?></button>
                     
-                    <a href="?page=<?php echo min($total_pages, $page + 1); ?>&limit=<?php echo $limit; ?>&search=<?php echo urlencode($search); ?>&filter_user=<?php echo urlencode($filter_user); ?>&filter_action=<?php echo urlencode($filter_action); ?>&filter_date=<?php echo urlencode($filter_date); ?>" 
+                    <a href="?page=<?php echo min($total_pages, $page + 1); ?>&limit=<?php echo $limit; ?>&search=<?php echo urlencode($search); ?>&filter_user=<?php echo urlencode($filter_user); ?>&filter_action=<?php echo urlencode($filter_action); ?>&filter_from_date=<?php echo urlencode($filter_from_date); ?>&filter_to_date=<?php echo urlencode($filter_to_date); ?>" 
                        class="page-btn <?php echo ($page >= $total_pages) ? 'disabled' : ''; ?>" title="Next">
                         <i class="fas fa-chevron-right"></i>
                     </a>
@@ -397,7 +408,8 @@ if (isset($conn)) {
             const clearFiltersBtn = document.getElementById('clearFiltersBtn');
             const filterUser = document.getElementById('filterUser');
             const filterAction = document.getElementById('filterAction');
-            const filterDate = document.getElementById('filterDate');
+            const filterFromDate = document.getElementById('filterFromDate');
+            const filterToDate = document.getElementById('filterToDate');
 
             if (filterBtn && filterPanel) {
                 filterBtn.addEventListener('click', function(e) {
@@ -416,7 +428,8 @@ if (isset($conn)) {
                 clearFiltersBtn.addEventListener('click', function() {
                     filterUser.value = '';
                     filterAction.value = '';
-                    filterDate.value = '';
+                    filterFromDate.value = '';
+                    filterToDate.value = '';
                     document.getElementById('activityLogForm').submit();
                 });
             }

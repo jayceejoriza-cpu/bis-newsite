@@ -140,12 +140,12 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     <div class="logo-section">
         <img src="<?php echo htmlspecialchars($barangay_logo); ?>" alt="Logo">
         <div>
-            <h3>BARANGGAY WAWANDUE</h3>
+            <h3>BARANGAY WAWANDUE</h3>
             <p class="text-muted">Barangay Information System</p>
         </div>
     </div>
 
-    <h2>Sign In</h2>
+    <h2>Log In</h2>
     <p class="subtitle">Please login to your account</p>
 
     <form method="POST">
@@ -173,7 +173,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             </div>
         <?php endif; ?>
 
-        <button type="submit" class="btn">Sign In</button>
+        <button type="submit" class="btn">Log In</button>
 
     </form>
 

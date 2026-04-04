@@ -210,14 +210,36 @@ $age = calculateAge($resident['date_of_birth']);
             <!-- Profile Header -->
             <div class="profile-header">
                 <div class="profile-header-left">
-                    <div class="profile-photo">
-                        <?php if (!empty($resident['photo'])): ?>
-                            <img src="<?php echo htmlspecialchars($resident['photo']); ?>" alt="<?php echo htmlspecialchars($fullName); ?>">
-                        <?php else: ?>
-                            <div class="profile-photo-placeholder">
-                                <i class="fas fa-user"></i>
+                    <div class="profile-photo-wrapper" style="display: flex; flex-direction: row; gap: 20px; align-items: center;">
+                        <div class="profile-photo" style="flex-shrink: 0; position: relative;">
+                            <?php if (!empty($resident['photo'])): ?>
+                                <img id="photoPreview" src="<?php echo htmlspecialchars($resident['photo']); ?>" alt="<?php echo htmlspecialchars($fullName); ?>" style="width: 100%; height: 100%; object-fit: cover; ">
+                                <div class="profile-photo-placeholder" style="display:none;"><i class="fas fa-user"></i></div>
+                            <?php else: ?>
+                                <div class="profile-photo-placeholder">
+                                    <i class="fas fa-user"></i>
+                                </div>
+                                <img id="photoPreview" src="" alt="Photo Preview" style="display:none; width: 100%; height: 100%; object-fit: cover;">
+                            <?php endif; ?>
+                            <div id="inlineWebcamPreview" style="display: none; width:100%; height:100%; border-radius:50%; overflow:hidden; position: absolute; top:0; left:0; z-index: 10;"></div>
+                        </div>
+                        <div class="edit-field" style="display:none;">
+                            <div class="photo-upload-actions" style="display: flex; flex-direction: column; gap: 8px; justify-content: center;">
+                                <input type="file" id="photoInput" name="photo" accept="image/jpeg,image/png,image/gif" style="display: none;">
+                                <button type="button" class="btn btn-sm btn-info" onclick="document.getElementById('photoInput').click()">
+                                    <i class="fas fa-upload"></i> <?php echo !empty($resident['photo']) ? 'Change Photo' : 'Upload Photo'; ?>
+                                </button>
+                                <button type="button" class="btn btn-sm btn-info" id="takePhotoBtn" onclick="toggleInlineWebcam()">
+                                    <i class="fas fa-camera"></i> <span id="cameraButtonText">Start Camera</span>
+                                </button>
+                                <button type="button" class="btn btn-sm btn-success" id="captureInlineBtn" onclick="captureInlinePhoto()" style="display: none;">
+                                    <i class="fas fa-camera"></i> Capture
+                                </button>
+                                <button type="button" class="btn btn-sm btn-secondary" id="resetPhotoBtn">
+                                    <i class="fas fa-redo"></i> Reset
+                                </button>
                             </div>
-                        <?php endif; ?>
+                        </div>
                     </div>
                     <div class="profile-header-info">
                         <h1 class="profile-name"><?php echo strtoupper  ($fullName); ?></h1>
@@ -628,10 +650,18 @@ $age = calculateAge($resident['date_of_birth']);
                                         <option value="Senior Citizen (60+ years)" <?php echo $resident['age_health_group'] == 'Senior Citizen (60+ years)' ? 'selected' : ''; ?>>Senior Citizen (60+ years)</option>
                                     </select>
                                 </div>
+                                 <div class="info-item">
+                                    <label>Pwd Status</label>
+                                    <p class="view-field"><?php echo htmlspecialchars($resident['pwd_status'] ?: 'N/A'); ?></p>
+                                 <select name="pwd_status" class="form-control edit-field" value="<?php echo htmlspecialchars($resident['pwd_status']); ?>" style="display:none;">
+                                    <option value="No" <?php echo $resident['pwd_status'] == 'No' ? 'selected' : ''; ?>>No</option>
+                                      <option value="Yes" <?php echo $resident['pwd_status'] == 'Yes' ? 'selected' : ''; ?>>Yes</option>
+                                    </select>
+                                </div>
                                 <div class="info-item full-width">
                                     <label>Medical History</label>
                                     <p class="view-field"><?php echo htmlspecialchars($resident['medical_history'] ?: 'N/A'); ?></p>
-                                    <input type="text" name="medical_history" class="form-control edit-field" value="<?php echo htmlspecialchars($resident['medical_history']); ?>" style="display:none;">
+                                   
                                 </div>
                             </div>
                             
@@ -1062,6 +1092,9 @@ $age = calculateAge($resident['date_of_birth']);
 
     <!-- Custom JavaScript -->
     <script src="assets/js/script.js"></script>
+    
+    <!-- WebcamJS Library -->
+    <script src="assets/webcamjs/webcam.min.js"></script>
     <script>
         window.RESIDENT_AGE = <?php echo json_encode($age); ?>;
         window.RESIDENT_DATA = {

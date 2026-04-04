@@ -502,7 +502,12 @@ if (demographicsChartEl) {
             maintainAspectRatio: false,
             plugins: {
                 legend: {
-                    display: false
+                    display: true,
+                    position: 'bottom',
+                    labels: {
+                        color: '#6b7280',
+                        padding: 15
+                    }
                 },
                 tooltip: {
                     backgroundColor: 'rgba(0, 0, 0, 0.8)',

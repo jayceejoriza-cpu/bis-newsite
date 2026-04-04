@@ -212,39 +212,39 @@ if (isset($conn)) {
                             
                             <!-- Personal Information Fields -->
                             <div class="row">
-                                <div class="col-md-4">
+                                <div class="col-md-1" style="margin-right: 20px;">
                                     <div class="form-group">
                                         <label>Resident ID</label>
                                         <input type="text" class="form-control" value="<?php echo $nextResidentId; ?>" disabled>
                                     </div>
                                 </div>
-                                <div class="col-md-4">
+                                <div class="col-md-2">
                                     <div class="form-group">
                                         <label for="firstName">First Name <span class="required">*</span></label>
                                         <input type="text" id="firstName" name="firstName" class="form-control" autocomplete="given-name" required>
                                         <small class="form-hint">First name is required</small>
                                     </div>
                                 </div>
-                                <div class="col-md-4">
+                                <div class="col-md-2">
                                     <div class="form-group">
                                         <label for="middleName">Middle Name (Optional)</label>
                                         <input type="text" id="middleName" name="middleName" class="form-control" autocomplete="additional-name">
                                     </div>
                                 </div>
-                                <div class="col-md-4">
+                                <div class="col-md-2">
                                     <div class="form-group">
                                         <label for="lastName">Last Name <span class="required">*</span></label>
                                         <input type="text" id="lastName" name="lastName" class="form-control" autocomplete="family-name" required>
                                         <small class="form-hint">Last name is required</small>
                                     </div>
                                 </div>
-                                <div class="col-md-4">
+                                <div class="col-md-2">
                                     <div class="form-group">
                                         <label for="suffix">Suffix (Optional)</label>
                                         <input type="text" id="suffix" name="suffix" class="form-control" placeholder="Jr., Sr., III, etc." autocomplete="honorific-suffix">
                                     </div>
                                 </div>
-                                <div class="col-md-4">
+                                <div class="col-md-2">
                                     <div class="form-group">
                                         <label for="sex">Sex <span class="required">*</span></label>
                                         <select id="sex" name="sex" class="form-control" required>
@@ -255,19 +255,19 @@ if (isset($conn)) {
                                         <small class="form-hint">Sex is required</small>
                                     </div>
                                 </div>
-                                <div class="col-md-4">
+                                <div class="col-md-3">
                                     <div class="form-group">
                                         <label for="dateOfBirth">Date of Birth <span class="required">*</span></label>
                                         <input type="text" id="dateOfBirth" name="dateOfBirth" class="form-control" placeholder="Select Date" autocomplete="bday" required>
                                     </div>
                                 </div>
-                                <div class="col-md-4">
+                                <div class="col-md-3">
                                     <div class="form-group">
                                         <label for="placeOfBirth">Place of Birth <span class="required"></span></label>
                                         <input type="text" id="placeOfBirth" name="placeOfBirth" class="form-control" placeholder="Enter Place of Birth" >
                                     </div>
                                 </div>
-                                <div class="col-md-4">
+                                <div class="col-md-3">
                                     <div class="form-group">
                                         <label for="religion">Religion<span class="required">*</span></label>
                                         <select id="religion" name="religion" class="form-control" required>
@@ -294,7 +294,7 @@ if (isset($conn)) {
                                         <small class="form-hint">Religion is required</small>
                                     </div>
                                 </div>
-                                <div class="col-md-4">
+                                <div class="col-md-3">
                                     <div class="form-group">
                                         <label for="ethnicity">Ethnicity<span class="required">*</span></label>
                                         <select id="ethnicity" class="form-control" name="ethnicity" required>
@@ -313,7 +313,7 @@ if (isset($conn)) {
                     <div class="form-step" data-step="2">
                         <div class="form-content">
                             <div class="row">
-                                <div class="col-md-4">
+                                <div class="col-md-2">
                                     <div class="form-group">
                                         <label for="mobileNumber">Mobile Number <span class="required">*</span></label>
                                         <div class="phone-input-group">
@@ -325,7 +325,7 @@ if (isset($conn)) {
                                         </div>
                                     </div>
                                 </div>
-                                <div class="col-md-4">
+                                <div class="col-md-2">
                                     <div class="form-group">
                                         <label for="purok">Purok <span class="required">*</span></label>
                                         <select id="purok" name="purok" class="form-control" required>
@@ -337,7 +337,7 @@ if (isset($conn)) {
                                         </select>       
                                     </div>
                                 </div>
-                                <div class="col-md-4">
+                                <div class="col-md-2">
                                     <div class="form-group">
                                         <label for="streetName">Street Name</label>
                                         <input type="text" id="streetName" name="streetName" class="form-control" placeholder="Street Name" autocomplete="address-line1">
@@ -351,7 +351,7 @@ if (isset($conn)) {
                     <div class="form-step" data-step="3">
                         <div class="form-content">
                             <div class="row">
-                                <div class="col-md-4 adult-only">
+                                <div class="col-md-2 adult-only">
                                     <div class="form-group">
                                         <label for="civilStatus">Civil Status <span class="required">*</span></label>
                                         <select id="civilStatus" name="civilStatus" class="form-control" required>
@@ -364,25 +364,25 @@ if (isset($conn)) {
                                         </select>
                                     </div>
                                 </div>
-                                <div class="col-md-4 adult-only" id="spouseNameGroup" style="display: none;">
+                                <div class="col-md-3 adult-only" id="spouseNameGroup" style="display: none;">
                                     <div class="form-group">
                                         <label for="spouseName">Spouse Name</label>
                                         <input type="text" id="spouseName" name="spouseName" class="form-control">
                                     </div>
                                 </div>
-                                <div class="col-md-4">
+                                <div class="col-md-3">
                                     <div class="form-group">
                                         <label for="fatherName">Father's Name</label>
                                         <input type="text" id="fatherName" name="fatherName" class="form-control">
                                     </div>
                                 </div>
-                                <div class="col-md-4">
+                                <div class="col-md-3">
                                     <div class="form-group">
                                         <label for="motherName">Mother's Maiden Name</label>
                                         <input type="text" id="motherName" name="motherName" class="form-control">
                                     </div>
                                 </div>
-                                <div class="col-md-4  adult-only">
+                                <div class="col-md-2  adult-only">
                                     <div class="form-group">
                                         <label for="numberOfChildren">Number of Children</label>
                                         <input type="number" id="numberOfChildren" name="numberOfChildren" class="form-control" min="0" value="0">
@@ -620,7 +620,7 @@ if (isset($conn)) {
                             <hr style="margin: 0 0 20px 0;">
                             
                             <div class="row">
-                                <div class="col-md-4 adult-only">
+                                <div class="col-md-2 adult-only">
                                     <div class="form-group">
                                         <label for="fourPs">4Ps Member</label>
                                         <select id="fourPs" name="fourPs" class="form-control">
@@ -629,13 +629,13 @@ if (isset($conn)) {
                                         </select>
                                     </div>
                                 </div>
-                                <div class="col-md-4 adult-only" id="fourpsIdGroup" style="display: none;">
+                                <div class="col-md-2 adult-only" id="fourpsIdGroup" style="display: none;">
                                     <div class="form-group">
                                         <label for="fourpsId">4Ps ID Number</label>
                                         <input type="text" id="fourpsId" name="fourpsId" class="form-control" placeholder="XX-YYYY-ZZZZ" maxlength="12">
                                     </div>
                                 </div>
-                                <div id="voterStatusContainer" class="col-md-4">
+                                <div id="voterStatusContainer" class="col-md-2">
                                     <div class="form-group">
                                         <label for="voterStatus">Registered Voter</label>
                                         <select id="voterStatus" name="voterStatus" class="form-control">
@@ -645,7 +645,7 @@ if (isset($conn)) {
                                         </select>
                                     </div>
                                 </div>
-                                <div class="col-md-4 adult-only" id="precinctNumberGroup" style="display: none;">
+                                <div class="col-md-2 adult-only" id="precinctNumberGroup" style="display: none;">
                                     <div class="form-group">
                                         <label for="precinctNumber">Precinct Number</label>
                                         <input type="text" id="precinctNumber" name="precinctNumber" class="form-control" placeholder="Enter Precinct Number">
@@ -658,13 +658,13 @@ if (isset($conn)) {
                             <hr style="margin: 0 0 20px 0;">
                             
                             <div class="row">
-                                <div class="col-md-4 adult-only">
+                                <div class="col-md-2 adult-only">
                                     <div class="form-group">
                                         <label for="philhealthId">Philhealth ID Number</label>
                                         <input type="text" id="philhealthId" name="philhealthId" class="form-control" placeholder="1234-5678-9012" maxlength="14">
                                     </div>
                                 </div>
-                                <div class="col-md-4 adult-only">
+                                <div class="col-md-2 adult-only">
                                     <div class="form-group">
                                         <label for="membershipType">Membership Type</label>
                                         <select id="membershipType" name="membershipType" class="form-control">
@@ -675,7 +675,7 @@ if (isset($conn)) {
                                         </select>
                                     </div>
                                 </div>
-                                <div class="col-md-4 adult-only">
+                                <div class="col-md-2 adult-only">
                                     <div class="form-group">
                                         <label for="philhealthCategory">Philhealth Category</label>
                                         <select id="philhealthCategory" name="philhealthCategory" class="form-control">
@@ -687,7 +687,7 @@ if (isset($conn)) {
                                         </select>
                                     </div>
                                 </div>
-                                <div class="col-md-4">
+                                <div class="col-md-3">
                                     <div class="form-group">
                                         <label for="ageHealthGroup">Classification by Age/Health Group</label>
                                         <select id="ageHealthGroup" name="ageHealthGroup" class="form-control" disabled>

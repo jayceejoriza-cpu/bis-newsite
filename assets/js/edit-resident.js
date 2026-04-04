@@ -1,5 +1,8 @@
 let isEditModeActive = false;
 let formIsDirty = false;
+let inlineWebcamActive = false;
+let capturedPhotoData = null;
+let originalPhotoSrc = '';
 
 // Set active navigation
 document.addEventListener('DOMContentLoaded', () => {
@@ -122,6 +125,75 @@ document.addEventListener('DOMContentLoaded', () => {
             toggleEditMode(true);
         }
     }
+
+    // Setup Photo Upload and Reset logic
+    const photoPreview = document.getElementById('photoPreview');
+    if (photoPreview) {
+        originalPhotoSrc = photoPreview.src;
+    }
+
+    const photoInput = document.getElementById('photoInput');
+    if (photoInput) {
+        photoInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const validTypes = ['image/jpeg', 'image/png', 'image/gif'];
+                if (!validTypes.includes(file.type)) {
+                    showNotification('Please upload a valid image file', 'error');
+                    photoInput.value = '';
+                    return;
+                }
+                if (file.size > 1048576) {
+                    showNotification('File size must be less than 1MB', 'error');
+                    photoInput.value = '';
+                    return;
+                }
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    const preview = document.getElementById('photoPreview');
+                    const placeholder = document.querySelector('.profile-photo-placeholder');
+                    if (preview) {
+                        preview.src = event.target.result;
+                        preview.style.display = 'block';
+                    }
+                    if (placeholder) {
+                        placeholder.style.display = 'none';
+                    }
+                    capturedPhotoData = null;
+                    if (inlineWebcamActive) stopInlineWebcam();
+                    formIsDirty = true;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+    }
+
+    const resetPhotoBtn = document.getElementById('resetPhotoBtn');
+    if (resetPhotoBtn) {
+        resetPhotoBtn.addEventListener('click', () => {
+            if (inlineWebcamActive) stopInlineWebcam();
+            
+            const pInput = document.getElementById('photoInput');
+            if (pInput) pInput.value = '';
+            capturedPhotoData = null;
+            
+            const preview = document.getElementById('photoPreview');
+            const placeholder = document.querySelector('.profile-photo-placeholder');
+            
+            // Check if there was an actual photo before
+            if (window.RESIDENT_DATA && window.RESIDENT_DATA.existingPhoto) {
+                if (preview) {
+                    preview.src = originalPhotoSrc;
+                    preview.style.display = 'block';
+                }
+                if (placeholder) placeholder.style.display = 'none';
+            } else {
+                if (preview) preview.style.display = 'none';
+                if (placeholder) placeholder.style.display = 'flex';
+            }
+            formIsDirty = true;
+        });
+    }
 });
 
 function updateProfileAgeVisibility() {
@@ -203,6 +275,9 @@ function toggleEditMode(enable) {
         viewActions.forEach(a => a.style.display = 'inline-flex');
         editActions.forEach(a => a.style.display = 'none');
         document.querySelectorAll('.edit-field-conditional').forEach(f => f.style.display = 'none');
+        if (inlineWebcamActive) {
+            stopInlineWebcam();
+        }
     }
 }
 
@@ -281,6 +356,13 @@ function saveProfile() {
     
     formData.append('mode', 'update');
     formData.append('residentId', rawData.get('resident_id'));
+    
+    const photoInput = document.getElementById('photoInput');
+    if (photoInput && photoInput.files[0]) {
+        formData.append('photo', photoInput.files[0]);
+    } else if (capturedPhotoData) {
+        formData.append('webcam_photo', capturedPhotoData);
+    }
     
     // Personal Details
     formData.append('firstName', rawData.get('first_name') || '');
@@ -401,6 +483,108 @@ function saveProfile() {
         saveBtn.disabled = false;
     });
 }
+
+// Webcam functionality
+window.toggleInlineWebcam = function() {
+    if (!inlineWebcamActive) {
+        startInlineWebcam();
+    } else {
+        stopInlineWebcam();
+    }
+};
+
+function startInlineWebcam() {
+    if (typeof Webcam === 'undefined') {
+        showNotification('Webcam library not loaded', 'error');
+        return;
+    }
+    
+    const photoPreview = document.getElementById('photoPreview');
+    const placeholder = document.querySelector('.profile-photo-placeholder');
+    const inlineWebcamPreview = document.getElementById('inlineWebcamPreview');
+    const cameraButtonText = document.getElementById('cameraButtonText');
+    const captureInlineBtn = document.getElementById('captureInlineBtn');
+    const takePhotoBtn = document.getElementById('takePhotoBtn');
+    
+    if (photoPreview) photoPreview.style.display = 'none';
+    if (placeholder) placeholder.style.display = 'none';
+    if (inlineWebcamPreview) inlineWebcamPreview.style.display = 'block';
+    
+    if (cameraButtonText) cameraButtonText.textContent = 'Stop Camera';
+    if (captureInlineBtn) captureInlineBtn.style.display = 'inline-flex';
+    if (takePhotoBtn) {
+        takePhotoBtn.classList.remove('btn-primary');
+        takePhotoBtn.classList.add('btn-secondary');
+    }
+    
+    Webcam.set({
+        width: 320,
+        height: 240,
+        dest_width: 320,
+        dest_height: 240,
+        image_format: 'jpeg',
+        jpeg_quality: 90,
+        force_flash: false,
+        flip_horiz: true,
+        fps: 45
+    });
+
+    Webcam.attach('#inlineWebcamPreview');
+    inlineWebcamActive = true;
+}
+
+function stopInlineWebcam() {
+    if (typeof Webcam !== 'undefined' && inlineWebcamActive) Webcam.reset();
+    inlineWebcamActive = false;
+    
+    const photoPreview = document.getElementById('photoPreview');
+    const placeholder = document.querySelector('.profile-photo-placeholder');
+    const inlineWebcamPreview = document.getElementById('inlineWebcamPreview');
+    const cameraButtonText = document.getElementById('cameraButtonText');
+    const captureInlineBtn = document.getElementById('captureInlineBtn');
+    const takePhotoBtn = document.getElementById('takePhotoBtn');
+    
+    if (inlineWebcamPreview) {
+        inlineWebcamPreview.style.display = 'none';
+        inlineWebcamPreview.innerHTML = '';
+    }
+    
+    // If we had captured a photo or uploaded a file, show it. Otherwise show placeholder.
+    const pInput = document.getElementById('photoInput');
+    if (capturedPhotoData || (pInput && pInput.files && pInput.files[0]) || (window.RESIDENT_DATA && window.RESIDENT_DATA.existingPhoto)) {
+        if (photoPreview) photoPreview.style.display = 'block';
+    } else {
+        if (placeholder) placeholder.style.display = 'flex';
+    }
+    
+    if (cameraButtonText) cameraButtonText.textContent = 'Start Camera';
+    if (captureInlineBtn) captureInlineBtn.style.display = 'none';
+    if (takePhotoBtn) {
+        takePhotoBtn.classList.remove('btn-secondary');
+        takePhotoBtn.classList.add('btn-primary');
+    }
+}
+
+window.captureInlinePhoto = function() {
+    if (!inlineWebcamActive) return;
+    
+    Webcam.snap(function(data_uri) {
+        capturedPhotoData = data_uri;
+        
+        const photoInput = document.getElementById('photoInput');
+        if (photoInput) photoInput.value = '';
+        
+        const photoPreview = document.getElementById('photoPreview');
+        if (photoPreview) {
+            photoPreview.src = data_uri;
+            photoPreview.style.display = 'block';
+        }
+        
+        stopInlineWebcam();
+        formIsDirty = true;
+        showNotification('Photo captured successfully!', 'success');
+    });
+};
 
 function deleteHousehold(householdId) {
     if (!isEditModeActive) {

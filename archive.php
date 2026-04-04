@@ -146,10 +146,9 @@ if (isset($conn)) {
                         <select id="filterType" class="form-control" style="width: 200px;">
                             <option value="">All Types</option>
                             <option value="resident">Residents</option>
-                            <option value="official">Officials</option>
-                            <option value="blotter">Blotters</option>
                             <option value="household">Households</option>
-                            <option value="permit">Business Permits</option>
+                            <option value="blotter">Blotters</option>
+                              <option value="official">Officials</option>
                             <option value="user">Users</option>
                         </select>
                     </div>
