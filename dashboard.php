@@ -121,7 +121,7 @@
                             <select id="populationYearSelect" class="year-select" style="font-size:13px;padding:5px 10px;border:1px solid var(--border-color);border-radius:4px;background:var(--bg-secondary);color:var(--text-primary);">
                                 <?php 
                                 $currentYear = date('Y');
-                                for($y = $currentYear; $y >= $currentYear - 5; $y--) {
+                                for($y = $currentYear; $y >= $currentYear - 3; $y--) {
                                     echo "<option value=\"$y\">$y</option>";
                                 }
                                 ?>
@@ -577,7 +577,22 @@
                         </div>
                     </div>
                     <div class="report-table-box">
-                        <div class="report-table-box-title">Certificate Type Summary</div>
+                        <div class="report-table-box-title">
+                        Certificate Type Summary
+                        
+                        <!-- Add a select dropdown next to the title -->
+                        <select id="certificateYearFilter" class="form-select form-select-sm ms-2 d-inline-block w-auto">
+                            <option value="all" <?php echo (isset($_GET['cert_year']) && $_GET['cert_year'] === 'all') ? 'selected' : ''; ?>>All Time</option>
+                            <?php 
+                            $currentYear = date('Y');
+                            for($y = $currentYear; $y >= $currentYear - 3; $y--) {
+                                $isDefault = !isset($_GET['cert_year']) && $y == $currentYear;
+                                $selected = ($isDefault || (isset($_GET['cert_year']) && $_GET['cert_year'] == $y)) ? 'selected' : '';
+                                echo "<option value=\"$y\" $selected>$y</option>";
+                            }
+                            ?>
+                        </select>
+                    </div>
                         <table class="report-table">
                             <thead>
                                 <tr>
@@ -601,7 +616,7 @@
                                     <?php endforeach; ?>
                                     <tr style="font-weight:600; border-top:2px solid var(--border-color);">
                                         <td>Total</td>
-                                        <td class="text-right"><?php echo number_format($totalCertReqs); ?></td>
+                                        <td class="text-right"><?php echo number_format(array_sum($certTypeData)); ?></td>
                                     
                                     </tr>
                                 <?php endif; ?>
@@ -754,6 +769,24 @@
 
         // Print Button Handler
         document.getElementById('printReportBtn')?.addEventListener('click', () => window.print());
+        
+        // Certificate Year Filter Handler
+        const certYearFilter = document.getElementById('certificateYearFilter');
+        if (certYearFilter) {
+            certYearFilter.addEventListener('change', function() {
+                const url = new URL(window.location.href);
+                url.searchParams.set('cert_year', this.value);
+                url.searchParams.set('tab', 'certificates');
+                window.location.href = url.toString();
+            });
+        }
+        
+        // Keep the certificates tab active after reload if specified
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('tab') === 'certificates') {
+            const certTabBtn = document.querySelector('.report-tab-btn[data-tab="certificates"]');
+            if (certTabBtn) certTabBtn.click();
+        }
     });
     </script>
 </div>

@@ -229,8 +229,10 @@ try {
                                     </td>
                                 </tr>
                         <?php } else { 
-                            foreach ($requestsData as $row) { ?>
-                                <tr>
+                            foreach ($requestsData as $row) { 
+                                $requestYear = $row['date_requested'] ? date('Y', strtotime($row['date_requested'])) : '';
+                                ?>
+                                <tr data-year="<?= $requestYear ?>">
                                     <td><?= htmlspecialchars($row['resident_id'] ?? 'N/A') ?></td>
                                     <td>
                                         <?php if (!empty($row['r_id'])): ?>

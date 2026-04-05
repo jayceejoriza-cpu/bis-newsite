@@ -10,6 +10,19 @@ document.addEventListener('DOMContentLoaded', function() {
         paginated: true,
         pageSize: 10,
         responsive: true,
+        defaultFilter: (row) => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const hasFilters = urlParams.has('certificate') || urlParams.has('purpose') || urlParams.has('from_date') || urlParams.has('to_date');
+            if (hasFilters) return true; // Show all returned records if specific URL filters are active
+            
+            const rowYear = parseInt(row.getAttribute('data-year'), 10);
+            const currentYear = new Date().getFullYear();
+            
+            if (!isNaN(rowYear) && rowYear < currentYear) {
+                return false; // Hide past year records
+            }
+            return true;
+        },
         customSearch: (row, term) => {
             const residentId = row.cells[0]?.textContent.toLowerCase() || '';
             const residentName = row.cells[1]?.textContent.toLowerCase() || '';

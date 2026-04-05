@@ -260,12 +260,14 @@ try {
 $certTypeData    = [];
 $certTypeRevenue = [];
 try {
-    $rows = $pdo->query("
-        SELECT cr.certificate_name, COUNT(cr.id) as cnt
-        FROM certificate_requests cr
-        GROUP BY cr.certificate_name
-        ORDER BY cnt DESC
-    ")->fetchAll();
+    $certYear = isset($_GET['cert_year']) ? $_GET['cert_year'] : date('Y');
+    $sql = "SELECT cr.certificate_name, COUNT(cr.id) as cnt FROM certificate_requests cr";
+    if ($certYear !== 'all' && is_numeric($certYear)) {
+        $sql .= " WHERE YEAR(cr.date_requested) = " . (int)$certYear;
+    }
+    $sql .= " GROUP BY cr.certificate_name ORDER BY cnt DESC";
+    
+    $rows = $pdo->query($sql)->fetchAll();
     foreach ($rows as $r) {
         $certTypeData[$r['certificate_name']]    = (int)$r['cnt'];
         $certTypeRevenue[$r['certificate_name']] = 0;
