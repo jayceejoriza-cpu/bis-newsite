@@ -35,6 +35,33 @@ document.addEventListener('DOMContentLoaded', function () {
     let currentCertType = '';
 
     // ============================================
+    // Apply Permissions (Hide/Block Actions)
+    // ============================================
+    if (window.BIS_PERMS) {
+        if (!window.BIS_PERMS.cert_edit) {
+            const editCertBtn = document.getElementById('editCertPhotoBtn');
+            if (editCertBtn) editCertBtn.style.display = 'none';
+        }
+        if (!window.BIS_PERMS.cert_generate) {
+            document.querySelectorAll('.btn-print-cert, [id$="PrintBtn"]').forEach(btn => {
+                btn.style.display = 'none';
+            });
+        }
+    }
+
+    // Intercept clicks to prevent bypasses
+    document.addEventListener('click', function(e) {
+        const isPrintBtn = e.target.closest('.btn-print-cert') || e.target.closest('[id$="PrintBtn"]');
+        
+        if (isPrintBtn && window.BIS_PERMS && !window.BIS_PERMS.cert_generate) {
+            e.preventDefault();
+            e.stopPropagation();
+            showNotification('Permission denied to generate certificates.', 'error');
+            return;
+        }
+    }, true);
+
+    // ============================================
     // Search Functionality
     // ============================================
     if (searchInput) {
@@ -153,6 +180,10 @@ document.addEventListener('DOMContentLoaded', function () {
     const editCertPhotoBtn = document.getElementById('editCertPhotoBtn');
     if (editCertPhotoBtn) {
         editCertPhotoBtn.addEventListener('click', function () {
+            if (window.BIS_PERMS && !window.BIS_PERMS.cert_edit) {
+                showNotification('Permission denied to edit certificate photos.', 'error');
+                return;
+            }
             document.body.classList.toggle('edit-mode-active');
             this.classList.toggle('active');
         });

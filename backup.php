@@ -4,6 +4,10 @@ require_once 'config.php';
 // Check authentication
 require_once 'auth_check.php';
 
+// Load permissions
+require_once 'permissions.php';
+requirePermission('perm_settings_backup');
+
 // Check if user is logged in
 if (!isset($_SESSION['user_id'])) {
     header("Location: login.php");
@@ -136,6 +140,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['backup'])) {
         
         $stmt->close();
     }
+}
+
+// Read Auto Backup Settings
+$settingsFile = __DIR__ . '/model/backup_settings.json';
+$autoSettings = [
+    'frequency' => 'None',
+    'backup_time' => '00:00',
+    'target_folder' => str_replace('\\', '/', __DIR__) . '/backups',
+    'zip_password' => ''
+];
+if (file_exists($settingsFile)) {
+    $loaded = json_decode(file_get_contents($settingsFile), true);
+    if (is_array($loaded)) $autoSettings = array_merge($autoSettings, $loaded);
 }
 ?>
 <!DOCTYPE html>
@@ -509,6 +526,55 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['backup'])) {
                         <i class="fas fa-download"></i> Generate & Download Backup
                     </button>
                 </div>
+                
+                <!-- Automatic Backup Settings Card -->
+                <div class="backup-card" style="margin-top: 2rem;">
+                    <div class="backup-icon-wrapper" style="background-color: #fef3c7; color: #d97706;">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    
+                    <h2 class="backup-title">Automatic Backup Settings</h2>
+                    <p class="backup-description">
+                        Schedule automated database backups. The backups will be compressed into a password-protected ZIP file and saved directly to the specified folder.
+                    </p>
+                    
+                    <form id="autoBackupForm" style="text-align: left;">
+                        <div class="form-group">
+                            <label for="frequency" class="form-label">Backup Frequency</label>
+                            <select id="frequency" name="frequency" class="form-input">
+                                <option value="None" <?php echo $autoSettings['frequency'] == 'None' ? 'selected' : ''; ?>>None (Disabled)</option>
+                                <option value="Daily" <?php echo $autoSettings['frequency'] == 'Daily' ? 'selected' : ''; ?>>Every Day</option>
+                                <option value="Weekly" <?php echo $autoSettings['frequency'] == 'Weekly' ? 'selected' : ''; ?>>Every Week</option>
+                                <option value="Monthly" <?php echo $autoSettings['frequency'] == 'Monthly' ? 'selected' : ''; ?>>Every Month</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="backup_time" class="form-label">Backup Time</label>
+                            <input type="time" id="backup_time" name="backup_time" class="form-input" value="<?php echo htmlspecialchars($autoSettings['backup_time']); ?>" required>
+                            <small class="form-hint" style="color: var(--text-secondary); font-size: 0.8rem;">Time of day to execute the automated backup.</small>
+                        </div>
+                        <div class="form-group">
+                            <label for="target_folder" class="form-label">Target Folder Path</label>
+                            <input type="text" id="target_folder" name="target_folder" class="form-input" value="<?php echo htmlspecialchars($autoSettings['target_folder']); ?>" required>
+                            <small class="form-hint" style="color: var(--text-secondary); font-size: 0.8rem;">Absolute path to save files (e.g. C:/xampp/htdocs/bis-newsite/backups)</small>
+                        </div>
+                        <div class="form-group">
+                            <label for="zip_password" class="form-label">ZIP Password</label>
+                            <div class="password-input-wrapper">
+                                <input type="password" id="zip_password" name="zip_password" class="form-input" value="<?php echo htmlspecialchars($autoSettings['zip_password']); ?>" placeholder="Leave blank for no password">
+                                <button type="button" class="toggle-password" id="toggleZipPassword">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div style="text-align: right; margin-top: 1.5rem;">
+                            <button type="submit" class="btn btn-primary" id="saveAutoBackupBtn" style="padding: 0.75rem 2rem; font-size: 1rem; border-radius: 8px;">
+                                <i class="fas fa-save"></i> Save Settings
+                            </button>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
     </main>
@@ -610,6 +676,52 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['backup'])) {
                 passwordInput.value = '';
             }
         });
+        
+        // Auto Backup form submission
+        const autoBackupForm = document.getElementById('autoBackupForm');
+        if (autoBackupForm) {
+            autoBackupForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                const btn = document.getElementById('saveAutoBackupBtn');
+                const origText = btn.innerHTML;
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+
+                fetch('model/save_backup_settings.php', {
+                    method: 'POST',
+                    body: new FormData(this)
+                })
+                .then(r => r.json())
+                .then(data => {
+                    btn.disabled = false;
+                    btn.innerHTML = origText;
+                    if(data.success) {
+                        alert('Auto-backup settings saved successfully.');
+                    } else {
+                        alert('Error: ' + data.message);
+                    }
+                })
+                .catch(err => {
+                    btn.disabled = false;
+                    btn.innerHTML = origText;
+                    alert('An error occurred while saving.');
+                });
+            });
+        }
+        
+        // Auto backup ZIP password toggle
+        const toggleZipPasswordBtn = document.getElementById('toggleZipPassword');
+        if (toggleZipPasswordBtn) {
+            toggleZipPasswordBtn.addEventListener('click', function() {
+                const input = document.getElementById('zip_password');
+                const type = input.getAttribute('type') === 'password' ? 'text' : 'password';
+                input.setAttribute('type', type);
+                
+                const icon = this.querySelector('i');
+                icon.classList.toggle('fa-eye');
+                icon.classList.toggle('fa-eye-slash');
+            });
+        }
     </script>
 </body>
 </html>

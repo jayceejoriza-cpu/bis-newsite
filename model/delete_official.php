@@ -46,6 +46,7 @@ try {
     $stmt = $pdo->prepare("
         SELECT 
             bo.*,
+            r.resident_id as r_resident_id,
             r.first_name,
             r.middle_name,
             r.last_name,
@@ -64,7 +65,7 @@ try {
     // Format official name
     $officialName = trim($official['first_name'] . ' ' . $official['last_name']);
     $officialPosition = $official['position'];
-    $officialId = $official['id'];
+    $recordId = $official['r_resident_id'] ?? $official['id'];
 
     // Prepare data for archive
     $recordData = json_encode($official, JSON_PARTIAL_OUTPUT_ON_ERROR | JSON_UNESCAPED_UNICODE);
@@ -92,7 +93,7 @@ try {
 
     // Insert into archive table
     $stmt = $pdo->prepare("INSERT INTO archive (archive_type, record_id, record_data, deleted_by, deleted_at) VALUES (?, ?, ?, ?, NOW())");
-    $stmt->execute([$archiveType, $officialId, $recordData, $deletedBy]);
+    $stmt->execute([$archiveType, $recordId, $recordData, $deletedBy]);
 
     // Delete the official record
     $stmt = $pdo->prepare("DELETE FROM barangay_officials WHERE id = ?");
@@ -107,7 +108,7 @@ try {
             try {
                 $log_user = $_SESSION['username'];
                 $log_action = 'Archive Official';
-                $log_desc = "Moved official to archive: $officialName - $officialPosition (ID: $officialId)";
+                $log_desc = "Moved official to archive: $officialName - $officialPosition (ID: $recordId)";
                 $log_stmt = $pdo->prepare("INSERT INTO activity_logs (user, action, description) VALUES (?, ?, ?)");
                 $log_stmt->execute([$log_user, $log_action, $log_desc]);
             } catch (Exception $log_error) {

@@ -98,14 +98,23 @@ try {
         $updateStmt->close();
         
         // Fetch existing members for logging
-        $existingMembersSql = "SELECT hm.resident_id, CONCAT(r.first_name, ' ', r.last_name) as name FROM household_members hm JOIN residents r ON hm.resident_id = r.id WHERE hm.household_id = ?";
+        $existingMembersSql = "SELECT hm.resident_id, hm.relationship_to_head, hm.is_head, CONCAT(r.first_name, ' ', r.last_name) as name, h.household_number FROM household_members hm JOIN residents r ON hm.resident_id = r.id JOIN households h ON hm.household_id = h.id WHERE hm.household_id = ?";
         $existingMembersStmt = $conn->prepare($existingMembersSql);
         $existingMembersStmt->bind_param('i', $householdId);
         $existingMembersStmt->execute();
         $res = $existingMembersStmt->get_result();
         $oldMembers = [];
+        $oldMembersData = [];
         while($row = $res->fetch_assoc()) {
             $oldMembers[$row['resident_id']] = $row['name'];
+            $oldMembersData[$row['resident_id']] = [
+                'household_id' => $householdId,
+                'household_number' => $row['household_number'],
+                'resident_id' => $row['resident_id'],
+                'resident_name' => $row['name'],
+                'relationship_to_head' => $row['relationship_to_head'],
+                'is_head' => $row['is_head']
+            ];
         }
         $existingMembersStmt->close();
 
@@ -188,6 +197,18 @@ try {
                 }
                 
                 foreach ($removedIds as $remId) {
+                    // Archive the removed member
+                    if (isset($oldMembersData[$remId])) {
+                        $archiveType = 'household_member';
+                        $recordId = $oldMembersData[$remId]['household_number'] ?? $remId;
+                        $recordData = json_encode($oldMembersData[$remId]);
+                        $deletedBy = $log_user;
+                        $archiveStmt = $conn->prepare("INSERT INTO archive (archive_type, record_id, record_data, deleted_by) VALUES (?, ?, ?, ?)");
+                        $archiveStmt->bind_param("ssss", $archiveType, $recordId, $recordData, $deletedBy);
+                        $archiveStmt->execute();
+                        $archiveStmt->close();
+                    }
+                    
                     $resName = $oldMembers[$remId];
                     $log_action = 'Delete Household Members';
                     $log_desc = "Deleted $resName from household $hhNum";

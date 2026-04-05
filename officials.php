@@ -825,7 +825,9 @@ try {
         officials_view:   <?php echo hasPermission('perm_officials_view')   ? 'true' : 'false'; ?>,
         officials_create: <?php echo hasPermission('perm_officials_create') ? 'true' : 'false'; ?>,
         officials_edit:   <?php echo hasPermission('perm_officials_edit')   ? 'true' : 'false'; ?>,
-        officials_delete: <?php echo hasPermission('perm_officials_delete') ? 'true' : 'false'; ?>
+        officials_delete: <?php echo hasPermission('perm_officials_delete') ? 'true' : 'false'; ?>,
+        officials_status: <?php echo hasPermission('perm_officials_status') ? 'true' : 'false'; ?>,
+        officials_archive:<?php echo hasPermission('perm_officials_archive') ? 'true' : 'false'; ?>
     };
     </script>
 

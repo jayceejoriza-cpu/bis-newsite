@@ -441,7 +441,9 @@ function saveProfile() {
     formData.append('pending_household_relationship', rawData.get('pending_household_relationship') || '');
 
     // Hidden required fields from original DB state
-    formData.append('pwdStatus', window.RESIDENT_DATA.pwdStatus);
+    formData.append('pwdStatus', rawData.get('pwd_status') || rawData.get('pwdStatus') || window.RESIDENT_DATA.pwdStatus);
+    formData.append('pwdType', rawData.get('pwd_type') || rawData.get('pwdType') || '');
+    formData.append('pwdIdNumber', rawData.get('pwd_id_number') || rawData.get('pwdIdNumber') || '');
     formData.append('verificationStatus', window.RESIDENT_DATA.verificationStatus);
     formData.append('activityStatus', window.RESIDENT_DATA.activityStatus);
     formData.append('rejectionReason', window.RESIDENT_DATA.rejectionReason);

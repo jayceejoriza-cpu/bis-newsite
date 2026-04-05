@@ -478,20 +478,31 @@ if (demographicsChartEl) {
     demographicsChart = new Chart(demographicsCtx, {
         type: 'doughnut',
         data: {
-            labels: ['Children (0-17)', 'Young Adults (18-29)', 'Adults (30-59)', 'Seniors (60+)'],
+            labels: [
+                'Newborn (0-28 days)', 
+                'Infant (29 days - 1 year)', 
+                'Child (1-9 years)', 
+                'Adolescent (10-19 years)', 
+                'Adult (20-59 years)', 
+                'Senior Citizen (60+ years)'
+            ],
             datasets: [{
                 data: [],
                 backgroundColor: [
-                    'rgba(74, 222, 128, 0.8)',
+                    'rgba(236, 72, 153, 0.8)',
+                    'rgba(139, 92, 246, 0.8)',
+                    'rgba(16, 185, 129, 0.8)',
                     'rgba(59, 130, 246, 0.8)',
-                    'rgba(251, 146, 60, 0.8)',
-                    'rgba(239, 68, 68, 0.8)'
+                    'rgba(239, 68, 68, 0.8)',
+                    'rgba(245, 158, 11, 0.8)'
                 ],
                 borderColor: [
-                    'rgba(74, 222, 128, 1)',
+                    'rgba(236, 72, 153, 1)',
+                    'rgba(139, 92, 246, 1)',
+                    'rgba(16, 185, 129, 1)',
                     'rgba(59, 130, 246, 1)',
-                    'rgba(251, 146, 60, 1)',
-                    'rgba(239, 68, 68, 1)'
+                    'rgba(239, 68, 68, 1)',
+                    'rgba(245, 158, 11, 1)'
                 ],
                 borderWidth: 2,
                 hoverOffset: 10
@@ -833,6 +844,7 @@ function fetchDemographicsData() {
                 
                 // Update chart with real data (use percentages for display)
                 if (demographicsChart && data.percentages) {
+                    demographicsChart.data.labels = data.labels;
                     demographicsChart.data.datasets[0].data = data.percentages;
                     demographicsChart.update();
                 }
@@ -851,3 +863,12 @@ function fetchDemographicsData() {
 console.log('%c🏘️ Barangay Management System', 'color: #3b82f6; font-size: 20px; font-weight: bold;');
 console.log('%cDashboard Template v1.0.0', 'color: #6b7280; font-size: 14px;');
 console.log('%cBuilt with ❤️ for community management', 'color: #10b981; font-size: 12px;');
+
+// ===================================
+// Auto-Backup Background Trigger
+// ===================================
+document.addEventListener('DOMContentLoaded', () => {
+    setTimeout(() => {
+        fetch('model/run_auto_backup.php').catch(e => console.log('Auto backup check error:', e));
+    }, 5000); // Trigger check 5 seconds after page loads
+});

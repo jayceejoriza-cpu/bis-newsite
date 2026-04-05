@@ -5,6 +5,10 @@ require_once 'config.php';
 // Check authentication
 require_once 'auth_check.php';
 
+// Load permissions
+require_once 'permissions.php';
+requirePermission('perm_blotter_view');
+
 // Page title
 $pageTitle = 'Blotter Records';
 
@@ -309,14 +313,18 @@ try {
                     <h1 class="page-title"><?php echo $pageTitle; ?></h1>
                     <p class="page-subtitle">View and manage official barangay blotter entries, including complaints, incidents, and case statuses.</p>
                 </div>
+                <?php if (hasPermission('perm_blotter_print')): ?>
                 <button class="btn btn-outline-secondary no-print" onclick="window.print()">
                     <i class="fas fa-print"></i>
                     Print Report
                 </button>
+                <?php endif; ?>
+                <?php if (hasPermission('perm_blotter_create')): ?>
                 <button class="btn btn-primary" id="createRecordBtn">
                     <i class="fas fa-plus"></i>
                     Create Record
                 </button>
+                <?php endif; ?>
             </div>
             
             <div class="filter-tabs">
@@ -417,19 +425,28 @@ try {
                                 <td><?php echo $incidentType; ?></td>
                                 <td><?php echo $incidentDate; ?></td>
                                 <td style="text-align: center; vertical-align: middle;">
+                                    <?php 
+                                    $hasAnyBlotterAction = hasPermission('perm_blotter_view') || hasPermission('perm_blotter_edit') || hasPermission('perm_blotter_status') || hasPermission('perm_blotter_archive');
+                                    if ($hasAnyBlotterAction): 
+                                    ?>
                                     <div class="action-menu-container">
                                         <button class="btn-action" data-record-id="<?php echo $record['id']; ?>" data-bs-strategy="fixed">
                                             <i class="fas fa-ellipsis-h"></i>
                                         </button>
                                         <div class="action-menu" data-record-id="<?php echo $record['id']; ?>">
+                                            <?php if (hasPermission('perm_blotter_view')): ?>
                                             <button class="action-menu-item" data-action="view">
                                                 <i class="fas fa-eye"></i>
                                                 <span>View Details</span>
                                             </button>
+                                            <?php endif; ?>
+                                            <?php if (hasPermission('perm_blotter_edit')): ?>
                                             <button class="action-menu-item" data-action="edit">
                                                 <i class="fas fa-edit"></i>
                                                 <span>Edit</span>
                                             </button>
+                                            <?php endif; ?>
+                                            <?php if (hasPermission('perm_blotter_status')): ?>
                                             <button class="action-menu-item has-submenu" data-action="status">
                                                 <i class="fas fa-circle status-dot"></i>
                                                 <span>Status</span>
@@ -449,10 +466,8 @@ try {
                                                     <span>Dismissed</span>
                                                 </button>
                                             </div>
-                                            <button class="action-menu-item" data-action="archive">
-                                                <i class="fas fa-archive"></i>
-                                                <span>Archive</span>
-                                            </button>
+                                            <?php endif; ?>
+                                            <?php if (hasPermission('perm_blotter_archive')): ?>
                                              <div class="action-menu-divider" style="
                                                 height: 1px;
                                                 background-color: #e5e7eb;
@@ -460,10 +475,14 @@ try {
                                                 </div>
                                             <button class="action-menu-item danger" data-action="delete">
                                                 <i class="fas fa-trash"></i>
-                                                <span>Delete Permanently</span>
+                                                <span>Archive Blotter</span>
                                             </button>
+                                            <?php endif; ?>
                                         </div>
                                     </div>
+                                    <?php else: ?>
+                                        <div class="text-center text-muted">-</div>
+                                    <?php endif; ?>
                                 </td>
                             </tr>
                             <?php endforeach; ?>
@@ -842,9 +861,11 @@ try {
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <?php if (hasPermission('perm_blotter_print')): ?>
                     <button type="button" class="btn btn-primary" id="printRecordBtn">
                         <i class="fas fa-print"></i> Print Record
                     </button>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>
@@ -877,6 +898,18 @@ try {
     
     <?php include 'model/edit_blotter.php'; ?>
     
+    <!-- Permission flags for JS -->
+    <script>
+    window.BIS_PERMS = {
+        blotter_create: <?php echo hasPermission('perm_blotter_create') ? 'true' : 'false'; ?>,
+        blotter_view:   <?php echo hasPermission('perm_blotter_view')   ? 'true' : 'false'; ?>,
+        blotter_edit:   <?php echo hasPermission('perm_blotter_edit')   ? 'true' : 'false'; ?>,
+        blotter_status: <?php echo hasPermission('perm_blotter_status') ? 'true' : 'false'; ?>,
+        blotter_print:  <?php echo hasPermission('perm_blotter_print')  ? 'true' : 'false'; ?>,
+        blotter_archive:<?php echo hasPermission('perm_blotter_archive')? 'true' : 'false'; ?>
+    };
+    </script>
+
     <script src="assets/bootstrap/js/bootstrap.bundle.min.js"></script>
     <script src="assets/js/script.js"></script>
     <script src="assets/js/table.js"></script>

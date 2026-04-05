@@ -128,31 +128,84 @@ function deleteRole() {
         echo json_encode(['success' => false, 'message' => 'Invalid role ID.']);
         return;
     }
+    
+    // Prevent deleting Administrator role
+    $roleCheck = $conn->prepare("SELECT name FROM roles WHERE id = ?");
+    if ($roleCheck) {
+        $roleCheck->bind_param('i', $roleId);
+        $roleCheck->execute();
+        $roleRow = $roleCheck->get_result()->fetch_assoc();
+        $roleCheck->close();
+        
+        if ($roleRow && (strtolower($roleRow['name']) === 'administrator' || strtolower($roleRow['name']) === 'admin')) {
+            echo json_encode(['success' => false, 'message' => 'The Administrator role is protected and cannot be deleted.']);
+            return;
+        }
+    }
 
     // Check if role is assigned to any users
     $check = $conn->prepare("SELECT COUNT(*) as cnt FROM user_roles WHERE role_id = ?");
-    $check->bind_param('i', $roleId);
-    $check->execute();
-    $result = $check->get_result()->fetch_assoc();
-    $check->close();
+    if ($check) {
+        $check->bind_param('i', $roleId);
+        $check->execute();
+        $result = $check->get_result()->fetch_assoc();
+        $check->close();
+    
+        if ($result && $result['cnt'] > 0) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Cannot delete role — it is assigned to ' . $result['cnt'] . ' user(s). Remove the role from users first.'
+            ]);
+            return;
+        }
+    }
 
-    if ($result['cnt'] > 0) {
-        echo json_encode([
-            'success' => false,
-            'message' => 'Cannot delete role — it is assigned to ' . $result['cnt'] . ' user(s). Remove the role from users first.'
-        ]);
-        return;
+    // Ensure archive table exists
+    $conn->query("CREATE TABLE IF NOT EXISTS `archive` (
+        `id` int(11) NOT NULL AUTO_INCREMENT,
+        `archive_type` varchar(50) DEFAULT NULL,
+        `record_id` varchar(50) DEFAULT NULL,
+        `record_data` longtext DEFAULT NULL,
+        `deleted_by` varchar(100) DEFAULT NULL,
+        `deleted_at` datetime DEFAULT NULL,
+        PRIMARY KEY (`id`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+    // Archive role before deleting
+    $stmt = $conn->prepare("SELECT * FROM roles WHERE id = ?");
+    if ($stmt) {
+        $stmt->bind_param('i', $roleId);
+        $stmt->execute();
+        $res = $stmt->get_result();
+        if ($res->num_rows > 0) {
+            $role = $res->fetch_assoc();
+            $archiveData = json_encode($role, JSON_UNESCAPED_UNICODE | JSON_PARTIAL_OUTPUT_ON_ERROR);
+            $deletedBy = $_SESSION['username'] ?? 'Unknown';
+            
+            $archStmt = $conn->prepare("INSERT INTO archive (archive_type, record_id, record_data, deleted_by, deleted_at) VALUES ('role', ?, ?, ?, NOW())");
+            if ($archStmt) {
+                $archStmt->bind_param("sss", $role['name'], $archiveData, $deletedBy);
+                $archStmt->execute();
+                $archStmt->close();
+            }
+        }
+        $stmt->close();
     }
 
     $stmt = $conn->prepare("DELETE FROM roles WHERE id = ?");
-    $stmt->bind_param('i', $roleId);
-
-    if ($stmt->execute()) {
-        $stmt->close();
-        echo json_encode(['success' => true, 'message' => 'Role deleted successfully.']);
+    if ($stmt) {
+        $stmt->bind_param('i', $roleId);
+    
+        if ($stmt->execute()) {
+            $stmt->close();
+            // Log Activity (already exists in your snippet, skipped for brevity but ensure it stays!)
+            echo json_encode(['success' => true, 'message' => 'Role deleted successfully.']);
+        } else {
+            $stmt->close();
+            echo json_encode(['success' => false, 'message' => 'Failed to delete role.']);
+        }
     } else {
-        $stmt->close();
-        echo json_encode(['success' => false, 'message' => 'Failed to delete role.']);
+        echo json_encode(['success' => false, 'message' => 'Database error during deletion.']);
     }
 }
 ?>

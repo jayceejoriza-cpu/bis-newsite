@@ -43,6 +43,19 @@ if ($_currentUserId > 0) {
             $permStmt->bind_param('i', $_currentUserId);
             $permStmt->execute();
             $permResult = $permStmt->get_result();
+            
+            $moduleViews = [
+                'perm_resident_' => 'perm_resident_view',
+                'perm_household_' => 'perm_household_view',
+                'perm_blotter_' => 'perm_blotter_view',
+                'perm_officials_' => 'perm_officials_view',
+                'perm_req_' => 'perm_req_view',
+                'perm_office_' => 'perm_office_view',
+                'perm_roles_' => 'perm_roles_view',
+                'perm_cert_' => 'perm_cert_view',
+                'perm_settings_logs_' => 'perm_settings_logs_view'
+            ];
+            
             while ($permRow = $permResult->fetch_assoc()) {
                 if (!empty($permRow['permissions'])) {
                     $rolePerms = json_decode($permRow['permissions'], true);
@@ -51,6 +64,14 @@ if ($_currentUserId > 0) {
                             // A permission is granted if ANY assigned role grants it
                             if ($value === true) {
                                 $_userPermissions[$perm] = true;
+                                
+                                // Auto-grant 'view' permission if another permission in the same module is granted
+                                foreach ($moduleViews as $prefix => $viewPerm) {
+                                    if (strpos($perm, $prefix) === 0 && $perm !== $viewPerm) {
+                                        $_userPermissions[$viewPerm] = true;
+                                        break;
+                                    }
+                                }
                             }
                         }
                     }

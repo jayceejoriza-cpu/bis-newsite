@@ -334,20 +334,31 @@ function initializeDemographicsChart() {
     window.demographicsChart = new Chart(demographicsCtx, {
         type: 'doughnut',
         data: {
-            labels: ['Children (0-17)', 'Young Adults (18-29)', 'Adults (30-59)', 'Seniors (60+)'],
+            labels: [
+                'Newborn (0-28 days)', 
+                'Infant (29 days - 1 year)', 
+                'Child (1-9 years)', 
+                'Adolescent (10-19 years)', 
+                'Adult (20-59 years)', 
+                'Senior Citizen (60+ years)'
+            ],
             datasets: [{
-                data: [30, 18, 35, 17],
+                data: [5, 10, 20, 20, 35, 10],
                 backgroundColor: [
-                    'rgba(74, 222, 128, 0.8)',
+                    'rgba(236, 72, 153, 0.8)',
+                    'rgba(139, 92, 246, 0.8)',
+                    'rgba(16, 185, 129, 0.8)',
                     'rgba(59, 130, 246, 0.8)',
-                    'rgba(251, 146, 60, 0.8)',
-                    'rgba(239, 68, 68, 0.8)'
+                    'rgba(239, 68, 68, 0.8)',
+                    'rgba(245, 158, 11, 0.8)'
                 ],
                 borderColor: [
-                    'rgba(74, 222, 128, 1)',
+                    'rgba(236, 72, 153, 1)',
+                    'rgba(139, 92, 246, 1)',
+                    'rgba(16, 185, 129, 1)',
                     'rgba(59, 130, 246, 1)',
-                    'rgba(251, 146, 60, 1)',
-                    'rgba(239, 68, 68, 1)'
+                    'rgba(239, 68, 68, 1)',
+                    'rgba(245, 158, 11, 1)'
                 ],
                 borderWidth: 2,
                 hoverOffset: 10

@@ -161,7 +161,6 @@ document.addEventListener('DOMContentLoaded', function () {
             document.getElementById('userId').value   = data.id       || '';
             document.getElementById('fullName').value = data.name     || '';
             document.getElementById('username').value = data.username || '';
-            document.getElementById('email').value    = data.email    || '';
             document.getElementById('status').value   = data.status   || 'Active';
             // Password optional in edit
             passwordRequired.style.display = 'none';
@@ -235,7 +234,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
         const fullName = document.getElementById('fullName').value.trim();
         const username = document.getElementById('username').value.trim();
-        const email    = document.getElementById('email').value.trim();
         const password = document.getElementById('password').value;
 
         if (!fullName) {
@@ -250,15 +248,6 @@ document.addEventListener('DOMContentLoaded', function () {
         } else if (username.length < 3) {
             showError('usernameError', 'Username must be at least 3 characters.');
             document.getElementById('username').classList.add('error');
-            valid = false;
-        }
-        if (!email) {
-            showError('emailError', 'Email is required.');
-            document.getElementById('email').classList.add('error');
-            valid = false;
-        } else if (!isValidEmail(email)) {
-            showError('emailError', 'Please enter a valid email address.');
-            document.getElementById('email').classList.add('error');
             valid = false;
         }
         if (!isEditMode && !password) {
@@ -321,7 +310,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 id:       editBtn.dataset.id,
                 name:     editBtn.dataset.name,
                 username: editBtn.dataset.username,
-                email:    editBtn.dataset.email,
                 status:   editBtn.dataset.status,
                 roleIds:  roleIds
             });
@@ -422,16 +410,46 @@ document.addEventListener('DOMContentLoaded', function () {
         const trigger = e.target.closest('.action-trigger');
         if (trigger) {
             e.stopPropagation();
-            const menu   = trigger.closest('.action-dropdown').querySelector('.action-menu');
+            
+            const container = trigger.closest('.action-dropdown') || trigger.parentElement;
+            let menu = container.querySelector('.action-menu');
+            
+            if (!menu && trigger.dataset.menuId) {
+                menu = document.getElementById(trigger.dataset.menuId);
+            }
+            
+            if (!menu) return;
+            
             const isOpen = menu.classList.contains('open');
             closeAllActionMenus();
+            
             if (!isOpen) {
                 menu.classList.add('open');
-                // Flip upward if near bottom
-                const rect = menu.getBoundingClientRect();
-                if (rect.bottom > window.innerHeight) {
+                
+                if (!menu.id) {
+                    menu.id = 'userMenu_' + Math.random().toString(36).substr(2, 9);
+                    trigger.dataset.menuId = menu.id;
+                }
+                if (!menu.dataset.originalParentSet) {
+                    menu.originalParent = container;
+                    menu.dataset.originalParentSet = 'true';
+                }
+                
+                document.body.appendChild(menu);
+                
+                menu.style.position = 'fixed';
+                menu.style.zIndex = '9999';
+                
+                const rect = trigger.getBoundingClientRect();
+                menu.style.left = 'auto';
+                menu.style.right = (window.innerWidth - rect.right) + 'px';
+                
+                if (rect.bottom + (menu.offsetHeight || 150) > window.innerHeight) {
                     menu.style.top    = 'auto';
-                    menu.style.bottom = 'calc(100% + 4px)';
+                    menu.style.bottom = (window.innerHeight - rect.top + 5) + 'px';
+                } else {
+                    menu.style.top    = (rect.bottom + 5) + 'px';
+                    menu.style.bottom = 'auto';
                 }
             }
             return;
@@ -444,6 +462,14 @@ document.addEventListener('DOMContentLoaded', function () {
             m.classList.remove('open');
             m.style.top    = '';
             m.style.bottom = '';
+            m.style.left   = '';
+            m.style.right  = '';
+            m.style.position = '';
+            m.style.zIndex = '';
+            
+            if (m.originalParent && m.parentElement === document.body) {
+                m.originalParent.appendChild(m);
+            }
         });
     }
 
@@ -471,7 +497,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function clearFormErrors() {
-        ['fullNameError','usernameError','emailError','passwordError','rolesError','statusError']
+        ['fullNameError','usernameError','passwordError','rolesError','statusError']
             .forEach(id => {
                 const el = document.getElementById(id);
                 if (el) el.textContent = '';
@@ -497,7 +523,7 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     // Clear error on input
-    ['fullName','username','email','password','status'].forEach(id => {
+    ['fullName','username','password','status'].forEach(id => {
         const el = document.getElementById(id);
         if (el) {
             el.addEventListener('input', function () {

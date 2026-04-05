@@ -67,6 +67,11 @@ try {
             $message = "Household record restored successfully";
             break;
             
+        case 'household_member':
+            restoreHouseholdMember($conn, $recordData);
+            $message = "Household member restored successfully";
+            break;
+            
         case 'permit':
             restorePermit($conn, $recordData);
             $message = "Business permit restored successfully";
@@ -75,6 +80,11 @@ try {
         case 'user':
             restoreUser($conn, $recordData);
             $message = "User account restored successfully";
+            break;
+            
+        case 'role':
+            restoreRole($conn, $recordData);
+            $message = "Role restored successfully";
             break;
             
         default:
@@ -138,7 +148,7 @@ function restoreResident($conn, $data) {
         'mobile_number', 'email', 'house_no', 'current_address', 'household_no', 'household_contact', 'purok', 'street_name',
         'civil_status', 'spouse_name', 'father_name', 'mother_name', 'number_of_children', 'household_head',
         'educational_attainment', 'employment_status', 'occupation', 'monthly_income',
-        'fourps_member', 'fourps_id', 'voter_status', 'precinct_number', 'pwd_status', 'senior_citizen', 'indigent',
+        'fourps_member', 'fourps_id', 'voter_status', 'precinct_number', 'pwd_status', 'pwd_type', 'pwd_id_number', 'senior_citizen', 'indigent',
         'philhealth_id', 'membership_type', 'philhealth_category', 'age_health_group', 'medical_history',
         'lmp_date', 'using_fp_method', 'fp_methods_used', 'fp_status',
         'water_source_type', 'toilet_facility_type', 'remarks',
@@ -454,6 +464,22 @@ function restoreHousehold($conn, $data) {
     }
 }
 
+function restoreHouseholdMember($conn, $data) {
+    $stmt = $conn->prepare("INSERT INTO household_members (household_id, resident_id, relationship_to_head, is_head) VALUES (?, ?, ?, ?)");
+    
+    $h_id = $data['household_id'];
+    $r_id = $data['resident_id'];
+    $rel = $data['relationship_to_head'];
+    $is_head = $data['is_head'] ?? 0;
+
+    $stmt->bind_param("iisi", $h_id, $r_id, $rel, $is_head);
+    
+    if (!$stmt->execute()) {
+        throw new Exception("Failed to restore household member: " . $stmt->error);
+    }
+    $stmt->close();
+}
+
 function restorePermit($conn, $data) {
     // Check if permit table exists
     $checkTable = $conn->query("SHOW TABLES LIKE 'tblpermit'");
@@ -510,6 +536,22 @@ function restoreUser($conn, $data) {
     
     if (!$stmt->execute()) {
         throw new Exception("Failed to restore user: " . $stmt->error);
+    }
+    $stmt->close();
+}
+
+function restoreRole($conn, $data) {
+    $stmt = $conn->prepare("INSERT INTO roles (name, description, color, text_color, permissions) VALUES (?, ?, ?, ?, ?)");
+    $name = $data['name'];
+    $description = $data['description'] ?? null;
+    $color = $data['color'] ?? '#e5e7eb';
+    $textColor = $data['text_color'] ?? '#374151';
+    $permissions = $data['permissions'] ?? '{}';
+    
+    $stmt->bind_param("sssss", $name, $description, $color, $textColor, $permissions);
+    
+    if (!$stmt->execute()) {
+        throw new Exception("Failed to restore role: " . $stmt->error);
     }
     $stmt->close();
 }

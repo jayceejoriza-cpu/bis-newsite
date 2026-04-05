@@ -270,7 +270,6 @@ function getUserAvatarColor($index) {
                                                 data-id="<?php echo $user['id']; ?>"
                                                 data-name="<?php echo htmlspecialchars($user['full_name']); ?>"
                                                 data-username="<?php echo htmlspecialchars($user['username']); ?>"
-                                                data-email="<?php echo htmlspecialchars($user['email']); ?>"
                                                 data-status="<?php echo htmlspecialchars($user['status']); ?>"
                                                 data-role-ids="<?php echo $roleIdsJson; ?>">
                                                 <i class="fas fa-edit"></i> Edit
@@ -339,14 +338,6 @@ function getUserAvatarColor($index) {
                         <input type="text" class="form-input" id="username" name="username"
                                placeholder="Enter username" required autocomplete="off">
                         <span class="form-error" id="usernameError"></span>
-                    </div>
-
-                    <!-- Email -->
-                    <div class="form-group">
-                        <label class="form-label" for="email">Email <span class="required">*</span></label>
-                        <input type="email" class="form-input" id="email" name="email"
-                               placeholder="Enter email address" required>
-                        <span class="form-error" id="emailError"></span>
                     </div>
 
                     <!-- Password -->

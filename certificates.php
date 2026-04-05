@@ -233,9 +233,11 @@ foreach ($certificateTypes as $cert) {
                     </button>
                 </div>
 
+                <?php if (hasPermission('perm_cert_edit')): ?>
                 <button class="btn btn-icon" id="editCertPhotoBtn" title="Edit Photos">
                     <i class="fas fa-edit"></i>
                 </button>
+                <?php endif; ?>
                
             </div>
 
@@ -1108,6 +1110,14 @@ foreach ($certificateTypes as $cert) {
 
     <!-- Bootstrap JS Bundle (includes Popper) -->
     <script src="assets/bootstrap/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Permission flags for JS -->
+    <script>
+    window.BIS_PERMS = {
+        cert_edit: <?php echo hasPermission('perm_cert_edit') ? 'true' : 'false'; ?>,
+        cert_generate: <?php echo hasPermission('perm_cert_generate') ? 'true' : 'false'; ?>
+    };
+    </script>
 
     <!-- Custom JavaScript -->
     <script src="assets/js/script.js"></script>

@@ -16,7 +16,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 
 // Check permission
-if (!hasPermission('perm_resident_edit')) {
+if (!hasPermission('perm_resident_edit') && !hasPermission('perm_resident_status')) {
     http_response_code(403);
     echo json_encode(['success' => false, 'message' => 'Permission denied']);
     exit;

@@ -151,6 +151,74 @@ function initializeForm() {
         toggleReligion(); // Initialize on load
     }
 
+    // Guardian Relationship Other handler
+    if (guardianRelationshipSelect) {
+        // Create input element for "Other" relationship
+        const guardianOtherInput = document.createElement('input');
+        guardianOtherInput.type = 'text';
+        guardianOtherInput.id = 'guardianRelationshipOther';
+        guardianOtherInput.className = 'form-control mt-2';
+        guardianOtherInput.placeholder = 'Please specify relationship';
+        guardianOtherInput.style.display = 'none';
+        
+        // Insert after the select element
+        guardianRelationshipSelect.parentNode.insertBefore(guardianOtherInput, guardianRelationshipSelect.nextSibling);
+        
+        guardianRelationshipSelect.addEventListener('change', function() {
+            if (this.value === 'Other') {
+                guardianOtherInput.style.display = 'block';
+                guardianOtherInput.focus();
+            } else {
+                guardianOtherInput.style.display = 'none';
+                guardianOtherInput.value = '';
+            }
+        });
+        
+        guardianOtherInput.addEventListener('blur', function() {
+            const newValue = this.value.trim();
+            if (newValue) {
+                // Check if option already exists
+                let optionExists = Array.from(guardianRelationshipSelect.options).some(opt => {
+                    if (opt.value.toLowerCase() === newValue.toLowerCase()) {
+                        guardianRelationshipSelect.value = opt.value;
+                        return true;
+                    }
+                    return false;
+                });
+                
+                // If it doesn't exist, add it
+                if (!optionExists) {
+                    const newOption = document.createElement('option');
+                    newOption.value = newValue;
+                    newOption.textContent = newValue;
+                    
+                    // Add before the 'Other' option if possible, or at the end
+                    const otherOption = Array.from(guardianRelationshipSelect.options).find(opt => opt.value === 'Other');
+                    if (otherOption) {
+                        guardianRelationshipSelect.insertBefore(newOption, otherOption);
+                    } else {
+                        guardianRelationshipSelect.appendChild(newOption);
+                    }
+                    guardianRelationshipSelect.value = newValue;
+                }
+                
+                // Hide and clear the input
+                this.style.display = 'none';
+                this.value = '';
+                
+                // Trigger change event to save form data
+                guardianRelationshipSelect.dispatchEvent(new Event('change'));
+            }
+        });
+        
+        guardianOtherInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                this.blur();
+            }
+        });
+    }
+
     // Civil status change handler
     const civilStatusSelect = document.getElementById('civilStatus');
     if (civilStatusSelect) {
@@ -195,11 +263,33 @@ function initializePwdStatus() {
     const yesRadio = document.getElementById('pwdStatusYes');
     const noRadio = document.getElementById('pwdStatusNo');
     const hiddenInput = document.getElementById('pwdStatus');
+    const pwdTypeGroup = document.getElementById('pwdTypeGroup');
+    const pwdIdGroup = document.getElementById('pwdIdGroup');
+    const pwdType = document.getElementById('pwdType');
+    const pwdIdNumber = document.getElementById('pwdIdNumber');
+
+    const togglePwdFields = (isYes) => {
+        if (pwdTypeGroup && pwdIdGroup) {
+            pwdTypeGroup.style.display = isYes ? 'block' : 'none';
+            pwdIdGroup.style.display = isYes ? 'block' : 'none';
+            if (pwdType) {
+                if (isYes) {
+                    pwdType.setAttribute('required', 'required');
+                } else {
+                    pwdType.removeAttribute('required');
+                    pwdType.value = '';
+                    pwdType.classList.remove('error');
+                }
+            }
+            if (!isYes && pwdIdNumber) pwdIdNumber.value = '';
+        }
+    };
 
     if (yesRadio && hiddenInput) {
         yesRadio.addEventListener('change', function() {
             if (this.checked) {
                 hiddenInput.value = 'Yes';
+                togglePwdFields(true);
                 saveFormData();
             }
         });
@@ -209,10 +299,15 @@ function initializePwdStatus() {
         noRadio.addEventListener('change', function() {
             if (this.checked) {
                 hiddenInput.value = 'No';
+                    togglePwdFields(false);
                 saveFormData();
             }
         });
     }
+        
+        if (hiddenInput && hiddenInput.value === 'Yes') {
+            togglePwdFields(true);
+        }
 }
 
 // ===================================
@@ -2083,6 +2178,10 @@ function populateReviewModal() {
     }
     additionalHTML += createField('Age/Health Group', getValue('ageHealthGroup'));
     additionalHTML += createField('Disability Status', getValue('pwdStatus'));
+    if (getValue('pwdStatus') === 'Yes') {
+        additionalHTML += createField('Type of Disability', getValue('pwdType'));
+        additionalHTML += createField('PWD ID Number', getValue('pwdIdNumber'));
+    }
     additionalHTML += createField('Medical History', getValue('medicalHistory'));
     additionalHTML += '</div>';
     
@@ -2304,6 +2403,21 @@ function restoreFormData() {
                         element.checked = true;
                     }
                 } else {
+                    if (element.tagName === 'SELECT' && formData[name]) {
+                        // Check if option exists, if not, append it
+                        let optionExists = Array.from(element.options).some(opt => opt.value === formData[name]);
+                        if (!optionExists) {
+                            const newOption = document.createElement('option');
+                            newOption.value = formData[name];
+                            newOption.textContent = formData[name];
+                            const otherOption = Array.from(element.options).find(opt => opt.value === 'Other');
+                            if (otherOption) {
+                                element.insertBefore(newOption, otherOption);
+                            } else {
+                                element.appendChild(newOption);
+                            }
+                        }
+                    }
                     element.value = formData[name];
                 }
             });

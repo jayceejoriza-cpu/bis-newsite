@@ -253,10 +253,12 @@ $age = calculateAge($resident['date_of_birth']);
                     </div>
                 </div>
                 <div class="profile-header-actions">
+                    <?php if (hasPermission('perm_resident_print_profile')): ?>
                     <button class="btn btn-secondary view-action" onclick="window.print()">
                         <i class="fas fa-print"></i>
                         Print Profile
                     </button>
+                    <?php endif; ?>
                     <?php if (hasPermission('perm_resident_edit')): ?>
                     <button class="btn btn-primary view-action" type="button" onclick="toggleEditMode(true)">
                         <i class="fas fa-edit"></i>
@@ -651,12 +653,22 @@ $age = calculateAge($resident['date_of_birth']);
                                     </select>
                                 </div>
                                  <div class="info-item">
-                                    <label>Pwd Status</label>
+                                    <label>PWD Status</label>
                                     <p class="view-field"><?php echo htmlspecialchars($resident['pwd_status'] ?: 'N/A'); ?></p>
-                                 <select name="pwd_status" class="form-control edit-field" value="<?php echo htmlspecialchars($resident['pwd_status']); ?>" style="display:none;">
+                                 <select name="pwd_status" id="profilePwdStatus" class="form-control edit-field" style="display:none;">
                                     <option value="No" <?php echo $resident['pwd_status'] == 'No' ? 'selected' : ''; ?>>No</option>
                                       <option value="Yes" <?php echo $resident['pwd_status'] == 'Yes' ? 'selected' : ''; ?>>Yes</option>
                                     </select>
+                                </div>
+                                <div class="info-item" id="profilePwdTypeGroup" style="display: <?php echo ($resident['pwd_status'] ?? '') == 'Yes' ? 'block' : 'none'; ?>;">
+                                    <label>Type of Disability <span class="required">*</span></label>
+                                    <p class="view-field"><?php echo htmlspecialchars($resident['pwd_type'] ?? 'N/A'); ?></p>
+                                    <input type="text" name="pwd_type" id="profilePwdType" class="form-control edit-field" value="<?php echo htmlspecialchars($resident['pwd_type'] ?? ''); ?>" style="display:none;">
+                                </div>
+                                <div class="info-item" id="profilePwdIdGroup" style="display: <?php echo ($resident['pwd_status'] ?? '') == 'Yes' ? 'block' : 'none'; ?>;">
+                                    <label>PWD ID Number <span class="text-muted">(Optional)</span></label>
+                                    <p class="view-field"><?php echo htmlspecialchars($resident['pwd_id_number'] ?? 'N/A'); ?></p>
+                                    <input type="text" name="pwd_id_number" id="profilePwdId" class="form-control edit-field" value="<?php echo htmlspecialchars($resident['pwd_id_number'] ?? ''); ?>" style="display:none;">
                                 </div>
                                 <div class="info-item full-width">
                                     <label>Medical History</label>

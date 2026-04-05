@@ -187,6 +187,8 @@ try {
     $philhealthCategory = $conn->real_escape_string($_POST['philhealthCategory'] ?? '');
     $ageHealthGroup = $conn->real_escape_string($_POST['ageHealthGroup'] ?? '');
     $pwdStatus = $conn->real_escape_string($_POST['pwdStatus'] ?? 'No');
+    $pwdType = $conn->real_escape_string(trim($_POST['pwdType'] ?? ''));
+    $pwdIdNumber = $conn->real_escape_string(trim($_POST['pwdIdNumber'] ?? ''));
     $medicalHistory = $conn->real_escape_string(trim($_POST['medicalHistory'] ?? ''));
     
     // Women's Reproductive Health (WRA)
@@ -351,6 +353,8 @@ try {
             philhealth_category = " . ($philhealthCategory ? "'$philhealthCategory'" : "NULL") . ",
             age_health_group = " . ($ageHealthGroup ? "'$ageHealthGroup'" : "NULL") . ",
             pwd_status = '$pwdStatus',
+            pwd_type = " . ($pwdType ? "'$pwdType'" : "NULL") . ",
+            pwd_id_number = " . ($pwdIdNumber ? "'$pwdIdNumber'" : "NULL") . ",
             medical_history = " . ($medicalHistory ? "'$medicalHistory'" : "NULL") . ",
             lmp_date = " . ($lmpDate ? "'$lmpDate'" : "NULL") . ",
             using_fp_method = " . ($usingFpMethod ? "'$usingFpMethod'" : "NULL") . ",
@@ -459,6 +463,32 @@ try {
         } elseif ($pendingAction === 'remove') {
             $householdId = intval($_POST['pending_selected_household_id'] ?? 0);
             if ($householdId > 0) {
+                // Archive the member before deleting
+                $stmt = $conn->prepare("SELECT hm.relationship_to_head, hm.is_head, CONCAT(r.first_name, ' ', r.last_name) as resident_name, h.household_number FROM household_members hm JOIN residents r ON hm.resident_id = r.id JOIN households h ON hm.household_id = h.id WHERE hm.household_id = ? AND hm.resident_id = ?");
+                $stmt->bind_param("ii", $householdId, $residentId);
+                $stmt->execute();
+                $res = $stmt->get_result();
+                if ($res->num_rows > 0) {
+                    $row = $res->fetch_assoc();
+                    $archiveData = [
+                        'household_id' => $householdId,
+                        'household_number' => $row['household_number'],
+                        'resident_id' => $residentId,
+                        'resident_name' => $row['resident_name'],
+                        'relationship_to_head' => $row['relationship_to_head'],
+                        'is_head' => $row['is_head']
+                    ];
+                    $archiveType = 'household_member';
+                    $deletedBy = $_SESSION['username'] ?? 'Unknown';
+                    $recordData = json_encode($archiveData);
+                    $recordId = $row['household_number'] ?? $residentId;
+                    $archStmt = $conn->prepare("INSERT INTO archive (archive_type, record_id, record_data, deleted_by, deleted_at) VALUES (?, ?, ?, ?, NOW())");
+                    $archStmt->bind_param("ssss", $archiveType, $recordId, $recordData, $deletedBy);
+                    $archStmt->execute();
+                    $archStmt->close();
+                }
+                $stmt->close();
+
                 $deleteSql = "DELETE FROM household_members WHERE household_id = $householdId AND resident_id = $residentId";
                 if (!$conn->query($deleteSql)) {
                     throw new Exception('Failed to remove member: ' . $conn->error);
@@ -544,6 +574,7 @@ try {
         civil_status, spouse_name, father_name, mother_name, number_of_children,
         guardian_name, guardian_relationship, guardian_contact,
         educational_attainment, employment_status, occupation, monthly_income, pwd_status,
+        pwd_type, pwd_id_number,
         fourps_member, fourps_id, voter_status, precinct_number,
         philhealth_id, membership_type, philhealth_category, age_health_group, medical_history,
         lmp_date, using_fp_method, fp_methods_used, fp_status,
@@ -559,6 +590,7 @@ try {
         " . ($guardianName ? "'$guardianName'" : "NULL") . ", " . ($guardianRelationship ? "'$guardianRelationship'" : "NULL") . ", " . ($guardianContact ? "'$guardianContact'" : "NULL") . ",
         " . ($educationalAttainment ? "'$educationalAttainment'" : "NULL") . ", " . ($employmentStatus ? "'$employmentStatus'" : "NULL") . ",
         " . ($occupation ? "'$occupation'" : "NULL") . ", " . ($monthlyIncome ? "'$monthlyIncome'" : "NULL") . ", '$pwdStatus',
+        " . ($pwdType ? "'$pwdType'" : "NULL") . ", " . ($pwdIdNumber ? "'$pwdIdNumber'" : "NULL") . ",
         '$fourPs', " . ($fourpsId ? "'$fourpsId'" : "NULL") . ", " . ($voterStatus ? "'$voterStatus'" : "NULL") . ", 
         " . ($precinctNumber ? "'$precinctNumber'" : "NULL") . ",
         " . ($philhealthId ? "'$philhealthId'" : "NULL") . ", " . ($membershipType ? "'$membershipType'" : "NULL") . ",

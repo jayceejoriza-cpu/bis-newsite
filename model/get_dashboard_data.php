@@ -305,24 +305,25 @@ function getBlotterData($conn) {
  */
 function getDemographicsData($conn) {
     $data = [
-        'labels' => ['Children (0-17)', 'Young Adults (18-29)', 'Adults (30-59)', 'Seniors (60+)'],
-        'values' => [0, 0, 0, 0],
-        'percentages' => [0, 0, 0, 0]
+        'labels' => [
+            'Newborn (0-28 days)',
+            'Infant (29 days - 1 year)',
+            'Child (1-9 years)',
+            'Adolescent (10-19 years)',
+            'Adult (20-59 years)',
+            'Senior Citizen (60+ years)'
+        ],
+        'values' => [0, 0, 0, 0, 0, 0],
+        'percentages' => [0, 0, 0, 0, 0, 0]
     ];
     
     // Get age distribution
     $query = "
         SELECT 
-            CASE 
-                WHEN TIMESTAMPDIFF(YEAR, date_of_birth, CURDATE()) BETWEEN 0 AND 17 THEN 'children'
-                WHEN TIMESTAMPDIFF(YEAR, date_of_birth, CURDATE()) BETWEEN 18 AND 29 THEN 'young_adults'
-                WHEN TIMESTAMPDIFF(YEAR, date_of_birth, CURDATE()) BETWEEN 30 AND 59 THEN 'adults'
-                WHEN TIMESTAMPDIFF(YEAR, date_of_birth, CURDATE()) >= 60 THEN 'seniors'
-                ELSE 'unknown'
-            END as age_group,
+            age_health_group as age_group,
             COUNT(*) as count
         FROM residents
-        WHERE activity_status = 'Alive' AND date_of_birth IS NOT NULL
+        WHERE activity_status != 'Archived' AND age_health_group IS NOT NULL
         GROUP BY age_group
     ";
     
@@ -331,28 +332,32 @@ function getDemographicsData($conn) {
     
     if ($result) {
         $counts = [
-            'children' => 0,
-            'young_adults' => 0,
-            'adults' => 0,
-            'seniors' => 0
+            'Newborn (0-28 days)' => 0,
+            'Infant (29 days - 1 year)' => 0,
+            'Child (1-9 years)' => 0,
+            'Adolescent (10-19 years)' => 0,
+            'Adult (20-59 years)' => 0,
+            'Senior Citizen (60+ years)' => 0
         ];
         
         while ($row = $result->fetch_assoc()) {
             if (isset($counts[$row['age_group']])) {
-                $counts[$row['age_group']] = (int)$row['count'];
+                $counts[$row['age_group']] += (int)$row['count'];
                 $total += (int)$row['count'];
             }
         }
         
         // Set values
-        $data['values'][0] = $counts['children'];
-        $data['values'][1] = $counts['young_adults'];
-        $data['values'][2] = $counts['adults'];
-        $data['values'][3] = $counts['seniors'];
+        $data['values'][0] = $counts['Newborn (0-28 days)'];
+        $data['values'][1] = $counts['Infant (29 days - 1 year)'];
+        $data['values'][2] = $counts['Child (1-9 years)'];
+        $data['values'][3] = $counts['Adolescent (10-19 years)'];
+        $data['values'][4] = $counts['Adult (20-59 years)'];
+        $data['values'][5] = $counts['Senior Citizen (60+ years)'];
         
         // Calculate percentages
         if ($total > 0) {
-            for ($i = 0; $i < 4; $i++) {
+            for ($i = 0; $i < 6; $i++) {
                 $data['percentages'][$i] = round(($data['values'][$i] / $total) * 100, 1);
             }
         }

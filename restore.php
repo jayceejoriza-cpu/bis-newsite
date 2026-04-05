@@ -4,6 +4,10 @@ require_once 'config.php';
 // Check authentication
 require_once 'auth_check.php';
 
+// Load permissions
+require_once 'permissions.php';
+requirePermission('perm_settings_restore');
+
 // Check if user is logged in
 if (!isset($_SESSION['user_id'])) {
     header("Location: login.php");

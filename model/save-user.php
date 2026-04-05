@@ -59,7 +59,7 @@ function createUser() {
 
     $fullName = trim($_POST['full_name'] ?? '');
     $username = trim($_POST['username']  ?? '');
-    $email    = trim($_POST['email']     ?? '');
+    $email    = ''; // Removed from frontend
     $password = $_POST['password']       ?? '';
     $status   = trim($_POST['status']    ?? 'Active');
     // roles[] is an array of role IDs from checkboxes
@@ -72,10 +72,6 @@ function createUser() {
     }
     if (empty($username) || strlen($username) < 3) {
         echo json_encode(['success' => false, 'message' => 'Username must be at least 3 characters.', 'field' => 'username']);
-        return;
-    }
-    if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        echo json_encode(['success' => false, 'message' => 'A valid email is required.', 'field' => 'email']);
         return;
     }
     if (empty($password) || strlen($password) < 6) {
@@ -97,18 +93,6 @@ function createUser() {
         return;
     }
     $chkUser->close();
-
-    // Check duplicate email
-    $chkEmail = $conn->prepare("SELECT id FROM users WHERE email = ? LIMIT 1");
-    $chkEmail->bind_param('s', $email);
-    $chkEmail->execute();
-    $chkEmail->store_result();
-    if ($chkEmail->num_rows > 0) {
-        $chkEmail->close();
-        echo json_encode(['success' => false, 'message' => 'Email already exists.', 'field' => 'email']);
-        return;
-    }
-    $chkEmail->close();
 
     // Set role field from first selected role name (column is now VARCHAR)
     $legacyRole = 'Staff';
@@ -154,7 +138,7 @@ function editUser() {
     $userId   = intval($_POST['user_id']   ?? 0);
     $fullName = trim($_POST['full_name']   ?? '');
     $username = trim($_POST['username']    ?? '');
-    $email    = trim($_POST['email']       ?? '');
+    $email    = ''; // Removed from frontend
     $password = $_POST['password']         ?? '';
     $status   = trim($_POST['status']      ?? 'Active');
     $roleIds  = isset($_POST['roles']) && is_array($_POST['roles']) ? $_POST['roles'] : [];
@@ -173,10 +157,6 @@ function editUser() {
         echo json_encode(['success' => false, 'message' => 'Username must be at least 3 characters.', 'field' => 'username']);
         return;
     }
-    if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        echo json_encode(['success' => false, 'message' => 'A valid email is required.', 'field' => 'email']);
-        return;
-    }
     if (!in_array($status, ['Active', 'Inactive'])) {
         $status = 'Active';
     }
@@ -192,18 +172,6 @@ function editUser() {
         return;
     }
     $chkUser->close();
-
-    // Check duplicate email (exclude current)
-    $chkEmail = $conn->prepare("SELECT id FROM users WHERE email = ? AND id != ? LIMIT 1");
-    $chkEmail->bind_param('si', $email, $userId);
-    $chkEmail->execute();
-    $chkEmail->store_result();
-    if ($chkEmail->num_rows > 0) {
-        $chkEmail->close();
-        echo json_encode(['success' => false, 'message' => 'Email already exists.', 'field' => 'email']);
-        return;
-    }
-    $chkEmail->close();
 
     // Set role field from first selected role name (column is now VARCHAR)
     $legacyRole = 'Staff';
@@ -294,16 +262,66 @@ function deleteUser() {
         return;
     }
 
+    // Ensure archive table exists
+    $conn->query("CREATE TABLE IF NOT EXISTS `archive` (
+        `id` int(11) NOT NULL AUTO_INCREMENT,
+        `archive_type` varchar(50) DEFAULT NULL,
+        `record_id` varchar(50) DEFAULT NULL,
+        `record_data` longtext DEFAULT NULL,
+        `deleted_by` varchar(100) DEFAULT NULL,
+        `deleted_at` datetime DEFAULT NULL,
+        PRIMARY KEY (`id`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+    // Archive user before deleting
+    $stmt = $conn->prepare("SELECT * FROM users WHERE id = ?");
+    if ($stmt) {
+        $stmt->bind_param('i', $userId);
+        $stmt->execute();
+        $res = $stmt->get_result();
+        if ($res->num_rows > 0) {
+            $user = $res->fetch_assoc();
+            $archiveData = json_encode($user, JSON_UNESCAPED_UNICODE | JSON_PARTIAL_OUTPUT_ON_ERROR);
+            $deletedBy = $_SESSION['username'] ?? 'Unknown';
+            
+            $archStmt = $conn->prepare("INSERT INTO archive (archive_type, record_id, record_data, deleted_by, deleted_at) VALUES ('user', ?, ?, ?, NOW())");
+            if ($archStmt) {
+                $archStmt->bind_param("sss", $user['username'], $archiveData, $deletedBy);
+                $archStmt->execute();
+                $archStmt->close();
+            }
+        }
+        $stmt->close();
+    }
+
     // user_roles will cascade delete via FK
     $stmt = $conn->prepare("DELETE FROM users WHERE id = ?");
-    $stmt->bind_param('i', $userId);
-
-    if ($stmt->execute()) {
-        $stmt->close();
-        echo json_encode(['success' => true, 'message' => 'User deleted successfully.']);
+    if ($stmt) {
+        $stmt->bind_param('i', $userId);
+    
+        if ($stmt->execute()) {
+            $stmt->close();
+            
+            // Log Activity
+            if (isset($_SESSION['username'])) {
+                $log_user = $_SESSION['username'];
+                $log_action = 'Delete User';
+                $log_desc = "Deleted user account: " . ($user['username'] ?? "ID $userId");
+                $log_stmt = $conn->prepare("INSERT INTO activity_logs (user, action, description) VALUES (?, ?, ?)");
+                if ($log_stmt) {
+                    $log_stmt->bind_param("sss", $log_user, $log_action, $log_desc);
+                    $log_stmt->execute();
+                    $log_stmt->close();
+                }
+            }
+            
+            echo json_encode(['success' => true, 'message' => 'User deleted successfully.']);
+        } else {
+            $stmt->close();
+            echo json_encode(['success' => false, 'message' => 'Failed to delete user.']);
+        }
     } else {
-        $stmt->close();
-        echo json_encode(['success' => false, 'message' => 'Failed to delete user.']);
+        echo json_encode(['success' => false, 'message' => 'Database error during deletion.']);
     }
 }
 ?>

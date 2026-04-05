@@ -127,6 +127,10 @@ document.addEventListener('DOMContentLoaded', function() {
     // ============================================
     if (createRecordBtn) {
         createRecordBtn.addEventListener('click', function() {
+            if (window.BIS_PERMS && window.BIS_PERMS.blotter_create === false) {
+                alert('Permission denied to create blotter records.');
+                return;
+            }
             // Reset form
             document.getElementById('createRecordForm').reset();
             
@@ -610,34 +614,66 @@ document.addEventListener('DOMContentLoaded', function() {
         
         switch(action) {
             case 'view':
+                if (window.BIS_PERMS && window.BIS_PERMS.blotter_view === false) {
+                    alert('Permission denied to view blotter details.');
+                    return;
+                }
                 viewBlotterDetails(recordId);
                 break;
                 
             case 'edit':
+                if (window.BIS_PERMS && window.BIS_PERMS.blotter_edit === false) {
+                    alert('Permission denied to edit blotter records.');
+                    return;
+                }
                 editBlotterRecord(recordId);
                 break;
                 
             case 'status-pending':
+                if (window.BIS_PERMS && window.BIS_PERMS.blotter_status === false) {
+                    alert('Permission denied to update blotter status.');
+                    return;
+                }
                 updateBlotterStatus(recordId, 'Pending');
                 break;
                 
             case 'status-investigation':
+                if (window.BIS_PERMS && window.BIS_PERMS.blotter_status === false) {
+                    alert('Permission denied to update blotter status.');
+                    return;
+                }
                 updateBlotterStatus(recordId, 'Under Investigation');
                 break;
                 
             case 'status-resolved':
+                if (window.BIS_PERMS && window.BIS_PERMS.blotter_status === false) {
+                    alert('Permission denied to update blotter status.');
+                    return;
+                }
                 updateBlotterStatus(recordId, 'Resolved');
                 break;
                 
             case 'status-dismissed':
+                if (window.BIS_PERMS && window.BIS_PERMS.blotter_status === false) {
+                    alert('Permission denied to update blotter status.');
+                    return;
+                }
                 updateBlotterStatus(recordId, 'Dismissed');
                 break;
                 
             case 'archive':
+                if (window.BIS_PERMS && window.BIS_PERMS.blotter_archive === false) {
+                    alert('Permission denied to archive blotter records.');
+                    return;
+                }
                 archiveBlotterRecord(recordId);
                 break;
                 
             case 'delete':
+                if (window.BIS_PERMS && window.BIS_PERMS.blotter_archive === false) {
+                    alert('Permission denied to archive blotter records.');
+                    return;
+                }
                 deleteBlotterRecord(recordId);
                 break;
         }
@@ -846,7 +882,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Delete blotter record
     function deleteBlotterRecord(recordId) {
-        if (!confirm('Are you sure you want to permanently delete this record? This action cannot be undone.')) {
+        if (!confirm('Are you sure you want to archive this record? This action cannot be undone.')) {
             return;
         }
         

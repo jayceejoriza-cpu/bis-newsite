@@ -42,6 +42,33 @@ try {
     }
     $checkStmt->close();
 
+    // Archive the member before deleting
+    $stmt = $conn->prepare("SELECT hm.relationship_to_head, hm.is_head, CONCAT(r.first_name, ' ', r.last_name) as resident_name, h.household_number FROM household_members hm JOIN residents r ON hm.resident_id = r.id JOIN households h ON hm.household_id = h.id WHERE hm.household_id = ? AND hm.resident_id = ?");
+    $stmt->bind_param("ii", $householdId, $residentId);
+    $stmt->execute();
+    $res = $stmt->get_result();
+    if ($res->num_rows > 0) {
+        $row = $res->fetch_assoc();
+        $archiveData = [
+            'household_id' => $householdId,
+            'household_number' => $row['household_number'],
+            'resident_id' => $residentId,
+            'resident_name' => $row['resident_name'],
+            'relationship_to_head' => $row['relationship_to_head'],
+            'is_head' => $row['is_head']
+        ];
+        $archiveType = 'household_member';
+        $deletedBy = $_SESSION['username'] ?? 'Unknown';
+        $recordData = json_encode($archiveData);
+        $recordId = $row['household_number'];
+        
+        $archStmt = $conn->prepare("INSERT INTO archive (archive_type, record_id, record_data, deleted_by, deleted_at) VALUES (?, ?, ?, ?, NOW())");
+        $archStmt->bind_param("ssss", $archiveType, $recordId, $recordData, $deletedBy);
+        $archStmt->execute();
+        $archStmt->close();
+    }
+    $stmt->close();
+
     // Delete member
     $deleteSql = "DELETE FROM household_members WHERE household_id = ? AND resident_id = ?";
     $deleteStmt = $conn->prepare($deleteSql);

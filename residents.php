@@ -182,10 +182,12 @@ try {
                     <p class="page-subtitle">View and manage resident records</p>
                 </div>
                 <div class="page-header-actions">
+                    <?php if (hasPermission('perm_resident_print_list')): ?>
                     <button class="btn btn-outline-secondary" id="printMasterlistBtn" title="Print Masterlist">
                         <i class="fas fa-print"></i>
                         Print Masterlist
                     </button>
+                    <?php endif; ?>
                     <?php if (hasPermission('perm_resident_create')): ?>
                     <button class="btn btn-primary" id="createResidentBtn">
                         <i class="fas fa-plus"></i>
@@ -724,7 +726,10 @@ try {
         resident_view:   <?php echo hasPermission('perm_resident_view')   ? 'true' : 'false'; ?>,
         resident_create: <?php echo hasPermission('perm_resident_create') ? 'true' : 'false'; ?>,
         resident_edit:   <?php echo hasPermission('perm_resident_edit')   ? 'true' : 'false'; ?>,
-        resident_delete: <?php echo hasPermission('perm_resident_delete') ? 'true' : 'false'; ?>
+        resident_delete: <?php echo hasPermission('perm_resident_delete') ? 'true' : 'false'; ?>,
+        resident_status: <?php echo hasPermission('perm_resident_status') ? 'true' : 'false'; ?>,
+        resident_print_id: <?php echo hasPermission('perm_resident_print_id') ? 'true' : 'false'; ?>,
+        resident_archive: <?php echo hasPermission('perm_resident_archive') ? 'true' : 'false'; ?>
     };
     </script>
 

@@ -15,6 +15,14 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
 function initOfficials() {
+    // Apply Permissions (Hide Actions)
+    if (window.BIS_PERMS) {
+        if (!window.BIS_PERMS.officials_create) {
+            const createBtn = document.getElementById('createOfficialBtn');
+            if (createBtn) createBtn.style.display = 'none';
+        }
+    }
+
     // Initialize EnhancedTable for pagination
     officialsTable = new EnhancedTable('officialsTable', {
         sortable: false,
@@ -201,6 +209,11 @@ function refreshOfficials() {
 
 // ── Create Official Modal ─────────────────────────────────────────────────────
 function openCreateOfficialModal() {
+    if (window.BIS_PERMS && !window.BIS_PERMS.officials_create) {
+        showNotification('Permission denied to create officials.', 'error');
+        return;
+    }
+
     resetCreateForm();
     const modal = new bootstrap.Modal(document.getElementById('createOfficialModal'));
     modal.show();
@@ -387,6 +400,14 @@ async function submitCreateOfficial() {
 
 // ── View Official Details ─────────────────────────────────────────────────────
 function viewOfficialDetails(officialId) {
+    if (window.BIS_PERMS && !window.BIS_PERMS.officials_view) {
+        showNotification('Permission denied to view officials.', 'error');
+        const url = new URL(window.location);
+        url.searchParams.delete('view');
+        window.history.replaceState({}, '', url);
+        return;
+    }
+
     console.log('Viewing official:', officialId);
 
     // Update URL parameter
@@ -488,6 +509,14 @@ function populateViewModal(official, history) {
 
 // ── Edit Official ─────────────────────────────────────────────────────────────
 function editOfficial(officialId) {
+    if (window.BIS_PERMS && !window.BIS_PERMS.officials_edit) {
+        showNotification('Permission denied to edit officials.', 'error');
+        const url = new URL(window.location);
+        url.searchParams.delete('edit');
+        window.history.replaceState({}, '', url);
+        return;
+    }
+
     console.log('Editing official:', officialId);
 
     // Update URL parameter
@@ -793,6 +822,11 @@ async function submitEditOfficial() {
 
 // ── Delete Official ───────────────────────────────────────────────────────────
 function deleteOfficial(officialId) {
+    if (window.BIS_PERMS && !window.BIS_PERMS.officials_archive) {
+        showNotification('Permission denied to archive officials.', 'error');
+        return;
+    }
+
     if (!confirm('Are you sure you want to move this official to archive?\n\nThis action will remove the official from the active list but preserve their record in the archive.')) {
         return;
     }
@@ -928,19 +962,21 @@ function showActionMenu(row, button) {
     const perms = window.BIS_PERMS || {};
     let menuHtml = '';
 
-    if (perms.official_view !== false) {
+    if (perms.officials_view) {
         menuHtml += `
         <div class="action-menu-item" data-action="view">
             <i class="fas fa-eye"></i>
             <span>View Details</span>
         </div>`;
     }
-    if (perms.official_edit !== false) {
+    if (perms.officials_edit) {
         menuHtml += `
         <div class="action-menu-item" data-action="edit">
             <i class="fas fa-edit"></i>
             <span>Edit Official</span>
         </div>`;
+    }
+    if (perms.officials_status) {
         menuHtml += `
         <div class="action-menu-item has-submenu" data-action="change-status">
             <i class="fas fa-toggle-on"></i>
@@ -965,7 +1001,7 @@ function showActionMenu(row, button) {
             </div>
         </div>`;
     }
-    if (perms.official_delete !== false) {
+    if (perms.officials_archive) {
         menuHtml += `
         <div class="action-menu-divider"></div>
         <div class="action-menu-item danger" data-action="delete">
@@ -1057,6 +1093,11 @@ function handleAction(action, officialId) {
 }
 
 function updateOfficialStatus(officialId, newStatus, row, currentStatus) {
+    if (window.BIS_PERMS && !window.BIS_PERMS.officials_status) {
+        showNotification('Permission denied to change official status.', 'error');
+        return;
+    }
+
     if (!officialId || newStatus === currentStatus) return;
 
     const formData = new FormData();

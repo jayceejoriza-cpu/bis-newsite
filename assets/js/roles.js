@@ -158,8 +158,23 @@ document.addEventListener('DOMContentLoaded', function () {
             e.preventDefault();
             e.stopPropagation();
             const badge = removeBtn.closest('.perm-badge-item');
+            const permName = badge.dataset.perm;
             badge.style.display = 'none';
             badge.querySelector('.perm-cb').checked = false;
+            
+            // If "View" is removed, automatically remove dependent permissions in the same group
+            if (permName.endsWith('_view')) {
+                const prefix = permName.replace('_view', '_');
+                const badgesRow = badge.closest('.perm-badges-row');
+                if (badgesRow) {
+                    badgesRow.querySelectorAll('.perm-badge-item').forEach(b => {
+                        if (b.dataset.perm.startsWith(prefix) && b !== badge) {
+                            b.style.display = 'none';
+                            b.querySelector('.perm-cb').checked = false;
+                        }
+                    });
+                }
+            }
         }
     });
 
@@ -214,6 +229,30 @@ document.addEventListener('DOMContentLoaded', function () {
             if (badge) {
                 badge.style.display = '';
                 badge.querySelector('.perm-cb').checked = true;
+                
+                // Auto-enable "View" permission for the group if a dependent permission is added
+                const moduleViews = {
+                    'perm_resident_': 'perm_resident_view',
+                    'perm_household_': 'perm_household_view',
+                    'perm_blotter_': 'perm_blotter_view',
+                    'perm_officials_': 'perm_officials_view',
+                    'perm_req_': 'perm_req_view',
+                    'perm_office_': 'perm_office_view',
+                    'perm_roles_': 'perm_roles_view',
+                    'perm_cert_': 'perm_cert_view',
+                    'perm_settings_logs_': 'perm_settings_logs_view'
+                };
+                
+                for (const [prefix, viewPerm] of Object.entries(moduleViews)) {
+                    if (permName.startsWith(prefix) && permName !== viewPerm) {
+                        const viewBadge = badgesRow.querySelector(`[data-perm="${viewPerm}"]`);
+                        if (viewBadge) {
+                            viewBadge.style.display = '';
+                            viewBadge.querySelector('.perm-cb').checked = true;
+                        }
+                        break;
+                    }
+                }
             }
             closeAllPermDropdowns();
         }
@@ -336,10 +375,24 @@ document.addEventListener('DOMContentLoaded', function () {
             closeAllRoleMenus();
             if (menu && !isOpen) {
                 menu.classList.add('open');
-                const rect = menu.getBoundingClientRect();
-                if (rect.bottom > window.innerHeight) {
+                
+                // Move to body to prevent clipping
+                document.body.appendChild(menu);
+                
+                // Position fixed to viewport
+                menu.style.position = 'fixed';
+                menu.style.zIndex = '9999';
+                
+                const rect = actionBtn.getBoundingClientRect();
+                menu.style.left = 'auto';
+                menu.style.right = (window.innerWidth - rect.right) + 'px';
+                
+                if (rect.bottom + (menu.offsetHeight || 150) > window.innerHeight) {
                     menu.style.top    = 'auto';
-                    menu.style.bottom = 'calc(100% + 4px)';
+                    menu.style.bottom = (window.innerHeight - rect.top + 5) + 'px';
+                } else {
+                    menu.style.top    = (rect.bottom + 5) + 'px';
+                    menu.style.bottom = 'auto';
                 }
             }
             return;
@@ -352,6 +405,17 @@ document.addEventListener('DOMContentLoaded', function () {
             m.classList.remove('open');
             m.style.top    = '';
             m.style.bottom = '';
+            m.style.left   = '';
+            m.style.right  = '';
+            m.style.position = '';
+            m.style.zIndex = '';
+            
+            // Return to original container
+            const roleId = m.id.replace('roleMenu_', '');
+            const actionBtn = document.querySelector(`.role-action-btn[data-id="${roleId}"]`);
+            if (actionBtn && actionBtn.parentElement && m.parentElement === document.body) {
+                actionBtn.parentElement.appendChild(m);
+            }
         });
     }
 
@@ -362,6 +426,10 @@ document.addEventListener('DOMContentLoaded', function () {
         const editBtn = e.target.closest('.edit-role-btn');
         if (editBtn) {
             closeAllRoleMenus();
+            if (roleDeleteModal) {
+                roleDeleteModal.classList.remove('active');
+                currentDeleteRoleId = null;
+            }
             openRoleModal('edit', {
                 id:          editBtn.dataset.id,
                 name:        editBtn.dataset.name,
@@ -379,6 +447,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const deleteBtn = e.target.closest('.delete-role-btn');
         if (deleteBtn) {
             closeAllRoleMenus();
+            closeRoleModalFn(); // Ensure the create/edit modal is closed
             currentDeleteRoleId = deleteBtn.dataset.id;
             deleteRoleName.textContent = deleteBtn.dataset.name;
             roleDeleteModal.classList.add('active');

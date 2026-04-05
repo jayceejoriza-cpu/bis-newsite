@@ -718,6 +718,18 @@ if (isset($conn)) {
                                         <small class="form-hint">Disability status is required</small>
                                     </div>
                                 </div>
+                                <div class="col-md-4" id="pwdTypeGroup" style="display: none;">
+                                    <div class="form-group">
+                                        <label for="pwdType">Type of Disability <span class="required">*</span></label>
+                                        <input type="text" id="pwdType" name="pwdType" class="form-control" placeholder="Specify disability">
+                                    </div>
+                                </div>
+                                <div class="col-md-4" id="pwdIdGroup" style="display: none;">
+                                    <div class="form-group">
+                                        <label for="pwdIdNumber">PWD ID Number <span class="text-muted">(Optional)</span></label>
+                                        <input type="text" id="pwdIdNumber" name="pwdIdNumber" class="form-control" placeholder="Enter PWD ID">
+                                    </div>
+                                </div>
                                 <div class="col-md-8">
                                     <div class="form-group">
                                         <label for="medicalHistory">Medical History</label>

@@ -5,6 +5,10 @@ require_once 'config.php';
 // Check authentication
 require_once 'auth_check.php';
 
+// Load permissions
+require_once 'permissions.php';
+requirePermission('perm_req_view');
+
 // Page title
 $pageTitle = 'Requests';
 

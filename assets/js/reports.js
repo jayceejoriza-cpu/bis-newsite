@@ -250,14 +250,23 @@ function renderGenderChart() {
             }]
         },
         options: {
+             onClick: (e, elements) => {
+                if (elements.length > 0) {
+                    const label = labels[elements[0].index];
+                    window.location.href = 'residents.php?filterSex=' + encodeURIComponent(label);
+                }
+            },
+            onHover: (e, elements) => {
+                e.native.target.style.cursor = elements.length ? 'pointer' : 'default';
+            },
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
                 legend: {
                     position: 'bottom',
                     labels: {
-                        color: getTextColor(),
-                        padding: 16,
+                        color: '#6b7280',
+                        padding: 15,
                         font: { family: 'Inter', size: 12 },
                         generateLabels: function(chart) {
                             const data = chart.data;
@@ -273,7 +282,9 @@ function renderGenderChart() {
                                         fillStyle: style.backgroundColor,
                                         strokeStyle: style.borderColor,
                                         lineWidth: style.borderWidth,
-                                        hidden: isNaN(data.datasets[0].data[i]) || meta.data[i].hidden,
+                                        hidden: !chart.getDataVisibility(i),
+                                        fontColor: '#000000',
+                                        textDecoration: !chart.getDataVisibility(i) ? 'line-through' : undefined,
                                         index: i
                                     };
                                 });
@@ -314,6 +325,15 @@ function renderAgeGroupChart() {
             }]
         },
         options: {
+             onClick: (e, elements) => {
+                if (elements.length > 0) {
+                    const label = labels[elements[0].index];
+                    window.location.href = 'residents.php?filterAgeHealthGroup=' + encodeURIComponent(label);
+                }
+            },
+            onHover: (e, elements) => {
+                e.native.target.style.cursor = elements.length ? 'pointer' : 'default';
+            },
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
@@ -611,6 +631,15 @@ function renderWaterSourceChart() {
             }]
         },
         options: {
+             onClick: (e, elements) => {
+                if (elements.length > 0) {
+                    const label = labels[elements[0].index];
+                    window.location.href = 'households.php?water=' + encodeURIComponent(label);
+                }
+            },
+            onHover: (e, elements) => {
+                e.native.target.style.cursor = elements.length ? 'pointer' : 'default';
+            },
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
@@ -634,7 +663,9 @@ function renderWaterSourceChart() {
                                         fillStyle: style.backgroundColor,
                                         strokeStyle: style.borderColor,
                                         lineWidth: style.borderWidth,
-                                        hidden: isNaN(data.datasets[0].data[i]) || meta.data[i].hidden,
+                                        hidden: !chart.getDataVisibility(i),
+                                        fontColor: '#000000',
+                                        textDecoration: !chart.getDataVisibility(i) ? 'line-through' : undefined,
                                         index: i
                                     };
                                 });
@@ -676,6 +707,15 @@ function renderToiletChart() {
             }]
         },
         options: {
+             onClick: (e, elements) => {
+                if (elements.length > 0) {
+                    const label = labels[elements[0].index];
+                    window.location.href = 'households.php?toilet=' + encodeURIComponent(label);
+                }
+            },
+            onHover: (e, elements) => {
+                e.native.target.style.cursor = elements.length ? 'pointer' : 'default';
+            },
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
@@ -699,7 +739,9 @@ function renderToiletChart() {
                                         fillStyle: style.backgroundColor,
                                         strokeStyle: style.borderColor,
                                         lineWidth: style.borderWidth,
-                                        hidden: isNaN(data.datasets[0].data[i]) || meta.data[i].hidden,
+                                        hidden: !chart.getDataVisibility(i),
+                                        fontColor: '#000000',
+                                        textDecoration: !chart.getDataVisibility(i) ? 'line-through' : undefined,
                                         index: i
                                     };
                                 });

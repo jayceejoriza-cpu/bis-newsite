@@ -27,6 +27,8 @@ class EnhancedTable {
         this.sortDirection = 'asc';
         this.allRows = [];
         this.filteredRows = [];
+        this.currentSearchTerm = '';
+        this.currentFilterFn = null;
         
         this.init();
     }
@@ -120,31 +122,7 @@ class EnhancedTable {
             activeIcon.style.color = '#3b82f6';
         }
         
-        // Sort the filtered rows
-        this.filteredRows.sort((a, b) => {
-            const aValue = this.getCellValue(a, columnIndex);
-            const bValue = this.getCellValue(b, columnIndex);
-            
-            // Handle different data types
-            const cleanA = aValue.replace(/,/g, '').trim();
-            const cleanB = bValue.replace(/,/g, '').trim();
-            const aIsNum = cleanA !== '' && !isNaN(Number(cleanA));
-            const bIsNum = cleanB !== '' && !isNaN(Number(cleanB));
-            
-            if (aIsNum && bIsNum) {
-                const aNum = Number(cleanA);
-                const bNum = Number(cleanB);
-                return this.sortDirection === 'asc' ? aNum - bNum : bNum - aNum;
-            }
-            
-            // String comparison (locale-aware, case-insensitive)
-            const comparison = aValue.localeCompare(bValue, undefined, { numeric: true, sensitivity: 'base' });
-            return this.sortDirection === 'asc' ? comparison : -comparison;
-        });
-        
-        // Reset to first page and update display
-        this.currentPage = 1;
-        this.updateDisplay();
+        this._performSort();
     }
 
     /**
@@ -176,50 +154,81 @@ class EnhancedTable {
         return cell.textContent.trim();
     }
     
-    // ===================================
-    // Search/Filter Functionality
-    // ===================================
-    search(searchTerm) {
-        searchTerm = searchTerm.toLowerCase().trim();
-        
-        if (!searchTerm) {
-            // No search term — apply defaultFilter (e.g. hide deceased)
-            if (this.options.defaultFilter) {
-                this.filteredRows = this.allRows.filter(this.options.defaultFilter);
-            } else {
-                this.filteredRows = [...this.allRows];
-            }
-        } else {
-            // Active search — search ALL rows including those hidden by defaultFilter
-            // so deceased residents are still findable by name
+    _applyState() {
+        let rows = this.allRows;
+
+        // 1. Apply custom filter
+        if (this.currentFilterFn) {
+            rows = rows.filter(this.currentFilterFn);
+        }
+
+        // 2. Apply search and default filter
+        if (this.currentSearchTerm) {
             if (this.options.customSearch && typeof this.options.customSearch === 'function') {
-                this.filteredRows = this.allRows.filter(row => this.options.customSearch(row, searchTerm));
+                rows = rows.filter(row => this.options.customSearch(row, this.currentSearchTerm));
             } else {
-                this.filteredRows = this.allRows.filter(row => {
+                rows = rows.filter(row => {
                     const cells = Array.from(row.cells);
-                    return cells.some(cell => {
-                        const text = cell.textContent.toLowerCase();
-                        return text.includes(searchTerm);
-                    });
+                    return cells.some(cell => cell.textContent.toLowerCase().includes(this.currentSearchTerm));
                 });
             }
+        } else {
+            if (this.options.defaultFilter) {
+                rows = rows.filter(this.options.defaultFilter);
+            }
         }
+
+        this.filteredRows = rows;
+
+        if (this.sortColumn !== null) {
+            this._performSort();
+        } else {
+            this.currentPage = 1;
+            this.updateDisplay();
+            this.updatePagination();
+        }
+    }
+
+    _performSort() {
+        const columnIndex = this.sortColumn;
+        this.filteredRows.sort((a, b) => {
+            const aValue = this.getCellValue(a, columnIndex);
+            const bValue = this.getCellValue(b, columnIndex);
+            
+            // Handle different data types
+            const cleanA = aValue.replace(/,/g, '').trim();
+            const cleanB = bValue.replace(/,/g, '').trim();
+            const aIsNum = cleanA !== '' && !isNaN(Number(cleanA));
+            const bIsNum = cleanB !== '' && !isNaN(Number(cleanB));
+            
+            if (aIsNum && bIsNum) {
+                const aNum = Number(cleanA);
+                const bNum = Number(cleanB);
+                return this.sortDirection === 'asc' ? aNum - bNum : bNum - aNum;
+            }
+            
+            // String comparison (locale-aware, case-insensitive)
+            const comparison = aValue.localeCompare(bValue, undefined, { numeric: true, sensitivity: 'base' });
+            return this.sortDirection === 'asc' ? comparison : -comparison;
+        });
         
+        // Reset to first page and update display
         this.currentPage = 1;
         this.updateDisplay();
         this.updatePagination();
     }
+
+    // ===================================
+    // Search/Filter Functionality
+    // ===================================
+    search(searchTerm) {
+        this.currentSearchTerm = searchTerm.toLowerCase().trim();
+        this._applyState();
+    }
     
     filter(filterFn) {
-        // Apply custom filter, then also apply defaultFilter on top
-        let rows = this.allRows.filter(filterFn);
-        if (this.options.defaultFilter) {
-            rows = rows.filter(this.options.defaultFilter);
-        }
-        this.filteredRows = rows;
-        this.currentPage = 1;
-        this.updateDisplay();
-        this.updatePagination();
+        this.currentFilterFn = filterFn;
+        this._applyState();
     }
     
     // ===================================
@@ -464,10 +473,7 @@ class EnhancedTable {
     // ===================================
     refresh() {
         this.allRows = Array.from(this.tbody.querySelectorAll('tr'));
-        this.filteredRows = [...this.allRows];
-        this.currentPage = 1;
-        this.updateDisplay();
-        this.updatePagination();
+        this._applyState();
     }
     
     getTotalRows() {
@@ -486,13 +492,8 @@ class EnhancedTable {
     }
     
     reset() {
-        // Apply defaultFilter when resetting (don't show deceased on reset)
-        if (this.options.defaultFilter) {
-            this.filteredRows = this.allRows.filter(this.options.defaultFilter);
-        } else {
-            this.filteredRows = [...this.allRows];
-        }
-        this.currentPage = 1;
+        this.currentSearchTerm = '';
+        this.currentFilterFn = null;
         this.sortColumn = null;
         this.sortDirection = 'asc';
         
@@ -502,8 +503,7 @@ class EnhancedTable {
             icon.style.color = '#9ca3af';
         });
         
-        this.updateDisplay();
-        this.updatePagination();
+        this._applyState();
     }
 }
 

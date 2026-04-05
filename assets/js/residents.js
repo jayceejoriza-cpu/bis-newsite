@@ -219,7 +219,7 @@ function applyFilter(filterType) {
     window.history.replaceState({}, '', url);
     
     if (filterType === 'all') {
-        residentsTable.reset();
+        residentsTable.filter(null);
         return;
     }
     
@@ -258,12 +258,7 @@ function initializeSearch() {
         searchInput.addEventListener('input', (e) => {
             clearTimeout(searchTimeout);
             searchTimeout = setTimeout(() => {
-                if (e.target.value === '') {
-                    residentsTable.reset();
-                    residentsTable.sortByColumn(1);
-                } else {
-                    residentsTable.search(e.target.value);
-                }
+                residentsTable.search(e.target.value);
             }, 300);
         });
     }
@@ -271,9 +266,7 @@ function initializeSearch() {
     if (clearSearchBtn) {
         clearSearchBtn.addEventListener('click', () => {
             searchInput.value = '';
-            residentsTable.reset();
-            residentsTable.sortByColumn(1);
-            
+            residentsTable.search('');
             searchInput.focus();
         });
     }
@@ -703,6 +696,10 @@ function showActionMenu(row, button) {
             <i class="fas fa-edit"></i>
             <span>Edit Resident</span>
         </div>
+        `;
+    }
+    if (perms.resident_status) {
+        menuHtml += `
         <div class="action-menu-item has-submenu" data-action="change-status">
             <i class="fas fa-toggle-on"></i>
             <span>Change Status</span>
@@ -721,17 +718,19 @@ function showActionMenu(row, button) {
             </div>
         </div>`;
     }
-    menuHtml += `
+    if (perms.resident_print_id) {
+        menuHtml += `
         <div class="action-menu-item" data-action="print">
             <i class="fas fa-print"></i>
             <span>Print ID</span>
         </div>`;
-    if (perms.resident_delete) {
+    }
+    if (perms.resident_archive || perms.resident_delete) {
         menuHtml += `
         <div class="action-menu-divider"></div>
         <div class="action-menu-item danger" data-action="delete">
             <i class="fas fa-trash"></i>
-            <span>Delete Resident</span>
+            <span>Archive Resident</span>
         </div>`;
     }
 
@@ -1161,9 +1160,14 @@ function clearAdvancedFilters() {
     setFilterValue('filterAgeGroup', ''); // Legacy cleanup
     window.history.replaceState({}, '', url);
     
-    // Reset the table
-    residentsTable.reset();
-    residentsTable.sortByColumn(1);
+    // Re-apply tab filter without resetting search
+    const activeTab = document.querySelector('.tab-btn.active');
+    const filterType = activeTab ? activeTab.getAttribute('data-filter') : 'all';
+    if (filterType === 'all') {
+        residentsTable.filter(null);
+    } else {
+        applyFilter(filterType);
+    }
     
     // Clear the filter notification badge
     updateFilterNotification(0);

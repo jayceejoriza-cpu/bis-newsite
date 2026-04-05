@@ -470,6 +470,14 @@ function initializeButtons() {
 }
 
 function showCreateHouseholdModal() {
+    if (window.BIS_PERMS && window.BIS_PERMS.household_edit === false) {
+        showNotification('Permission denied. You do not have edit privileges.', 'error');
+        const url = new URL(window.location);
+        url.searchParams.delete('create');
+        window.history.replaceState({}, '', url);
+        return;
+    }
+
     const modal = document.getElementById('createHouseholdModal');
     if (modal) {
         modal.classList.add('show');
@@ -668,7 +676,7 @@ function showActionMenu(row, button) {
         <div class="action-menu-divider"></div>
         <div class="action-menu-item danger" data-action="delete">
             <i class="fas fa-trash"></i>
-            <span>Delete Household</span>
+            <span>Archive Household</span>
         </div>`;
     }
 
@@ -726,6 +734,10 @@ function handleAction(action, householdNumber, headName, memberCount, row) {
             break;
             
         case 'delete':
+            if (window.BIS_PERMS && window.BIS_PERMS.household_delete === false) {
+                showNotification('Permission denied to archive households.', 'error');
+                return;
+            }
             if (confirm(`Are you sure you want to delete household ${householdNumber}?\n\nHead: ${headName}\nMembers: ${memberCount}\n\nThis action cannot be undone.`)) {
                 const formData = new FormData();
                 formData.append('id', householdId);
@@ -757,6 +769,14 @@ function handleAction(action, householdNumber, headName, memberCount, row) {
 }
 
 function viewHousehold(householdId) {
+    if (window.BIS_PERMS && window.BIS_PERMS.household_view === false) {
+        showNotification('Permission denied to view households.', 'error');
+        const url = new URL(window.location);
+        url.searchParams.delete('view');
+        window.history.replaceState({}, '', url);
+        return;
+    }
+
     // Update URL parameter
     const url = new URL(window.location);
     url.searchParams.set('view', householdId);
@@ -848,6 +868,14 @@ function viewHousehold(householdId) {
 }
 
 function editHousehold(householdId) {
+    if (window.BIS_PERMS && window.BIS_PERMS.household_edit === false) {
+        showNotification('Permission denied to edit households.', 'error');
+        const url = new URL(window.location);
+        url.searchParams.delete('edit');
+        window.history.replaceState({}, '', url);
+        return;
+    }
+
     // Update URL parameter
     const url = new URL(window.location);
     url.searchParams.set('edit', householdId);
@@ -1108,7 +1136,7 @@ function initializeModalEventListeners() {
 function deleteMember(row) {
     const memberName = row.cells[1].textContent;
     
-    if (confirm(`Are you sure you want to remove ${memberName} from this household?`)) {
+    if (confirm(`Are you sure you want to remove ${memberName} from this household?\n\nThey will be moved to the archive once you save the changes.`)) {
         row.style.opacity = '0';
         row.style.transition = 'opacity 0.3s ease';
         
@@ -1123,7 +1151,7 @@ function deleteMember(row) {
                 tbody.innerHTML = '<tr class="no-members-row"><td colspan="7" style="text-align: center; color: var(--text-secondary); padding: 20px;">No members added yet</td></tr>';
             }
             
-            showNotification('Member removed successfully', 'success');
+            showNotification('Member removed successfully (will be archived on save)', 'success');
         }, 300);
     }
 }

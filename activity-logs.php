@@ -3,6 +3,11 @@ require_once 'config.php';
 
 // Check authentication
 require_once 'auth_check.php';
+
+// Load permissions
+require_once 'permissions.php';
+requirePermission('perm_settings_logs_view');
+
 $pageTitle = 'Activity Logs';
 
 // Pagination and Search Settings
@@ -320,7 +325,7 @@ if (isset($conn)) {
                                 <button type="button" class="btn btn-secondary" id="clearFiltersBtn" style="font-size: 13px; padding: 8px 15px; background: var(--bg-secondary); border: 1px solid var(--border-color); color: var(--text-secondary); border-radius: 6px; cursor: pointer;">
                                     <i class="fas fa-times" style="margin-right: 5px;"></i> Clear
                                 </button>
-                                <button type="submit" class="btn btn-primary" style="font-size: 13px; padding: 8px 15px; background: var(--primary-color); border: none; color: white; border-radius: 6px; cursor: pointer;">
+                            <button type="submit" class="btn btn-primary" id="applyFiltersBtn" style="font-size: 13px; padding: 8px 15px; background: var(--primary-color); border: none; color: white; border-radius: 6px; cursor: pointer;">
                                     <i class="fas fa-check" style="margin-right: 5px;"></i> Apply Now
                                 </button>
                             </div>
@@ -406,10 +411,66 @@ if (isset($conn)) {
             const filterBtn = document.getElementById('filterBtn');
             const filterPanel = document.getElementById('filterPanel');
             const clearFiltersBtn = document.getElementById('clearFiltersBtn');
+            const applyFiltersBtn = document.getElementById('applyFiltersBtn');
             const filterUser = document.getElementById('filterUser');
             const filterAction = document.getElementById('filterAction');
             const filterFromDate = document.getElementById('filterFromDate');
             const filterToDate = document.getElementById('filterToDate');
+
+            // Notification Function
+            function showNotification(message, type = 'info') {
+                document.querySelectorAll('.notification').forEach(n => n.remove());
+                const notification = document.createElement('div');
+                notification.className = `notification notification-${type}`;
+                notification.innerHTML = `
+                    <i class="fas fa-${type === 'success' ? 'check-circle' : 'info-circle'}"></i>
+                    <span>${message}</span>
+                `;
+                notification.style.cssText = `
+                    position: fixed; top: 20px; right: 20px;
+                    background: ${type === 'success' ? '#10b981' : '#3b82f6'};
+                    color: white; padding: 15px 20px; border-radius: 8px;
+                    box-shadow: 0 4px 6px rgba(0,0,0,0.1); display: flex;
+                    align-items: center; gap: 10px; z-index: 10000;
+                    animation: slideIn 0.3s ease;
+                `;
+                document.body.appendChild(notification);
+                setTimeout(() => {
+                    notification.style.animation = 'slideOut 0.3s ease forwards';
+                    setTimeout(() => notification.remove(), 300);
+                }, 3000);
+            }
+            
+            // Add animation styles
+            const style = document.createElement('style');
+            style.textContent = `
+                @keyframes slideIn { from { transform: translateX(400px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+                @keyframes slideOut { from { transform: translateX(0); opacity: 1; } to { transform: translateX(400px); opacity: 0; } }
+            `;
+            document.head.appendChild(style);
+            
+            // Check for saved notification
+            const alertMsg = sessionStorage.getItem('activity_filter_alert');
+            if (alertMsg) {
+                showNotification(alertMsg, alertMsg.includes('cleared') || alertMsg.includes('selected') ? 'info' : 'success');
+                sessionStorage.removeItem('activity_filter_alert');
+            }
+
+            if (applyFiltersBtn) {
+                applyFiltersBtn.addEventListener('click', function() {
+                    let active = 0;
+                    if (filterUser.value) active++;
+                    if (filterAction.value) active++;
+                    if (filterFromDate.value) active++;
+                    if (filterToDate.value) active++;
+                    
+                    if (active > 0) {
+                        sessionStorage.setItem('activity_filter_alert', `${active} filter(s) applied successfully`);
+                    } else {
+                        sessionStorage.setItem('activity_filter_alert', 'No filters selected');
+                    }
+                });
+            }
 
             if (filterBtn && filterPanel) {
                 filterBtn.addEventListener('click', function(e) {
@@ -426,6 +487,7 @@ if (isset($conn)) {
 
             if (clearFiltersBtn) {
                 clearFiltersBtn.addEventListener('click', function() {
+                    sessionStorage.setItem('activity_filter_alert', 'Filters cleared');
                     filterUser.value = '';
                     filterAction.value = '';
                     filterFromDate.value = '';

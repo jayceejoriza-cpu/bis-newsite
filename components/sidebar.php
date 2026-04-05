@@ -39,6 +39,14 @@ if (!file_exists($sidebar_brgy_logo) && file_exists('../' . $sidebar_brgy_logo))
 $can_view_users = hasPermission('perm_office_view');
 $can_view_roles = hasPermission('perm_roles_view');
 $show_user_mgmt = $can_view_users || $can_view_roles;
+
+// Determine which settings sub-items are visible
+$can_view_brgy_info = hasPermission('perm_settings_brgy_info');
+$can_view_activity_logs = hasPermission('perm_settings_logs_view');
+$can_view_archive = hasPermission('perm_settings_archive');
+$can_view_backup = hasPermission('perm_settings_backup');
+$can_view_restore = hasPermission('perm_settings_restore');
+$show_settings = $can_view_brgy_info || $can_view_activity_logs || $can_view_archive || $can_view_backup || $can_view_restore;
 ?>
 <aside class="sidebar" id="sidebar">
     <div class="sidebar-header">
@@ -86,7 +94,8 @@ $show_user_mgmt = $can_view_users || $can_view_roles;
             </li>
             <?php endif; ?>
 
-            <!-- ── Certificate Issuance (no specific perm yet — show to all) ── -->
+            <!-- ── Certificate Issuance ── -->
+            <?php if (hasPermission('perm_cert_view')): ?>
             <li class="nav-item <?php echo ($current_page === 'certificates.php' || $current_page === 'certificate-barangayclearance.php' || $current_page === 'certificate-brgybusinessclearance.php' 
             || $current_page === 'certificate-businesspermit.php' || $current_page === 'certificate-fishingclearance.php' || $current_page === 'certificate-ft-jobseeker-assistance.php' || $current_page === 'certificate-gmrc.php' 
             || $current_page === 'certificate-indigency.php' || $current_page === 'certificate-lowincome.php' || $current_page === 'certificate-oathofundertaking.php'  || $current_page === 'certificate-RBC.php' 
@@ -96,22 +105,27 @@ $show_user_mgmt = $can_view_users || $can_view_roles;
                     <span>Certificate Issuance</span>
                 </a>
             </li>
+            <?php endif; ?>
 
             <!-- ── Service Requests ── -->
+            <?php if (hasPermission('perm_req_view')): ?>
             <li class="nav-item <?php echo $current_page === 'requests.php' ? 'active' : ''; ?>">
                 <a href="requests.php" class="nav-link">
                     <i class="fas fa-file-alt"></i>
                     <span>Service Requests</span>
                 </a>
             </li>
+            <?php endif; ?>
 
             <!-- ── Blotter Records ── -->
+            <?php if (hasPermission('perm_blotter_view')): ?>
             <li class="nav-item <?php echo $current_page === 'blotter.php' ? 'active' : ''; ?>">
                 <a href="blotter.php" class="nav-link">
                     <i class="fas fa-book"></i>
                     <span>Blotter Records</span>
                 </a>
             </li>
+            <?php endif; ?>
 
             <!-- ── Barangay Officials ── -->
             <?php if (hasPermission('perm_officials_view')): ?>
@@ -123,9 +137,16 @@ $show_user_mgmt = $can_view_users || $can_view_roles;
             </li>
             <?php endif; ?>
 
-            
+            <!-- ── Statistical Reports ── -->
+            <li class="nav-item <?php echo $current_page === 'reports.php' ? 'active' : ''; ?>">
+                <a href="reports.php" class="nav-link">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Statistical Reports</span>
+                </a>
+            </li>
 
             <!-- ── Settings ── -->
+            <?php if ($show_settings): ?>
             <li class="nav-item has-submenu <?php echo $is_settings_active ? 'open active' : ''; ?>">
                 <a href="#" class="nav-link">
                     <i class="fas fa-cog"></i>
@@ -133,38 +154,49 @@ $show_user_mgmt = $can_view_users || $can_view_roles;
                     <i class="fas fa-chevron-right nav-arrow"></i>
                 </a>
                 <ul class="submenu">
+                    <?php if ($can_view_brgy_info): ?>
                     <li class="submenu-item <?php echo $current_page === 'barangay-info.php' ? 'active' : ''; ?>">
                         <a href="barangay-info.php" class="submenu-link">
                             <i class="fas fa-info-circle"></i>
                             <span>Barangay Info</span>
                         </a>
                     </li>
+                    <?php endif; ?>
+                    <?php if ($can_view_activity_logs): ?>
                     <li class="submenu-item <?php echo $current_page === 'activity-logs.php' ? 'active' : ''; ?>">
                         <a href="activity-logs.php" class="submenu-link">
                             <i class="fas fa-history"></i>
                             <span>Activity Logs</span>
                         </a>
                     </li>
+                    <?php endif; ?>
+                    <?php if ($can_view_archive): ?>
                     <li class="submenu-item <?php echo $current_page === 'archive.php' ? 'active' : ''; ?>">
                         <a href="archive.php" class="submenu-link">
                             <i class="fas fa-archive"></i>
                             <span>Archive</span>
                         </a>
                     </li>
+                    <?php endif; ?>
+                    <?php if ($can_view_backup): ?>
                     <li class="submenu-item <?php echo $current_page === 'backup.php' ? 'active' : ''; ?>">
                         <a href="backup.php" class="submenu-link">
                             <i class="fas fa-database"></i>
                             <span>Backup</span>
                         </a>
                     </li>
+                    <?php endif; ?>
+                    <?php if ($can_view_restore): ?>
                     <li class="submenu-item <?php echo $current_page === 'restore.php' ? 'active' : ''; ?>">
                         <a href="restore.php" class="submenu-link">
                             <i class="fas fa-upload"></i>
                             <span>Restore</span>
                         </a>
                     </li>
+                    <?php endif; ?>
                 </ul>
             </li>
+            <?php endif; ?>
 
             <!-- ── User Management ── -->
             <?php if ($show_user_mgmt): ?>
