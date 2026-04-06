@@ -342,9 +342,9 @@ body.dark-mode .badge-dismissed {
 
 .action-submenu {
     position: absolute;
-    left: 100%;
+    right: calc(100% + 5px);
     top: 0;
-    margin-left: 5px;
+    margin-left: 0;
     background-color: var(--bg-secondary);
     border: 1px solid var(--border-color);
     border-radius: 8px;
@@ -357,13 +357,13 @@ body.dark-mode .badge-dismissed {
 
 .action-submenu.show {
     display: block;
-    animation: slideRight 0.2s ease;
+    animation: slideLeft 0.2s ease;
 }
 
-@keyframes slideRight {
+@keyframes slideLeft {
     from {
         opacity: 0;
-        transform: translateX(-10px);
+        transform: translateX(10px);
     }
     to {
         opacity: 1;

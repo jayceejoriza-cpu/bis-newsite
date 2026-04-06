@@ -355,12 +355,41 @@ function initializeButtons() {
     // Print button
     const printBtn = document.getElementById('printMasterlistBtn');
     if (printBtn) {
-        printBtn.addEventListener('click', () => {
+        printBtn.addEventListener('click', async () => {
             if (!residentsTable || !residentsTable.filteredRows) {
                 fetch('model/log_print_masterlist.php', { method: 'POST' }).catch(e => console.error(e));
                 window.print();
                 return;
             }
+
+            // Fetch barangay info
+            let brgyInfo = {
+                province_name: 'Province',
+                town_name: 'Municipality',
+                barangay_name: 'Barangay',
+                barangay_logo: '',
+                official_emblem: ''
+            };
+            
+            try {
+                const response = await fetch('model/get_barangay_info.php');
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.success && data.data) {
+                        brgyInfo = data.data;
+                    }
+                }
+            } catch (error) {
+                console.error('Error fetching barangay info:', error);
+            }
+            
+            const brgyLogoHtml = brgyInfo.barangay_logo 
+                ? `<img src="${brgyInfo.barangay_logo}" class="logo-img" alt="Barangay Logo">`
+                : `<div class="logo-placeholder-box"></div>`;
+                
+            const govLogoHtml = brgyInfo.official_emblem
+                ? `<img src="${brgyInfo.official_emblem}" class="logo-img" alt="Official Emblem">`
+                : `<div class="logo-placeholder-box"></div>`;
 
             // Create a hidden iframe for printing to bypass pagination visibility issues
             let printFrame = document.getElementById('residentPrintFrame');
@@ -379,22 +408,34 @@ function initializeButtons() {
             const doc = printFrame.contentWindow.document;
             doc.open();
 
-            // Clone the table header and remove the Action column
-            const tableHeader = document.querySelector('#residentsTable thead').cloneNode(true);
-            const headerActionCol = tableHeader.querySelector('th:last-child');
-            if (headerActionCol) headerActionCol.remove();
+            // Create a custom table header for No., Name, Address
+            const tableHeaderHtml = `
+                <thead>
+                    <tr>
+                        <th style="width: 10px; text-align: center;">No.</th>
+                        <th>Resident Name</th>
+                        <th>Address</th>
+                    </tr>
+                </thead>
+            `;
 
             // Get only the filtered rows from the EnhancedTable instance
             let rowsHtml = '';
-            residentsTable.filteredRows.forEach(row => {
-                const rowClone = row.cloneNode(true);
-                // Remove the Action column (last cell)
-                const actionCell = rowClone.querySelector('td:last-child');
-                if (actionCell) actionCell.remove();
+            residentsTable.filteredRows.forEach((row, index) => {
+                const no = index + 1;
+                const nameEl = row.querySelector('.resident-name span:last-child');
+                const name = nameEl ? nameEl.textContent.trim() : (row.cells[1] ? row.cells[1].textContent.trim() : '');
                 
-                // Ensure row is visible in the print document
-                rowClone.style.display = 'table-row';
-                rowsHtml += rowClone.outerHTML;
+                const purok = row.getAttribute('data-purok');
+                const address = purok ? 'Purok ' + purok : (row.cells[4] ? row.cells[4].textContent.trim() : '');
+                
+                rowsHtml += `
+                    <tr style="display: table-row;">
+                        <td style="text-align: center;">${no}</td>
+                        <td>${name}</td>
+                        <td>${address}</td>
+                    </tr>
+                `;
             });
 
             // Get the print header and update the count
@@ -402,6 +443,8 @@ function initializeButtons() {
             const countBadge = printHeader.querySelector('#printTotalRecords');
             if (countBadge) countBadge.textContent = residentsTable.filteredRows.length;
 
+            let finalTitle = "Resident Masterlist";
+            
             // Update the print title with active filter information
             const printTitle = printHeader.querySelector('.print-list-title');
             if (printTitle) {
@@ -454,10 +497,11 @@ function initializeButtons() {
                 if (activeFilters.length > 0) {
                     printTitle.textContent += " - " + activeFilters.join(', ');
                 }
+                finalTitle = printTitle.textContent;
             }
 
             // Get the print footer
-            const printFooter = document.querySelector('.print-footer').cloneNode(true);
+            const printFooter = document.querySelector('.print-footer') ? document.querySelector('.print-footer').cloneNode(true) : null;
 
             // Collect all styles to maintain layout
             const styles = Array.from(document.querySelectorAll('link[rel="stylesheet"], style'))
@@ -478,17 +522,40 @@ function initializeButtons() {
                         .residents-table th { background-color: #f3f4f6 !important; -webkit-print-color-adjust: exact; }
                         .avatar { display: none !important; }
                         .resident-name { gap: 5px !important; }
-                        @page { size: landscape; margin: 15mm; }
+                        .cert-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; text-align: center;   border-bottom: 3px double #7a51c9; }
+                        .header-center { flex: 1; }
+                        .header-center p { margin: 2px 0; font-size: 14px; }
+                        .header-center .brgy-name { font-weight: bold; font-size: 16px; margin-top: 5px; }
+                        .logo-img { width: 80px; height: 80px; object-fit: contain; }
+                        .logo-placeholder-box { width: 80px; height: 80px; }
+                        @page { size: A4 ; margin: 15mm; }
                     </style>
                 </head>
                 <body>
                     <div class="dashboard-content">
-                        ${printHeader.outerHTML}
+                        <div class="cert-header">
+                            ${brgyLogoHtml}
+
+                            <div class="header-center">
+                                <p>Republic of the Philippines</p>
+                                <p>Province of ${brgyInfo.province_name}</p>
+                                <p>Municipality of ${brgyInfo.town_name}</p>
+                                <p class="brgy-name">${brgyInfo.barangay_name.toUpperCase()}</p>
+                            </div>
+
+                            ${govLogoHtml}
+                        </div>
+                        
+                        <div style="text-align: center; margin: 15px 0;">
+                            <h3 style="margin: 0; text-transform: uppercase;">${finalTitle}</h3>
+                            <p style="margin: 5px 0 0 0; font-size: 12px;">Total Records: ${residentsTable.filteredRows.length}</p>
+                        </div>
+
                         <table class="residents-table">
-                            ${tableHeader.outerHTML}
+                            ${tableHeaderHtml}
                             <tbody>${rowsHtml}</tbody>
                         </table>
-                        ${printFooter.outerHTML}
+                        ${printFooter ? printFooter.outerHTML : ''}
                     </div>
                 </body>
                 </html>

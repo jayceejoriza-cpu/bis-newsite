@@ -116,34 +116,37 @@ function pct($val, $total) {
         .print-only { display: none; }
 
         @media print {
-            @page { size: A4; margin: 1in; }
-            body { background: white !important; color: #000 !important; font-family: "Times New Roman", Georgia, serif !important; font-size: 11pt; }
+            @page { size: A4; margin: 0.5in; }
+            body { background: white !important; color: #000 !important; font-family: "Times New Roman", Georgia, serif !important; font-size: 9pt !important; }
             .main-content { margin: 0 !important; padding: 0 !important; width: 100% !important; }
             .sidebar, .header, .no-print { display: none !important; }
             .print-only { display: block !important; }
             
-            .report-section { page-break-inside: avoid; margin-bottom: 30px; }
-            .report-table { width: 100% !important; border-collapse: collapse !important; border: 1px solid #000 !important; }
-            .report-table th, .report-table td { border: 1px solid #000 !important; padding: 6px !important; page-break-inside: avoid; }
+            .report-section { page-break-inside: avoid; margin-bottom: 15px !important; }
+            .report-table { width: 100% !important; border-collapse: collapse !important; border: 1px solid #000 !important; font-size: 8pt !important; }
+            .report-table th, .report-table td { border: 1px solid #000 !important; padding: 3px 5px !important; page-break-inside: avoid; }
             .report-table th { background-color: #f3f4f6 !important; -webkit-print-color-adjust: exact; }
 
-            .print-header { text-align: center; margin-bottom: 30px; }
-            .header-logos { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-            .logo-placeholder { width: 80px; height: 80px; object-fit: contain; }
-            .header-text p { margin: 0; line-height: 1.4; }
-            .office-name { font-weight: bold; font-size: 14pt; margin-top: 5px !important; }
-            .report-title { font-weight: bold; text-decoration: underline; margin-top: 25px; font-size: 16pt; }
+            .print-header { text-align: center; margin-bottom: 15px !important; }
+            .header-logos { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px !important; }
+            .logo-placeholder { width: 60px !important; height: 60px !important; object-fit: contain; }
+            .header-text p { margin: 0; line-height: 1.2 !important; }
+            .office-name { font-weight: bold; font-size: 11pt !important; margin-top: 3px !important; }
+            .report-title { font-weight: bold; text-decoration: underline; margin-top: 10px !important; font-size: 12pt !important; }
 
-            .print-footer { margin-top: 60px; page-break-inside: avoid; }
-            .signatories { display: flex; justify-content: space-between; margin-bottom: 40px; }
+            .print-footer { margin-top: 20px !important; page-break-inside: avoid; }
+            .signatories { display: flex; justify-content: space-between; margin-bottom: 20px !important; }
             .signatory-item { width: 40%; text-align: center; }
-            .sig-line { border-bottom: 1px solid #000; margin: 50px auto 5px; width: 100%; }
-            .sig-name { font-weight: bold; text-transform: uppercase; margin-bottom: 0; }
-            .sig-title { font-size: 10pt; margin-top: 0; }
+            .sig-line { border-bottom: 1px solid #000; margin: 30px auto 5px !important; width: 100%; }
+            .sig-name { font-weight: bold; text-transform: uppercase; margin-bottom: 0; font-size: 9pt !important; }
+            .sig-title { font-size: 8pt !important; margin-top: 0; }
             
-            .reports-stats-grid, .report-two-col { display: block !important; }
-            .report-stat-card, .report-table-box { margin-bottom: 20px; border: 1px solid #000; page-break-inside: avoid; box-shadow: none; }
-            .section-divider { border-bottom: 1px solid #000; }
+            .reports-stats-grid { display: flex !important; gap: 10px !important; margin-bottom: 15px !important; }
+            .report-two-col { display: flex !important; flex-direction: row !important; gap: 15px !important; align-items: flex-start !important; }
+            .report-two-col > * { flex: 1 !important; min-width: 0 !important; }
+            .report-stat-card { flex: 1 !important; margin-bottom: 10px !important; padding: 10px !important; border: 1px solid #000 !important; page-break-inside: avoid; box-shadow: none !important; }
+            .report-table-box { margin-bottom: 10px !important; border: 1px solid #000 !important; page-break-inside: avoid; box-shadow: none !important; }
+            .section-divider { border-bottom: 1px solid #000 !important; margin: 15px 0 10px !important; font-size: 10pt !important; padding-bottom: 5px !important; }
         }
     </style>
 </head>

@@ -209,8 +209,22 @@ try {
             text-align: left;
         }
         .action-menu-item:hover { background-color: #f3f4f6; }
-        .action-submenu { display: none; padding-left: 15px; background: #f9fafb; border-radius: 4px; margin-top: 5px; }
-        .action-menu-item.show-submenu + .action-submenu { display: block; }
+        .action-submenu { 
+            display: none; 
+            position: absolute; 
+            right: calc(100% + 6px); 
+            left: auto !important;
+            top: 0; 
+            margin: 0 !important;
+            background: white !important; 
+            border: 1px solid #e5e7eb; 
+            border-radius: 8px; 
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.12); 
+            padding: 6px !important; 
+            min-width: 160px; 
+            z-index: 10000; 
+        }
+        .action-menu-item.show-submenu .action-submenu { display: block; }
         .submenu-arrow { margin-left: auto; font-size: 10px; transition: transform 0.2s; }
         .action-menu-item.show-submenu .submenu-arrow { transform: rotate(90deg); }
         
@@ -294,18 +308,20 @@ try {
         <?php include 'components/header.php'; ?>
         
         <div class="dashboard-content">
-            <!-- Official Print Header -->
+            <!-- Print-Only Header (hidden on screen, visible when printing) -->
             <div class="print-only print-header">
-                <div class="header-logos">
-                    <img src="<?php echo !empty($barangayInfo['barangay_logo']) ? $barangayInfo['barangay_logo'] : 'assets/image/brgylogo.jpg'; ?>" class="logo-placeholder" alt="Barangay Logo">
-                    <div class="header-text">
-                        <p>Republic of the Philippines</p>
-                        <p>Province of <?php echo htmlspecialchars($barangayInfo['province_name'] ?? '[Province Name]'); ?>, City/Municipality of <?php echo htmlspecialchars($barangayInfo['town_name'] ?? '[City Name]'); ?></p>
-                        <p class="office-name">OFFICE OF THE SANGGUNIANG BARANGAY OF <?php echo strtoupper(htmlspecialchars($barangayInfo['barangay_name'] ?? '[BARANGAY NAME]')); ?></p>
-                    </div>
-                    <img src="<?php echo !empty($barangayInfo['municipal_logo']) ? $barangayInfo['municipal_logo'] : 'assets/image/citylogo.png'; ?>" class="logo-placeholder" alt="City Logo">
+                <div class="print-header-logo">
+                    <img src="assets/image/brgylogo.jpg" alt="Barangay Logo" class="print-logo">
                 </div>
-                <h2 class="report-title">BLOTTER SUMMARY REPORT</h2>
+                <div class="print-header-info">
+                    <h2 class="print-barangay-name"><?php echo defined('SITE_NAME') ? htmlspecialchars(SITE_NAME) : 'Barangay Information System'; ?></h2>
+                    <h3 class="print-list-title">Blotter Records Masterlist</h3>
+                    <p class="print-meta">
+                        Date Printed: <strong><?php echo date('F d, Y'); ?></strong>
+                        &nbsp;&nbsp;|&nbsp;&nbsp;
+                        Total Records: <strong id="printTotalRecords">0</strong>
+                    </p>
+                </div>
             </div>
 
             <div class="page-header-section">
@@ -314,7 +330,7 @@ try {
                     <p class="page-subtitle">View and manage official barangay blotter entries, including complaints, incidents, and case statuses.</p>
                 </div>
                 <?php if (hasPermission('perm_blotter_print')): ?>
-                <button class="btn btn-outline-secondary no-print" onclick="window.print()">
+                <button class="btn btn-outline-secondary no-print" id="printMasterlistBtn">
                     <i class="fas fa-print"></i>
                     Print Report
                 </button>
@@ -447,25 +463,32 @@ try {
                                             </button>
                                             <?php endif; ?>
                                             <?php if (hasPermission('perm_blotter_status')): ?>
-                                            <button class="action-menu-item has-submenu" data-action="status">
+                                            <div class="action-menu-item has-submenu" data-action="status">
                                                 <i class="fas fa-circle status-dot"></i>
-                                                <span>Status</span>
+                                                <span>Change Status</span>
                                                 <i class="fas fa-chevron-right submenu-arrow"></i>
-                                            </button>
-                                            <div class="action-submenu">
-                                                <button class="action-menu-item" data-action="status-pending">
-                                                    <span>Pending</span>
-                                                </button>
-                                                <button class="action-menu-item" data-action="status-investigation">
-                                                    <span>Under Investigation</span>
-                                                </button>
-                                                <button class="action-menu-item" data-action="status-resolved">
-                                                    <span>Resolved</span>
-                                                </button>
-                                                <button class="action-menu-item" data-action="status-dismissed">
-                                                    <span>Dismissed</span>
-                                                </button>
+                                                <div class="action-submenu">
+                                                    <button type="button" class="action-menu-item" data-action="status-pending">
+                                                        <span>Pending</span>
+                                                    </button>
+                                                    <button type="button" class="action-menu-item" data-action="status-investigation">
+                                                        <span>Under Investigation</span>
+                                                    </button>
+                                                    <button type="button" class="action-menu-item" data-action="status-resolved">
+                                                        <span>Resolved</span>
+                                                    </button>
+                                                    <button type="button" class="action-menu-item" data-action="status-dismissed">
+                                                        <span>Dismissed</span>
+                                                    </button>
+                                                </div>
                                             </div>
+                                            <?php endif; ?>
+                                            <?php if (hasPermission('perm_blotter_print')): ?>
+                                         
+                                            <button class="action-menu-item" data-action="print">
+                                                <i class="fas fa-print"></i>
+                                                <span>Print Details</span>
+                                            </button>
                                             <?php endif; ?>
                                             <?php if (hasPermission('perm_blotter_archive')): ?>
                                              <div class="action-menu-divider" style="

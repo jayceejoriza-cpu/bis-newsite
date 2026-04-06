@@ -121,6 +121,7 @@ try {
             voter_status,
             activity_status,
             purok,
+            street_name,
             occupation,
             membership_type,
             philhealth_category,
@@ -162,6 +163,9 @@ try {
     <link rel="stylesheet" href="assets/css/residents.css">
     <link rel="stylesheet" href="assets/css/residents-grid.css">
     
+    <style>
+        .print-only { display: none !important; }
+    </style>
     <!-- Dark Mode Init: must be in <head> to prevent flash of light mode -->
     <script src="assets/js/dark-mode-init.js"></script>
 </head>
@@ -550,7 +554,8 @@ try {
                                 data-medical-history="<?php echo htmlspecialchars($resident['medical_history'] ?? ''); ?>"
                                 data-using-fp-method="<?php echo htmlspecialchars($resident['using_fp_method'] ?? ''); ?>"
                                 data-fp-methods-used="<?php echo htmlspecialchars($resident['fp_methods_used'] ?? ''); ?>"
-                                data-fp-status="<?php echo htmlspecialchars($resident['fp_status'] ?? ''); ?>">
+                                data-fp-status="<?php echo htmlspecialchars($resident['fp_status'] ?? ''); ?>"
+                                data-street-name="<?php echo htmlspecialchars($resident['street_name'] ?? '') ?>">
                                
                                     <td><?php echo htmlspecialchars($residentId); ?></td>
                                      <td data-sort="<?php echo htmlspecialchars($sortName); ?>"><a href="resident_profile.php?id=<?php echo htmlspecialchars($resident['id']); ?>" class="resident-name-link">
@@ -638,7 +643,8 @@ try {
                          data-medical-history="<?php echo htmlspecialchars($resident['medical_history'] ?? ''); ?>"
                          data-using-fp-method="<?php echo htmlspecialchars($resident['using_fp_method'] ?? ''); ?>"
                          data-fp-methods-used="<?php echo htmlspecialchars($resident['fp_methods_used'] ?? ''); ?>"
-                         data-fp-status="<?php echo htmlspecialchars($resident['fp_status'] ?? ''); ?>">
+                         data-fp-status="<?php echo htmlspecialchars($resident['fp_status'] ?? ''); ?>"
+                         data-street-name="<?php echo htmlspecialchars($resident['street_name'] ?? '') ?>">
                         <?php if ($photo): ?>
                             <img src="<?php echo $photo; ?>" alt="Photo" class="avatar" style="object-fit: cover;">
                         <?php else: ?>

@@ -107,6 +107,205 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // ============================================
+    // Print Masterlist Button
+    // ============================================
+    const printBtn = document.getElementById('printMasterlistBtn');
+    if (printBtn) {
+        printBtn.addEventListener('click', async () => {
+            let brgyInfo = {
+                province_name: 'Province',
+                town_name: 'Municipality',
+                barangay_name: 'Barangay',
+                barangay_logo: '',
+                official_emblem: ''
+            };
+            
+            try {
+                const response = await fetch('model/get_barangay_info.php');
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.success && data.data) {
+                        brgyInfo = data.data;
+                    }
+                }
+            } catch (error) {
+                console.error('Error fetching barangay info:', error);
+            }
+            
+            const brgyLogoHtml = brgyInfo.barangay_logo 
+                ? `<img src="${brgyInfo.barangay_logo}" class="logo-img" alt="Barangay Logo">`
+                : `<div class="logo-placeholder-box"></div>`;
+                
+            const govLogoHtml = brgyInfo.official_emblem
+                ? `<img src="${brgyInfo.official_emblem}" class="logo-img" alt="Official Emblem">`
+                : `<div class="logo-placeholder-box"></div>`;
+
+            let printFrame = document.getElementById('blotterPrintFrame');
+            if (!printFrame) {
+                printFrame = document.createElement('iframe');
+                printFrame.id = 'blotterPrintFrame';
+                printFrame.style.position = 'fixed';
+                printFrame.style.bottom = '0';
+                printFrame.style.right = '0';
+                printFrame.style.width = '0';
+                printFrame.style.height = '0';
+                printFrame.style.border = 'none';
+                document.body.appendChild(printFrame);
+            }
+
+            const doc = printFrame.contentWindow.document;
+            doc.open();
+
+            const tableHeaderHtml = `
+                <thead>
+                    <tr>
+                        <th style="width: 40px; text-align: center;">No.</th>
+                        <th>Record #</th>
+                        <th>Date Reported</th>
+                        <th>Status</th>
+                        <th>Complainants</th>
+                        <th>Respondents</th>
+                        <th>Incident Type</th>
+                        <th>Incident Date</th>
+                    </tr>
+                </thead>
+            `;
+
+            let rowsHtml = '';
+            let rowsToPrint = [];
+            
+            if (typeof blotterTable !== 'undefined' && blotterTable.filteredRows) {
+                rowsToPrint = blotterTable.filteredRows;
+            } else {
+                rowsToPrint = Array.from(document.querySelectorAll('#blotterTableBody tr:not([style*="display: none"])'));
+            }
+            
+            rowsToPrint.forEach((row, index) => {
+                if (row.cells.length < 8) return;
+                if (row.querySelector('td[colspan]')) return;
+
+                const no = index + 1;
+                const recordNum = row.cells[0]?.textContent.trim() || '';
+                const dateRep = row.cells[1]?.textContent.trim() || '';
+                const status = row.cells[2]?.textContent.trim() || '';
+                
+                const compEls = row.cells[3]?.querySelectorAll('.avatar-sm');
+                let complainants = [];
+                if (compEls) {
+                    compEls.forEach(el => complainants.push(el.getAttribute('title') || el.textContent.trim()));
+                }
+                const compStr = complainants.join(', ');
+                
+                const respEls = row.cells[4]?.querySelectorAll('.avatar-sm');
+                let respondents = [];
+                if (respEls) {
+                    respEls.forEach(el => respondents.push(el.getAttribute('title') || el.textContent.trim()));
+                }
+                const respStr = respondents.join(', ');
+
+                const incType = row.cells[5]?.textContent.trim() || '';
+                const incDate = row.cells[6]?.textContent.trim() || '';
+
+                rowsHtml += `
+                    <tr style="display: table-row;">
+                        <td style="text-align: center;">${no}</td>
+                        <td>${recordNum}</td>
+                        <td>${dateRep}</td>
+                        <td>${status}</td>
+                        <td>${compStr}</td>
+                        <td>${respStr}</td>
+                        <td>${incType}</td>
+                        <td>${incDate}</td>
+                    </tr>
+                `;
+            });
+
+            const styles = Array.from(document.querySelectorAll('link[rel="stylesheet"], style')).map(s => s.outerHTML).join('\n');
+            const printFooter = document.querySelector('.print-footer') ? document.querySelector('.print-footer').cloneNode(true) : null;
+
+            let finalTitle = "Blotter Records Masterlist";
+            const printHeader = document.querySelector('.print-header');
+            if (printHeader) {
+                const countBadge = printHeader.querySelector('#printTotalRecords');
+                if (countBadge) countBadge.textContent = rowsToPrint.length;
+                
+                const printTitle = printHeader.querySelector('.print-list-title');
+                if (printTitle) {
+                    const activeFilters = [];
+                    
+                    const activeTab = document.querySelector('.tab-btn.active');
+                    if (activeTab && activeTab.getAttribute('data-filter') !== 'all') {
+                        activeFilters.push("Status: " + activeTab.textContent.trim());
+                    }
+
+                    const searchInput = document.getElementById('searchInput');
+                    if (searchInput && searchInput.value.trim()) {
+                        activeFilters.push(`Search: "${searchInput.value.trim()}"`);
+                    }
+                    if (activeFilters.length > 0) {
+                        finalTitle += " - " + activeFilters.join(', ');
+                    }
+                }
+            }
+
+            doc.write(`
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>Blotter Records Masterlist</title>
+                    ${styles}
+                    <style>
+                        body { background: white !important; color: black !important; padding: 20px !important; }
+                        .main-content, .dashboard-content { margin: 0 !important; padding: 0 !important; width: 100% !important; }
+                        .print-only { display: flex !important; }
+                        .data-table { width: 100% !important; border-collapse: collapse !important; margin-top: 20px; }
+                        .data-table th, .data-table td { border: 1px solid #333 !important; padding: 6px !important; font-size: 9px !important; text-align: left; }
+                        .data-table th { background-color: #f3f4f6 !important; -webkit-print-color-adjust: exact; }
+                        .cert-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; text-align: center; border-bottom: 3px double #7a51c9; padding-bottom: 10px; }
+                        .header-center { flex: 1; }
+                        .header-center p { margin: 2px 0; font-size: 14px; }
+                        .header-center .brgy-name { font-weight: bold; font-size: 16px; margin-top: 5px; }
+                        .logo-img { width: 80px; height: 80px; object-fit: contain; }
+                        .logo-placeholder-box { width: 80px; height: 80px; }
+                        @page { size: A4 landscape; margin: 15mm; }
+                    </style>
+                </head>
+                <body>
+                    <div class="dashboard-content">
+                        <div class="cert-header">
+                            ${brgyLogoHtml}
+                            <div class="header-center">
+                                <p>Republic of the Philippines</p>
+                                <p>Province of ${brgyInfo.province_name || 'Province'}</p>
+                                <p>Municipality of ${brgyInfo.town_name || 'Municipality'}</p>
+                                <p class="brgy-name">${(brgyInfo.barangay_name || 'Barangay').toUpperCase()}</p>
+                            </div>
+                            ${govLogoHtml}
+                        </div>
+                        <div style="text-align: center; margin: 15px 0;">
+                            <h3 style="margin: 0; text-transform: uppercase;">${finalTitle}</h3>
+                            <p style="margin: 5px 0 0 0; font-size: 12px;">Total Records: ${rowsToPrint.length}</p>
+                        </div>
+                        <table class="data-table">
+                            ${tableHeaderHtml}
+                            <tbody>${rowsHtml}</tbody>
+                        </table>
+                        ${printFooter ? printFooter.outerHTML : ''}
+                    </div>
+                </body>
+                </html>
+            `);
+            doc.close();
+
+            setTimeout(() => {
+                fetch('model/log_print_masterlist.php', { method: 'POST' }).catch(e => console.error(e));
+                printFrame.contentWindow.focus();
+                printFrame.contentWindow.print();
+            }, 500);
+        });
+    }
+
+    // ============================================
     // Refresh Button
     // ============================================
     if (refreshBtn) {
@@ -546,7 +745,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (menuItem) {
             const action = menuItem.getAttribute('data-action');
             const menu = menuItem.closest('.action-menu');
-            const recordId = menu.getAttribute('data-record-id');
+            const recordId = menu ? menu.getAttribute('data-record-id') : null;
             
             // Don't close menu if it's the status item (has submenu)
             if (menuItem.classList.contains('has-submenu')) {
@@ -556,7 +755,11 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             
             // Handle different actions
-            handleAction(action, recordId);
+            if (recordId) {
+                handleAction(action, recordId);
+            } else {
+                console.error('Action clicked but record ID is missing');
+            }
             
             // Close menu
             closeMenu(menu);
@@ -629,6 +832,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 editBlotterRecord(recordId);
                 break;
                 
+            case 'print':
+                if (window.BIS_PERMS && window.BIS_PERMS.blotter_print === false) {
+                    alert('Permission denied to print blotter records.');
+                    return;
+                }
+                printBlotterDetails(recordId);
+                break;
+                
             case 'status-pending':
                 if (window.BIS_PERMS && window.BIS_PERMS.blotter_status === false) {
                     alert('Permission denied to update blotter status.');
@@ -677,6 +888,196 @@ document.addEventListener('DOMContentLoaded', function() {
                 deleteBlotterRecord(recordId);
                 break;
         }
+    }
+    // Print individual blotter details
+    function printBlotterDetails(recordId) {
+        console.log('Print blotter details:', recordId);
+        
+        fetch(`model/edit_blotter.php?ajax=true&id=${recordId}`)
+            .then(response => response.json())
+            .then(async data => {
+                if (data.success) {
+                    let brgyInfo = {
+                        province_name: 'Province',
+                        town_name: 'Municipality',
+                        barangay_name: 'Barangay',
+                        barangay_logo: '',
+                        official_emblem: ''
+                    };
+                    
+                    try {
+                        const response = await fetch('model/get_barangay_info.php');
+                        if (response.ok) {
+                            const bData = await response.json();
+                            if (bData.success && bData.data) {
+                                brgyInfo = bData.data;
+                            }
+                        }
+                    } catch (error) {
+                        console.error('Error fetching barangay info:', error);
+                    }
+                    
+                    const brgyLogoHtml = brgyInfo.barangay_logo 
+                        ? `<img src="${brgyInfo.barangay_logo}" class="logo-img" alt="Barangay Logo">`
+                        : `<div class="logo-placeholder-box"></div>`;
+                        
+                    const govLogoHtml = brgyInfo.official_emblem
+                        ? `<img src="${brgyInfo.official_emblem}" class="logo-img" alt="Official Emblem">`
+                        : `<div class="logo-placeholder-box"></div>`;
+
+                    let printFrame = document.getElementById('blotterSinglePrintFrame');
+                    if (!printFrame) {
+                        printFrame = document.createElement('iframe');
+                        printFrame.id = 'blotterSinglePrintFrame';
+                        printFrame.style.position = 'fixed';
+                        printFrame.style.bottom = '0';
+                        printFrame.style.right = '0';
+                        printFrame.style.width = '0';
+                        printFrame.style.height = '0';
+                        printFrame.style.border = 'none';
+                        document.body.appendChild(printFrame);
+                    }
+
+                    const doc = printFrame.contentWindow.document;
+                    doc.open();
+
+                    const record = data.data.record;
+                    
+                    const renderParties = (parties) => {
+                        if (!parties || parties.length === 0) return `<p style="margin: 0; font-size: 11px; color: #555; font-style: italic;">None</p>`;
+                        return parties.map(p => {
+                            let text = `<strong style="font-size: 12px;">${p.name}</strong>`;
+                            if (p.contact_number) text += ` | ${p.contact_number}`;
+                            if (p.address) text += ` | ${p.address}`;
+                            return `<div style="margin-bottom: 4px; font-size: 11px;">${text}</div>`;
+                        }).join('');
+                    };
+
+                    const renderActions = (actions) => {
+                        if (!actions || actions.length === 0) return `<p style="margin: 0; font-size: 11px; color: #555; font-style: italic;">None</p>`;
+                        return actions.map(a => `
+                            <div style="margin-bottom: 8px; font-size: 11px;">
+                                <strong>${a.date}</strong> - ${a.officer || 'Officer'}<br>
+                                ${a.details}
+                            </div>
+                        `).join('');
+                    };
+
+                    doc.write(`
+                        <!DOCTYPE html>
+                        <html>
+                        <head>
+                            <title>Blotter Record - ${record.record_number}</title>
+                            <style>
+                                body { background: white !important; color: black !important; padding: 20px !important; font-family: Arial, sans-serif; }
+                                .cert-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; text-align: center; border-bottom: 3px double #7a51c9; padding-bottom: 10px; }
+                                .header-center { flex: 1; }
+                                .header-center p { margin: 2px 0; font-size: 14px; }
+                                .header-center .brgy-name { font-weight: bold; font-size: 16px; margin-top: 5px; }
+                                .logo-img { width: 80px; height: 80px; object-fit: contain; }
+                                .logo-placeholder-box { width: 80px; height: 80px; }
+                                h3 { text-align: center; text-transform: uppercase; margin: 15px 0; font-size: 16px; }
+                                .section { margin-bottom: 15px; border: 1px solid #ddd; padding: 10px; border-radius: 5px; }
+                                .section-title { font-weight: bold; text-transform: uppercase; font-size: 12px; margin-bottom: 8px; border-bottom: 1px solid #ddd; padding-bottom: 4px; color: #333; }
+                                .row { display: flex; flex-wrap: wrap; margin-bottom: 5px; }
+                                .col { flex: 1; min-width: 50%; font-size: 11px; }
+                                .label { color: #666; font-weight: bold; font-size: 10px; text-transform: uppercase; }
+                                .value { font-weight: bold; font-size: 12px; margin-top: 2px; }
+                                @page { size: A4; margin: 15mm; }
+                            </style>
+                        </head>
+                        <body>
+                            <div class="cert-header">
+                                ${brgyLogoHtml}
+                                <div class="header-center">
+                                    <p>Republic of the Philippines</p>
+                                    <p>Province of ${brgyInfo.province_name || 'Province'}</p>
+                                    <p>Municipality of ${brgyInfo.town_name || 'Municipality'}</p>
+                                    <p class="brgy-name">${(brgyInfo.barangay_name || 'Barangay').toUpperCase()}</p>
+                                </div>
+                                ${govLogoHtml}
+                            </div>
+                            
+                            <h3>Blotter Record Details</h3>
+                            
+                            <div class="section">
+                                <div class="section-title">Basic Information</div>
+                                <div class="row">
+                                    <div class="col"><div class="label">Record Number</div><div class="value">${record.record_number}</div></div>
+                                    <div class="col"><div class="label">Status</div><div class="value">${record.status}</div></div>
+                                </div>
+                                <div class="row" style="margin-top: 8px;">
+                                    <div class="col"><div class="label">Date Reported</div><div class="value">${new Date(record.date_reported).toLocaleString()}</div></div>
+                                    <div class="col"><div class="label">Incident Date</div><div class="value">${new Date(record.incident_date).toLocaleString()}</div></div>
+                                </div>
+                            </div>
+
+                            <div class="section">
+                                <div class="section-title">Parties Involved</div>
+                                <div class="row">
+                                    <div class="col" style="margin-bottom: 10px;">
+                                        <div class="label" style="margin-bottom: 4px;">Complainant(s)</div>
+                                        ${renderParties(data.data.complainants)}
+                                    </div>
+                                    <div class="col" style="margin-bottom: 10px;">
+                                        <div class="label" style="margin-bottom: 4px;">Respondent(s)</div>
+                                        ${renderParties(data.data.respondents)}
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col">
+                                        <div class="label" style="margin-bottom: 4px;">Victim(s)</div>
+                                        ${renderParties(data.data.victims)}
+                                    </div>
+                                    <div class="col">
+                                        <div class="label" style="margin-bottom: 4px;">Witness(es)</div>
+                                        ${renderParties(data.data.witnesses)}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="section">
+                                <div class="section-title">Incident Details</div>
+                                <div class="row">
+                                    <div class="col"><div class="label">Incident Type</div><div class="value" style="font-weight: normal; font-size: 11px;">${record.incident_type}</div></div>
+                                </div>
+                                <div class="row" style="margin-top: 8px;">
+                                    <div class="col"><div class="label">Location</div><div class="value" style="font-weight: normal; font-size: 11px;">${record.incident_location}</div></div>
+                                </div>
+                                <div class="row" style="margin-top: 8px;">
+                                    <div class="col"><div class="label">Description</div><div class="value" style="font-weight: normal; font-size: 11px;">${record.incident_description.replace(/\n/g, '<br>')}</div></div>
+                                </div>
+                            </div>
+
+                            <div class="section">
+                                <div class="section-title">Actions & Resolution</div>
+                                <div class="row">
+                                    <div class="col">
+                                        <div class="label" style="margin-bottom: 4px;">Actions Taken</div>
+                                        ${renderActions(data.data.actions)}
+                                    </div>
+                                </div>
+                                <div class="row" style="margin-top: 8px;">
+                                    <div class="col"><div class="label">Resolution</div><div class="value" style="font-weight: normal; font-size: 11px;">${(record.resolution || 'No resolution recorded.').replace(/\n/g, '<br>')}</div></div>
+                                </div>
+                            </div>
+                        </body>
+                        </html>
+                    `);
+                    doc.close();
+
+                    setTimeout(() => {
+                        printFrame.contentWindow.focus();
+                        printFrame.contentWindow.print();
+                    }, 500);
+                } else {
+                    alert('Error loading record: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching record:', error);
+                alert('An error occurred while preparing the print view.');
+            });
     }
     
     // View blotter details
@@ -826,15 +1227,24 @@ document.addEventListener('DOMContentLoaded', function() {
         
         console.log('Updating status:', recordId, newStatus);
         
+        const formData = new FormData();
+        formData.append('id', recordId);
+        formData.append('status', newStatus);
+        
         // Send AJAX request to update status
         fetch('model/update_blotter_status.php', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-            },
-            body: `id=${recordId}&status=${encodeURIComponent(newStatus)}`
+            body: formData
         })
-        .then(response => response.json())
+        .then(async response => {
+            const text = await response.text();
+            try {
+                return JSON.parse(text);
+            } catch (e) {
+                console.error('Invalid JSON from server:', text);
+                throw new Error('Server returned invalid response');
+            }
+        })
         .then(data => {
             if (data.success) {
                 alert('Status updated successfully!');
@@ -845,7 +1255,7 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .catch(error => {
             console.error('Error updating status:', error);
-            alert('An error occurred while updating the status.');
+            alert('An error occurred while updating the status. Check console for details.\n\n' + error.message);
         });
     }
     

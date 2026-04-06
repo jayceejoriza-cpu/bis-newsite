@@ -21,12 +21,7 @@
             <h1 class="page-title">Dashboard</h1>
             <p class="page-subtitle">Comprehensive barangay statistics and data summaries</p>
         </div>
-        <div class="reports-header-right no-print">
-            <button class="btn-print" id="printReportBtn">
-                <i class="fas fa-print"></i>
-                Print Report
-            </button>
-        </div>
+        
     </div>
 
     <!-- ================================

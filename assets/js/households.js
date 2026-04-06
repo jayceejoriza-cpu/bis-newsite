@@ -467,6 +467,199 @@ function initializeButtons() {
             refreshData();
         });
     }
+
+    // Print button
+    const printBtn = document.getElementById('printMasterlistBtn');
+    if (printBtn) {
+        printBtn.addEventListener('click', async () => {
+            if (!householdsTable || !householdsTable.filteredRows) {
+                fetch('model/log_print_masterlist.php', { method: 'POST' }).catch(e => console.error(e));
+                window.print();
+                return;
+            }
+
+            // Fetch barangay info
+            let brgyInfo = {
+                province_name: 'Province',
+                town_name: 'Municipality',
+                barangay_name: 'Barangay',
+                barangay_logo: '',
+                official_emblem: ''
+            };
+            
+            try {
+                const response = await fetch('model/get_barangay_info.php');
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.success && data.data) {
+                        brgyInfo = data.data;
+                    }
+                }
+            } catch (error) {
+                console.error('Error fetching barangay info:', error);
+            }
+            
+            const brgyLogoHtml = brgyInfo.barangay_logo 
+                ? `<img src="${brgyInfo.barangay_logo}" class="logo-img" alt="Barangay Logo">`
+                : `<div class="logo-placeholder-box"></div>`;
+                
+            const govLogoHtml = brgyInfo.official_emblem
+                ? `<img src="${brgyInfo.official_emblem}" class="logo-img" alt="Official Emblem">`
+                : `<div class="logo-placeholder-box"></div>`;
+
+            // Create a hidden iframe for printing
+            let printFrame = document.getElementById('householdMasterlistPrintFrame');
+            if (!printFrame) {
+                printFrame = document.createElement('iframe');
+                printFrame.id = 'householdMasterlistPrintFrame';
+                printFrame.style.position = 'fixed';
+                printFrame.style.bottom = '0';
+                printFrame.style.right = '0';
+                printFrame.style.width = '0';
+                printFrame.style.height = '0';
+                printFrame.style.border = 'none';
+                document.body.appendChild(printFrame);
+            }
+
+            const doc = printFrame.contentWindow.document;
+            doc.open();
+
+            // Create table header
+            const tableHeaderHtml = `
+                <thead>
+                    <tr>
+                        <th style="width: 40px; text-align: center;">No.</th>
+                        <th>Household Number</th>
+                        <th>Household Head</th>
+                        <th style="text-align: center; width: 100px;">Members</th>
+                    </tr>
+                </thead>
+            `;
+
+            // Build rows
+            let rowsHtml = '';
+            householdsTable.filteredRows.forEach((row, index) => {
+                const no = index + 1;
+                const hhNum = row.cells[0]?.textContent.trim() || '';
+                
+                const headNameEl = row.querySelector('.head-name span:last-child');
+                const headName = headNameEl ? headNameEl.textContent.trim() : (row.cells[1]?.textContent.trim() || '');
+                
+                const memberCountEl = row.querySelector('.member-count .count');
+                const memberCount = memberCountEl ? memberCountEl.textContent.trim() : (row.cells[2]?.textContent.trim() || '');
+
+                rowsHtml += `
+                    <tr style="display: table-row;">
+                        <td style="text-align: center;">${no}</td>
+                        <td>${hhNum}</td>
+                        <td>${headName}</td>
+                        <td style="text-align: center;">${memberCount}</td>
+                    </tr>
+                `;
+            });
+
+            let finalTitle = "Household Masterlist";
+            const printHeader = document.querySelector('.print-header');
+            if (printHeader) {
+                const countBadge = printHeader.querySelector('#printTotalRecords');
+                if (countBadge) countBadge.textContent = householdsTable.filteredRows.length;
+                
+                const printTitle = printHeader.querySelector('.print-list-title');
+                if (printTitle) {
+                    const activeFilters = [];
+                    
+                    const activeTab = document.querySelector('.tab-btn.active');
+                    if (activeTab && activeTab.getAttribute('data-filter') !== 'all') {
+                        activeFilters.push(activeTab.textContent.trim());
+                    }
+
+                    const filterMappings = {
+                        'filterFamilySize': 'Family Size',
+                        'filterWaterSource': 'Water Source',
+                        'filterToiletFacility': 'Toilet Facility'
+                    };
+
+                    for (const [id, label] of Object.entries(filterMappings)) {
+                        const el = document.getElementById(id);
+                        if (el && el.value) {
+                            activeFilters.push(`${label}: ${el.value}`);
+                        }
+                    }
+
+                    const searchInput = document.getElementById('searchInput');
+                    if (searchInput && searchInput.value.trim()) {
+                        activeFilters.push(`Search: "${searchInput.value.trim()}"`);
+                    }
+
+                    if (activeFilters.length > 0) {
+                        finalTitle += " - " + activeFilters.join(', ');
+                    }
+                }
+            }
+
+            const printFooter = document.querySelector('.print-footer') ? document.querySelector('.print-footer').cloneNode(true) : null;
+            const styles = Array.from(document.querySelectorAll('link[rel="stylesheet"], style')).map(s => s.outerHTML).join('\n');
+
+            doc.write(`
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>Household Masterlist</title>
+                    ${styles}
+                    <style>
+                        body { background: white !important; color: black !important; padding: 20px !important; }
+                        .main-content, .dashboard-content { margin: 0 !important; padding: 0 !important; width: 100% !important; }
+                        .print-only { display: flex !important; }
+                        .data-table { width: 100% !important; border-collapse: collapse !important; margin-top: 20px; }
+                        .data-table th, .data-table td { border: 1px solid #333 !important; padding: 10px !important; font-size: 11px !important; text-align: left; }
+                        .data-table th { background-color: #f3f4f6 !important; -webkit-print-color-adjust: exact; }
+                        .avatar { display: none !important; }
+                        .head-name { gap: 5px !important; }
+                        .member-indicator { display: none !important; }
+                        .cert-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; text-align: center; border-bottom: 3px double #7a51c9; padding-bottom: 10px; }
+                        .header-center { flex: 1; }
+                        .header-center p { margin: 2px 0; font-size: 14px; }
+                        .header-center .brgy-name { font-weight: bold; font-size: 16px; margin-top: 5px; }
+                        .logo-img { width: 80px; height: 80px; object-fit: contain; }
+                        .logo-placeholder-box { width: 80px; height: 80px; }
+                        @page { size: A4; margin: 15mm; }
+                    </style>
+                </head>
+                <body>
+                    <div class="dashboard-content">
+                        <div class="cert-header">
+                            ${brgyLogoHtml}
+                            <div class="header-center">
+                                <p>Republic of the Philippines</p>
+                                <p>Province of ${brgyInfo.province_name || 'Province'}</p>
+                                <p>Municipality of ${brgyInfo.town_name || 'Municipality'}</p>
+                                <p class="brgy-name">${(brgyInfo.barangay_name || 'Barangay').toUpperCase()}</p>
+                            </div>
+                            ${govLogoHtml}
+                        </div>
+                        <div style="text-align: center; margin: 15px 0;">
+                            <h3 style="margin: 0; text-transform: uppercase;">${finalTitle}</h3>
+                            <p style="margin: 5px 0 0 0; font-size: 12px;">Total Records: ${householdsTable.filteredRows.length}</p>
+                        </div>
+                        <table class="data-table">
+                            ${tableHeaderHtml}
+                            <tbody>${rowsHtml}</tbody>
+                        </table>
+                        ${printFooter ? printFooter.outerHTML : ''}
+                    </div>
+                </body>
+                </html>
+            `);
+            doc.close();
+
+            // Trigger print
+            setTimeout(() => {
+                fetch('model/log_print_masterlist.php', { method: 'POST' }).catch(e => console.error(e));
+                printFrame.contentWindow.focus();
+                printFrame.contentWindow.print();
+            }, 500);
+        });
+    }
 }
 
 function showCreateHouseholdModal() {
@@ -671,6 +864,13 @@ function showActionMenu(row, button) {
             <span>Edit Household</span>
         </div>`;
     }
+    if (perms.household_view) {
+        menuHtml += `
+        <div class="action-menu-item" data-action="print">
+            <i class="fas fa-print"></i>
+            <span>Print Household</span>
+        </div>`;
+    }
     if (perms.household_delete) {
         menuHtml += `
         <div class="action-menu-divider"></div>
@@ -731,6 +931,10 @@ function handleAction(action, householdNumber, headName, memberCount, row) {
             
         case 'edit':
             editHousehold(householdId);
+            break;
+            
+        case 'print':
+            printHousehold(householdId);
             break;
             
         case 'delete':
@@ -807,7 +1011,7 @@ function viewHousehold(householdId) {
                 } else {
                     headFullNameElement.textContent = data.household.head_name || 'N/A';
                 }
-                document.getElementById('headDateOfBirth').textContent = data.household.head_dob || 'N/A';
+                document.getElementById('headDateOfBirth').textContent = data.household.head_dob ? formatDobAndAge(data.household.head_dob) : 'N/A';
                 document.getElementById('headSex').textContent = data.household.head_sex || 'N/A';
                 document.getElementById('selectedResidentId').value = data.household.household_head_id;
               
@@ -848,7 +1052,7 @@ function viewHousehold(householdId) {
                         row.innerHTML = `
                             <td>${index + 1}</td>
                             <td>${memberNameHtml}</td>
-                            <td>${member.date_of_birth || 'N/A'}</td>
+                            <td>${member.date_of_birth ? formatDobAndAge(member.date_of_birth) : 'N/A'}</td>
                             <td>${member.sex || 'N/A'}</td>
                             <td>${member.relationship_to_head}</td>
                             <td>${member.mobile_number || 'N/A'}</td>
@@ -915,7 +1119,7 @@ function editHousehold(householdId) {
                 } else {
                     headFullNameElement.textContent = data.household.head_name || 'N/A';
                 }
-                document.getElementById('headDateOfBirth').textContent = data.household.head_dob || 'N/A';
+                document.getElementById('headDateOfBirth').textContent = data.household.head_dob ? formatDobAndAge(data.household.head_dob) : 'N/A';
                 document.getElementById('headSex').textContent = data.household.head_sex || 'N/A';
                 document.getElementById('selectedResidentId').value = data.household.household_head_id;
              
@@ -956,7 +1160,7 @@ function editHousehold(householdId) {
                         row.innerHTML = `
                             <td>${index + 1}</td>
                             <td>${memberNameHtml}</td>
-                            <td>${member.date_of_birth || 'N/A'}</td>
+                            <td>${member.date_of_birth ? formatDobAndAge(member.date_of_birth) : 'N/A'}</td>
                             <td>${member.sex || 'N/A'}</td>
                             <td>${member.relationship_to_head}</td>
                             <td>${member.mobile_number || 'N/A'}</td>
@@ -985,6 +1189,24 @@ function editHousehold(householdId) {
 // ===================================
 // Utility Functions
 // ===================================
+function formatDobAndAge(dateString) {
+    if (!dateString) return 'N/A';
+    const dob = new Date(dateString);
+    if (isNaN(dob)) return 'N/A';
+    
+    const today = new Date();
+    let age = today.getFullYear() - dob.getFullYear();
+    const m = today.getMonth() - dob.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) {
+        age--;
+    }
+    
+    const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const formattedDate = `${monthNames[dob.getMonth()]} ${String(dob.getDate()).padStart(2, '0')}, ${dob.getFullYear()}`;
+    
+    return `${formattedDate} - ${age}`;
+}
+
 function showNotification(message, type = 'info') {
     document.querySelectorAll('.notification').forEach(n => n.remove());
     
@@ -1319,7 +1541,7 @@ function selectResident(resident) {
 
 function setHouseholdHead(resident) {
     document.getElementById('headFullName').textContent = resident.fullName;
-    document.getElementById('headDateOfBirth').textContent = resident.dateOfBirth;
+    document.getElementById('headDateOfBirth').textContent = resident.dateOfBirth ? formatDobAndAge(resident.dateOfBirth) : 'N/A';
     document.getElementById('headSex').textContent = resident.sex;
    
     document.getElementById('selectedResidentId').value = resident.id;
@@ -1470,7 +1692,7 @@ function addMemberToTable(member) {
     newRow.innerHTML = `
         <td>${memberNumber}</td>
         <td>${member.name}</td>
-        <td>${member.dateOfBirth}</td>
+            <td>${member.dateOfBirth ? formatDobAndAge(member.dateOfBirth) : 'N/A'}</td>
         <td>${member.sex}</td>
         <td>${member.relationship}</td>
         <td>${member.mobileNumber || 'N/A'}</td>
@@ -1792,6 +2014,187 @@ function saveTransferHead() {
         btn.innerHTML = originalText;
         btn.disabled = false;
     });
+}
+
+// ===================================
+// Print Household
+// ===================================
+async function printHousehold(householdId) {
+    try {
+        showNotification('Preparing document for printing...', 'info');
+
+        // Fetch barangay info
+        let brgyInfo = {
+            province_name: 'Province',
+            town_name: 'Municipality',
+            barangay_name: 'Barangay',
+            barangay_logo: '',
+            official_emblem: ''
+        };
+        
+        try {
+            const response = await fetch('model/get_barangay_info.php');
+            if (response.ok) {
+                const data = await response.json();
+                if (data.success && data.data) {
+                    brgyInfo = data.data;
+                }
+            }
+        } catch (error) {
+            console.error('Error fetching barangay info:', error);
+        }
+
+        // Fetch household details
+        const hhResponse = await fetch(`model/get_household_details.php?id=${householdId}`);
+        const hhData = await hhResponse.json();
+
+        if (!hhData.success) {
+            showNotification('Failed to fetch household data for printing', 'error');
+            return;
+        }
+
+        const household = hhData.household;
+        const members = hhData.members || [];
+
+        const brgyLogoHtml = brgyInfo.barangay_logo 
+            ? `<img src="${brgyInfo.barangay_logo}" class="logo-img" alt="Barangay Logo">`
+            : `<div class="logo-placeholder-box"></div>`;
+            
+        const govLogoHtml = brgyInfo.official_emblem
+            ? `<img src="${brgyInfo.official_emblem}" class="logo-img" alt="Official Emblem">`
+            : `<div class="logo-placeholder-box"></div>`;
+
+        // Create a hidden iframe for printing
+        let printFrame = document.getElementById('householdPrintFrame');
+        if (!printFrame) {
+            printFrame = document.createElement('iframe');
+            printFrame.id = 'householdPrintFrame';
+            printFrame.style.position = 'fixed';
+            printFrame.style.bottom = '0';
+            printFrame.style.right = '0';
+            printFrame.style.width = '0';
+            printFrame.style.height = '0';
+            printFrame.style.border = 'none';
+            document.body.appendChild(printFrame);
+        }
+
+        const doc = printFrame.contentWindow.document;
+        doc.open();
+
+        // Build members rows
+        let rowsHtml = '';
+        if (members.length === 0) {
+            rowsHtml = `<tr><td colspan="6" class="text-center" style="text-align: center; padding: 15px;">No members found in this household.</td></tr>`;
+        } else {
+            members.forEach((member, index) => {
+                const isHead = (member.is_head == 1 || member.is_head === true || member.is_head === '1') ? '<strong>(Head)</strong>' : '';
+                rowsHtml += `
+                    <tr>
+                        <td style="text-align: center;">${index + 1}</td>
+                        <td>${member.full_name} ${isHead}</td>
+                        <td>${member.date_of_birth ? formatDobAndAge(member.date_of_birth) : 'N/A'}</td>
+                        <td>${member.sex || 'N/A'}</td>
+                        <td>${member.relationship_to_head || 'N/A'}</td>
+                        <td>${member.mobile_number || 'N/A'}</td>
+                    </tr>
+                `;
+            });
+        }
+
+        doc.write(`
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>Print Household - ${household.household_number}</title>
+                <style>
+                    @page { size: A4; margin: 15mm; }
+                    body { font-family: Arial, sans-serif; color: #000; background: #fff; margin: 0; padding: 0; }
+                    .container { width: 100%; max-width: 210mm; margin: 0 auto; }
+                    
+                    .cert-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; text-align: center; border-bottom: 3px double #7a51c9; padding-bottom: 10px; }
+                    .header-center { flex: 1; }
+                    .header-center p { margin: 2px 0; font-size: 14px; }
+                    .header-center .brgy-name { font-weight: bold; font-size: 16px; margin-top: 5px; }
+                    .logo-img { width: 80px; height: 80px; object-fit: contain; }
+                    .logo-placeholder-box { width: 80px; height: 80px; }
+                    
+                    .household-title { text-align: center; font-size: 18px; font-weight: bold; margin: 20px 0; text-transform: uppercase; }
+                    
+                    .members-table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 12px; }
+                    .members-table th, .members-table td { border: 1px solid #000; padding: 8px; text-align: left; }
+                    .members-table th { background-color: #f3f4f6 !important; -webkit-print-color-adjust: exact; color-adjust: exact; }
+                    
+                    .info-flex { display: flex; justify-content: space-between; margin-bottom: 20px; font-size: 13px; }
+                    .info-box { width: 48%; border: 1px solid #000; padding: 10px; }
+                    .info-box h4 { margin-top: 0; margin-bottom: 8px; border-bottom: 1px solid #000; padding-bottom: 4px; font-size: 14px; text-transform: uppercase; }
+                    .info-row { margin-bottom: 4px; }
+                    .info-label { font-weight: bold; display: inline-block; width: 110px; }
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <div class="cert-header">
+                        ${brgyLogoHtml}
+
+                        <div class="header-center">
+                            <p>Republic of the Philippines</p>
+                            <p>Province of ${brgyInfo.province_name || 'Province'}</p>
+                            <p>Municipality of ${brgyInfo.town_name || 'Municipality'}</p>
+                            <p class="brgy-name">${(brgyInfo.barangay_name || 'Barangay').toUpperCase()}</p>
+                        </div>
+
+                        ${govLogoHtml}
+                    </div>
+                    
+                    <div class="household-title">Household Information</div>
+                    
+                    <div class="info-flex">
+                        <div class="info-box">
+                            <h4>Household Details</h4>
+                            <div class="info-row"><span class="info-label">Household No:</span> ${household.household_number}</div>
+                            <div class="info-row"><span class="info-label">Address:</span> ${household.address || 'N/A'}</div>
+                            <div class="info-row"><span class="info-label">Contact:</span> ${household.household_contact || 'N/A'}</div>
+                        </div>
+                        <div class="info-box">
+                            <h4>Household Head</h4>
+                            <div class="info-row"><span class="info-label">Name:</span> ${household.head_name || 'N/A'}</div>
+                            <div class="info-row"><span class="info-label">Date of Birth:</span> ${household.head_dob ? formatDobAndAge(household.head_dob) : 'N/A'}</div>
+                            <div class="info-row"><span class="info-label">Sex:</span> ${household.head_sex || 'N/A'}</div>
+                        </div>
+                    </div>
+                    
+                    <h4 style="margin-top: 20px; margin-bottom: 10px; font-size: 14px; text-transform: uppercase;">Household Members</h4>
+                    <table class="members-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 30px; text-align: center;">#</th>
+                                <th>Name</th>
+                                <th>Date of Birth</th>
+                                <th>Sex</th>
+                                <th>Relationship to Head</th>
+                                <th>Mobile Number</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${rowsHtml}
+                        </tbody>
+                    </table>
+                </div>
+            </body>
+            </html>
+        `);
+        doc.close();
+
+        // Trigger print
+        setTimeout(() => {
+            printFrame.contentWindow.focus();
+            printFrame.contentWindow.print();
+        }, 500);
+
+    } catch (error) {
+        console.error('Print Error:', error);
+        showNotification('An error occurred while printing', 'error');
+    }
 }
 
 // Export functions for external use

@@ -186,6 +186,82 @@ $age = calculateAge($resident['date_of_birth']);
         .edit-field, .edit-field-conditional {
             font-size: 15px !important;
         }
+
+        /* Print layout: Resume style / Resident Info Sheet */
+        @media print {
+            @page { size: A4; margin: 10mm; }
+            body { background: #fff !important; color: #000 !important; font-family: 'Inter', Arial, sans-serif !important; line-height: 1.2 !important; }
+            
+            /* Hide UI Elements */
+            .sidebar, .header, .back-navigation, .profile-header-actions, .profile-sidebar { display: none !important; }
+            #service-requests, #blotter-records, #incident-report { display: none !important; }
+            .edit-field, .edit-field-conditional, .household-actions, .fas, .photo-upload-actions, .badge { display: none !important; }
+            
+            .main-content, .dashboard-content { margin: 0 !important; padding: 0 !important; width: 100% !important; }
+            a { text-decoration: none !important; color: #000 !important; }
+            
+            /* Profile Header (Resume Style) */
+            .profile-header {
+                display: flex !important;
+                flex-direction: row-reverse !important;
+                justify-content: space-between !important;
+                align-items: flex-start !important;
+                border-bottom: 2px solid #000 !important;
+                padding: 0 0 5px 0 !important;
+                margin-bottom: 5px !important;
+                background: none !important;
+                box-shadow: none !important;
+                border-radius: 0 !important;
+            }
+            .profile-header-left {
+                display: flex !important;
+                flex-direction: row-reverse !important;
+                justify-content: space-between !important;
+                width: 100% !important;
+                align-items: flex-start !important;
+            }
+            .profile-photo-wrapper { margin: 0 !important; gap: 0 !important; }
+            .profile-photo { 
+                width: 90px !important; 
+                height: 90px !important; 
+                border-radius: 0 !important; 
+                border: 2px solid #000 !important; 
+            }
+            .profile-photo-placeholder { border-radius: 0 !important; background: #fff !important; }
+            .profile-photo-placeholder::after { content: "PHOTO"; display: block; font-size: 10pt; font-weight: bold; text-align: center; line-height: 90px; color: #000; }
+            .profile-header-info { text-align: left !important; margin-top: 5px !important; }
+            .profile-name { font-size: 18pt !important; color: #000 !important; margin-bottom: 4px !important; line-height: 1 !important; text-transform: uppercase; }
+            .profile-id { font-size: 10pt !important; color: #555 !important; }
+            
+            /* Section Layouts */
+            .profile-content-grid { display: block !important; gap: 0 !important; }
+            .profile-main-content { padding: 0 !important; background: none !important; box-shadow: none !important; }
+            .profile-section { 
+                margin-bottom: 0 !important; 
+                padding: 0 !important; 
+                border: none !important; 
+                background: none !important; 
+                box-shadow: none !important;
+                page-break-inside: avoid;
+            }
+            .section-header { display: none !important; }
+            .section-content { margin: 0 !important; padding: 0 !important; }
+            
+            /* Grid to Text Mapping */
+            .info-grid { display: flex !important; flex-wrap: wrap !important; gap: 0 !important; }
+            .info-item { flex: 0 0 50% !important; margin-bottom: 0 !important; padding: 0 !important; background: none !important; border: none !important; display: flex !important; align-items: baseline !important; }
+            .info-item.full-width { flex: 0 0 100% !important; }
+            .info-item label { flex: 0 0 35% !important; font-size: 8pt !important; color: #444 !important; font-weight: normal !important; margin: 0 !important; text-transform: capitalize; }
+            .info-item p { flex: 0 0 65% !important; font-size: 9pt !important; color: #000 !important; font-weight: bold !important; margin: 0 !important; }
+            
+            .subsection-title { display: none !important; }
+            
+            /* Household Table */
+            .household-info-card, .household-head-card, .household-members-card { padding: 0 !important; border: none !important; background: none !important; box-shadow: none !important; margin-top: 0 !important; }
+            .members-display-table { width: 100% !important; border-collapse: collapse !important; margin-top: 0 !important; }
+            .members-display-table th, .members-display-table td { border: 1px solid #000 !important; padding: 3px !important; font-size: 8pt !important; color: #000 !important; }
+            .members-display-table th { background-color: #f0f0f0 !important; -webkit-print-color-adjust: exact; }
+        }
     </style>
 </head>
 <body>
@@ -384,7 +460,7 @@ $age = calculateAge($resident['date_of_birth']);
                                 <div class="info-item">
                                     <label>Place of Birth</label>
                                     <p class="view-field"><?php echo htmlspecialchars($resident['place_of_birth'] ?: 'N/A'); ?></p>
-                                    <input type="text" name="place_of_birth" class="form-control edit-field" value="<?php echo htmlspecialchars($resident['place_of_birth']); ?>" style="display:none;" required>
+                                    <input type="text" name="place_of_birth" class="form-control edit-field" value="<?php echo htmlspecialchars($resident['place_of_birth']); ?>" style="display:none;" >
                                 </div>
                                 <div class="info-item">
                                     <label>Religion</label>
@@ -874,7 +950,7 @@ $age = calculateAge($resident['date_of_birth']);
                                                                     <?php echo htmlspecialchars($member['full_name']); ?>
                                                                 <?php endif; ?>
                                                             </td>
-                                                            <td><?php echo htmlspecialchars($member['date_of_birth'] ? date('M d, Y', strtotime($member['date_of_birth'])) : 'N/A'); ?></td>
+                                                            <td><?php echo htmlspecialchars($member['date_of_birth'] ? date('M d, Y', strtotime($member['date_of_birth'])) . ' - ' . calculateAge($member['date_of_birth']) : 'N/A'); ?></td>
                                                             <td><?php echo htmlspecialchars($member['sex'] ?: 'N/A'); ?></td>
                                                             <td><?php echo htmlspecialchars($member['relationship_to_head']); ?></td>
                                                             <td><?php echo htmlspecialchars($member['mobile_number'] ?: 'N/A'); ?></td>

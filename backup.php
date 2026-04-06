@@ -173,12 +173,17 @@ if (file_exists($settingsFile)) {
     
     <style>
         .backup-container {
-            max-width: 600px;
+            max-width: 1200px;
             margin: 0 auto;
             padding: 2rem;
+            display: flex;
+            gap: 2rem;
+            flex-wrap: wrap;
         }
         
         .backup-card {
+            flex: 1;
+            min-width: 350px;
             background-color: var(--bg-secondary);
             border-radius: 12px;
             box-shadow: var(--shadow-md);
@@ -186,6 +191,8 @@ if (file_exists($settingsFile)) {
             text-align: center;
             border: 1px solid var(--border-color);
             transition: var(--color-transition);
+            display: flex;
+            flex-direction: column;
         }
         
         .backup-icon-wrapper {
@@ -522,13 +529,13 @@ if (file_exists($settingsFile)) {
                         </div>
                     <?php endif; ?>
                     
-                    <button type="button" id="openBackupModal" class="btn btn-primary btn-lg">
+                    <button type="button" id="openBackupModal" class="btn btn-primary btn-lg" style="margin-top: auto;">
                         <i class="fas fa-download"></i> Generate & Download Backup
                     </button>
                 </div>
                 
                 <!-- Automatic Backup Settings Card -->
-                <div class="backup-card" style="margin-top: 2rem;">
+                <div class="backup-card">
                     <div class="backup-icon-wrapper" style="background-color: #fef3c7; color: #d97706;">
                         <i class="fas fa-clock"></i>
                     </div>

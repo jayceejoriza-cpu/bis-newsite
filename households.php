@@ -33,6 +33,9 @@ $pageTitle = 'Households';
     <!-- Custom CSS -->
     <link rel="stylesheet" href="assets/css/style.css">
     <link rel="stylesheet" href="assets/css/households.css">
+    <style>
+        .print-only { display: none !important; }
+    </style>
     <!-- Dark Mode Init: must be in <head> to prevent flash of light mode -->
     <script src="assets/js/dark-mode-init.js"></script>
 </head>
@@ -52,10 +55,38 @@ $pageTitle = 'Households';
                     <h1 class="page-title"><?php echo $pageTitle; ?></h1>
                     <p class="page-subtitle">View all household profiles, including heads and members. <i class="fas fa-info-circle info-icon"></i></p>
                 </div>
+                <div class="page-header-actions">
+                    <?php if (hasPermission('perm_household_view')): ?>
+                    <button class="btn btn-outline-secondary" id="printMasterlistBtn" title="Print Masterlist">
+                        <i class="fas fa-print"></i>
+                        Print Masterlist
+                    </button>
+                    <?php endif; ?>
+                    <?php if (hasPermission('perm_household_create')): ?>
+                    <button class="btn btn-primary" id="createHouseholdBtn" onclick="showCreateHouseholdModal()">
+                        <i class="fas fa-plus"></i>
+                        Create Household
+                    </button>
+                    <?php endif; ?>
+                </div>
             </div>
             
-          
-            
+            <!-- Print-Only Header (hidden on screen, visible when printing) -->
+            <div class="print-only print-header">
+                <div class="print-header-logo">
+                    <img src="assets/image/brgylogo.jpg" alt="Barangay Logo" class="print-logo">
+                </div>
+                <div class="print-header-info">
+                    <h2 class="print-barangay-name"><?php echo defined('SITE_NAME') ? htmlspecialchars(SITE_NAME) : 'Barangay Information System'; ?></h2>
+                    <h3 class="print-list-title">Household Masterlist</h3>
+                    <p class="print-meta">
+                        Date Printed: <strong><?php echo date('F d, Y'); ?></strong>
+                        &nbsp;&nbsp;|&nbsp;&nbsp;
+                        Total Records: <strong id="printTotalRecords">0</strong>
+                    </p>
+                </div>
+            </div>
+
             <!-- Filter Tabs -->
             <div class="filter-tabs">
                 <button class="tab-btn active" data-filter="all">All</button>
@@ -169,6 +200,22 @@ $pageTitle = 'Households';
                     <button class="page-btn" id="nextPage">
                         <i class="fas fa-chevron-right"></i>
                     </button>
+                </div>
+            </div>
+            
+            <!-- Print-Only Footer (hidden on screen, visible when printing) -->
+            <div class="print-only print-footer" style="margin-top: 60px; width: 100%;">
+                <div style="display: flex; justify-content: space-between; padding: 0 50px; width: 100%;">
+                    <div style="text-align: center;">
+                        <div style="border-bottom: 1px solid #000; width: 220px; margin-bottom: 8px;"></div>
+                        <p style="margin: 0; font-size: 12px; font-weight: 600; text-transform: uppercase;">Prepared by:</p>
+                        <p style="margin: 0; font-size: 14px;"><?php echo htmlspecialchars($_SESSION['full_name'] ?? 'Authorized Staff'); ?></p>
+                    </div>
+                    <div style="text-align: center;">
+                        <div style="border-bottom: 1px solid #000; width: 220px; margin-bottom: 8px;"></div>
+                        <p style="margin: 0; font-size: 12px; font-weight: 600; text-transform: uppercase;">Certified Correct:</p>
+                        <p style="margin: 0; font-size: 14px;">Barangay Captain</p>
+                    </div>
                 </div>
             </div>
         </div>
