@@ -262,6 +262,38 @@ $age = calculateAge($resident['date_of_birth']);
             .members-display-table th, .members-display-table td { border: 1px solid #000 !important; padding: 3px !important; font-size: 8pt !important; color: #000 !important; }
             .members-display-table th { background-color: #f0f0f0 !important; -webkit-print-color-adjust: exact; }
         }
+
+.autocomplete-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 100%;
+    z-index: 1000;
+    background: var(--bg-primary, #ffffff);
+    border: 1px solid var(--border-color, #ccc);
+    border-radius: 0 0 8px 8px;
+    max-height: 200px;
+    overflow-y: auto;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    margin-top: 2px;
+}
+.autocomplete-item {
+    padding: 8px 12px;
+    cursor: pointer;
+    border-bottom: 1px solid var(--border-color, #eee);
+    color: var(--text-primary, #333);
+    font-size: 14px;
+}
+.autocomplete-item:last-child {
+    border-bottom: none;
+}
+.autocomplete-item:hover {
+    background-color: var(--bg-secondary, #f8f9fa);
+}
+.autocomplete-item strong {
+    color: var(--primary-color, #0d6efd);
+    font-weight: bold;
+}
     </style>
 </head>
 <body>
@@ -557,15 +589,35 @@ $age = calculateAge($resident['date_of_birth']);
                                     <p class="view-field"><?php echo htmlspecialchars($resident['spouse_name'] ?: 'N/A'); ?></p>
                                     <input type="text" name="spouse_name" id="spouseNameInput" class="form-control edit-field" value="<?php echo htmlspecialchars($resident['spouse_name']); ?>" style="display:none;">
                                 </div>
-                                <div class="info-item">
+                                <div class="info-item position-relative" style="position: relative;">
                                     <label>Father's Name</label>
-                                    <p class="view-field"><?php echo htmlspecialchars($resident['father_name'] ?: 'N/A'); ?></p>
-                                    <input type="text" name="father_name" class="form-control edit-field" value="<?php echo htmlspecialchars($resident['father_name']); ?>" style="display:none;">
+                                    <p class="view-field">
+                                        <?php if (!empty($resident['father_resident_id'])): ?>
+                                            <a href="resident_profile.php?id=<?php echo htmlspecialchars($resident['father_resident_id']); ?>" style="color: var(--primary-color); text-decoration: none; font-weight: 500;">
+                                                <?php echo htmlspecialchars($resident['father_name'] ?: 'N/A'); ?>
+                                            </a>
+                                        <?php else: ?>
+                                            <?php echo htmlspecialchars($resident['father_name'] ?: 'N/A'); ?>
+                                        <?php endif; ?>
+                                    </p>
+                                    <input type="hidden" id="fatherNameId" name="father_resident_id" value="<?php echo htmlspecialchars($resident['father_resident_id'] ?? ''); ?>">
+                                    <input type="text" id="fatherName" name="father_name" class="form-control edit-field" value="<?php echo htmlspecialchars($resident['father_name']); ?>" style="display:none;" autocomplete="off">
+                                    <div id="fatherNameDropdown" class="autocomplete-dropdown" style="display: none;"></div>
                                 </div>
-                                <div class="info-item">
+                                <div class="info-item position-relative" style="position: relative;">
                                     <label>Mother's Name</label>
-                                    <p class="view-field"><?php echo htmlspecialchars($resident['mother_name'] ?: 'N/A'); ?></p>
-                                    <input type="text" name="mother_name" class="form-control edit-field" value="<?php echo htmlspecialchars($resident['mother_name']); ?>" style="display:none;">
+                                    <p class="view-field">
+                                        <?php if (!empty($resident['mother_resident_id'])): ?>
+                                            <a href="resident_profile.php?id=<?php echo htmlspecialchars($resident['mother_resident_id']); ?>" style="color: var(--primary-color); text-decoration: none; font-weight: 500;">
+                                                <?php echo htmlspecialchars($resident['mother_name'] ?: 'N/A'); ?>
+                                            </a>
+                                        <?php else: ?>
+                                            <?php echo htmlspecialchars($resident['mother_name'] ?: 'N/A'); ?>
+                                        <?php endif; ?>
+                                    </p>
+                                    <input type="hidden" id="motherNameId" name="mother_resident_id" value="<?php echo htmlspecialchars($resident['mother_resident_id'] ?? ''); ?>">
+                                    <input type="text" id="motherName" name="mother_name" class="form-control edit-field" value="<?php echo htmlspecialchars($resident['mother_name']); ?>" style="display:none;" autocomplete="off">
+                                    <div id="motherNameDropdown" class="autocomplete-dropdown" style="display: none;"></div>
                                 </div>
                                 <div class="info-item adult-only">
                                     <label>Number of Children</label>

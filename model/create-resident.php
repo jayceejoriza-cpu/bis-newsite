@@ -99,6 +99,38 @@ if (isset($conn)) {
 .minor-only, .adult-only {
     transition: all 0.3s ease-in-out;
 }
+
+.autocomplete-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 100%;
+    z-index: 1000;
+    background: var(--bg-primary, #ffffff);
+    border: 1px solid var(--border-color, #ccc);
+    border-radius: 0 0 8px 8px;
+    max-height: 200px;
+    overflow-y: auto;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    margin-top: 2px;
+}
+.autocomplete-item {
+    padding: 8px 12px;
+    cursor: pointer;
+    border-bottom: 1px solid var(--border-color, #eee);
+    color: var(--text-primary, #333);
+    font-size: 14px;
+}
+.autocomplete-item:last-child {
+    border-bottom: none;
+}
+.autocomplete-item:hover {
+    background-color: var(--bg-secondary, #f8f9fa);
+}
+.autocomplete-item strong {
+    color: var(--primary-color, #0d6efd);
+    font-weight: bold;
+}
     </style>
 </head>
 <body>
@@ -371,15 +403,19 @@ if (isset($conn)) {
                                     </div>
                                 </div>
                                 <div class="col-md-3">
-                                    <div class="form-group">
+                                    <div class="form-group position-relative">
                                         <label for="fatherName">Father's Name</label>
-                                        <input type="text" id="fatherName" name="fatherName" class="form-control">
+                                        <input type="hidden" id="fatherNameId" name="fatherResidentId" value="">
+                                        <input type="text" id="fatherName" name="fatherName" class="form-control" autocomplete="off">
+                                        <div id="fatherNameDropdown" class="autocomplete-dropdown" style="display: none;"></div>
                                     </div>
                                 </div>
                                 <div class="col-md-3">
-                                    <div class="form-group">
-                                        <label for="motherName">Mother's Maiden Name</label>
-                                        <input type="text" id="motherName" name="motherName" class="form-control">
+                                    <div class="form-group position-relative">
+                                        <label for="motherName">Mother's Maiden Name <span class="required">*</span></label>
+                                        <input type="hidden" id="motherNameId" name="motherResidentId" value="">
+                                        <input type="text" id="motherName" name="motherName" class="form-control" required autocomplete="off">
+                                        <div id="motherNameDropdown" class="autocomplete-dropdown" style="display: none;"></div>
                                     </div>
                                 </div>
                                 <div class="col-md-2  adult-only">

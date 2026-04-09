@@ -1261,64 +1261,26 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Archive blotter record
     function archiveBlotterRecord(recordId) {
-        if (!confirm('Are you sure you want to archive this record?')) {
-            return;
-        }
+        const archiveModal = document.getElementById('archiveModal');
+        const archiveRecordIdInput = document.getElementById('archiveRecordId');
+        const archivePasswordInput = document.getElementById('archivePassword');
+        const archiveReasonInput = document.getElementById('archiveReason');
         
-        console.log('Archive blotter record:', recordId);
-        
-        // Send AJAX request to archive
-        fetch('model/archive_blotter_record.php', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-            },
-            body: `id=${recordId}`
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                alert('Record archived successfully!');
-                location.reload();
-            } else {
-                alert('Error: ' + data.message);
+        if (archiveModal && archiveRecordIdInput) {
+            archiveRecordIdInput.value = recordId;
+            if (archivePasswordInput) archivePasswordInput.value = '';
+            if (archiveReasonInput) archiveReasonInput.value = '';
+            
+            archiveModal.style.display = 'block';
+            if (archiveReasonInput) {
+                archiveReasonInput.focus();
             }
-        })
-        .catch(error => {
-            console.error('Error archiving record:', error);
-            alert('An error occurred while archiving the record.');
-        });
+        }
     }
     
     // Delete blotter record
     function deleteBlotterRecord(recordId) {
-        if (!confirm('Are you sure you want to archive this record? This action cannot be undone.')) {
-            return;
-        }
-        
-        console.log('Delete blotter record:', recordId);
-        
-        // Send AJAX request to delete
-        fetch('model/delete_blotter_record.php', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-            },
-            body: `id=${recordId}`
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                alert('Record deleted successfully!');
-                location.reload();
-            } else {
-                alert('Error: ' + data.message);
-            }
-        })
-        .catch(error => {
-            console.error('Error deleting record:', error);
-            alert('An error occurred while deleting the record.');
-        });
+        archiveBlotterRecord(recordId);
     }
     
     // ============================================
@@ -1893,6 +1855,73 @@ document.addEventListener('DOMContentLoaded', function() {
             console.log('Resident selection reset');
         }
     });
+    
+    // ============================================
+    // Archive Modal Handlers
+    // ============================================
+    const archiveModal = document.getElementById('archiveModal');
+    const archiveForm = document.getElementById('archiveForm');
+    const cancelArchiveBtn = document.getElementById('cancelArchive');
+    const toggleArchivePasswordBtn = document.getElementById('toggleArchivePassword');
+    const archivePasswordInput = document.getElementById('archivePassword');
+    
+    if (cancelArchiveBtn) {
+        cancelArchiveBtn.addEventListener('click', () => {
+            if (archiveModal) archiveModal.style.display = 'none';
+        });
+    }
+    
+    if (archiveModal) {
+        window.addEventListener('click', (e) => {
+            if (e.target === archiveModal) {
+                archiveModal.style.display = 'none';
+            }
+        });
+    }
+    
+    if (toggleArchivePasswordBtn && archivePasswordInput) {
+        toggleArchivePasswordBtn.addEventListener('click', () => {
+            const type = archivePasswordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+            archivePasswordInput.setAttribute('type', type);
+            toggleArchivePasswordBtn.innerHTML = type === 'password' ? '<i class="fas fa-eye"></i>' : '<i class="fas fa-eye-slash"></i>';
+        });
+    }
+    
+    if (archiveForm) {
+        archiveForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const confirmBtn = document.getElementById('confirmArchiveBtn');
+            const originalText = confirmBtn.innerHTML;
+            
+            confirmBtn.disabled = true;
+            confirmBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Archiving...';
+            
+            const formData = new FormData(this);
+            
+            fetch('model/archive_blotter_record.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(data.message || 'Record archived successfully!');
+                    archiveModal.style.display = 'none';
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    alert(data.message || 'Error archiving record');
+                    confirmBtn.disabled = false;
+                    confirmBtn.innerHTML = originalText;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred');
+                confirmBtn.disabled = false;
+                confirmBtn.innerHTML = originalText;
+            });
+        });
+    }
     
     console.log('Blotter Records page initialized');
 });

@@ -228,7 +228,7 @@ try {
             <div class="search-filter-bar" style="position: relative;">
                 <div class="search-box">
                     <i class="fas fa-search"></i>
-                    <input type="text" placeholder="Search" id="searchInput">
+                    <input type="text" placeholder="Search resident ID or name " id="searchInput">
                     <button class="btn-clear" id="clearSearch">
                         <i class="fas fa-times"></i>
                     </button>
@@ -526,7 +526,7 @@ try {
                                 // Use resident_id from database, or generate if not set
                                 $residentId = !empty($resident['resident_id']) ? $resident['resident_id'] : generateResidentId($resident['id']);
                                 $age = calculateAge($resident['date_of_birth']);
-                                $dob = !empty($resident['date_of_birth']) ? date('m/d/Y', strtotime($resident['date_of_birth'])) : 'N/A';
+                                $dob = !empty($resident['date_of_birth']) ? date('M d, Y', strtotime($resident['date_of_birth'])) : 'N/A';
                                 $sortDob = !empty($resident['date_of_birth']) ? date('Y-m-d', strtotime($resident['date_of_birth'])) : '9999-12-31';
                                 
                                 // Badge classes
@@ -721,7 +721,59 @@ try {
         </div>
     </main>
     
-    
+     <!-- Archive Confirmation Modal -->
+    <div id="archiveModal" class="modal" style="display: none; position: fixed; z-index: 9999 !important; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.5);">
+    <div id="archiveModal" class="modal" style="display: none; position: fixed; z-index: 999999 !important; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.5);">
+        <div class="modal-content" style="background-color: var(--bg-secondary); padding: 2rem; border-radius: 12px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);  margin: 10% auto; position: relative;">
+            <div class="modal-header" style="display: flex; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 1.25rem; margin-bottom: 1.25rem;">
+                <div style="width: 54px; height: 54px; background-color: #fee2e2; color: #ef4444; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; margin-right: 1.25rem; flex-shrink: 0;">
+                    <i class="fas fa-trash-alt"></i>
+                </div>
+                <div style="flex: 1; min-width: 0;">
+                    <h3 id="archiveModalTitle" style="margin: 0 0 0.25rem 0; color: var(--text-primary); font-size: 1.25rem; font-weight: 600; line-height: 1.4; word-wrap: break-word;">Archive Resident</h3>
+                    <p style="margin: 0; color: var(--text-secondary); font-size: 0.9rem; line-height: 1.4;">Are you sure you want to archive this resident? This action will move the record to the archives.</p>
+                </div>
+            </div>
+            
+            <div class="modal-body">
+                <div style="background-color: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem; color: #d97706; font-size: 0.875rem;">
+                    <i class="fas fa-shield-alt" style="margin-right: 5px;"></i> For security purposes, please enter your password to confirm.
+                </div>
+                
+                <form id="archiveForm">
+                    <input type="hidden" id="archiveResidentId" name="id">
+                    
+                    <div style="margin-bottom: 1.25rem;">
+                        <label for="archiveReason" style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: var(--text-primary); font-size: 0.9rem;">
+                            <i class="fas fa-comment-alt" style="margin-right: 5px;"></i> Reason for Archiving <span style="color: #ef4444;">*</span>
+                        </label>
+                        <textarea id="archiveReason" name="reason" rows="2" style="width: 100%; padding: 0.75rem 1rem; border: 1px solid var(--border-color); border-radius: 8px; background-color: var(--bg-primary); color: var(--text-primary); box-sizing: border-box; font-family: inherit;" placeholder="Please state the reason..." required></textarea>
+                    </div>
+
+                    <div style="margin-bottom: 1.5rem;">
+                        <label for="archivePassword" style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: var(--text-primary); font-size: 0.9rem;">
+                            <i class="fas fa-key" style="margin-right: 5px;"></i> Your Password
+                        </label>
+                        <div style="position: relative;">
+                            <input type="password" id="archivePassword" name="password" style="width: 100%; padding: 0.75rem 2.5rem 0.75rem 1rem; border: 1px solid var(--border-color); border-radius: 8px; background-color: var(--bg-primary); color: var(--text-primary); box-sizing: border-box;" placeholder="Enter your password" required>
+                            <button type="button" id="toggleArchivePassword" style="position: absolute; right: 0.75rem; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--text-secondary); cursor: pointer; padding: 0;">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div style="display: flex; gap: 0.75rem; justify-content: flex-end;">
+                        <button type="button" id="cancelArchive" style="padding: 0.6rem 1.5rem; border-radius: 8px; border: none; background-color: #6b7280; color: white; cursor: pointer; font-weight: 500; display: inline-flex; align-items: center; gap: 0.5rem;">
+                            <i class="fas fa-times"></i> Cancel
+                        </button>
+                        <button type="submit" id="confirmArchiveBtn" style="padding: 0.6rem 1.5rem; border-radius: 8px; border: none; background-color: #ef4444; color: white; cursor: pointer; font-weight: 500; display: inline-flex; align-items: center; gap: 0.5rem;">
+                            <i class="fas fa-trash"></i> Archive
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
     
     <!-- Bootstrap JS Bundle (includes Popper) -->
     <script src="assets/bootstrap/js/bootstrap.bundle.min.js"></script>
@@ -743,5 +795,194 @@ try {
     <script src="assets/js/script.js"></script>
     <script src="assets/js/table.js"></script>
     <script src="assets/js/residents.js"></script>
+    
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const archiveModal = document.getElementById('archiveModal');
+        const archiveForm = document.getElementById('archiveForm');
+        const cancelBtn = document.getElementById('cancelArchive');
+        const togglePasswordBtn = document.getElementById('toggleArchivePassword');
+        const passwordInput = document.getElementById('archivePassword');
+        
+        // Override function in case residents.js calls it directly
+        window.deleteResident = window.archiveResident = function(residentId) {
+            if (window.BIS_PERMS && window.BIS_PERMS.resident_archive === false) {
+                showNotification('Permission denied to archive residents.', 'error');
+                return;
+            }
+            document.getElementById('archiveResidentId').value = residentId;
+            passwordInput.value = '';
+            const reasonInput = document.getElementById('archiveReason');
+            if (reasonInput) reasonInput.value = '';
+            
+            const modalTitle = document.getElementById('archiveModalTitle');
+            if (modalTitle) {
+                if (lastClickedResidentId == residentId && lastClickedResidentName && lastClickedResidentCode) {
+                    modalTitle.textContent = `Archive ${lastClickedResidentName} (${lastClickedResidentCode})`;
+                } else {
+                    modalTitle.textContent = 'Archive Resident';
+                }
+            }
+            
+            archiveModal.style.display = 'block';
+            if (reasonInput) {
+                reasonInput.focus();
+            } else {
+                passwordInput.focus();
+            }
+        };
+
+        let lastClickedResidentId = null;
+        let lastClickedResidentName = '';
+        let lastClickedResidentCode = '';
+
+        // Capture clicks on .btn-action to store the resident ID
+        document.addEventListener('click', function(e) {
+            const actionBtn = e.target.closest('.btn-action');
+            if (actionBtn) {
+                const residentId = actionBtn.getAttribute('data-resident-id') || actionBtn.getAttribute('data-id');
+                if (residentId) {
+                    lastClickedResidentId = residentId;
+                    lastClickedResidentName = '';
+                    lastClickedResidentCode = '';
+                    
+                    const row = actionBtn.closest('tr');
+                    if (row) {
+                        lastClickedResidentCode = row.cells[0].textContent.trim();
+                        const nameSpan = row.querySelector('.resident-name span:last-child');
+                        lastClickedResidentName = nameSpan ? nameSpan.textContent.trim() : '';
+                    } else {
+                        const card = actionBtn.closest('.resident-card');
+                        if (card) {
+                            const nameEl = card.querySelector('.resident-name');
+                            lastClickedResidentName = nameEl ? nameEl.textContent.trim() : '';
+                            const idEl = card.querySelector('.resident-id');
+                            lastClickedResidentCode = idEl ? idEl.textContent.trim() : '';
+                        }
+                    }
+                }
+            }
+        }, true);
+
+        // Intercept the delete action via capturing phase
+        // This catches the click before the original event delegation handles it
+        document.addEventListener('click', function(e) {
+            const deleteBtn = e.target.closest('.action-menu-item[data-action="delete"], .action-menu-item[data-action="archive"]');
+            if (deleteBtn) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                if (window.BIS_PERMS && window.BIS_PERMS.resident_archive === false) {
+                    showNotification('Permission denied to archive residents.', 'error');
+                    return;
+                }
+                
+                const menu = deleteBtn.closest('.action-menu');
+                let residentId = null;
+                
+                if (menu) {
+                    residentId = menu.getAttribute('data-resident-id') || menu.getAttribute('data-id') || menu.getAttribute('data-record-id');
+                }
+                
+                if (!residentId) {
+                    residentId = lastClickedResidentId;
+                }
+                
+                if (residentId) {
+                    document.getElementById('archiveResidentId').value = residentId;
+                    passwordInput.value = '';
+                const reasonInput = document.getElementById('archiveReason');
+                if (reasonInput) reasonInput.value = '';
+                
+                const modalTitle = document.getElementById('archiveModalTitle');
+                if (modalTitle) {
+                    if (lastClickedResidentName && lastClickedResidentCode) {
+                        modalTitle.innerHTML = `Archive <u>${lastClickedResidentName} (${lastClickedResidentCode})</u>`;
+                        
+                    } else {
+                        modalTitle.textContent = 'Archive Resident';
+                    }
+                }
+                    
+                    archiveModal.style.display = 'block';
+                if (reasonInput) {
+                    reasonInput.focus();
+                } else {
+                    passwordInput.focus();
+                }
+                    if (menu) menu.remove(); // Close the action menu
+                }
+            }
+        }, true);
+        
+        // Modal close handlers
+        cancelBtn.addEventListener('click', () => archiveModal.style.display = 'none');
+        
+        window.addEventListener('click', (e) => {
+            if (e.target === archiveModal) archiveModal.style.display = 'none';
+        });
+        
+        // Password toggle
+        togglePasswordBtn.addEventListener('click', () => {
+            const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+            passwordInput.setAttribute('type', type);
+            togglePasswordBtn.innerHTML = type === 'password' ? '<i class="fas fa-eye"></i>' : '<i class="fas fa-eye-slash"></i>';
+        });
+        
+        // Form submit
+        archiveForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const confirmBtn = document.getElementById('confirmArchiveBtn');
+            const originalText = confirmBtn.innerHTML;
+            
+            confirmBtn.disabled = true;
+            confirmBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Archiving...';
+            
+            const formData = new FormData(this);
+            
+            fetch('model/delete_resident.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showNotification(data.message, 'success');
+                    archiveModal.style.display = 'none';
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    showNotification(data.message || 'Error archiving resident', 'error');
+                    confirmBtn.disabled = false;
+                    confirmBtn.innerHTML = originalText;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showNotification('An error occurred', 'error');
+                confirmBtn.disabled = false;
+                confirmBtn.innerHTML = originalText;
+            });
+        });
+        
+        // Notification helper
+        function showNotification(message, type = 'info') {
+            document.querySelectorAll('.notification').forEach(n => n.remove());
+            const notification = document.createElement('div');
+            notification.className = `notification notification-${type}`;
+            notification.innerHTML = `<i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i><span>${message}</span>`;
+            notification.style.cssText = `
+                position: fixed; top: 20px; right: 20px; background: ${type === 'success' ? '#10b981' : '#ef4444'};
+                color: white; padding: 15px 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+                display: flex; align-items: center; gap: 10px; z-index: 10000; animation: slideInRight 0.3s ease;
+            `;
+            document.body.appendChild(notification);
+            setTimeout(() => {
+                notification.style.opacity = '0';
+                notification.style.transition = 'opacity 0.3s ease';
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
+        }
+    });
+    </script>
 </body>
 </html>

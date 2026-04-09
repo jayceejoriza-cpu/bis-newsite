@@ -163,7 +163,9 @@ try {
     $fatherName = $conn->real_escape_string(trim($_POST['fatherName'] ?? ''));
     $motherName = $conn->real_escape_string(trim($_POST['motherName'] ?? ''));
     $numberOfChildren = intval($_POST['numberOfChildren'] ?? 0);
-    
+    // Capture the hidden inputs we added to the JS FormData
+    $fatherResidentId = !empty($_POST['fatherResidentId']) ? intval($_POST['fatherResidentId']) : null;
+    $motherResidentId = !empty($_POST['motherResidentId']) ? intval($_POST['motherResidentId']) : null;
     // Guardian Information
     $guardianName = $conn->real_escape_string(trim($_POST['guardianName'] ?? ''));
     $guardianRelationship = $conn->real_escape_string(trim($_POST['guardianRelationship'] ?? ''));
@@ -213,7 +215,7 @@ try {
 
     // Validation
     $isMinor = ($age !== null && $age < 18);
-    if (empty($firstName) || empty($lastName) || empty($sex) || empty($dateOfBirth) || empty($placeOfBirth) ||
+    if (empty($firstName) || empty($lastName) || empty($sex) || empty($dateOfBirth) ||
         (!$isMinor && empty($mobileNumber)) || empty($currentAddress) || 
         (!$isMinor && empty($civilStatus)) || empty($pwdStatus)) {
         throw new Exception('Please fill in all required fields.');
@@ -335,7 +337,9 @@ try {
             civil_status = '$civilStatus',
             spouse_name = " . ($spouseName ? "'$spouseName'" : "NULL") . ",
             father_name = " . ($fatherName ? "'$fatherName'" : "NULL") . ",
+            father_resident_id = " . ($fatherResidentId ? $fatherResidentId : "NULL") . ",
             mother_name = " . ($motherName ? "'$motherName'" : "NULL") . ",
+            mother_resident_id = " . ($motherResidentId ? $motherResidentId : "NULL") . ",
             number_of_children = $numberOfChildren,
             guardian_name = " . ($guardianName ? "'$guardianName'" : "NULL") . ",
             guardian_relationship = " . ($guardianRelationship ? "'$guardianRelationship'" : "NULL") . ",
@@ -571,7 +575,8 @@ try {
     $sql = "INSERT INTO residents (
         photo, first_name, middle_name, last_name, suffix, sex, date_of_birth, place_of_birth, age, religion, ethnicity,
         mobile_number, email, house_no, purok, street_name, current_address,
-        civil_status, spouse_name, father_name, mother_name, number_of_children,
+        civil_status, spouse_name,  father_name, father_resident_id, 
+            mother_name, mother_resident_id, number_of_children,
         guardian_name, guardian_relationship, guardian_contact,
         educational_attainment, employment_status, occupation, monthly_income, pwd_status,
         pwd_type, pwd_id_number,
@@ -586,7 +591,7 @@ try {
         '$mobileNumber', " . ($email ? "'$email'" : "NULL") . ", " . ($houseNo ? "'$houseNo'" : "NULL") . ", 
         " . ($purok ? "'$purok'" : "NULL") . ", " . ($streetName ? "'$streetName'" : "NULL") . ", '$currentAddress',
         '$civilStatus', " . ($spouseName ? "'$spouseName'" : "NULL") . ", " . ($fatherName ? "'$fatherName'" : "NULL") . ", 
-        " . ($motherName ? "'$motherName'" : "NULL") . ", $numberOfChildren,
+        " . ($fatherResidentId ? "'$fatherResidentId'" : "NULL") . ", " . ($motherName ? "'$motherName'" : "NULL") . ", " . ($motherResidentId ? "'$motherResidentId'" : "NULL") . ", $numberOfChildren,
         " . ($guardianName ? "'$guardianName'" : "NULL") . ", " . ($guardianRelationship ? "'$guardianRelationship'" : "NULL") . ", " . ($guardianContact ? "'$guardianContact'" : "NULL") . ",
         " . ($educationalAttainment ? "'$educationalAttainment'" : "NULL") . ", " . ($employmentStatus ? "'$employmentStatus'" : "NULL") . ",
         " . ($occupation ? "'$occupation'" : "NULL") . ", " . ($monthlyIncome ? "'$monthlyIncome'" : "NULL") . ", '$pwdStatus',

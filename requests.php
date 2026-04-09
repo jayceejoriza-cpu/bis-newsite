@@ -152,7 +152,7 @@ try {
             <div class="search-filter-bar" style="position: relative;">
                 <div class="search-box">
                     <i class="fas fa-search"></i>
-                    <input type="text" placeholder="Search" id="searchInput">
+                    <input type="text" placeholder="Search resident ID or name" id="searchInput">
                     <button class="btn-clear" id="clearSearch">
                         <i class="fas fa-times"></i>
                     </button>

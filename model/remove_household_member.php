@@ -24,6 +24,32 @@ if ($householdId <= 0 || $residentId <= 0) {
     exit;
 }
 
+$password = trim($_POST['password'] ?? '');
+
+if (empty($password)) {
+    echo json_encode(['success' => false, 'message' => 'Password is required']);
+    exit;
+}
+
+$reason = trim($_POST['reason'] ?? 'No reason provided');
+
+// Verify user password for security
+$stmt = $conn->prepare("SELECT password FROM users WHERE id = ? LIMIT 1");
+$stmt->bind_param("i", $_SESSION['user_id']);
+$stmt->execute();
+$result = $stmt->get_result();
+if ($result->num_rows === 1) {
+    $user = $result->fetch_assoc();
+    if (!password_verify($password, $user['password'])) {
+        echo json_encode(['success' => false, 'message' => 'Invalid password']);
+        exit;
+    }
+} else {
+    echo json_encode(['success' => false, 'message' => 'User not found']);
+    exit;
+}
+$stmt->close();
+
 try {
     // Make sure we are not removing the household head
     $checkSql = "SELECT household_head_id FROM households WHERE id = ?";
@@ -55,7 +81,8 @@ try {
             'resident_id' => $residentId,
             'resident_name' => $row['resident_name'],
             'relationship_to_head' => $row['relationship_to_head'],
-            'is_head' => $row['is_head']
+            'is_head' => $row['is_head'],
+            'archive_reason' => $reason
         ];
         $archiveType = 'household_member';
         $deletedBy = $_SESSION['username'] ?? 'Unknown';
@@ -94,7 +121,7 @@ try {
         
         $log_user = $_SESSION['username'];
         $log_action = 'Delete Household Members';
-        $log_desc = "Deleted $resName from household $hhNum";
+        $log_desc = "Deleted $resName from household $hhNum. Reason: $reason";
         $log_stmt = $conn->prepare("INSERT INTO activity_logs (user, action, description) VALUES (?, ?, ?)");
         $log_stmt->bind_param("sss", $log_user, $log_action, $log_desc);
         $log_stmt->execute();

@@ -38,9 +38,30 @@ if ($id <= 0) {
     exit;
 }
 
+$password = trim($_POST['password'] ?? '');
+if (empty($password)) {
+    echo json_encode(['success' => false, 'message' => 'Password is required']);
+    exit;
+}
+
+$reason = trim($_POST['reason'] ?? 'No reason provided');
+
 try {
     // Start transaction
     $pdo->beginTransaction();
+
+    // Verify user password for security
+    $stmt = $pdo->prepare("SELECT password FROM users WHERE id = ? LIMIT 1");
+    $stmt->execute([$_SESSION['user_id']]);
+    $user = $stmt->fetch();
+    
+    if (!$user) {
+        throw new Exception("User not found");
+    }
+    
+    if (!password_verify($password, $user['password'])) {
+        throw new Exception("Invalid password");
+    }
 
     // Get official details for archiving
     $stmt = $pdo->prepare("
@@ -66,6 +87,8 @@ try {
     $officialName = trim($official['first_name'] . ' ' . $official['last_name']);
     $officialPosition = $official['position'];
     $recordId = $official['r_resident_id'] ?? $official['id'];
+
+    $official['archive_reason'] = $reason;
 
     // Prepare data for archive
     $recordData = json_encode($official, JSON_PARTIAL_OUTPUT_ON_ERROR | JSON_UNESCAPED_UNICODE);

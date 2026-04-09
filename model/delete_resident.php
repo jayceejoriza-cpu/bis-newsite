@@ -24,6 +24,32 @@ if ($id <= 0) {
     exit;
 }
 
+$password = trim($_POST['password'] ?? '');
+
+if (empty($password)) {
+    echo json_encode(['success' => false, 'message' => 'Password is required']);
+    exit;
+}
+
+$reason = trim($_POST['reason'] ?? 'No reason provided');
+
+// Verify user password for security
+$stmt = $conn->prepare("SELECT password FROM users WHERE id = ? LIMIT 1");
+$stmt->bind_param("i", $_SESSION['user_id']);
+$stmt->execute();
+$result = $stmt->get_result();
+if ($result->num_rows === 1) {
+    $user = $result->fetch_assoc();
+    if (!password_verify($password, $user['password'])) {
+        echo json_encode(['success' => false, 'message' => 'Invalid password']);
+        exit;
+    }
+} else {
+    echo json_encode(['success' => false, 'message' => 'User not found']);
+    exit;
+}
+$stmt->close();
+
 // Check if archive table exists and create it if not (Outside transaction)
 $checkTable = $conn->query("SHOW TABLES LIKE 'archive'");
 if ($checkTable->num_rows == 0) {
@@ -72,6 +98,9 @@ try {
     }
     $resident['emergency_contacts'] = $emergencyContacts;
 
+    // Append the archival reason to the record data
+    $resident['archive_reason'] = $reason;
+
     // Prepare data for archive
     // Use JSON_PARTIAL_OUTPUT_ON_ERROR and JSON_UNESCAPED_UNICODE
     $recordData = json_encode($resident, JSON_PARTIAL_OUTPUT_ON_ERROR | JSON_UNESCAPED_UNICODE);
@@ -115,7 +144,7 @@ try {
             try {
                 $log_user = $_SESSION['username'];
                 $log_action = 'Archive Resident';
-                $log_desc = "Moved resident to archive: $residentName ($residentIdCode)";
+                $log_desc = "Moved resident to archive: $residentName ($residentIdCode). Reason: $reason";
                 $log_stmt = $conn->prepare("INSERT INTO activity_logs (user, action, description) VALUES (?, ?, ?)");
                 if ($log_stmt) {
                     $log_stmt->bind_param("sss", $log_user, $log_action, $log_desc);

@@ -942,31 +942,19 @@ function handleAction(action, householdNumber, headName, memberCount, row) {
                 showNotification('Permission denied to archive households.', 'error');
                 return;
             }
-            if (confirm(`Are you sure you want to delete household ${householdNumber}?\n\nHead: ${headName}\nMembers: ${memberCount}\n\nThis action cannot be undone.`)) {
-                const formData = new FormData();
-                formData.append('id', householdId);
-
-                fetch('model/delete_household.php', {
-                    method: 'POST',
-                    body: formData
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        row.style.opacity = '0';
-                        setTimeout(() => {
-                            row.remove();
-                            updateTotalCount();
-                            showNotification('Household moved to archive successfully', 'success');
-                        }, 300);
-                    } else {
-                        showNotification(data.message || 'Error deleting household', 'error');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    showNotification('An error occurred while deleting', 'error');
-                });
+            const archiveModal = document.getElementById('archiveModal');
+            if (archiveModal) {
+                document.getElementById('archiveRecordId').value = householdId;
+                document.getElementById('archiveRecordType').value = 'household';
+                const modalTitle = document.getElementById('archiveModalTitle');
+                const modalDesc = document.getElementById('archiveModalDesc');
+                if (modalTitle) modalTitle.innerHTML = `Archive Household <u>${householdNumber}</u>`;
+                if (modalDesc) modalDesc.textContent = `Are you sure you want to archive household ${householdNumber}? Head: ${headName}, Members: ${memberCount}.`;
+                document.getElementById('archivePassword').value = '';
+                document.getElementById('archiveReason').value = '';
+                window.rowToArchive = row;
+                archiveModal.style.display = 'block';
+                document.getElementById('archiveReason').focus();
             }
             break;
     }
@@ -1357,27 +1345,54 @@ function initializeModalEventListeners() {
 
 function deleteMember(row) {
     const memberName = row.cells[1].textContent;
+    const residentId = row.dataset.residentId;
+    const householdId = document.getElementById('createHouseholdForm').getAttribute('data-household-id');
     
-    if (confirm(`Are you sure you want to remove ${memberName} from this household?\n\nThey will be moved to the archive once you save the changes.`)) {
-        row.style.opacity = '0';
-        row.style.transition = 'opacity 0.3s ease';
+    // If it's a new member (no resident ID yet, or no household ID), just remove from table
+    if (!householdId || !residentId) {
+        if (confirm(`Are you sure you want to remove ${memberName} from this household?`)) {
+            row.style.opacity = '0';
+            row.style.transition = 'opacity 0.3s ease';
+            setTimeout(() => {
+                row.remove();
+                renumberMembers();
+                checkEmptyMembers();
+                showNotification('Member removed successfully', 'success');
+            }, 300);
+        }
+        return;
+    }
+    
+    const archiveModal = document.getElementById('archiveModal');
+    if (archiveModal) {
+        document.getElementById('archiveRecordId').value = householdId;
+        document.getElementById('archiveMemberId').value = residentId;
+        document.getElementById('archiveRecordType').value = 'member';
         
-        setTimeout(() => {
-            row.remove();
-            renumberMembers();
-            
-            const tbody = document.getElementById('membersTableBody');
-            const remainingRows = tbody.querySelectorAll('tr:not(.no-members-row)');
-            
-            if (remainingRows.length === 0) {
-                tbody.innerHTML = '<tr class="no-members-row"><td colspan="7" style="text-align: center; color: var(--text-secondary); padding: 20px;">No members added yet</td></tr>';
-            }
-            
-            showNotification('Member removed successfully (will be archived on save)', 'success');
-        }, 300);
+        const modalTitle = document.getElementById('archiveModalTitle');
+        const modalDesc = document.getElementById('archiveModalDesc');
+        if (modalTitle) modalTitle.innerHTML = `Remove Member <u>${memberName}</u>`;
+        if (modalDesc) modalDesc.textContent = `Are you sure you want to remove ${memberName} from this household? This will take effect immediately.`;
+        
+        document.getElementById('archivePassword').value = '';
+        document.getElementById('archiveReason').value = '';
+        
+        window.rowToArchive = row;
+        
+        archiveModal.style.display = 'block';
+        document.getElementById('archiveReason').focus();
     }
 }
 
+function checkEmptyMembers() {
+    const tbody = document.getElementById('membersTableBody');
+    if (!tbody) return;
+    const remainingRows = tbody.querySelectorAll('tr:not(.no-members-row)');
+    
+    if (remainingRows.length === 0) {
+        tbody.innerHTML = '<tr class="no-members-row"><td colspan="7" style="text-align: center; color: var(--text-secondary); padding: 20px;">No members added yet</td></tr>';
+    }
+}
 function renumberMembers() {
     const tbody = document.getElementById('membersTableBody');
     const rows = tbody.querySelectorAll('tr:not(.no-members-row)');
@@ -1671,6 +1686,119 @@ function confirmAddMember() {
     addMemberToTable(memberData);
     closeAddMemberModal();
 }
+
+document.addEventListener('DOMContentLoaded', function() {
+    const archiveForm = document.getElementById('archiveForm');
+    if (archiveForm) {
+        archiveForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const type = document.getElementById('archiveRecordType').value;
+            const confirmBtn = document.getElementById('confirmArchiveBtn');
+            const originalText = confirmBtn.innerHTML;
+            
+            confirmBtn.disabled = true;
+            confirmBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+            
+            if (type === 'household') {
+                const formData = new FormData(this);
+                
+                fetch('model/delete_household.php', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showNotification(data.message, 'success');
+                        document.getElementById('archiveModal').style.display = 'none';
+                        if (window.rowToArchive) {
+                            window.rowToArchive.style.opacity = '0';
+                            setTimeout(() => {
+                                window.rowToArchive.remove();
+                                updateTotalCount();
+                            }, 300);
+                        } else {
+                            setTimeout(() => location.reload(), 1500);
+                        }
+                    } else {
+                        showNotification(data.message || 'Error archiving household', 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showNotification('An error occurred', 'error');
+                })
+                .finally(() => {
+                    confirmBtn.disabled = false;
+                    confirmBtn.innerHTML = originalText;
+                });
+            } else if (type === 'member') {
+                const formData = new FormData();
+                formData.append('household_id', document.getElementById('archiveRecordId').value);
+                formData.append('resident_id', document.getElementById('archiveMemberId').value);
+                formData.append('reason', document.getElementById('archiveReason').value);
+                formData.append('password', document.getElementById('archivePassword').value);
+                
+                fetch('model/remove_household_member.php', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showNotification(data.message, 'success');
+                        document.getElementById('archiveModal').style.display = 'none';
+                        
+                        if (window.rowToArchive) {
+                            window.rowToArchive.style.opacity = '0';
+                            setTimeout(() => {
+                                window.rowToArchive.remove();
+                                renumberMembers();
+                                checkEmptyMembers();
+                            }, 300);
+                        }
+                    } else {
+                        showNotification(data.message || 'Error removing member', 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showNotification('An error occurred', 'error');
+                })
+                .finally(() => {
+                    confirmBtn.disabled = false;
+                    confirmBtn.innerHTML = originalText;
+                });
+            }
+        });
+    }
+    
+    const cancelBtn = document.getElementById('cancelArchive');
+    if (cancelBtn) {
+        cancelBtn.addEventListener('click', () => {
+            document.getElementById('archiveModal').style.display = 'none';
+        });
+    }
+    
+    const togglePasswordBtn = document.getElementById('toggleArchivePassword');
+    if (togglePasswordBtn) {
+        togglePasswordBtn.addEventListener('click', () => {
+            const input = document.getElementById('archivePassword');
+            const type = input.getAttribute('type') === 'password' ? 'text' : 'password';
+            input.setAttribute('type', type);
+            togglePasswordBtn.innerHTML = type === 'password' ? '<i class="fas fa-eye"></i>' : '<i class="fas fa-eye-slash"></i>';
+        });
+    }
+    
+    const archiveModal = document.getElementById('archiveModal');
+    if (archiveModal) {
+        archiveModal.addEventListener('click', (e) => {
+            if (e.target === archiveModal) {
+                archiveModal.style.display = 'none';
+            }
+        });
+    }
+});
 
 function addMemberToTable(member) {
     const tbody = document.getElementById('membersTableBody');

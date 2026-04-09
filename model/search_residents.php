@@ -43,6 +43,9 @@ $filterHouseholds = isset($_GET['filter_households']) ? $_GET['filter_households
 // Get optional parameter to exclude a specific resident ID (for RBC child search)
 $excludeResidentId = isset($_GET['exclude_resident_id']) ? intval($_GET['exclude_resident_id']) : 0;
 
+// Get optional parameter to include deceased residents
+$includeDeceased = isset($_GET['include_deceased']) ? $_GET['include_deceased'] === 'true' : false;
+
 // Define certificate types that have 1-time only limit
 $oneTimeCertificates = [
     'certificate-ft-jobseeker-assistance.php',
@@ -73,6 +76,8 @@ $today = date('Y-m-d');
 
 try {
     // Prepare SQL query to search residents - ONLY search by name and resident_id
+    $statusFilter = $includeDeceased ? "r.activity_status IN ('Alive', 'Deceased')" : "r.activity_status = 'Alive'";
+
     $sql = "SELECT 
                 r.id,
                 r.resident_id,
@@ -83,9 +88,10 @@ try {
                 r.suffix,
                 r.date_of_birth,
                 r.sex,
-                r.current_address
+                r.current_address,
+                r.activity_status
             FROM residents r
-            WHERE r.activity_status = 'Alive'";
+            WHERE " . $statusFilter;
     
     // If filtering for households, exclude residents already assigned
     if ($filterHouseholds) {

@@ -73,6 +73,9 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Initialize navigation guard
     initializeNavigationGuard();
+
+    setupAutocomplete('fatherName', 'fatherNameDropdown', 'Male', true);
+    setupAutocomplete('motherName', 'motherNameDropdown', 'Female', true);
     
     console.log('Create Resident page loaded successfully');
 });
@@ -1245,6 +1248,105 @@ function applyPhoneNumberFormatting(input) {
         // Ensure that it is a number and stop the keypress
         if ((e.shiftKey || (e.keyCode < 48 || e.keyCode > 57)) && (e.keyCode < 96 || e.keyCode > 105)) {
             e.preventDefault();
+        }
+    });
+}
+
+// ===================================
+// Autocomplete Setup
+// ===================================
+function setupAutocomplete(inputId, dropdownId, filterSex = null, requireOlder = false) {
+    const input = document.getElementById(inputId);
+    const dropdown = document.getElementById(dropdownId);
+    let timeout = null;
+
+    if (!input || !dropdown) return;
+
+    input.addEventListener('input', function(e) {
+        // Clear hidden ID when typing manually
+        if (e.isTrusted) {
+            const hiddenId = document.getElementById(inputId + 'Id');
+            if (hiddenId) hiddenId.value = '';
+        }
+
+        clearTimeout(timeout);
+        const query = this.value.trim();
+
+        if (query.length < 2) {
+            dropdown.style.display = 'none';
+            return;
+        }
+
+        timeout = setTimeout(() => {
+            const basePath = window.location.pathname.includes('/model/') ? '' : 'model/';
+            
+            // Get current DOB from the form
+            const dobInput = document.getElementById('dateOfBirth') || document.querySelector('input[name="date_of_birth"]');
+            const currentDob = dobInput ? dobInput.value : '';
+            
+            let url = `${basePath}search_residents.php?search=${encodeURIComponent(query)}&include_deceased=true`;
+            if (requireOlder && currentDob) {
+                url += `&dob_before=${encodeURIComponent(currentDob)}`;
+            }
+            
+            fetch(url)
+                .then(res => res.json())
+                .then(data => {
+                    dropdown.innerHTML = '';
+                    if (data.success && data.data && data.data.length > 0) {
+                        let count = 0;
+                        data.data.forEach(resident => {
+                            if (filterSex && resident.sex !== filterSex) return;
+                            
+                            // Frontend check to ensure the suggested person is strictly older
+                            if (requireOlder && currentDob && resident.date_of_birth) {
+                                if (new Date(resident.date_of_birth) >= new Date(currentDob)) return;
+                            }
+                            
+                            count++;
+                            const item = document.createElement('div');
+                            item.className = 'autocomplete-item';
+                            
+                            // Highlight matching text
+                            const safeQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                            const regex = new RegExp(`(${safeQuery})`, 'gi');
+                            let displayHtml = resident.full_name.replace(regex, '<strong>$1</strong>');
+                            if (resident.activity_status === 'Deceased') {
+                                displayHtml += ' <span style="font-size: 11px; color: #ef4444; font-style: italic;">(Deceased)</span>';
+                            }
+                            item.innerHTML = displayHtml;
+                            
+                            item.addEventListener('click', () => {
+                                input.value = resident.full_name;
+                                dropdown.style.display = 'none';
+                                
+                                const hiddenId = document.getElementById(inputId + 'Id');
+                                if (hiddenId) hiddenId.value = resident.id;
+                                
+                                input.dispatchEvent(new Event('input'));
+                            });
+                            dropdown.appendChild(item);
+                        });
+                        
+                        if (count > 0) {
+                            dropdown.style.display = 'block';
+                        } else {
+                            dropdown.style.display = 'none';
+                        }
+                    } else {
+                        dropdown.style.display = 'none';
+                    }
+                })
+                .catch(err => {
+                    console.error('Error fetching residents:', err);
+                    dropdown.style.display = 'none';
+                });
+        }, 300);
+    });
+
+    document.addEventListener('click', function(e) {
+        if (e.target !== input && e.target !== dropdown) {
+            dropdown.style.display = 'none';
         }
     });
 }

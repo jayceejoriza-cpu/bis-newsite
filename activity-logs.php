@@ -98,6 +98,19 @@ if (isset($conn)) {
         }
     }
     $stmt->close();
+
+    // Fetch Barangay Info and Captain for Official Header/Footer
+    $barangayInfo = null;
+    $captainName = 'BARANGAY CAPTAIN';
+    $infoStmt = $conn->query("SELECT * FROM barangay_info WHERE id = 1 LIMIT 1");
+    if ($infoStmt && $infoStmt->num_rows > 0) {
+        $barangayInfo = $infoStmt->fetch_assoc();
+    }
+    $capStmt = $conn->query("SELECT fullname FROM barangay_officials WHERE position = 'Barangay Captain' AND status = 'Active' LIMIT 1");
+    if ($capStmt && $capStmt->num_rows > 0) {
+        $cap = $capStmt->fetch_assoc();
+        $captainName = $cap['fullname'];
+    }
 }
 ?>
 <!DOCTYPE html>
@@ -241,6 +254,7 @@ if (isset($conn)) {
             opacity: 0.5;
             pointer-events: none;
         }
+        .print-only { display: none !important; }
     </style>
 </head>
 <body>
@@ -252,6 +266,30 @@ if (isset($conn)) {
                 <div>
                     <h1 class="page-title"><?php echo $pageTitle; ?></h1>
                     <p class="page-subtitle">View system activity and audit logs</p>
+                </div>
+                <div class="page-header-actions">
+                    <?php if (hasPermission('perm_settings_logs_print')): ?>
+                    <button class="btn btn-outline-secondary" id="printMasterlistBtn" title="Print Masterlist">
+                        <i class="fas fa-print"></i>
+                        Print Masterlist
+                    </button>
+                    <?php endif; ?>
+                </div>
+            </div>
+            
+            <!-- Print-Only Header (hidden on screen, visible when printing) -->
+            <div class="print-only print-header">
+                <div class="print-header-logo">
+                    <img src="assets/image/brgylogo.jpg" alt="Barangay Logo" class="print-logo">
+                </div>
+                <div class="print-header-info">
+                    <h2 class="print-barangay-name"><?php echo defined('SITE_NAME') ? htmlspecialchars(SITE_NAME) : 'Barangay Information System'; ?></h2>
+                    <h3 class="print-list-title">Activity Logs Masterlist</h3>
+                    <p class="print-meta">
+                        Date Printed: <strong><?php echo date('F d, Y'); ?></strong>
+                        &nbsp;&nbsp;|&nbsp;&nbsp;
+                        Total Records: <strong id="printTotalRecords"><?php echo number_format($total_records); ?></strong>
+                    </p>
                 </div>
             </div>
             
@@ -403,6 +441,22 @@ if (isset($conn)) {
                 </div>
                 <?php endif; ?>
             </div>
+            
+            <!-- Print-Only Footer (hidden on screen, visible when printing) -->
+            <div class="print-only print-footer" style="margin-top: 60px; width: 100%;">
+                <div style="display: flex; justify-content: space-between; padding: 0 50px; width: 100%;">
+                    <div style="text-align: center;">
+                        <div style="border-bottom: 1px solid #000; width: 220px; margin-bottom: 8px;"></div>
+                        <p style="margin: 0; font-size: 12px; font-weight: 600; text-transform: uppercase;">Prepared by:</p>
+                        <p style="margin: 0; font-size: 14px;"><?php echo htmlspecialchars($_SESSION['full_name'] ?? 'Authorized Staff'); ?></p>
+                    </div>
+                    <div style="text-align: center;">
+                        <div style="border-bottom: 1px solid #000; width: 220px; margin-bottom: 8px;"></div>
+                        <p style="margin: 0; font-size: 12px; font-weight: 600; text-transform: uppercase;">Certified Correct:</p>
+                        <p style="margin: 0; font-size: 14px;"><?php echo htmlspecialchars($captainName); ?></p>
+                    </div>
+                </div>
+            </div>
         </div>
     </main>
     <script src="assets/js/script.js"></script>
@@ -493,6 +547,181 @@ if (isset($conn)) {
                     filterFromDate.value = '';
                     filterToDate.value = '';
                     document.getElementById('activityLogForm').submit();
+                });
+            }
+            
+            // Print Masterlist
+            const printBtn = document.getElementById('printMasterlistBtn');
+            if (printBtn) {
+                printBtn.addEventListener('click', async () => {
+                    let brgyInfo = {
+                        province_name: 'Province',
+                        town_name: 'Municipality',
+                        barangay_name: 'Barangay',
+                        barangay_logo: '',
+                        official_emblem: ''
+                    };
+                    
+                    try {
+                        const response = await fetch('model/get_barangay_info.php');
+                        if (response.ok) {
+                            const data = await response.json();
+                            if (data.success && data.data) {
+                                brgyInfo = data.data;
+                            }
+                        }
+                    } catch (error) {
+                        console.error('Error fetching barangay info:', error);
+                    }
+                    
+                    const brgyLogoHtml = brgyInfo.barangay_logo 
+                        ? `<img src="${brgyInfo.barangay_logo}" class="logo-img" alt="Barangay Logo">`
+                        : `<div class="logo-placeholder-box"></div>`;
+                        
+                    const govLogoHtml = brgyInfo.official_emblem
+                        ? `<img src="${brgyInfo.official_emblem}" class="logo-img" alt="Official Emblem">`
+                        : `<div class="logo-placeholder-box"></div>`;
+
+                    let printFrame = document.getElementById('logsPrintFrame');
+                    if (!printFrame) {
+                        printFrame = document.createElement('iframe');
+                        printFrame.id = 'logsPrintFrame';
+                        printFrame.style.position = 'fixed';
+                        printFrame.style.bottom = '0';
+                        printFrame.style.right = '0';
+                        printFrame.style.width = '0';
+                        printFrame.style.height = '0';
+                        printFrame.style.border = 'none';
+                        document.body.appendChild(printFrame);
+                    }
+
+                    const doc = printFrame.contentWindow.document;
+                    doc.open();
+
+                    const tableHeaderHtml = `
+                        <thead>
+                            <tr>
+                                <th style="width: 40px; text-align: center;">No.</th>
+                                <th>ID</th>
+                                <th>User</th>
+                                <th>Action</th>
+                                <th>Description</th>
+                                <th>Timestamp</th>
+                            </tr>
+                        </thead>
+                    `;
+
+                    let rowsHtml = '';
+                    let rowsToPrint = Array.from(document.querySelectorAll('.activity-table tbody tr:not([style*="display: none"])'));
+                    
+                    if (rowsToPrint.length === 1 && rowsToPrint[0].cells.length === 1) {
+                        rowsHtml = `<tr><td colspan="6" style="text-align: center;">No activity logs found.</td></tr>`;
+                    } else {
+                        rowsToPrint.forEach((row, index) => {
+                            if (row.cells.length < 5) return;
+                            const no = index + 1;
+                            const id = row.cells[0]?.textContent.trim() || '';
+                            const user = row.cells[1]?.textContent.trim() || '';
+                            const action = row.cells[2]?.textContent.trim() || '';
+                            const desc = row.cells[3]?.textContent.trim() || '';
+                            const time = row.cells[4]?.textContent.trim() || '';
+
+                            rowsHtml += `
+                                <tr style="display: table-row;">
+                                    <td style="text-align: center;">${no}</td>
+                                    <td>${id}</td>
+                                    <td>${user}</td>
+                                    <td>${action}</td>
+                                    <td>${desc}</td>
+                                    <td>${time}</td>
+                                </tr>
+                            `;
+                        });
+                    }
+
+                    const styles = Array.from(document.querySelectorAll('link[rel="stylesheet"], style')).map(s => s.outerHTML).join('\n');
+                    const printFooter = document.querySelector('.print-footer') ? document.querySelector('.print-footer').cloneNode(true) : null;
+
+                    let finalTitle = "Activity Logs Masterlist";
+                    const printHeader = document.querySelector('.print-header');
+                    if (printHeader) {
+                        const countBadge = printHeader.querySelector('#printTotalRecords');
+                        if (countBadge) countBadge.textContent = "<?php echo $total_records; ?>";
+                        
+                        const activeFilters = [];
+                        const fUser = document.getElementById('filterUser')?.value;
+                        const fAction = document.getElementById('filterAction')?.value;
+                        const fFrom = document.getElementById('filterFromDate')?.value;
+                        const fTo = document.getElementById('filterToDate')?.value;
+                        
+                        if (fUser) activeFilters.push(`User: ${fUser}`);
+                        if (fAction) activeFilters.push(`Action: ${fAction}`);
+                        if (fFrom) activeFilters.push(`From: ${fFrom}`);
+                        if (fTo) activeFilters.push(`To: ${fTo}`);
+                        
+                        const searchInput = document.querySelector('input[name="search"]');
+                        if (searchInput && searchInput.value.trim()) {
+                            activeFilters.push(`Search: "${searchInput.value.trim()}"`);
+                        }
+                        if (activeFilters.length > 0) {
+                            finalTitle += " - " + activeFilters.join(', ');
+                        }
+                    }
+
+                    doc.write(`
+                        <!DOCTYPE html>
+                        <html>
+                        <head>
+                            <title>Activity Logs Masterlist</title>
+                            ${styles}
+                            <style>
+                                body { background: white !important; color: black !important; padding: 20px !important; }
+                                .main-content, .dashboard-content { margin: 0 !important; padding: 0 !important; width: 100% !important; }
+                                .print-only { display: flex !important; }
+                                .data-table { width: 100% !important; border-collapse: collapse !important; margin-top: 20px; }
+                                .data-table th, .data-table td { border: 1px solid #333 !important; padding: 6px !important; font-size: 9px !important; text-align: left; }
+                                .data-table th { background-color: #f3f4f6 !important; -webkit-print-color-adjust: exact; }
+                                .cert-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; text-align: center; border-bottom: 3px double #7a51c9; padding-bottom: 10px; }
+                                .header-center { flex: 1; }
+                                .header-center p { margin: 2px 0; font-size: 14px; }
+                                .header-center .brgy-name { font-weight: bold; font-size: 16px; margin-top: 5px; }
+                                .logo-img { width: 80px; height: 80px; object-fit: contain; }
+                                .logo-placeholder-box { width: 80px; height: 80px; }
+                                @page { size: A4; margin: 15mm; }
+                            </style>
+                        </head>
+                        <body>
+                            <div class="dashboard-content">
+                                <div class="cert-header">
+                                    ${brgyLogoHtml}
+                                    <div class="header-center">
+                                        <p>Republic of the Philippines</p>
+                                        <p>Province of ${brgyInfo.province_name || 'Province'}</p>
+                                        <p>Municipality of ${brgyInfo.town_name || 'Municipality'}</p>
+                                        <p class="brgy-name">${(brgyInfo.barangay_name || 'Barangay').toUpperCase()}</p>
+                                    </div>
+                                    ${govLogoHtml}
+                                </div>
+                                <div style="text-align: center; margin: 15px 0;">
+                                    <h3 style="margin: 0; text-transform: uppercase;">${finalTitle}</h3>
+                                    <p style="margin: 5px 0 0 0; font-size: 12px;">Records on Page: ${rowsToPrint.length > 0 && rowsToPrint[0].cells.length > 1 ? rowsToPrint.length : 0} (Total: <?php echo $total_records; ?>)</p>
+                                </div>
+                                <table class="data-table">
+                                    ${tableHeaderHtml}
+                                    <tbody>${rowsHtml}</tbody>
+                                </table>
+                                ${printFooter ? printFooter.outerHTML : ''}
+                            </div>
+                        </body>
+                        </html>
+                    `);
+                    doc.close();
+
+                    setTimeout(() => {
+                        fetch('model/log_print_masterlist.php', { method: 'POST' }).catch(e => console.error(e));
+                        printFrame.contentWindow.focus();
+                        printFrame.contentWindow.print();
+                    }, 500);
                 });
             }
         });

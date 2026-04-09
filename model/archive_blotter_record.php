@@ -29,6 +29,32 @@ if ($id <= 0) {
     exit;
 }
 
+$password = trim($_POST['password'] ?? '');
+
+if (empty($password)) {
+    echo json_encode(['success' => false, 'message' => 'Password is required']);
+    exit;
+}
+
+$reason = trim($_POST['reason'] ?? 'No reason provided');
+
+// Verify user password for security
+$stmt = $conn->prepare("SELECT password FROM users WHERE id = ? LIMIT 1");
+$stmt->bind_param("i", $_SESSION['user_id']);
+$stmt->execute();
+$result = $stmt->get_result();
+if ($result->num_rows === 1) {
+    $user = $result->fetch_assoc();
+    if (!password_verify($password, $user['password'])) {
+        echo json_encode(['success' => false, 'message' => 'Invalid password']);
+        exit;
+    }
+} else {
+    echo json_encode(['success' => false, 'message' => 'User not found']);
+    exit;
+}
+$stmt->close();
+
 // Ensure archive table exists
 $conn->query("CREATE TABLE IF NOT EXISTS `archive` (
     `id` int(11) NOT NULL AUTO_INCREMENT,
@@ -140,6 +166,7 @@ try {
         'witnesses'    => $witnesses,
         'respondents'  => $respondents,
         'actions'      => $actions,
+        'archive_reason' => $reason
     ];
 
     $recordData = json_encode($archiveData, JSON_UNESCAPED_UNICODE | JSON_PARTIAL_OUTPUT_ON_ERROR);

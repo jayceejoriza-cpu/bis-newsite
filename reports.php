@@ -25,6 +25,29 @@ $purokData = $pdo->query("SELECT purok, COUNT(*) as cnt FROM residents WHERE act
 $ageGroupData = $pdo->query("SELECT age_health_group, COUNT(*) as cnt FROM residents WHERE activity_status != 'Archived' AND age_health_group IS NOT NULL AND age_health_group != '' GROUP BY age_health_group")->fetchAll(PDO::FETCH_KEY_PAIR);
 $civilStatusData = $pdo->query("SELECT civil_status, COUNT(*) as cnt FROM residents WHERE activity_status != 'Archived' AND civil_status IS NOT NULL AND civil_status != '' GROUP BY civil_status")->fetchAll(PDO::FETCH_KEY_PAIR);
 
+$ethnicityData = $pdo->query("SELECT ethnicity, COUNT(*) as cnt FROM residents WHERE activity_status != 'Archived' AND ethnicity IS NOT NULL AND ethnicity != '' GROUP BY ethnicity")->fetchAll(PDO::FETCH_KEY_PAIR);
+
+$waterSourceData = $pdo->query("SELECT water_source_type, COUNT(*) as cnt FROM households WHERE water_source_type IS NOT NULL AND water_source_type != '' GROUP BY water_source_type")->fetchAll(PDO::FETCH_KEY_PAIR);
+
+$toiletData = $pdo->query("SELECT toilet_facility_type, COUNT(*) as cnt FROM households WHERE toilet_facility_type IS NOT NULL AND toilet_facility_type != '' GROUP BY toilet_facility_type")->fetchAll(PDO::FETCH_KEY_PAIR);
+
+$householdSizeData = $pdo->query("
+    SELECT
+        CASE 
+            WHEN (member_count + 1) = 1 THEN 'Single-person (1)'
+            WHEN (member_count + 1) BETWEEN 2 AND 4 THEN 'Small (2-4)'
+            WHEN (member_count + 1) BETWEEN 5 AND 7 THEN 'Medium (5-7)'
+            WHEN (member_count + 1) BETWEEN 8 AND 10 THEN 'Large (8-10)'
+            ELSE 'Very Large (11+)'
+        END AS size_category,
+        COUNT(*) as cnt
+    FROM (
+        SELECT h.id, (SELECT COUNT(*) FROM household_members hm WHERE hm.household_id = h.id) as member_count
+        FROM households h
+    ) as subquery
+    GROUP BY size_category
+")->fetchAll(PDO::FETCH_KEY_PAIR);
+
 $specialGroups = $pdo->query("
     SELECT
         SUM(CASE WHEN fourps_member = 'Yes' THEN 1 ELSE 0 END) AS fourps,
@@ -182,21 +205,6 @@ function pct($val, $total) {
                 </div>
             </div>
 
-            <div class="filter-bar-reports no-print">
-                <form method="GET" action="reports.php" style="display:flex; gap:15px; align-items:center; width:100%;">
-                    <div class="form-group">
-                        <label style="font-weight:600; color:var(--text-secondary);">From:</label>
-                        <input type="date" name="from_date" value="<?php echo htmlspecialchars($fromDate); ?>" required>
-                    </div>
-                    <div class="form-group">
-                        <label style="font-weight:600; color:var(--text-secondary);">To:</label>
-                        <input type="date" name="to_date" value="<?php echo htmlspecialchars($toDate); ?>" required>
-                    </div>
-                    <button type="submit" class="btn btn-primary" style="padding:8px 16px;">
-                        <i class="fas fa-sync-alt"></i> Generate
-                    </button>
-                </form>
-            </div>
 
             <!-- ===================== SNAPSHOT ===================== -->
             <div class="section-divider">
@@ -220,11 +228,6 @@ function pct($val, $total) {
                                 <td class="text-right"><strong><?php echo number_format($totalResidents); ?></strong></td>
                                 <td class="text-right">100.0%</td>
                             </tr>
-                            <tr>
-                                <td>Total Households</td>
-                                <td class="text-right"><strong><?php echo number_format($totalHouseholds); ?></strong></td>
-                                <td class="text-right">-</td>
-                            </tr>
                             <tr><td colspan="3" style="background:var(--bg-secondary); font-weight:600;">By Sex</td></tr>
                             <tr>
                                 <td>Male</td>
@@ -238,6 +241,15 @@ function pct($val, $total) {
                             </tr>
                             <tr><td colspan="3" style="background:var(--bg-secondary); font-weight:600;">By Civil Status</td></tr>
                             <?php foreach($civilStatusData as $k => $v): ?>
+                                <tr>
+                                    <td><?php echo htmlspecialchars($k); ?></td>
+                                    <td class="text-right"><?php echo number_format($v); ?></td>
+                                    <td class="text-right"><?php echo pct($v, $totalResidents); ?></td>
+                                </tr>
+                            <?php endforeach; ?>
+                            
+                            <tr><td colspan="3" style="background:var(--bg-secondary); font-weight:600;">By Ethnicity</td></tr>
+                            <?php foreach($ethnicityData as $k => $v): ?>
                                 <tr>
                                     <td><?php echo htmlspecialchars($k); ?></td>
                                     <td class="text-right"><?php echo number_format($v); ?></td>
@@ -289,6 +301,101 @@ function pct($val, $total) {
                 </div>
             </div>
             
+            <!-- ===================== HOUSEHOLD STATS ===================== -->
+            <div class="section-divider" style="margin-top:40px;">
+                <i class="fas fa-home"></i> Household Statistics
+            </div>
+            
+            <div class="report-two-col">
+                <div class="report-table-box">
+                    <div class="report-table-box-title">Household Size & Overview</div>
+                    <table class="report-table">
+                        <thead>
+                            <tr>
+                                <th>Category</th>
+                                <th class="text-right">Count</th>
+                                <th class="text-right">% of Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Total Households</td>
+                                <td class="text-right"><strong><?php echo number_format($totalHouseholds); ?></strong></td>
+                                <td class="text-right">100.0%</td>
+                            </tr>
+                            <tr><td colspan="3" style="background:var(--bg-secondary); font-weight:600;">By Family Size</td></tr>
+                            <?php 
+                            $orderedSizes = ['Single-person (1)', 'Small (2-4)', 'Medium (5-7)', 'Large (8-10)', 'Very Large (11+)'];
+                            foreach($orderedSizes as $sizeLabel): 
+                                $v = $householdSizeData[$sizeLabel] ?? 0;
+                                if ($v > 0):
+                            ?>
+                                <tr>
+                                    <td><?php echo htmlspecialchars($sizeLabel); ?></td>
+                                    <td class="text-right"><?php echo number_format($v); ?></td>
+                                    <td class="text-right"><?php echo pct($v, $totalHouseholds); ?></td>
+                                </tr>
+                            <?php endif; endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="report-table-box">
+                    <div class="report-table-box-title">Household Facilities</div>
+                    <table class="report-table">
+                        <thead>
+                            <tr>
+                                <th>Facility Type</th>
+                                <th class="text-right">Count</th>
+                                <th class="text-right">% of Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td colspan="3" style="background:var(--bg-secondary); font-weight:600;">Water Source</td></tr>
+                            <?php if (empty($waterSourceData)): ?>
+                                <tr><td colspan="3" class="text-center text-muted">No data available</td></tr>
+                            <?php else: ?>
+                                <?php foreach($waterSourceData as $k => $v): ?>
+                                    <tr>
+                                        <td><?php echo htmlspecialchars($k); ?></td>
+                                        <td class="text-right"><?php echo number_format($v); ?></td>
+                                        <td class="text-right"><?php echo pct($v, $totalHouseholds); ?></td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
+
+                            <tr><td colspan="3" style="background:var(--bg-secondary); font-weight:600;">Toilet Facility</td></tr>
+                            <?php if (empty($toiletData)): ?>
+                                <tr><td colspan="3" class="text-center text-muted">No data available</td></tr>
+                            <?php else: ?>
+                                <?php foreach($toiletData as $k => $v): ?>
+                                    <tr>
+                                        <td><?php echo htmlspecialchars($k); ?></td>
+                                        <td class="text-right"><?php echo number_format($v); ?></td>
+                                        <td class="text-right"><?php echo pct($v, $totalHouseholds); ?></td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+             <div class="filter-bar-reports no-print">
+                <form method="GET" action="reports.php" style="display:flex; gap:15px; align-items:center; width:100%;">
+                    <div class="form-group">
+                        <label style="font-weight:600; color:var(--text-secondary);">From:</label>
+                        <input type="date" name="from_date" value="<?php echo htmlspecialchars($fromDate); ?>" required>
+                    </div>
+                    <div class="form-group">
+                        <label style="font-weight:600; color:var(--text-secondary);">To:</label>
+                        <input type="date" name="to_date" value="<?php echo htmlspecialchars($toDate); ?>" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="padding:8px 16px;">
+                        <i class="fas fa-sync-alt"></i> Generate
+                    </button>
+                </form>
+            </div>
             <!-- ===================== PERIOD STATS ===================== -->
             <div class="section-divider" style="margin-top:40px;">
                 <i class="fas fa-calendar-alt"></i> Period Statistics (<?php echo date('M d, Y', strtotime($fromDate)); ?> to <?php echo date('M d, Y', strtotime($toDate)); ?>)

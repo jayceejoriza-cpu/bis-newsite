@@ -19,6 +19,32 @@ if ($id <= 0) {
     exit;
 }
 
+$password = trim($_POST['password'] ?? '');
+
+if (empty($password)) {
+    echo json_encode(['success' => false, 'message' => 'Password is required']);
+    exit;
+}
+
+$reason = trim($_POST['reason'] ?? 'No reason provided');
+
+// Verify user password for security
+$stmt = $conn->prepare("SELECT password FROM users WHERE id = ? LIMIT 1");
+$stmt->bind_param("i", $_SESSION['user_id']);
+$stmt->execute();
+$result = $stmt->get_result();
+if ($result->num_rows === 1) {
+    $user = $result->fetch_assoc();
+    if (!password_verify($password, $user['password'])) {
+        echo json_encode(['success' => false, 'message' => 'Invalid password']);
+        exit;
+    }
+} else {
+    echo json_encode(['success' => false, 'message' => 'User not found']);
+    exit;
+}
+$stmt->close();
+
 // Check if archive table exists (create if not - Outside transaction)
 $conn->query("CREATE TABLE IF NOT EXISTS `archive` (
     `id` int(11) NOT NULL AUTO_INCREMENT,
@@ -63,6 +89,7 @@ try {
     $stmt->close();
 
     $household['members'] = $members;
+    $household['archive_reason'] = $reason;
 
     // Archive
     $recordData = json_encode($household, JSON_PARTIAL_OUTPUT_ON_ERROR | JSON_UNESCAPED_UNICODE);
@@ -96,7 +123,7 @@ try {
     if (isset($_SESSION['username'])) {
         $log_user = $_SESSION['username'];
         $log_action = 'Archive Household';
-        $log_desc = "Moved household to archive: $householdNumber";
+        $log_desc = "Moved household to archive: $householdNumber. Reason: $reason";
         $log_stmt = $conn->prepare("INSERT INTO activity_logs (user, action, description) VALUES (?, ?, ?)");
         $log_stmt->bind_param("sss", $log_user, $log_action, $log_desc);
         $log_stmt->execute();

@@ -661,6 +661,9 @@ if (isset($conn)) {
                 html += createRow('Gender', data.gender || data.sex || 'N/A');
                 html += createRow('Address', data.address || data.current_address || 'N/A');
                 html += createRow('Contact', data.number || data.mobile_number || 'N/A');
+                if (data.archive_reason) {
+                    html += createRow('Archive Reason', data.archive_reason);
+                }
             } else if (type === 'official') {
                 // Build full name from archived data
                 let fullName = '';

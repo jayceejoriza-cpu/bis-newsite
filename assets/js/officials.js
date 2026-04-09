@@ -99,6 +99,69 @@ function initOfficials() {
         });
     }
 
+    // Archive Modal handlers
+    const archiveModal = document.getElementById('archiveModal');
+    const cancelArchive = document.getElementById('cancelArchive');
+    const archiveForm = document.getElementById('archiveForm');
+    const toggleArchivePassword = document.getElementById('toggleArchivePassword');
+    const archivePassword = document.getElementById('archivePassword');
+
+    if (cancelArchive) {
+        cancelArchive.addEventListener('click', () => {
+            archiveModal.style.display = 'none';
+        });
+    }
+
+    if (toggleArchivePassword && archivePassword) {
+        toggleArchivePassword.addEventListener('click', () => {
+            const type = archivePassword.getAttribute('type') === 'password' ? 'text' : 'password';
+            archivePassword.setAttribute('type', type);
+            toggleArchivePassword.innerHTML = type === 'password' ? '<i class="fas fa-eye"></i>' : '<i class="fas fa-eye-slash"></i>';
+        });
+    }
+
+    if (archiveForm) {
+        archiveForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const confirmBtn = document.getElementById('confirmArchiveBtn');
+            const originalText = confirmBtn.innerHTML;
+            
+            confirmBtn.disabled = true;
+            confirmBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Archiving...';
+            
+            fetch('model/delete_official.php', {
+                method: 'POST',
+                body: new FormData(this)
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    showNotification(data.message || 'Official moved to archive successfully', 'success');
+                    archiveModal.style.display = 'none';
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    showNotification(data.message || 'Failed to archive official', 'danger');
+                    confirmBtn.disabled = false;
+                    confirmBtn.innerHTML = originalText;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showNotification('An error occurred while archiving the official', 'danger');
+                confirmBtn.disabled = false;
+                confirmBtn.innerHTML = originalText;
+            });
+        });
+    }
+    
+    if (archiveModal) {
+        window.addEventListener('click', function(e) {
+            if (e.target === archiveModal) {
+                archiveModal.style.display = 'none';
+            }
+        });
+    }
+
     checkUrlParams();
 }
 
@@ -821,48 +884,25 @@ async function submitEditOfficial() {
 }
 
 // ── Delete Official ───────────────────────────────────────────────────────────
-function deleteOfficial(officialId) {
+function deleteOfficial(officialId, officialName = 'Official') {
     if (window.BIS_PERMS && !window.BIS_PERMS.officials_archive) {
         showNotification('Permission denied to archive officials.', 'error');
         return;
     }
 
-    if (!confirm('Are you sure you want to move this official to archive?\n\nThis action will remove the official from the active list but preserve their record in the archive.')) {
-        return;
-    }
-
-    const deleteBtn = document.querySelector(`.btn-delete[data-official-id="${officialId}"]`);
-    if (deleteBtn) {
-        deleteBtn.disabled = true;
-        deleteBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Archiving...';
-    }
-
-    fetch('model/delete_official.php', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: 'id=' + officialId
-    })
-    .then(r => r.json())
-    .then(data => {
-        if (data.success) {
-            showNotification(data.message || 'Official moved to archive successfully', 'success');
-            setTimeout(() => location.reload(), 1500);
-        } else {
-            showNotification(data.message || 'Failed to archive official', 'danger');
-            if (deleteBtn) {
-                deleteBtn.disabled = false;
-                deleteBtn.innerHTML = '<i class="fas fa-trash"></i> Delete';
-            }
+    const archiveModal = document.getElementById('archiveModal');
+    if (archiveModal) {
+        document.getElementById('archiveOfficialId').value = officialId;
+        document.getElementById('archivePassword').value = '';
+        document.getElementById('archiveReason').value = '';
+        
+        const modalTitle = document.getElementById('archiveModalTitle');
+        if (modalTitle) {
+            modalTitle.innerHTML = `Archive Official <u>${escapeHtml(officialName)}</u>`;
         }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        showNotification('An error occurred while archiving the official', 'danger');
-        if (deleteBtn) {
-            deleteBtn.disabled = false;
-            deleteBtn.innerHTML = '<i class="fas fa-trash"></i> Delete';
-        }
-    });
+        
+        archiveModal.style.display = 'block';
+    }
 }
 
 // ── Utilities ─────────────────────────────────────────────────────────────────
@@ -1050,7 +1090,8 @@ function showActionMenu(row, button) {
     menu.querySelectorAll('.action-menu-item:not(.has-submenu):not(.submenu-item)').forEach(item => {
         item.addEventListener('click', () => {
             const action = item.getAttribute('data-action');
-            handleAction(action, officialId);
+            const officialName = row.querySelector('.official-info-name')?.textContent || 'Official';
+            handleAction(action, officialId, officialName);
             menu.remove();
         });
     });
@@ -1076,7 +1117,7 @@ function showActionMenu(row, button) {
     }, 0);
 }
 
-function handleAction(action, officialId) {
+function handleAction(action, officialId, officialName) {
     switch(action) {
         case 'view':
             if (officialId) viewOfficialDetails(officialId);
@@ -1087,7 +1128,7 @@ function handleAction(action, officialId) {
             break;
             
         case 'delete':
-            if (officialId) deleteOfficial(officialId);
+            if (officialId) deleteOfficial(officialId, officialName);
             break;
     }
 }
