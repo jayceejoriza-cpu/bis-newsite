@@ -154,6 +154,24 @@ function calculateAge($dateOfBirth) {
     return $now->diff($dob)->y;
 }
 
+// Fetch Barangay Info for Print Header
+$brgy_logo = '';
+$government_logo = '';
+$province  = 'Province';
+$town      = 'Municipality';
+$brgy      = 'Barangay';
+try {
+    $biStmt = $pdo->query("SELECT * FROM barangay_info WHERE id = 1 LIMIT 1");
+    $bi = $biStmt->fetch();
+    if ($bi) {
+        $province  = $bi['province_name']  ?? 'Province';
+        $town      = $bi['town_name']      ?? 'Municipality';
+        $brgy      = $bi['barangay_name']  ?? 'Barangay';
+        $brgy_logo = $bi['barangay_logo']  ?? '';
+        $government_logo = $bi['official_emblem'] ?? '';
+    }
+} catch (PDOException $e) { error_log("Error fetching barangay info: " . $e->getMessage()); }
+
 $fullName = formatFullName(
     $resident['first_name'],
     $resident['middle_name'],
@@ -186,6 +204,7 @@ $age = calculateAge($resident['date_of_birth']);
         .edit-field, .edit-field-conditional {
             font-size: 15px !important;
         }
+        .print-only { display: none; }
 
         /* Print layout: Resume style / Resident Info Sheet */
         @media print {
@@ -200,64 +219,43 @@ $age = calculateAge($resident['date_of_birth']);
             .main-content, .dashboard-content { margin: 0 !important; padding: 0 !important; width: 100% !important; }
             a { text-decoration: none !important; color: #000 !important; }
             
-            /* Profile Header (Resume Style) */
-            .profile-header {
-                display: flex !important;
-                flex-direction: row-reverse !important;
-                justify-content: space-between !important;
-                align-items: flex-start !important;
-                border-bottom: 2px solid #000 !important;
-                padding: 0 0 5px 0 !important;
-                margin-bottom: 5px !important;
-                background: none !important;
-                box-shadow: none !important;
-                border-radius: 0 !important;
-            }
-            .profile-header-left {
-                display: flex !important;
-                flex-direction: row-reverse !important;
-                justify-content: space-between !important;
-                width: 100% !important;
-                align-items: flex-start !important;
-            }
-            .profile-photo-wrapper { margin: 0 !important; gap: 0 !important; }
-            .profile-photo { 
-                width: 90px !important; 
-                height: 90px !important; 
-                border-radius: 0 !important; 
-                border: 2px solid #000 !important; 
-            }
-            .profile-photo-placeholder { border-radius: 0 !important; background: #fff !important; }
-            .profile-photo-placeholder::after { content: "PHOTO"; display: block; font-size: 10pt; font-weight: bold; text-align: center; line-height: 90px; color: #000; }
-            .profile-header-info { text-align: left !important; margin-top: 5px !important; }
-            .profile-name { font-size: 18pt !important; color: #000 !important; margin-bottom: 4px !important; line-height: 1 !important; text-transform: uppercase; }
-            .profile-id { font-size: 10pt !important; color: #555 !important; }
+            /* Print Header */
+            .profile-header { display: none !important; }
+            .cert-header.print-only { display: flex !important; justify-content: space-between; align-items: center; margin-bottom: 20px; text-align: center; border-bottom: 3px double #7a51c9; padding-bottom: 10px; }
+            .print-title.print-only { display: block !important; text-align: center; font-weight: bold; font-size: 18pt; margin-bottom: 25px; text-transform: uppercase; letter-spacing: 1px; }
+            .header-center { flex: 1; }
+            .header-center p { margin: 2px 0; font-size: 14px; }
+            .header-center .brgy-name { font-weight: bold; font-size: 16px; margin-top: 5px; }
+            .logo-img { width: 80px; height: 80px; object-fit: contain; }
+            .logo-placeholder-box { width: 80px; height: 80px; }
             
             /* Section Layouts */
-            .profile-content-grid { display: block !important; gap: 0 !important; }
-            .profile-main-content { padding: 0 !important; background: none !important; box-shadow: none !important; }
+            .profile-content-grid { display: inline !important; gap: 0 !important; }
+            .profile-main-content { padding: 0 !important; background: none !important; box-shadow: none !important; line-height: 2 !important; text-align: justify !important; display: inline !important; }
+            form#inlineEditForm, .minor-only, .gov-programs-section { display: inline !important; }
             .profile-section { 
                 margin-bottom: 0 !important; 
                 padding: 0 !important; 
                 border: none !important; 
                 background: none !important; 
                 box-shadow: none !important;
-                page-break-inside: avoid;
+                display: inline !important;
             }
             .section-header { display: none !important; }
-            .section-content { margin: 0 !important; padding: 0 !important; }
+            .section-content { margin: 0 !important; padding: 0 !important; display: inline !important; }
             
-            /* Grid to Text Mapping */
-            .info-grid { display: flex !important; flex-wrap: wrap !important; gap: 0 !important; }
-            .info-item { flex: 0 0 50% !important; margin-bottom: 0 !important; padding: 0 !important; background: none !important; border: none !important; display: flex !important; align-items: baseline !important; }
-            .info-item.full-width { flex: 0 0 100% !important; }
-            .info-item label { flex: 0 0 35% !important; font-size: 8pt !important; color: #444 !important; font-weight: normal !important; margin: 0 !important; text-transform: capitalize; }
-            .info-item p { flex: 0 0 65% !important; font-size: 9pt !important; color: #000 !important; font-weight: bold !important; margin: 0 !important; }
+            /* Paragraph Form Layout */
+            .info-grid { display: inline !important; }
+            .info-item { display: inline !important; margin-right: 15px !important; }
+            .info-item.full-width { display: inline !important; }
+            .info-item label { display: inline !important; font-size: 10pt !important; color: #333 !important; font-weight: normal !important; margin: 0 !important; text-transform: capitalize; }
+            .info-item label::after { content: ": "; }
+            .info-item p, .info-item a { display: inline !important; font-size: 10pt !important; color: #000 !important; font-weight: bold !important; margin: 0 !important; border-bottom: 1px solid #000 !important; padding: 0 5px !important; text-decoration: none !important; }
             
             .subsection-title { display: none !important; }
             
             /* Household Table */
-            .household-info-card, .household-head-card, .household-members-card { padding: 0 !important; border: none !important; background: none !important; box-shadow: none !important; margin-top: 0 !important; }
+            .household-info-card, .household-head-card, .household-members-card { padding: 0 !important; border: none !important; background: none !important; box-shadow: none !important; margin-top: 0 !important; display: inline !important; }
             .members-display-table { width: 100% !important; border-collapse: collapse !important; margin-top: 0 !important; }
             .members-display-table th, .members-display-table td { border: 1px solid #000 !important; padding: 3px !important; font-size: 8pt !important; color: #000 !important; }
             .members-display-table th { background-color: #f0f0f0 !important; -webkit-print-color-adjust: exact; }
@@ -315,6 +313,32 @@ $age = calculateAge($resident['date_of_birth']);
                 </a>
             </div>
             
+            <!-- =====================
+                 Header
+            ===================== -->
+            <div class="cert-header print-only">
+                <?php if (!empty($brgy_logo)): ?>
+                    <img src="<?= htmlspecialchars($brgy_logo) ?>" class="logo-img" alt="Barangay Logo">
+                <?php else: ?>
+                    <div class="logo-placeholder-box"></div>
+                <?php endif; ?>
+
+                <div class="header-center">
+                    <p>Republic of the Philippines</p>
+                    <p>Province of <?= ucwords($province) ?></p>
+                    <p>Municipality of <?= ucwords($town) ?></p>
+                    <p class="brgy-name"><?= strtoupper($brgy) ?></p>
+                </div>
+
+                <?php if (!empty($government_logo)): ?>
+                    <img src="<?= htmlspecialchars($government_logo) ?>" class="logo-img" alt="Bagong Pilipinas Logo">
+                <?php else: ?>
+                    <div class="logo-placeholder-box"></div>
+                <?php endif; ?>
+            </div>
+
+            <h2 class="print-title print-only">RESIDENT INFORMATION</h2>
+
             <!-- Profile Header -->
             <div class="profile-header">
                 <div class="profile-header-left">
