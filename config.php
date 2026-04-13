@@ -44,7 +44,6 @@ define('COMPONENTS_PATH', __DIR__ . '/components/');
 $dashboard_stats = [
     'total_residents' => 0,
     'total_households' => 0,
-    'pending_requests' => 0,
 ];
 
 // Fetch total residents (active only)
@@ -57,12 +56,6 @@ if ($result && $row = $result->fetch_assoc()) {
 $result = $conn->query("SELECT COUNT(*) as count FROM households");
 if ($result && $row = $result->fetch_assoc()) {
     $dashboard_stats['total_households'] = (int)$row['count'];
-}
-
-// Fetch pending certificate requests
-$result = $conn->query("SELECT COUNT(*) as count FROM certificate_requests WHERE status = 'Pending'");
-if ($result && $row = $result->fetch_assoc()) {
-    $dashboard_stats['pending_requests'] = (int)$row['count'];
 }
 
 // Menu Items Configuration

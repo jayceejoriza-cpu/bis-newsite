@@ -76,8 +76,8 @@ try {
     // Using certificate_id = 1 as default and storing certificate_name for proper tracking
     $stmt = $conn->prepare("
         INSERT INTO certificate_requests 
-        (reference_no, resident_id, certificate_id, certificate_name, purpose, status, date_requested, created_at) 
-        VALUES (?, ?, ?, ?, ?, 'Approved', ?, NOW())
+        (reference_no, resident_id, certificate_id, certificate_name, purpose, date_requested, created_at) 
+        VALUES (?, ?, ?, ?, ?, ?, NOW())
     ");
     
     $stmt->bind_param("siisss", $ref_no, $resident_id, $certificate_id, $certificate_name, $purpose, $date_requested);

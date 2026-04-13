@@ -685,7 +685,6 @@ if (isset($conn)) {
                 html += createRow('Status', data.status || 'N/A');
                 html += createRow('Appointment Type', data.appointment_type || 'N/A');
                 html += createRow('Contact Number', data.contact_number || 'N/A');
-                html += createRow('Email', data.email || 'N/A');
                 html += createRow('Resident ID', data.resident_id || 'N/A');
             } else if (type === 'blotter') {
                 html += createRow('Record Number', data.record_number || 'N/A');

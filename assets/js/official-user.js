@@ -505,10 +505,6 @@ document.addEventListener('DOMContentLoaded', function () {
         userForm.querySelectorAll('.form-input.error').forEach(el => el.classList.remove('error'));
     }
 
-    function isValidEmail(email) {
-        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-    }
-
     // ============================================
     // Role Badge Click — explicit toggle handler
     // Prevents double-toggle from label default behavior

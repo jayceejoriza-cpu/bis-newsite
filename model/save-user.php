@@ -59,7 +59,6 @@ function createUser() {
 
     $fullName = trim($_POST['full_name'] ?? '');
     $username = trim($_POST['username']  ?? '');
-    $email    = ''; // Removed from frontend
     $password = $_POST['password']       ?? '';
     $status   = trim($_POST['status']    ?? 'Active');
     // roles[] is an array of role IDs from checkboxes
@@ -112,8 +111,8 @@ function createUser() {
     $hashedPassword = password_hash($password, PASSWORD_BCRYPT);
 
     // Insert user
-    $stmt = $conn->prepare("INSERT INTO users (username, password, full_name, email, role, status) VALUES (?, ?, ?, ?, ?, ?)");
-    $stmt->bind_param('ssssss', $username, $hashedPassword, $fullName, $email, $legacyRole, $status);
+    $stmt = $conn->prepare("INSERT INTO users (username, password, full_name, role, status) VALUES (?, ?, ?, ?, ?)");
+    $stmt->bind_param('sssss', $username, $hashedPassword, $fullName, $legacyRole, $status);
 
     if ($stmt->execute()) {
         $newUserId = $conn->insert_id;
@@ -138,7 +137,6 @@ function editUser() {
     $userId   = intval($_POST['user_id']   ?? 0);
     $fullName = trim($_POST['full_name']   ?? '');
     $username = trim($_POST['username']    ?? '');
-    $email    = ''; // Removed from frontend
     $password = $_POST['password']         ?? '';
     $status   = trim($_POST['status']      ?? 'Active');
     $roleIds  = isset($_POST['roles']) && is_array($_POST['roles']) ? $_POST['roles'] : [];
@@ -194,11 +192,11 @@ function editUser() {
             return;
         }
         $hashedPassword = password_hash($password, PASSWORD_BCRYPT);
-        $stmt = $conn->prepare("UPDATE users SET username=?, password=?, full_name=?, email=?, role=?, status=? WHERE id=?");
-        $stmt->bind_param('ssssssi', $username, $hashedPassword, $fullName, $email, $legacyRole, $status, $userId);
+        $stmt = $conn->prepare("UPDATE users SET username=?, password=?, full_name=?, role=?, status=? WHERE id=?");
+        $stmt->bind_param('sssssi', $username, $hashedPassword, $fullName, $legacyRole, $status, $userId);
     } else {
-        $stmt = $conn->prepare("UPDATE users SET username=?, full_name=?, email=?, role=?, status=? WHERE id=?");
-        $stmt->bind_param('sssssi', $username, $fullName, $email, $legacyRole, $status, $userId);
+        $stmt = $conn->prepare("UPDATE users SET username=?, full_name=?, role=?, status=? WHERE id=?");
+        $stmt->bind_param('ssssi', $username, $fullName, $legacyRole, $status, $userId);
     }
 
     if ($stmt->execute()) {

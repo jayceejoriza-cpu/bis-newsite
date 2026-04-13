@@ -117,7 +117,6 @@ try {
             fourps_member,
             age_health_group,
             pwd_status,
-            verification_status,
             voter_status,
             activity_status,
             purok,
@@ -530,7 +529,6 @@ try {
                                 $sortDob = !empty($resident['date_of_birth']) ? date('Y-m-d', strtotime($resident['date_of_birth'])) : '9999-12-31';
                                 
                                 // Badge classes
-                                $verificationBadge = 'badge-' . strtolower($resident['verification_status']);
                                 $voterBadge = ($resident['voter_status'] === 'Yes') ? 'badge-yes' : 'badge-no';
                                 $activityBadge = 'badge-' . strtolower($resident['activity_status']);
                                 $sortName = $resident['last_name'] . ', ' . $resident['first_name'];

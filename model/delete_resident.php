@@ -84,20 +84,6 @@ try {
     $residentIdCode = $resident['resident_id'];
     $stmt->close();
 
-    // Fetch emergency contacts to include in archive
-    $emergencyContacts = [];
-    $stmt = $conn->prepare("SELECT * FROM emergency_contacts WHERE resident_id = ?");
-    if ($stmt) {
-        $stmt->bind_param("i", $id);
-        $stmt->execute();
-        $contactsResult = $stmt->get_result();
-        while ($contact = $contactsResult->fetch_assoc()) {
-            $emergencyContacts[] = $contact;
-        }
-        $stmt->close();
-    }
-    $resident['emergency_contacts'] = $emergencyContacts;
-
     // Append the archival reason to the record data
     $resident['archive_reason'] = $reason;
 
@@ -118,14 +104,6 @@ try {
         throw new Exception("Failed to archive resident record: " . $stmt->error);
     }
     $stmt->close();
-
-    // Delete emergency contacts associated with the resident
-    $stmt = $conn->prepare("DELETE FROM emergency_contacts WHERE resident_id = ?");
-    if ($stmt) {
-        $stmt->bind_param("i", $id);
-        $stmt->execute();
-        $stmt->close();
-    }
 
     // Delete the resident record
     $stmt = $conn->prepare("DELETE FROM residents WHERE id = ?");

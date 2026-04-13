@@ -391,7 +391,6 @@ function saveProfile() {
     // Contact
     formData.append('mobileNumber', rawData.get('mobile_number') || '');
     formData.append('streetName', rawData.get('street_name') || '');
-    formData.append('houseNo', '');
     formData.append('purok', rawData.get('purok') || '');
     
     // Family
@@ -407,7 +406,6 @@ function saveProfile() {
     formData.append('educationalAttainment', rawData.get('educational_attainment') || '');
     formData.append('employmentStatus', rawData.get('employment_status') || '');
     formData.append('occupation', rawData.get('occupation') || '');
-    formData.append('monthlyIncome', rawData.get('monthly_income') || '');
     
     // Government Programs
     formData.append('fourPs', rawData.get('fourps_member') || 'No');
@@ -449,10 +447,7 @@ function saveProfile() {
     formData.append('pwdStatus', rawData.get('pwd_status') || rawData.get('pwdStatus') || window.RESIDENT_DATA.pwdStatus);
     formData.append('pwdType', rawData.get('pwd_type') || rawData.get('pwdType') || '');
     formData.append('pwdIdNumber', rawData.get('pwd_id_number') || rawData.get('pwdIdNumber') || '');
-    formData.append('verificationStatus', window.RESIDENT_DATA.verificationStatus);
     formData.append('activityStatus', window.RESIDENT_DATA.activityStatus);
-    formData.append('rejectionReason', window.RESIDENT_DATA.rejectionReason);
-    formData.append('statusRemarks', window.RESIDENT_DATA.statusRemarks);
     formData.append('guardianName', rawData.get('guardian_name') || '');
     formData.append('guardianRelationship', rawData.get('guardian_relationship') || '');
     formData.append('guardianContact', rawData.get('guardian_contact') || '');

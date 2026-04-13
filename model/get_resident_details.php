@@ -36,14 +36,6 @@ try {
     $stmt = $pdo->prepare("
         SELECT 
             r.*,
-            GROUP_CONCAT(
-                DISTINCT CONCAT_WS('|', 
-                    ec.contact_name, 
-                    ec.relationship, 
-                    ec.contact_number, 
-                    ec.address
-                ) SEPARATOR '||'
-            ) as emergency_contacts,
             hm.household_id       AS hm_household_id,
             hm.relationship_to_head,
             hm.is_head,
@@ -60,7 +52,6 @@ try {
                 IFNULL(CONCAT(' ', head_r.suffix), '')
             )) AS hh_head_name
         FROM residents r
-        LEFT JOIN emergency_contacts ec ON r.id = ec.resident_id
         LEFT JOIN household_members hm ON hm.resident_id = r.id
         LEFT JOIN households h ON hm.household_id = h.id
         LEFT JOIN residents head_r ON h.household_head_id = head_r.id
@@ -78,29 +69,6 @@ try {
         ]);
         exit;
     }
-    
-    // Parse emergency contacts
-    $emergencyContacts = [];
-    if (!empty($resident['emergency_contacts'])) {
-        $contacts = explode('||', $resident['emergency_contacts']);
-        foreach ($contacts as $contact) {
-            $parts = explode('|', $contact);
-            if (count($parts) >= 3) {
-                $emergencyContacts[] = [
-                    'name' => $parts[0] ?? '',
-                    'relationship' => $parts[1] ?? '',
-                    'contact_number' => $parts[2] ?? '',
-                    'address' => $parts[3] ?? ''
-                ];
-            }
-        }
-    }
-    
-    // Remove the concatenated emergency contacts field
-    unset($resident['emergency_contacts']);
-    
-    // Add parsed emergency contacts
-    $resident['emergency_contacts_list'] = $emergencyContacts;
     
     // Return success response
     echo json_encode([

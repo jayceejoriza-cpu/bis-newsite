@@ -24,7 +24,6 @@ const spouseNameGroup = document.getElementById('spouseNameGroup');
 const voterStatusSelect = document.getElementById('voterStatus');
 const employmentStatusSelect = document.getElementById('employmentStatus');
 const occupationInput = document.getElementById('occupation');
-const monthlyIncomeSelect = document.getElementById('monthlyIncome');
 const educationalAttainmentSelect = document.getElementById('educationalAttainment');
 const philhealthIdInput = document.getElementById('philhealthId');
 const membershipTypeSelect = document.getElementById('membershipType');
@@ -619,7 +618,6 @@ function updateMinorStatus() {
         if (voterStatusSelect) voterStatusSelect.removeAttribute('disabled');
         if (employmentStatusSelect) employmentStatusSelect.removeAttribute('disabled');
         if (occupationInput) occupationInput.removeAttribute('disabled');
-        if (monthlyIncomeSelect) monthlyIncomeSelect.removeAttribute('disabled');
         if (educationalAttainmentSelect) educationalAttainmentSelect.removeAttribute('disabled');
         if (philhealthIdInput) philhealthIdInput.removeAttribute('disabled');
         if (membershipTypeSelect) membershipTypeSelect.removeAttribute('disabled');
@@ -802,10 +800,6 @@ function updateMinorStatus() {
         }
         
         if (incomeContainer) incomeContainer.style.display = 'none';
-        if (monthlyIncomeSelect) {
-            monthlyIncomeSelect.value = '';
-            monthlyIncomeSelect.setAttribute('disabled', 'disabled');
-        }
         
         // Disable 4Ps for minors
         const fourPsSelect = document.getElementById('fourPs');
@@ -900,7 +894,6 @@ function updateMinorStatus() {
         if (occupationInput) occupationInput.removeAttribute('disabled');
         
         if (incomeContainer) incomeContainer.style.display = 'block';
-        if (monthlyIncomeSelect) monthlyIncomeSelect.removeAttribute('disabled');
         
         handleVoterStatusChange();
     } else {
@@ -2178,13 +2171,12 @@ function populateReviewModal() {
     // 2. Contact Information
     let contactInfoHTML = '<div class="review-fields-grid">';
     contactInfoHTML += createField('Mobile Number', getValue('mobileNumber'));
-    contactInfoHTML += createField('Email Address', getValue('email'));
     
     // Construct address for review
     const houseNo = getValue('houseNo');
     const purok = getValue('purok');
     const streetName = getValue('streetName');
-    const addressParts = [houseNo ? `House No. ${houseNo}` : '', purok ? `Purok ${purok}` : '', streetName].filter(Boolean);
+    const addressParts = [purok ? `Purok ${purok}` : '', streetName].filter(Boolean);
     const fullAddress = addressParts.join(', ');
 
     contactInfoHTML += createField('Complete Address', fullAddress);
@@ -2250,7 +2242,6 @@ function populateReviewModal() {
     if (currentAge >= 15) {
         educationHTML += createField('Employment Status', getValue('employmentStatus'));
         educationHTML += createField('Occupation', getValue('occupation'));
-        educationHTML += createField('Monthly Income', getValue('monthlyIncome'));
     }
     educationHTML += '</div>';
     
