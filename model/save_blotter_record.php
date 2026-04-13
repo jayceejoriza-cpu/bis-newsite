@@ -79,14 +79,17 @@ try {
     $incidentLocation = $_POST['incident_location'];
     $incidentDescription = $_POST['incident_description'];
     $resolution = $_POST['resolution'] ?? null;
+    $caseOutcome = $_POST['case_outcome'] ?? null;
+    $mediationSchedule = $_POST['mediation_schedule'] ?? null;
     $reportedBy = $_POST['reported_by'] ?? null;
     
     // Insert blotter record
     $stmt = $pdo->prepare("
         INSERT INTO blotter_records (
             record_number, incident_type, incident_description, incident_date, 
-            incident_location, date_reported, reported_by, status, resolution
-        ) VALUES (?, ?, ?, ?, ?, NOW(), ?, ?, ?)
+            incident_location, date_reported, reported_by, status, resolution, 
+            case_outcome, mediation_schedule
+        ) VALUES (?, ?, ?, ?, ?, NOW(), ?, ?, ?, ?, ?)
     ");
     
     $stmt->execute([
@@ -97,7 +100,9 @@ try {
         $incidentLocation,
         $reportedBy,
         $status,
-        $resolution
+        $resolution,
+        $caseOutcome,
+        $mediationSchedule
     ]);
     
     $blotterId = $pdo->lastInsertId();

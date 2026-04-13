@@ -224,7 +224,7 @@ function initializeBlotterChart() {
         pending: months.map(() => Math.random() * 0.5 + 0.2),
         underInvestigation: months.map(() => Math.random() * 0.8 + 0.3),
         dismissed: months.map(() => Math.random() * 0.3 + 0.1),
-        resolved: months.map(() => Math.random() * 1.5 + 0.5)
+        settled: months.map(() => Math.random() * 1.5 + 0.5)
     };
 
     window.blotterChart = new Chart(blotterCtx, {
@@ -263,8 +263,8 @@ function initializeBlotterChart() {
                     pointRadius: 0
                 },
                 {
-                    label: 'Resolved',
-                    data: blotterData.resolved,
+                    label: 'Settled',
+                    data: blotterData.settled,
                     backgroundColor: 'rgba(144, 238, 144, 0.6)',
                     borderColor: 'rgba(144, 238, 144, 1)',
                     borderWidth: 2,

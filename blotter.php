@@ -126,42 +126,12 @@ try {
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="assets/css/style.css">
-    <link rel="stylesheet" href="assets/css/blotter.css">
+<link rel="stylesheet" href="assets/css/blotter.css">
+    <script src="https://cdn.tailwindcss.com"></script>
     <!-- Dark Mode Init: must be in <head> to prevent flash of light mode -->
     <script src="assets/js/dark-mode-init.js"></script>
     <style>
-        /* View Modal Styles */
-        .party-view-item {
-            background-color: #fff;
-            border: 1px solid #e9ecef;
-            border-radius: 8px;
-            padding: 15px;
-            margin-bottom: 10px;
-            transition: all 0.2s ease;
-            border-left: 4px solid #e9ecef;
-        }
-        .party-view-item:hover {
-            border-color: #dee2e6;
-            border-left-color: var(--primary-color);
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-            transform: translateY(-2px);
-        }
-        .action-view-item {
-            background-color: #f8f9fa;
-            border-left: 4px solid var(--primary-color);
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-            padding: 15px;
-            margin-bottom: 15px;
-            border-radius: 4px;
-        }
-        .view-info-label {
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            color: #6c757d;
-            font-weight: 600;
-            margin-bottom: 4px;
-        }
+
 
         .table-container {
             overflow: visible !important;
@@ -346,9 +316,11 @@ try {
             <div class="filter-tabs">
                 <button class="tab-btn active" data-filter="all">All</button>
                 <button class="tab-btn" data-filter="pending">Pending</button>
-                <button class="tab-btn" data-filter="resolved">Resolve</button>
+                <button class="tab-btn" data-filter="settled">Settled</button>
                 <button class="tab-btn" data-filter="under-investigation">Under Investigation</button>
+                <button class="tab-btn" data-filter="scheduled-for-mediation">Mediation</button>
                 <button class="tab-btn" data-filter="dismissed">Dismissed</button>
+                <button class="tab-btn" data-filter="endorsed-to-police">Endorsed</button>
             </div>
             
             <div class="search-filter-bar">
@@ -392,7 +364,7 @@ try {
                                 $recordNumber = htmlspecialchars($record['record_number']);
                                 $dateReported = formatDateShort($record['date_reported']);
                                 $incidentDate = formatDateShort($record['incident_date']);
-                                $status = $record['status'];
+                                $status = ($record['status'] === 'Resolved') ? 'Settled' : $record['status'];
                                 $incidentType = htmlspecialchars($record['incident_type']);
                                 $statusBadge = 'badge-' . strtolower(str_replace(' ', '-', $status));
                                 $complainants = !empty($record['complainant_names']) ? explode('|||', $record['complainant_names']) : [];
@@ -400,7 +372,7 @@ try {
                                 $complainantCount = $record['complainant_count'];
                                 $respondentCount = $record['respondent_count'];
                             ?>
-                            <tr data-status="<?php echo strtolower(str_replace(' ', '-', $status)); ?>">
+<tr class="clickable-row" data-id="<?php echo $record['id']; ?>" data-status="<?php echo strtolower(str_replace(' ', '-', $status)); ?>">
                                 <td><span class="record-number"><?php echo $recordNumber; ?></span></td>
                                 <td><?php echo $dateReported; ?></td>
                                 <td><span class="badge <?php echo $statusBadge; ?>"><?php echo htmlspecialchars($status); ?></span></td>
@@ -474,11 +446,17 @@ try {
                                                     <button type="button" class="action-menu-item" data-action="status-investigation">
                                                         <span>Under Investigation</span>
                                                     </button>
-                                                    <button type="button" class="action-menu-item" data-action="status-resolved">
-                                                        <span>Resolved</span>
+                                                    <button type="button" class="action-menu-item" data-action="status-mediation">
+                                                        <span>Scheduled for Mediation</span>
+                                                    </button>
+                                                    <button type="button" class="action-menu-item" data-action="status-settled">
+                                                        <span>Settled</span>
                                                     </button>
                                                     <button type="button" class="action-menu-item" data-action="status-dismissed">
                                                         <span>Dismissed</span>
+                                                    </button>
+                                                    <button type="button" class="action-menu-item" data-action="status-endorsed">
+                                                        <span>Endorsed to Police</span>
                                                     </button>
                                                 </div>
                                             </div>
@@ -549,251 +527,125 @@ try {
     </main>
     
     <!-- Create Blotter Record Modal -->
-    <div class="modal fade" id="createRecordModal" tabindex="-1">
-        <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Barangay Blotter Record</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <form id="createRecordForm">
-                        <div class="step-indicator">
-                            <div class="step-item active" data-step="0" id="step-basic-info">
-                                <div class="step-icon">
-                                    <i class="fas fa-info-circle"></i>
-                                </div>
-                                <div class="step-label">Basic Info</div>
-                            </div>
-                            <div class="step-line"></div>
-                            <div class="step-item" data-step="1" id="step-parties">
-                                <div class="step-icon">
-                                    <i class="fas fa-users"></i>
-                                </div>
-                                <div class="step-label">Parties Involved</div>
-                            </div>
-                            <div class="step-line"></div>
-                            <div class="step-item" data-step="2" id="step-incident">
-                                <div class="step-icon">
-                                    <i class="fas fa-exclamation-triangle"></i>
-                                </div>
-                                <div class="step-label">Incident Details</div>
-                            </div>
-                            <div class="step-line"></div>
-                            <div class="step-item" data-step="3" id="step-actions">
-                                <div class="step-icon">
-                                    <i class="fas fa-clipboard-check"></i>
-                                </div>
-                                <div class="step-label">Actions & Resolution</div>
-                            </div>
+<div class="modal fade" id="createRecordModal" tabindex="-1">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Create Barangay Blotter Record</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="createRecordForm">
+                    <div class="step-indicator transition-all duration-300">
+                        <div class="step-item active" data-step="0">
+                            <div class="step-icon"><i class="fas fa-info-circle"></i></div>
+                            <div class="step-label">Step 1: Basic Info</div>
                         </div>
-                        
-                        <div class="tab-content">
-                            <div class="tab-pane fade show active" id="basic-info">
-                                <div class="mt-4">
-                                    <div class="row mb-3">
-                                        <div class="col-md-6 mb-3">
-                                            <label class="form-label">Status</label>
-                                            <select class="form-control" name="status" required>
-                                                <option value="Pending">Pending</option>
-                                                <option value="Under Investigation">Under Investigation</option>
-                                                <option value="Resolved">Resolved</option>
-                                                <option value="Dismissed">Dismissed</option>
-                                            </select>
-                                        </div>
-                                        <div class="col-md-6 mb-3">
-                                            <label class="form-label">Incident Date</label>
-                                            <input type="datetime-local" class="form-control" id="incidentDate" name="incident_date" required>
-                                        </div>
-                                    </div>
-                                    
-                                    <!-- Complainant Section -->
-                                    <div class="party-section mb-4">
-                                        <div class="party-header">
-                                            <h6 class="party-title"><i class="fas fa-user"></i> Complainant</h6>
-                                            <button type="button" class="btn btn-sm btn-primary" id="addComplainantBtn"><i class="fas fa-plus"></i></button>
-                                        </div>
-                                        <div id="complainantsContainer">
-                                            <div class="party-entry">
-                                                <div class="party-entry-header"><span>Complainant 1</span></div>
-                                                <div class="party-entry-body">
-                                                    <div class="mb-3">
-                                                        <label class="form-label">Full Name <span class="text-danger">*</span></label>
-                                                        <div class="member-name-input-group">
-                                                            <input type="text" class="form-control complainant-name-required" name="complainant_name[]" placeholder="Enter full name" required>
-                                                            <button type="button" class="btn-resident-search" data-target="complainant" data-index="0">
-                                                                RESIDENT
-                                                            </button>
-                                                            <button type="button" class="btn-reset-resident" style="display: none;" title="Reset">
-                                                                <i class="fas fa-redo"></i>
-                                                            </button>
-                                                        </div>
-                                                        <input type="hidden" name="complainant_resident_id[]" value="">
-                                                    </div>
-                                                    <div class="row">
-                                                        <div class="col-md-6 mb-3">
-                                                            <label class="form-label">Address</label>
-                                                            <input type="text" class="form-control" name="complainant_address[]">
-                                                        </div>
-                                                        <div class="col-md-6 mb-3">
-                                                            <label class="form-label">Mobile Number</label>
-                                                            <div class="input-group">
-                                                                <span class="input-group-text"><img src="https://flagcdn.com/w20/ph.png" alt="PH" style="width:20px;"> +63</span>
-                                                                <input type="text" class="form-control" name="complainant_contact[]" placeholder="9XX XXX XXXX">
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    
-                                    <!-- Victims Section -->
-                                    <div class="party-section">
-                                        <div class="party-header">
-                                            <h6 class="party-title"><i class="fas fa-user-injured"></i> Victims</h6>
-                                            <button type="button" class="btn btn-sm btn-primary" id="addVictimBtn"><i class="fas fa-plus"></i></button>
-                                        </div>
-                                        <div id="victimsContainer">
-                                            <div class="party-entry">
-                                                <div class="party-entry-header"><span>Victim 1</span></div>
-                                                <div class="party-entry-body">
-                                                    <div class="mb-3">
-                                                        <label class="form-label">Full Name <span class="text-danger">*</span></label>
-                                                        <div class="member-name-input-group">
-                                                            <input type="text" class="form-control victim-name-required" name="victim_name[]" placeholder="Enter full name" required>
-                                                            <button type="button" class="btn-resident-search" data-target="victim" data-index="0">
-                                                                RESIDENT
-                                                            </button>
-                                                            <button type="button" class="btn-reset-resident" style="display: none;" title="Reset">
-                                                                <i class="fas fa-redo"></i>
-                                                            </button>
-                                                        </div>
-                                                        <input type="hidden" name="victim_resident_id[]" value="">
-                                                    </div>
-                                                    <div class="row">
-                                                        <div class="col-md-6 mb-3">
-                                                            <label class="form-label">Address</label>
-                                                            <input type="text" class="form-control" name="victim_address[]">
-                                                        </div>
-                                                        <div class="col-md-6 mb-3">
-                                                            <label class="form-label">Mobile Number</label>
-                                                            <div class="input-group">
-                                                                <span class="input-group-text"><img src="https://flagcdn.com/w20/ph.png" alt="PH" style="width:20px;"> +63</span>
-                                                                <input type="text" class="form-control" name="victim_contact[]" placeholder="9XX XXX XXXX">
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div class="tab-pane fade" id="parties">
-                                <div class="mt-4">
-                                    <div class="party-section mb-4">
-                                        <div class="party-header">
-                                            <h6 class="party-title"><i class="fas fa-user-shield"></i> Respondents</h6>
-                                            <button type="button" class="btn btn-sm btn-primary" id="addRespondentBtn"><i class="fas fa-plus"></i></button>
-                                        </div>
-                                        <div id="respondentsContainer">
-                                            <div class="party-entry">
-                                                <div class="party-entry-header"><span>Respondents 1</span></div>
-                                                <div class="party-entry-body">
-                                                    <div class="mb-3">
-                                                        <label class="form-label">Full Name <span class="text-danger">*</span></label>
-                                                        <div class="member-name-input-group">
-                                                            <input type="text" class="form-control respondent-name-required" name="respondent_name[]" placeholder="Enter full name" required>
-                                                            <button type="button" class="btn-resident-search" data-target="respondent" data-index="0">
-                                                                RESIDENT
-                                                            </button>
-                                                            <button type="button" class="btn-reset-resident" style="display: none;" title="Reset">
-                                                                <i class="fas fa-redo"></i>
-                                                            </button>
-                                                        </div>
-                                                        <input type="hidden" name="respondent_resident_id[]" value="">
-                                                    </div>
-                                                    <div class="row">
-                                                        <div class="col-md-6 mb-3">
-                                                            <label class="form-label">Address</label>
-                                                            <input type="text" class="form-control" name="respondent_address[]">
-                                                        </div>
-                                                        <div class="col-md-6 mb-3">
-                                                            <label class="form-label">Mobile Number</label>
-                                                            <div class="input-group">
-                                                                <span class="input-group-text"><img src="https://flagcdn.com/w20/ph.png" alt="PH" style="width:20px;"> +63</span>
-                                                                <input type="text" class="form-control" name="respondent_contact[]" placeholder="9XX XXX XXXX">
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    
-                                    <div class="party-section">
-                                        <div class="party-header">
-                                            <h6 class="party-title"><i class="fas fa-eye"></i> Witnesses</h6>
-                                            <button type="button" class="btn btn-sm btn-primary" id="addWitnessBtn"><i class="fas fa-plus"></i></button>
-                                        </div>
-                                        <div id="witnessesContainer"></div>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div class="tab-pane fade" id="incident">
-                                <div class="mt-4">
-                                    <div class="mb-3">
-                                        <label class="form-label">Incident Date <span class="text-danger">*</span></label>
-                                        <input type="datetime-local" class="form-control" name="incident_date_details" required>
-                                    </div>
-                                    <div class="mb-3">
-                                        <label class="form-label">Incident Type <span class="text-danger">*</span></label>
-                                        <input type="text" class="form-control" name="incident_type" placeholder="Incident type is required." required>
-                                    </div>
-                                    <div class="mb-3">
-                                        <label class="form-label">Incident Location <span class="text-danger">*</span></label>
-                                        <textarea class="form-control" name="incident_location" rows="2" placeholder="Incident location is required." required></textarea>
-                                    </div>
-                                    <div class="mb-3">
-                                        <label class="form-label">Incident Details <span class="text-danger">*</span></label>
-                                        <textarea class="form-control" name="incident_description" rows="6" placeholder="Incident details is required." required></textarea>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div class="tab-pane fade" id="actions">
-                                <div class="mt-4">
-                                    <div class="party-section mb-4">
-                                        <div class="party-header">
-                                            <h6 class="party-title">Action Taken</h6>
-                                            <button type="button" class="btn btn-sm btn-primary" id="addActionBtn"><i class="fas fa-plus"></i></button>
-                                        </div>
-                                        <div id="actionsContainer"></div>
-                                    </div>
-                                    <div class="mb-3">
-                                        <label class="form-label">Resolution</label>
-                                        <textarea class="form-control" name="resolution" rows="4" placeholder="Enter final resolution details..."></textarea>
-                                        <small class="text-danger">Resolution is required.</small>
-                                    </div>
-                                </div>
-                            </div>
+                        <div class="step-line"></div>
+                        <div class="step-item" data-step="1">
+                            <div class="step-icon"><i class="fas fa-users"></i></div>
+                            <div class="step-label">Step 2: Parties Involved</div>
                         </div>
-                    </form>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <div style="margin-left: auto; display: flex; gap: 10px;">
-                        <button type="button" class="btn btn-secondary" id="modalBackBtn" style="display: none;">Back</button>
-                        <button type="button" class="btn btn-primary" id="modalNextBtn">Next</button>
-                        <button type="button" class="btn btn-primary" id="saveRecordBtn" style="display: none;">Save Record</button>
+                        <div class="step-line"></div>
+                        <div class="step-item" data-step="2">
+                            <div class="step-icon"><i class="fas fa-align-left"></i></div>
+                            <div class="step-label">Step 3: Narrative</div>
+                        </div>
+                        <div class="step-line"></div>
+                        <div class="step-item" data-step="3">
+                            <div class="step-icon"><i class="fas fa-check-circle"></i></div>
+                            <div class="step-label">Step 4: Witnesses & Final</div>
+                        </div>
                     </div>
+                    
+                    <div class="tab-content">
+                        <!-- Step 1: Basic Info -->
+                        <div class="tab-pane fade show active" id="step-1-basic">
+                            <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div class="col-span-1">
+                                    <label class="form-label fw-bold">Case Status <span class="text-danger">*</span></label>
+                                    <select class="form-select" name="status" required>
+                                        <option value="Pending">Pending</option>
+                                        <option value="Scheduled for Mediation">Scheduled for Mediation</option>
+                                        <option value="Under Investigation">Under Investigation</option>
+                                        <option value="Settled">Settled</option>
+                                        <option value="Dismissed">Dismissed</option>
+                                        <option value="Endorsed to Police">Endorsed to Police</option>
+                                    </select>
+                                </div>
+                                <div class="col-span-1">
+                                    <label class="form-label fw-bold">Incident Date <span class="text-danger">*</span></label>
+                                    <input type="datetime-local" class="form-control" id="incidentDate" name="incident_date" required>
+                                </div>
+                                <div class="col-span-1">
+                                    <label class="form-label fw-bold">Incident Type <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" name="incident_type" placeholder="e.g., Verbal Dispute" required>
+                                </div>
+                                <div class="col-span-1">
+                                    <label class="form-label fw-bold">Incident Location <span class="text-danger">*</span></label>
+                                    <textarea class="form-control" name="incident_location" rows="2" placeholder="Full address where incident occurred" required></textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Step 2: Parties Involved -->
+                        <div class="tab-pane fade" id="step-2-parties">
+                            <div class="mt-4">
+                                <div class="row">
+                                    <div class="col-lg-4">
+                                        <h6 class="party-title mb-3"><i class="fas fa-user-shield"></i> Complainants</h6>
+                                        <div id="complainantsContainer" class="party-section mb-4"></div>
+                                        <button type="button" class="btn btn-outline-primary btn-sm mb-2" id="addComplainantBtn"><i class="fas fa-plus"></i> Add</button>
+                                    </div>
+                                    <div class="col-lg-4">
+                                        <h6 class="party-title mb-3"><i class="fas fa-user-injured"></i> Victims</h6>
+                                        <div id="victimsContainer" class="party-section mb-4"></div>
+                                        <button type="button" class="btn btn-outline-primary btn-sm mb-2" id="addVictimBtn"><i class="fas fa-plus"></i> Add</button>
+                                    </div>
+                                    <div class="col-lg-4">
+                                        <h6 class="party-title mb-3"><i class="fas fa-user-shield"></i> Respondents</h6>
+                                        <div id="respondentsContainer" class="party-section mb-4"></div>
+                                        <button type="button" class="btn btn-outline-primary btn-sm mb-2" id="addRespondentBtn"><i class="fas fa-plus"></i> Add</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Step 3: Narrative -->
+                        <div class="tab-pane fade" id="step-3-narrative">
+                            <div class="mt-4">
+                                <label class="form-label fw-bold text-xl mb-4 d-block">
+                                    <i class="fas fa-align-left text-primary me-2"></i>
+                                    Incident Narrative / Details <span class="text-danger">*</span>
+                                </label>
+                                <textarea class="form-control" name="incident_description" rows="8" style="resize: vertical; min-height: 300px; font-size: 1.1rem; line-height: 1.6;" placeholder="Provide COMPLETE detailed narrative of the incident." required></textarea>
+                            </div>
+                        </div>
+
+                        <!-- Step 4: Witnesses & Final -->
+                        <div class="tab-pane fade" id="step-4-final">
+                            <div class="mt-4">
+                                <h6 class="party-title mb-3"><i class="fas fa-eye text-success"></i> Witnesses</h6>
+                                <div id="witnessesContainer" class="party-section mb-2"></div>
+                                <button type="button" class="btn btn-outline-success btn-sm" id="addWitnessBtn"><i class="fas fa-plus"></i> Add Witness</button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <div style="margin-left: auto; display: flex; gap: 10px;">
+                    <button type="button" class="btn btn-secondary" id="modalBackBtn" style="display: none;">Back</button>
+                    <button type="button" class="btn btn-primary" id="modalNextBtn">Next</button>
+                    <button type="button" class="btn btn-primary" id="saveRecordBtn" style="display: none;">
+                        <i class="fas fa-save"></i> Save Record
+                    </button>
                 </div>
             </div>
         </div>
     </div>
+</div>
     
     <!-- View Blotter Record Modal -->
     <div class="modal fade" id="viewRecordModal" tabindex="-1">
@@ -803,92 +655,142 @@ try {
                     <h5 class="modal-title">View Blotter Record Details</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
-                <div class="modal-body">
-                    <form id="viewRecordForm">
-                        <!-- Basic Info -->
-                        <h5 class="mb-3 text-primary"><i class="fas fa-info-circle"></i> Basic Information</h5>
-                        <div class="row mb-3">
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Status</label>
-                                <input type="text" class="form-control" id="view_status" readonly>
+                <div class="modal-body max-h-[70vh] overflow-y-auto p-6">
+                    <form id="viewRecordForm" class="space-y-6">
+                        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                            <!-- Left Column: Case Information (col-span-7) -->
+                            <div class="lg:col-span-7 space-y-6">
+                                <!-- Basic Info -->
+                                <div>
+                                    <h5 class="text-lg font-semibold text-blue-600 mb-4 flex items-center gap-2">
+                                        <i class="fas fa-info-circle text-blue-500"></i> 
+                                        Basic Information
+                                    </h5>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <label class="block text-xs uppercase font-semibold text-gray-500 tracking-wide mb-1">Status</label>
+                                            <div class="bg-gray-50 p-3 rounded-lg text-sm border">
+                                                <input type="text" class="bg-transparent w-full border-none p-0 focus:ring-0 text-sm font-medium" id="view_status" readonly>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs uppercase font-semibold text-gray-500 tracking-wide mb-1">Incident Date</label>
+                                            <div class="bg-gray-50 p-3 rounded-lg text-sm border">
+                                                <input type="text" class="bg-transparent w-full border-none p-0 focus:ring-0 text-sm font-medium" id="view_incident_date" readonly>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Incident Details -->
+                                <div>
+                                    <h5 class="text-lg font-semibold text-blue-600 mb-4 flex items-center gap-2">
+                                        <i class="fas fa-exclamation-triangle text-yellow-500"></i> 
+                                        Incident Details
+                                    </h5>
+                                    <div class="space-y-4">
+                                        <div>
+                                            <label class="block text-xs uppercase font-semibold text-gray-500 tracking-wide mb-1">Incident Type</label>
+                                            <div class="bg-gray-50 p-3 rounded-lg text-sm border">
+                                                <input type="text" class="bg-transparent w-full border-none p-0 focus:ring-0 text-sm font-medium" id="view_incident_type" readonly>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs uppercase font-semibold text-gray-500 tracking-wide mb-1">Incident Location</label>
+                                            <div class="bg-gray-50 p-3 rounded-lg text-sm border">
+                                                <textarea id="view_incident_location" rows="2" class="bg-transparent w-full border-none p-0 focus:ring-0 text-sm resize-none" readonly></textarea>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs uppercase font-semibold text-gray-500 tracking-wide mb-1">Incident Details</label>
+                                            <div class="bg-gray-50 p-3 rounded-lg text-sm border">
+                                                <textarea id="view_incident_description" rows="6" class="bg-transparent w-full border-none p-0 focus:ring-0 text-sm resize-none" readonly></textarea>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Actions & Resolution -->
+                                <div>
+                                    <h5 class="text-lg font-semibold text-blue-600 mb-4 flex items-center gap-2">
+                                        <i class="fas fa-clipboard-check text-green-500"></i> 
+                                        Actions & Resolution
+                                    </h5>
+                                    <div id="view_mediation_field" class="mb-4" style="display: none;">
+                                        <label class="block text-xs uppercase font-semibold text-gray-500 tracking-wide mb-1">Mediation Schedule</label>
+                                        <div class="bg-gray-50 p-3 rounded-lg text-sm border">
+                                            <input type="text" class="bg-transparent w-full border-none p-0 focus:ring-0 text-sm font-medium" id="view_mediation_date" readonly>
+                                        </div>
+                                    </div>
+                                    <div id="view_referral_notice" class="bg-blue-50 border border-blue-200 p-3 rounded-lg text-sm text-blue-800 mb-4 hidden">
+                                        <i class="fas fa-info-circle mr-2"></i> Note: This case is tagged for Certificate to File Action.
+                                    </div>
+                                    <div id="viewActionsContainer" class="space-y-3 mb-4"></div>
+                                    <div>
+                                        <label class="block text-xs uppercase font-semibold text-gray-500 tracking-wide mb-1">Resolution</label>
+                                        <div class="bg-gray-50 p-3 rounded-lg text-sm border">
+                                            <textarea id="view_resolution" rows="4" class="bg-transparent w-full border-none p-0 focus:ring-0 text-sm resize-none" readonly></textarea>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Incident Date</label>
-                                <input type="text" class="form-control" id="view_incident_date" readonly>
+
+                            <!-- Right Column: Parties Involved (col-span-5) -->
+                            <div class="lg:col-span-5">
+                                <h5 class="text-lg font-semibold text-blue-600 mb-4 flex items-center gap-2">
+                                    <i class="fas fa-users text-purple-500"></i> 
+                                    Parties Involved
+                                </h5>
+                                <div class="space-y-3">
+                                    <!-- Complainant -->
+                                    <div>
+                                        <h6 class="text-sm font-semibold text-gray-800 mb-2 flex items-center gap-2">
+                                            <i class="fas fa-user text-blue-500 w-4 h-4"></i>
+                                            Complainant
+                                        </h6>
+                                        <ul id="viewComplainantsContainer" class="space-y-2 border-b pb-3"></ul>
+                                    </div>
+                                    <!-- Victims -->
+                                    <div>
+                                        <h6 class="text-sm font-semibold text-gray-800 mb-2 flex items-center gap-2">
+                                            <i class="fas fa-user-injured text-red-500 w-4 h-4"></i>
+                                            Victims
+                                        </h6>
+                                        <ul id="viewVictimsContainer" class="space-y-2 border-b pb-3"></ul>
+                                    </div>
+                                    <!-- Respondents -->
+                                    <div>
+                                        <h6 class="text-sm font-semibold text-gray-800 mb-2 flex items-center gap-2">
+                                            <i class="fas fa-user-shield text-orange-500 w-4 h-4"></i>
+                                            Respondents
+                                        </h6>
+                                        <ul id="viewRespondentsContainer" class="space-y-2 border-b pb-3"></ul>
+                                    </div>
+                                    <!-- Witnesses -->
+                                    <div>
+                                        <h6 class="text-sm font-semibold text-gray-800 mb-2 flex items-center gap-2">
+                                            <i class="fas fa-eye text-green-500 w-4 h-4"></i>
+                                            Witnesses
+                                        </h6>
+                                        <ul id="viewWitnessesContainer" class="space-y-2"></ul>
+                                    </div>
+                                </div>
                             </div>
-                        </div>
-                        
-                        <!-- Parties Involved -->
-                        <h5 class="mb-3 mt-4 text-primary"><i class="fas fa-users"></i> Parties Involved</h5>
-                        
-                        <!-- Complainant Section -->
-                        <div class="party-section mb-4">
-                            <div class="party-header">
-                                <h6 class="party-title"><i class="fas fa-user"></i> Complainant</h6>
-                            </div>
-                            <div id="viewComplainantsContainer"></div>
-                        </div>
-                        
-                        <!-- Victims Section -->
-                        <div class="party-section mb-4">
-                            <div class="party-header">
-                                <h6 class="party-title"><i class="fas fa-user-injured"></i> Victims</h6>
-                            </div>
-                            <div id="viewVictimsContainer"></div>
-                        </div>
-                        
-                        <!-- Respondents Section -->
-                        <div class="party-section mb-4">
-                            <div class="party-header">
-                                <h6 class="party-title"><i class="fas fa-user-shield"></i> Respondents</h6>
-                            </div>
-                            <div id="viewRespondentsContainer"></div>
-                        </div>
-                        
-                        <!-- Witnesses Section -->
-                        <div class="party-section mb-4">
-                            <div class="party-header">
-                                <h6 class="party-title"><i class="fas fa-eye"></i> Witnesses</h6>
-                            </div>
-                            <div id="viewWitnessesContainer"></div>
-                        </div>
-                        
-                        <!-- Incident Details -->
-                        <h5 class="mb-3 mt-4 text-primary"><i class="fas fa-exclamation-triangle"></i> Incident Details</h5>
-                        <div class="mb-3">
-                            <label class="form-label">Incident Type</label>
-                            <input type="text" class="form-control" id="view_incident_type" readonly>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Incident Location</label>
-                            <textarea class="form-control" id="view_incident_location" rows="2" readonly></textarea>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Incident Details</label>
-                            <textarea class="form-control" id="view_incident_description" rows="6" readonly></textarea>
-                        </div>
-                        
-                        <!-- Actions & Resolution -->
-                        <h5 class="mb-3 mt-4 text-primary"><i class="fas fa-clipboard-check"></i> Actions & Resolution</h5>
-                        <div class="party-section mb-4">
-                            <div class="party-header">
-                                <h6 class="party-title">Action Taken</h6>
-                            </div>
-                            <div id="viewActionsContainer"></div>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Resolution</label>
-                            <textarea class="form-control" id="view_resolution" rows="4" readonly></textarea>
                         </div>
                     </form>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    <?php if (hasPermission('perm_blotter_print')): ?>
-                    <button type="button" class="btn btn-primary" id="printRecordBtn">
-                        <i class="fas fa-print"></i> Print Record
-                    </button>
-                    <?php endif; ?>
+                <div class="sticky bottom-0 bg-white border-t p-4 z-10 shadow-2xl mt-auto">
+                    <div class="flex justify-end gap-3">
+                        <button type="button" class="px-6 py-2 bg-gray-500 hover:bg-gray-600 text-white font-medium rounded-lg transition-all duration-200" data-bs-dismiss="modal">
+                            Close
+                        </button>
+                        <?php if (hasPermission('perm_blotter_print')): ?>
+                        <button type="button" class="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg flex items-center gap-2 transition-all duration-200" id="printRecordBtn">
+                            <i class="fas fa-print"></i> 
+                            Print Record
+                        </button>
+                        <?php endif; ?>
+                    </div>
                 </div>
             </div>
         </div>

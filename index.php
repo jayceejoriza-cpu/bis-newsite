@@ -221,7 +221,9 @@ $blotterStatusData = [];
 try {
     $rows = $pdo->query("SELECT status, COUNT(*) as cnt FROM blotter_records GROUP BY status ORDER BY cnt DESC")->fetchAll();
     foreach ($rows as $r) {
-        $blotterStatusData[$r['status']] = (int)$r['cnt'];
+        $status = ($r['status'] === 'Resolved') ? 'Settled' : $r['status'];
+        if (!isset($blotterStatusData[$status])) $blotterStatusData[$status] = 0;
+        $blotterStatusData[$status] += (int)$r['cnt'];
     }
 } catch (PDOException $e) { error_log($e->getMessage()); }
 
@@ -332,7 +334,7 @@ $blotterStackedData = [
     'Pending' => array_fill(0, 12, 0),
     'Under Investigation' => array_fill(0, 12, 0),
     'Dismissed' => array_fill(0, 12, 0),
-    'Resolved' => array_fill(0, 12, 0)
+    'Settled' => array_fill(0, 12, 0)
 ];
 
 // Pre-populate labels for the last 12 months to ensure charts render even if queries fail
@@ -359,10 +361,11 @@ try {
     // Blotter Stacked (Rolling 12 Months)
     $stmt = $pdo->query("SELECT DATE_FORMAT(date_reported, '%Y-%m') as ym, status, COUNT(*) as cnt FROM blotter_records WHERE date_reported >= DATE_SUB(CURDATE(), INTERVAL 12 MONTH) GROUP BY ym, status");
     while($r = $stmt->fetch()) {
+        $status = ($r['status'] === 'Resolved') ? 'Settled' : $r['status'];
         for($i=11; $i>=0; $i--) {
             if(date('Y-m', strtotime("-$i months")) == $r['ym']) {
-                if(isset($blotterStackedData[$r['status']])) {
-                    $blotterStackedData[$r['status']][11 - $i] = (int)$r['cnt'];
+                if(isset($blotterStackedData[$status])) {
+                    $blotterStackedData[$status][11 - $i] += (int)$r['cnt'];
                 }
                 break;
             }
