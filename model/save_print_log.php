@@ -22,7 +22,7 @@ if ($resident_id <= 0 || empty($cert_title)) {
 $ref_no = 'REQ-' . date('Ymd') . '-' . rand(1000, 9999);
 
 // Insert Request - now using certificate_name directly
-$stmt = $conn->prepare("INSERT INTO certificate_requests (reference_no, resident_id, certificate_name, purpose, status, date_requested, created_at) VALUES (?, ?, ?, ?, 'Approved', ?, NOW())");
+$stmt = $conn->prepare("INSERT INTO certificate_requests (reference_no, resident_id, certificate_name, purpose, date_requested, created_at) VALUES (?, ?, ?, ?, ?, NOW())");
 $stmt->bind_param("sisss", $ref_no, $resident_id, $cert_title, $purpose, $date_requested);
 
 if ($stmt->execute()) {

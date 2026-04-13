@@ -32,7 +32,6 @@ $usersResult = $conn->query("
         u.id,
         u.username,
         u.full_name,
-        u.email,
         u.status,
         u.created_at,
         GROUP_CONCAT(r.id   ORDER BY r.name SEPARATOR ',') AS role_ids,

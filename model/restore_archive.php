@@ -145,15 +145,14 @@ function restoreResident($conn, $data) {
     $allowedColumns = [
         'resident_id', 'photo', 'first_name', 'middle_name', 'last_name', 'suffix',
         'sex', 'date_of_birth', 'age', 'place_of_birth', 'religion', 'ethnicity',
-        'mobile_number', 'email', 'house_no', 'current_address', 'household_no', 'household_contact', 'purok', 'street_name',
+        'mobile_number', 'current_address', 'purok', 'street_name',
         'civil_status', 'spouse_name', 'father_name', 'mother_name', 'number_of_children', 'household_head',
-        'educational_attainment', 'employment_status', 'occupation', 'monthly_income',
-        'fourps_member', 'fourps_id', 'voter_status', 'precinct_number', 'pwd_status', 'pwd_type', 'pwd_id_number', 'senior_citizen', 'indigent',
+        'educational_attainment', 'employment_status', 'occupation',
+        'fourps_member', 'fourps_id', 'voter_status', 'precinct_number', 'pwd_status', 'pwd_type', 'pwd_id_number', 'senior_citizen',
         'philhealth_id', 'membership_type', 'philhealth_category', 'age_health_group', 'medical_history',
         'lmp_date', 'using_fp_method', 'fp_methods_used', 'fp_status',
-        'water_source_type', 'toilet_facility_type', 'remarks',
-        'verification_status', 'verified_by', 'verified_at', 'rejection_reason',
-        'activity_status', 'status_changed_at', 'status_changed_by', 'status_remarks'
+        'remarks',
+        'activity_status', 'status_changed_at', 'status_changed_by'
     ];
     
     foreach ($allowedColumns as $column) {
@@ -189,31 +188,6 @@ function restoreResident($conn, $data) {
     
     $residentId = $stmt->insert_id;
     $stmt->close();
-    
-    // Restore emergency contacts if they exist
-    if (isset($data['emergency_contacts']) && is_array($data['emergency_contacts'])) {
-        foreach ($data['emergency_contacts'] as $contact) {
-            $stmt = $conn->prepare("INSERT INTO emergency_contacts (resident_id, contact_name, relationship, contact_number, address, priority) VALUES (?, ?, ?, ?, ?, ?)");
-            
-            // Assign to variables for bind_param references
-            $c_name = $contact['contact_name'];
-            $c_rel = $contact['relationship'];
-            $c_num = $contact['contact_number'];
-            $c_addr = $contact['address'] ?? null;
-            $priority = $contact['priority'] ?? 1;
-            
-            $stmt->bind_param("issssi", 
-                $residentId,
-                $c_name,
-                $c_rel,
-                $c_num,
-                $c_addr,
-                $priority
-            );
-            $stmt->execute();
-            $stmt->close();
-        }
-    }
 }
 
 function restoreOfficial($conn, $data) {
@@ -232,7 +206,7 @@ function restoreOfficial($conn, $data) {
     $allowedColumns = [
         'resident_id', 'position', 'committee', 'hierarchy_level',
         'term_start', 'term_end', 'status', 'appointment_type',
-        'photo', 'contact_number', 'email', 'created_at', 'updated_at'
+        'photo', 'contact_number', 'created_at', 'updated_at'
     ];
     
     foreach ($allowedColumns as $column) {
@@ -517,19 +491,17 @@ function restorePermit($conn, $data) {
 }
 
 function restoreUser($conn, $data) {
-    $stmt = $conn->prepare("INSERT INTO users (username, password, full_name, email, role, status) VALUES (?, ?, ?, ?, ?, ?)");
+    $stmt = $conn->prepare("INSERT INTO users (username, password, full_name, role, status) VALUES (?, ?, ?, ?, ?)");
     $role = $data['role'] ?? $data['type'] ?? 'Staff';
     $status = $data['status'] ?? 'Active';
     $fullName = $data['full_name'] ?? $data['name'] ?? $data['username'];
-    $email = $data['email'] ?? null;
     $username = $data['username'];
     $password = $data['password'];
     
-    $stmt->bind_param("ssssss",
+    $stmt->bind_param("sssss",
         $username,
         $password,
         $fullName,
-        $email,
         $role,
         $status
     );

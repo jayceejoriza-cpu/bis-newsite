@@ -59,11 +59,6 @@ try {
         exit;
     }
     
-    // Fetch emergency contacts
-    $contactStmt = $pdo->prepare("SELECT * FROM emergency_contacts WHERE resident_id = ?");
-    $contactStmt->execute([$residentId]);
-    $emergencyContacts = $contactStmt->fetchAll();
-    
     // Fetch household information where resident is the household head
     $householdStmt = $pdo->prepare("
         SELECT h.*, 
@@ -440,9 +435,9 @@ $age = calculateAge($resident['date_of_birth']);
                         <h1 class="profile-name"><?php echo strtoupper  ($fullName); ?></h1>
                         <p class="profile-id"><?php echo htmlspecialchars($resident['resident_id'] ?: 'N/A'); ?></p>
                         <div class="profile-badges">
-                            <span class="badge badge-<?php echo strtolower($resident['activity_status']); ?>">
+                            <span class="badge badge-<?php echo strtolower($resident['activity_status'] ?? ''); ?>">
                                 <i class="fas fa-circle"></i>
-                                <?php echo htmlspecialchars($resident['activity_status']); ?>
+                                <?php echo htmlspecialchars($resident['activity_status'] ?? ''); ?>
                             </span>
                         </div>
                     </div>
@@ -545,27 +540,27 @@ $age = calculateAge($resident['date_of_birth']);
                                 </div>
                                 <div class="info-item no-print">
                                     <label>First Name</label>
-                                    <p class="view-field"><?php echo strtoupper($resident['first_name']); ?></p>
-                                    <input type="text" name="first_name" class="form-control edit-field" value="<?php echo htmlspecialchars($resident['first_name']); ?>" style="display:none;" required>
+                                    <p class="view-field"><?php echo strtoupper($resident['first_name'] ?? ''); ?></p>
+                                    <input type="text" name="first_name" class="form-control edit-field" value="<?php echo htmlspecialchars($resident['first_name'] ?? ''); ?>" style="display:none;" required>
                                 </div>
                                 <div class="info-item no-print">
                                     <label>Middle Name</label>
                                     <p class="view-field"><?php echo strtoupper($resident['middle_name'] ?: 'N/A'); ?></p>
-                                    <input type="text" name="middle_name" class="form-control edit-field" value="<?php echo htmlspecialchars($resident['middle_name']); ?>" style="display:none;">
+                                    <input type="text" name="middle_name" class="form-control edit-field" value="<?php echo htmlspecialchars($resident['middle_name'] ?? ''); ?>" style="display:none;">
                                 </div>
                                 <div class="info-item no-print">
                                     <label>Last Name</label>
                                     <p class="view-field"><?php echo strtoupper($resident['last_name']); ?></p>
-                                    <input type="text" name="last_name" class="form-control edit-field" value="<?php echo htmlspecialchars($resident['last_name']); ?>" style="display:none;" required>
+                                    <input type="text" name="last_name" class="form-control edit-field" value="<?php echo htmlspecialchars($resident['last_name'] ?? ''); ?>" style="display:none;" required>
                                 </div>
                                 <div class="info-item no-print">
                                     <label>Suffix</label>
                                     <p class="view-field"><?php echo htmlspecialchars($resident['suffix'] ?: 'N/A'); ?></p>
-                                    <input type="text" name="suffix" class="form-control edit-field" value="<?php echo htmlspecialchars($resident['suffix']); ?>" style="display:none;">
+                                    <input type="text" name="suffix" class="form-control edit-field" value="<?php echo htmlspecialchars($resident['suffix'] ?? ''); ?>" style="display:none;">
                                 </div>
                                 <div class="info-item">
                                     <label>Sex</label>
-                                    <p class="view-field"><?php echo htmlspecialchars($resident['sex']); ?></p>
+                                    <p class="view-field"><?php echo htmlspecialchars($resident['sex'] ?? ''); ?></p>
                                     <select name="sex" class="form-control edit-field" style="display:none;" required>
                                         <option value="Male" <?php echo $resident['sex'] == 'Male' ? 'selected' : ''; ?>>Male</option>
                                         <option value="Female" <?php echo $resident['sex'] == 'Female' ? 'selected' : ''; ?>>Female</option>
@@ -574,7 +569,7 @@ $age = calculateAge($resident['date_of_birth']);
                                 <div class="info-item">
                                     <label>Date of Birth</label>
                                     <p class="view-field"><?php echo htmlspecialchars($resident['date_of_birth'] ? date('F d, Y', strtotime($resident['date_of_birth'])) : 'N/A'); ?></p>
-                                    <input type="date" name="date_of_birth" class="form-control edit-field" value="<?php echo htmlspecialchars($resident['date_of_birth']); ?>" style="display:none;" required>
+                                    <input type="date" name="date_of_birth" class="form-control edit-field" value="<?php echo htmlspecialchars($resident['date_of_birth'] ?? ''); ?>" style="display:none;" required>
                                 </div>
                                 <div class="info-item">
                                     <label>Age</label>
@@ -583,7 +578,7 @@ $age = calculateAge($resident['date_of_birth']);
                                 <div class="info-item">
                                     <label>Place of Birth</label>
                                     <p class="view-field"><?php echo htmlspecialchars($resident['place_of_birth'] ?: 'N/A'); ?></p>
-                                    <input type="text" name="place_of_birth" class="form-control edit-field" value="<?php echo htmlspecialchars($resident['place_of_birth']); ?>" style="display:none;" >
+                                    <input type="text" name="place_of_birth" class="form-control edit-field" value="<?php echo htmlspecialchars($resident['place_of_birth'] ?? ''); ?>" style="display:none;" >
                                 </div>
                                 <div class="info-item">
                                     <label>Religion</label>
@@ -645,12 +640,12 @@ $age = calculateAge($resident['date_of_birth']);
                                 <div class="info-item">
                                     <label>Street Name</label>
                                     <p class="view-field"><?php echo htmlspecialchars($resident['street_name'] ?: 'N/A'); ?></p>
-                                    <input type="text" name="street_name" id="streetNameInput" class="form-control edit-field" value="<?php echo htmlspecialchars($resident['street_name']); ?>" style="display:none;" >
+                                    <input type="text" name="street_name" id="streetNameInput" class="form-control edit-field" value="<?php echo htmlspecialchars($resident['street_name'] ?? ''); ?>" style="display:none;" >
                                 </div>
                                 <div class="info-item">
                                     <label>Mobile Number</label>
                                     <p class="view-field">+63 <?php echo htmlspecialchars($resident['mobile_number'] ?: 'N/A'); ?></p>
-                                    <input type="text" name="mobile_number" class="form-control edit-field"  placeholder="XXX XXX XXXX" pattern="[0-9 ]+" maxlength="12" oninput="let v=this.value.replace(/\D/g,'').substring(0,10);if(v.length>6)this.value=v.slice(0,3)+' '+v.slice(3,6)+' '+v.slice(6);else if(v.length>3)this.value=v.slice(0,3)+' '+v.slice(3);else this.value=v;" value="<?php echo htmlspecialchars($resident['mobile_number']); ?>" style="display:none;">
+                                    <input type="text" name="mobile_number" class="form-control edit-field"  placeholder="XXX XXX XXXX" pattern="[0-9 ]+" maxlength="12" oninput="let v=this.value.replace(/\D/g,'').substring(0,10);if(v.length>6)this.value=v.slice(0,3)+' '+v.slice(3,6)+' '+v.slice(6);else if(v.length>3)this.value=v.slice(0,3)+' '+v.slice(3);else this.value=v;" value="<?php echo htmlspecialchars($resident['mobile_number'] ?? ''); ?>" style="display:none;">
                                 </div>
                             </div>
                         </div>
@@ -678,7 +673,7 @@ $age = calculateAge($resident['date_of_birth']);
                                 <div class="info-item adult-only" id="spouseNameGroup">
                                     <label id="spouseNameLabel">Spouse Name</label>
                                     <p class="view-field"><?php echo htmlspecialchars($resident['spouse_name'] ?: 'N/A'); ?></p>
-                                    <input type="text" name="spouse_name" id="spouseNameInput" class="form-control edit-field" value="<?php echo htmlspecialchars($resident['spouse_name']); ?>" style="display:none;">
+                                    <input type="text" name="spouse_name" id="spouseNameInput" class="form-control edit-field" value="<?php echo htmlspecialchars($resident['spouse_name'] ?? ''); ?>" style="display:none;">
                                 </div>
                                 <div class="info-item position-relative" style="position: relative;">
                                     <label>Father's Name</label>
@@ -692,7 +687,7 @@ $age = calculateAge($resident['date_of_birth']);
                                         <?php endif; ?>
                                     </p>
                                     <input type="hidden" id="fatherNameId" name="father_resident_id" value="<?php echo htmlspecialchars($resident['father_resident_id'] ?? ''); ?>">
-                                    <input type="text" id="fatherName" name="father_name" class="form-control edit-field" value="<?php echo htmlspecialchars($resident['father_name']); ?>" style="display:none;" autocomplete="off">
+                                    <input type="text" id="fatherName" name="father_name" class="form-control edit-field" value="<?php echo htmlspecialchars($resident['father_name'] ?? ''); ?>" style="display:none;" autocomplete="off">
                                     <div id="fatherNameDropdown" class="autocomplete-dropdown" style="display: none;"></div>
                                 </div>
                                 <div class="info-item position-relative" style="position: relative;">
@@ -707,13 +702,13 @@ $age = calculateAge($resident['date_of_birth']);
                                         <?php endif; ?>
                                     </p>
                                     <input type="hidden" id="motherNameId" name="mother_resident_id" value="<?php echo htmlspecialchars($resident['mother_resident_id'] ?? ''); ?>">
-                                    <input type="text" id="motherName" name="mother_name" class="form-control edit-field" value="<?php echo htmlspecialchars($resident['mother_name']); ?>" style="display:none;" autocomplete="off">
+                                    <input type="text" id="motherName" name="mother_name" class="form-control edit-field" value="<?php echo htmlspecialchars($resident['mother_name'] ?? ''); ?>" style="display:none;" autocomplete="off">
                                     <div id="motherNameDropdown" class="autocomplete-dropdown" style="display: none;"></div>
                                 </div>
                                 <div class="info-item adult-only">
                                     <label>Number of Children</label>
                                     <p class="view-field"><?php echo htmlspecialchars($resident['number_of_children'] ?: '0'); ?></p>
-                                    <input type="number" name="number_of_children" class="form-control edit-field" value="<?php echo htmlspecialchars($resident['number_of_children']); ?>" style="display:none;">
+                                    <input type="number" name="number_of_children" class="form-control edit-field" value="<?php echo htmlspecialchars($resident['number_of_children'] ?? 0); ?>" style="display:none;">
                                 </div>
                             </div>
 
@@ -787,7 +782,7 @@ $age = calculateAge($resident['date_of_birth']);
                                 <div class="info-item adult-only">
                                     <label>Occupation</label>
                                     <p class="view-field"><?php echo htmlspecialchars($resident['occupation'] ?: 'N/A'); ?></p>
-                                    <input type="text" name="occupation" class="form-control edit-field" value="<?php echo htmlspecialchars($resident['occupation']); ?>" style="display:none;">
+                                    <input type="text" name="occupation" class="form-control edit-field" value="<?php echo htmlspecialchars($resident['occupation'] ?? ''); ?>" style="display:none;">
                                 </div>
                             </div>
                         </div>
@@ -813,7 +808,7 @@ $age = calculateAge($resident['date_of_birth']);
                                 <div class="info-item adult-only <?php echo ($resident['fourps_member'] !== 'Yes') ? 'no-print' : ''; ?>">
                                     <label>4Ps ID Number</label>
                                     <p class="view-field"><?php echo htmlspecialchars($resident['fourps_id'] ?: 'N/A'); ?></p>
-                                    <input type="text" name="fourps_id" class="form-control edit-field" placeholder="XX-YYYY-ZZZZ" maxlength="12" oninput="let v=this.value.replace(/[^a-zA-Z0-9]/g,'').toUpperCase().substring(0,10);if(v.length > 6) this.value = v.slice(0,2) + '-' + v.slice(2,6) + '-' + v.slice(6);else if(v.length > 2) this.value = v.slice(0,2) + '-' + v.slice(2);else this.value = v;" value="<?php echo htmlspecialchars($resident['fourps_id']); ?>" style="display:none;">
+                                    <input type="text" name="fourps_id" class="form-control edit-field" placeholder="XX-YYYY-ZZZZ" maxlength="12" oninput="let v=this.value.replace(/[^a-zA-Z0-9]/g,'').toUpperCase().substring(0,10);if(v.length > 6) this.value = v.slice(0,2) + '-' + v.slice(2,6) + '-' + v.slice(6);else if(v.length > 2) this.value = v.slice(0,2) + '-' + v.slice(2);else this.value = v;" value="<?php echo htmlspecialchars($resident['fourps_id'] ?? ''); ?>" style="display:none;">
                                 </div>
                                 <div class="info-item voter-only">
                                     <label>Voter Status</label>
@@ -826,7 +821,7 @@ $age = calculateAge($resident['date_of_birth']);
                                 <div class="info-item voter-only <?php echo ($resident['voter_status'] !== 'Yes') ? 'no-print' : ''; ?>">
                                     <label>Precinct Number</label>
                                     <p class="view-field"><?php echo htmlspecialchars($resident['precinct_number'] ?: 'N/A'); ?></p>
-                                    <input type="text" name="precinct_number" class="form-control edit-field" value="<?php echo htmlspecialchars($resident['precinct_number']); ?>" style="display:none;">
+                                    <input type="text" name="precinct_number" class="form-control edit-field" value="<?php echo htmlspecialchars($resident['precinct_number'] ?? ''); ?>" style="display:none;">
                                 </div>
                             </div>
                             
@@ -835,7 +830,7 @@ $age = calculateAge($resident['date_of_birth']);
                                 <div class="info-item adult-only">
                                     <label>Philhealth ID</label>
                                     <p class="view-field"><?php echo htmlspecialchars($resident['philhealth_id'] ?: 'N/A'); ?></p>
-                                    <input type="text" name="philhealth_id" class="form-control edit-field" placeholder="1234-5678-9012" maxlength="14" oninput="let v=this.value.replace(/[^a-zA-Z0-9]/g,'').toUpperCase().substring(0,12);if(v.length > 8) this.value = v.slice(0,4) + '-' + v.slice(4,8) + '-' + v.slice(8);else if(v.length > 4) this.value = v.slice(0,4) + '-' + v.slice(4);else this.value = v;" value="<?php echo htmlspecialchars($resident['philhealth_id']); ?>" style="display:none;">
+                                    <input type="text" name="philhealth_id" class="form-control edit-field" placeholder="1234-5678-9012" maxlength="14" oninput="let v=this.value.replace(/[^a-zA-Z0-9]/g,'').toUpperCase().substring(0,12);if(v.length > 8) this.value = v.slice(0,4) + '-' + v.slice(4,8) + '-' + v.slice(8);else if(v.length > 4) this.value = v.slice(0,4) + '-' + v.slice(4);else this.value = v;" value="<?php echo htmlspecialchars($resident['philhealth_id'] ?? ''); ?>" style="display:none;">
                                 </div>
                                 <div class="info-item adult-only">
                                     <label>Membership Type</label>
@@ -999,11 +994,11 @@ $age = calculateAge($resident['date_of_birth']);
                                     <div class="info-grid">
                                         <div class="info-item">
                                             <label>Household Number</label>
-                                            <p><?php echo htmlspecialchars($householdInfo['household_number']); ?></p>
+                                            <p><?php echo htmlspecialchars($householdInfo['household_number'] ?? ''); ?></p>
                                         </div>
                                         <div class="info-item">
                                             <label>Household Contact</label>
-                                            <p><?php echo htmlspecialchars($householdInfo['household_contact'] ?: 'N/A'); ?></p>
+                                            <p><?php echo htmlspecialchars(($householdInfo['household_contact'] ?? '') ?: 'N/A'); ?></p>
                                         </div>
                                         <div class="info-item full-width">
                                             <label>Address</label>
@@ -1011,16 +1006,16 @@ $age = calculateAge($resident['date_of_birth']);
                                         </div>
                                         <div class="info-item">
                                             <label>Water Source Type</label>
-                                            <p><?php echo htmlspecialchars($householdInfo['water_source_type'] ?: 'N/A'); ?></p>
+                                            <p><?php echo htmlspecialchars(($householdInfo['water_source_type'] ?? '') ?: 'N/A'); ?></p>
                                         </div>
                                         <div class="info-item">
                                             <label>Toilet Facility Type</label>
-                                            <p><?php echo htmlspecialchars($householdInfo['toilet_facility_type'] ?: 'N/A'); ?></p>
+                                            <p><?php echo htmlspecialchars(($householdInfo['toilet_facility_type'] ?? '') ?: 'N/A'); ?></p>
                                         </div>
                                         <?php if (!empty($householdInfo['notes'])): ?>
                                             <div class="info-item full-width">
                                                 <label>Notes</label>
-                                                <p><?php echo htmlspecialchars($householdInfo['notes']); ?></p>
+                                                <p><?php echo htmlspecialchars($householdInfo['notes'] ?? ''); ?></p>
                                             </div>
                                         <?php endif; ?>
                                     </div>
@@ -1034,29 +1029,29 @@ $age = calculateAge($resident['date_of_birth']);
                                             <p>
                                                 <?php if (isset($householdInfo['head_resident_id'])): ?>
                                                     <a href="resident_profile.php?id=<?php echo $householdInfo['head_resident_id']; ?>" style="color: var(--primary-color); text-decoration: none;">
-                                                        <?php echo htmlspecialchars($householdInfo['head_name']); ?>
+                                                        <?php echo htmlspecialchars($householdInfo['head_name'] ?? ''); ?>
                                                     </a>
                                                 <?php elseif ($householdInfo['household_head_id'] == $residentId): ?>
-                                                    <?php echo htmlspecialchars($householdInfo['head_name']); ?> <span style="color: var(--primary-color);">(You)</span>
+                                                    <?php echo htmlspecialchars($householdInfo['head_name'] ?? ''); ?> <span style="color: var(--primary-color);">(You)</span>
                                                 <?php else: ?>
                                                     <a href="resident_profile.php?id=<?php echo $householdInfo['household_head_id']; ?>" style="color: var(--primary-color); text-decoration: none;">
-                                                        <?php echo htmlspecialchars($householdInfo['head_name']); ?>
+                                                        <?php echo htmlspecialchars($householdInfo['head_name'] ?? ''); ?>
                                                     </a>
                                                 <?php endif; ?>
                                             </p>
                                         </div>
                                         <div class="info-item">
                                             <label>Date of Birth</label>
-                                            <p><?php echo htmlspecialchars($householdInfo['head_dob'] ? date('F d, Y', strtotime($householdInfo['head_dob'])) : 'N/A'); ?></p>
+                                            <p><?php echo htmlspecialchars(($householdInfo['head_dob'] ?? '') ? date('F d, Y', strtotime($householdInfo['head_dob'])) : 'N/A'); ?></p>
                                         </div>
                                         <div class="info-item">
                                             <label>Sex</label>
-                                            <p><?php echo htmlspecialchars($householdInfo['head_sex'] ?: 'N/A'); ?></p>
+                                            <p><?php echo htmlspecialchars(($householdInfo['head_sex'] ?? '') ?: 'N/A'); ?></p>
                                         </div>
                                         <?php if (isset($householdInfo['relationship_to_head'])): ?>
                                             <div class="info-item">
                                                 <label>Your Relationship to Head</label>
-                                                <p><strong><?php echo htmlspecialchars($householdInfo['relationship_to_head']); ?></strong></p>
+                                                <p><strong><?php echo htmlspecialchars($householdInfo['relationship_to_head'] ?? ''); ?></strong></p>
                                             </div>
                                         <?php endif; ?>
                                     </div>
@@ -1087,15 +1082,15 @@ $age = calculateAge($resident['date_of_birth']);
                                                             <td>
                                                                 <?php if ($member['resident_id']): ?>
                                                                     <a href="resident_profile.php?id=<?php echo $member['resident_id']; ?>" style="color: var(--primary-color); text-decoration: none;">
-                                                                        <?php echo htmlspecialchars($member['full_name']); ?>
+                                                                        <?php echo htmlspecialchars($member['full_name'] ?? ''); ?>
                                                                     </a>
                                                                 <?php else: ?>
-                                                                    <?php echo htmlspecialchars($member['full_name']); ?>
+                                                                    <?php echo htmlspecialchars($member['full_name'] ?? ''); ?>
                                                                 <?php endif; ?>
                                                             </td>
                                                             <td><?php echo htmlspecialchars($member['date_of_birth'] ? date('M d, Y', strtotime($member['date_of_birth'])) . ' - ' . calculateAge($member['date_of_birth']) : 'N/A'); ?></td>
                                                             <td><?php echo htmlspecialchars($member['sex'] ?: 'N/A'); ?></td>
-                                                            <td><?php echo htmlspecialchars($member['relationship_to_head']); ?></td>
+                                                            <td><?php echo htmlspecialchars($member['relationship_to_head'] ?? ''); ?></td>
                                                             <td><?php echo htmlspecialchars($member['mobile_number'] ?: 'N/A'); ?></td>
                                                         </tr>
                                                     <?php endforeach; ?>
@@ -1166,7 +1161,7 @@ $age = calculateAge($resident['date_of_birth']);
                                             <?php $totalRequests = count($certRequests); foreach ($certRequests as $index => $req): ?>
                                                 <tr>
                                                     <td><?php echo $totalRequests - $index; ?></td>
-                                                    <td><?php echo htmlspecialchars($req['certificate_name']); ?></td>
+                                                    <td><?php echo htmlspecialchars($req['certificate_name'] ?? ''); ?></td>
                                                     <td><?php echo htmlspecialchars($req['purpose'] ?: 'N/A'); ?></td>
                                                     <td><?php echo $req['date_requested'] ? date('M d, Y g:i A', strtotime($req['date_requested'])) : 'N/A'; ?></td>
                                                 </tr>
@@ -1202,13 +1197,13 @@ $age = calculateAge($resident['date_of_birth']);
                                         <tbody>
                                             <?php foreach ($blotterRecords as $record): ?>
                                                 <tr>
-                                                    <td><strong><?php echo htmlspecialchars($record['record_number']); ?></strong></td>
-                                                    <td><?php echo htmlspecialchars($record['role']); ?></td>
-                                                    <td><?php echo htmlspecialchars($record['incident_type']); ?></td>
+                                                    <td><strong><?php echo htmlspecialchars($record['record_number'] ?? ''); ?></strong></td>
+                                                    <td><?php echo htmlspecialchars($record['role'] ?? ''); ?></td>
+                                                    <td><?php echo htmlspecialchars($record['incident_type'] ?? ''); ?></td>
                                                     <td><?php echo date('M d, Y', strtotime($record['date_reported'])); ?></td>
                                                     <td>
                                                         <span class="badge badge-<?php echo strtolower(str_replace(' ', '-', $record['status'])); ?>">
-                                                            <?php echo htmlspecialchars($record['status']); ?>
+                                                            <?php echo htmlspecialchars($record['status'] ?? ''); ?>
                                                         </span>
                                                     </td>
                                                     <td class="no-print">

@@ -148,13 +148,11 @@ try {
     
     // Contact Information
     $mobileNumber = $conn->real_escape_string(trim($_POST['mobileNumber'] ?? ''));
-    $email = $conn->real_escape_string(trim($_POST['email'] ?? ''));
-    $houseNo = $conn->real_escape_string(trim($_POST['houseNo'] ?? ''));
     $purok = $conn->real_escape_string(trim($_POST['purok'] ?? ''));
     $streetName = $conn->real_escape_string(trim($_POST['streetName'] ?? ''));
 
     // Construct address for legacy current_address column
-    $addressParts = array_filter([$houseNo ? "House No. $houseNo" : "", $purok ? "Purok $purok" : "", $streetName]);
+    $addressParts = array_filter([$purok ? "Purok $purok" : "", $streetName]);
     $currentAddress = $conn->real_escape_string(implode(', ', $addressParts));
     
     // Family Information
@@ -175,7 +173,6 @@ try {
     $educationalAttainment = $conn->real_escape_string($_POST['educationalAttainment'] ?? '');
     $employmentStatus = $conn->real_escape_string($_POST['employmentStatus'] ?? '');
     $occupation = $conn->real_escape_string(trim($_POST['occupation'] ?? ''));
-    $monthlyIncome = $conn->real_escape_string($_POST['monthlyIncome'] ?? '');
     
     // Government Programs
     $fourPs = $conn->real_escape_string($_POST['fourPs'] ?? 'No');
@@ -202,12 +199,9 @@ try {
     // Additional Information
     $remarks = $conn->real_escape_string(trim($_POST['remarks'] ?? ''));
     
-    // Status fields (for edit mode)
-    $verificationStatus = $conn->real_escape_string($_POST['verificationStatus'] ?? 'Pending');
+    // Status fields
     $activityStatus = $conn->real_escape_string($_POST['activityStatus'] ?? 'Alive');
-    $rejectionReason = $conn->real_escape_string(trim($_POST['rejectionReason'] ?? ''));
-    $statusRemarks = $conn->real_escape_string(trim($_POST['statusRemarks'] ?? ''));
-    
+
     // If minor, default civil status to Single if not provided (since it's disabled in UI)
     if ($age !== null && $age < 18 && empty($civilStatus)) {
         $civilStatus = 'Single';
@@ -329,8 +323,6 @@ try {
             religion = " . ($religion ? "'$religion'" : "NULL") . ",
             ethnicity = " . ($ethnicity ? "'$ethnicity'" : "NULL") . ",
             mobile_number = '$mobileNumber',
-            email = " . ($email ? "'$email'" : "NULL") . ",
-            house_no = " . ($houseNo ? "'$houseNo'" : "NULL") . ",
             purok = " . ($purok ? "'$purok'" : "NULL") . ",
             street_name = " . ($streetName ? "'$streetName'" : "NULL") . ",
             current_address = '$currentAddress',
@@ -347,7 +339,6 @@ try {
             educational_attainment = " . ($educationalAttainment ? "'$educationalAttainment'" : "NULL") . ",
             employment_status = " . ($employmentStatus ? "'$employmentStatus'" : "NULL") . ",
             occupation = " . ($occupation ? "'$occupation'" : "NULL") . ",
-            monthly_income = " . ($monthlyIncome ? "'$monthlyIncome'" : "NULL") . ",
             fourps_member = '$fourPs',
             fourps_id = " . ($fourpsId ? "'$fourpsId'" : "NULL") . ",
             voter_status = " . ($voterStatus ? "'$voterStatus'" : "NULL") . ",
@@ -365,41 +356,13 @@ try {
             fp_methods_used = " . ($fpMethodsUsed ? "'$fpMethodsUsed'" : "NULL") . ",
             fp_status = " . ($fpStatus ? "'$fpStatus'" : "NULL") . ",
             remarks = " . ($remarks ? "'$remarks'" : "NULL") . ",
-            verification_status = '$verificationStatus',
             activity_status = '$activityStatus',
-            rejection_reason = " . ($rejectionReason ? "'$rejectionReason'" : "NULL") . ",
-            status_remarks = " . ($statusRemarks ? "'$statusRemarks'" : "NULL") . ",
             status_changed_at = NOW()" .
             ($photoPath && $photoPath !== $conn->real_escape_string($_POST['existingPhoto'] ?? '') ? ", photo = '" . $conn->real_escape_string($photoPath) . "'" : "") . "
         WHERE id = $residentId";
         
         if (!$conn->query($updateSql)) {
             throw new Exception('Failed to update resident: ' . $conn->error);
-        }
-        
-        // Delete existing emergency contacts
-        $deleteSql = "DELETE FROM emergency_contacts WHERE resident_id = $residentId";
-        $conn->query($deleteSql);
-        
-        // Insert updated emergency contacts
-        $contactIndex = 1;
-        while (isset($_POST["emergencyContactName_$contactIndex"])) {
-            $contactName = $conn->real_escape_string(trim($_POST["emergencyContactName_$contactIndex"]));
-            $relationship = $conn->real_escape_string(trim($_POST["emergencyRelationship_$contactIndex"]));
-            $contactNumber = $conn->real_escape_string(trim($_POST["emergencyContactNumber_$contactIndex"]));
-            $contactAddress = $conn->real_escape_string(trim($_POST["emergencyAddress_$contactIndex"] ?? ''));
-            
-            if (!empty($contactName) && !empty($relationship) && !empty($contactNumber)) {
-                $sql = "INSERT INTO emergency_contacts (resident_id, contact_name, relationship, contact_number, address, priority) 
-                        VALUES ($residentId, '$contactName', '$relationship', '$contactNumber', " . 
-                        ($contactAddress ? "'$contactAddress'" : "NULL") . ", $contactIndex)";
-                
-                if (!$conn->query($sql)) {
-                    throw new Exception('Failed to save emergency contact: ' . $conn->error);
-                }
-            }
-            
-            $contactIndex++;
         }
         
         // ============================================
@@ -563,7 +526,6 @@ try {
         $response['data'] = [
             'resident_id' => $residentId,
             'generated_resident_id' => $generatedResidentId,
-            'verification_status' => $verificationStatus,
             'activity_status' => $activityStatus
         ];
         
@@ -574,27 +536,26 @@ try {
     
     $sql = "INSERT INTO residents (
         photo, first_name, middle_name, last_name, suffix, sex, date_of_birth, place_of_birth, age, religion, ethnicity,
-        mobile_number, email, house_no, purok, street_name, current_address,
+        mobile_number, purok, street_name, current_address,
         civil_status, spouse_name,  father_name, father_resident_id, 
             mother_name, mother_resident_id, number_of_children,
         guardian_name, guardian_relationship, guardian_contact,
-        educational_attainment, employment_status, occupation, monthly_income, pwd_status,
+        educational_attainment, employment_status, occupation, pwd_status,
         pwd_type, pwd_id_number,
         fourps_member, fourps_id, voter_status, precinct_number,
         philhealth_id, membership_type, philhealth_category, age_health_group, medical_history,
         lmp_date, using_fp_method, fp_methods_used, fp_status,
-        remarks, verification_status
+        remarks, activity_status
     ) VALUES (
         " . ($photoPath ? "'" . $conn->real_escape_string($photoPath) . "'" : "NULL") . ",
         '$firstName', " . ($middleName ? "'$middleName'" : "NULL") . ", '$lastName', " . ($suffix ? "'$suffix'" : "NULL") . ",
         '$sex', '$dateOfBirth', " . ($placeOfBirth ? "'$placeOfBirth'" : "NULL") . ", " . ($age !== null ? $age : "NULL") . ", " . ($religion ? "'$religion'" : "NULL") . ", " . ($ethnicity ? "'$ethnicity'" : "NULL") . ",
-        '$mobileNumber', " . ($email ? "'$email'" : "NULL") . ", " . ($houseNo ? "'$houseNo'" : "NULL") . ", 
-        " . ($purok ? "'$purok'" : "NULL") . ", " . ($streetName ? "'$streetName'" : "NULL") . ", '$currentAddress',
+        '$mobileNumber', " . ($purok ? "'$purok'" : "NULL") . ", " . ($streetName ? "'$streetName'" : "NULL") . ", '$currentAddress',
         '$civilStatus', " . ($spouseName ? "'$spouseName'" : "NULL") . ", " . ($fatherName ? "'$fatherName'" : "NULL") . ", 
         " . ($fatherResidentId ? "'$fatherResidentId'" : "NULL") . ", " . ($motherName ? "'$motherName'" : "NULL") . ", " . ($motherResidentId ? "'$motherResidentId'" : "NULL") . ", $numberOfChildren,
         " . ($guardianName ? "'$guardianName'" : "NULL") . ", " . ($guardianRelationship ? "'$guardianRelationship'" : "NULL") . ", " . ($guardianContact ? "'$guardianContact'" : "NULL") . ",
         " . ($educationalAttainment ? "'$educationalAttainment'" : "NULL") . ", " . ($employmentStatus ? "'$employmentStatus'" : "NULL") . ",
-        " . ($occupation ? "'$occupation'" : "NULL") . ", " . ($monthlyIncome ? "'$monthlyIncome'" : "NULL") . ", '$pwdStatus',
+        " . ($occupation ? "'$occupation'" : "NULL") . ", '$pwdStatus',
         " . ($pwdType ? "'$pwdType'" : "NULL") . ", " . ($pwdIdNumber ? "'$pwdIdNumber'" : "NULL") . ",
         '$fourPs', " . ($fourpsId ? "'$fourpsId'" : "NULL") . ", " . ($voterStatus ? "'$voterStatus'" : "NULL") . ", 
         " . ($precinctNumber ? "'$precinctNumber'" : "NULL") . ",
@@ -603,7 +564,7 @@ try {
         " . ($medicalHistory ? "'$medicalHistory'" : "NULL") . ",
         " . ($lmpDate ? "'$lmpDate'" : "NULL") . ", " . ($usingFpMethod ? "'$usingFpMethod'" : "NULL") . ",
         " . ($fpMethodsUsed ? "'$fpMethodsUsed'" : "NULL") . ", " . ($fpStatus ? "'$fpStatus'" : "NULL") . ",
-        " . ($remarks ? "'$remarks'" : "NULL") . ", 'Pending'
+        " . ($remarks ? "'$remarks'" : "NULL") . ", 'Alive'
     )";
 
     if (!$conn->query($sql)) {
@@ -735,8 +696,7 @@ try {
     $response['message'] = 'Resident record created successfully! Resident ID: ' . $generatedResidentId;
     $response['data'] = [
         'resident_id' => $residentId,
-        'generated_resident_id' => $generatedResidentId,
-        'verification_status' => 'Pending'
+        'generated_resident_id' => $generatedResidentId
     ];
     
     } // End of CREATE mode

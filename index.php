@@ -57,7 +57,6 @@ $totalResidents   = 0;
 $totalHouseholds  = 0;
 $totalBlotter     = 0;
 $totalCertReqs    = 0;
-$pendingRequests  = 0;
 $totalMale        = 0;
 $totalFemale      = 0;
 
@@ -66,7 +65,6 @@ try {
     $totalHouseholds = (int)$pdo->query("SELECT COUNT(*) FROM households")->fetchColumn();
     $totalBlotter    = (int)$pdo->query("SELECT COUNT(*) FROM blotter_records")->fetchColumn();
     $totalCertReqs   = (int)$pdo->query("SELECT COUNT(*) FROM certificate_requests")->fetchColumn();
-    $pendingRequests = (int)$pdo->query("SELECT COUNT(*) FROM certificate_requests WHERE status = 'Pending'")->fetchColumn();
 } catch (PDOException $e) {
     error_log("Stats error: " . $e->getMessage());
 }
@@ -271,17 +269,6 @@ try {
     foreach ($rows as $r) {
         $certTypeData[$r['certificate_name']]    = (int)$r['cnt'];
         $certTypeRevenue[$r['certificate_name']] = 0;
-    }
-} catch (PDOException $e) { error_log($e->getMessage()); }
-
-// ============================================
-// CERTIFICATES: By Status
-// ============================================
-$certStatusData = [];
-try {
-    $rows = $pdo->query("SELECT status, COUNT(*) as cnt FROM certificate_requests GROUP BY status ORDER BY cnt DESC")->fetchAll();
-    foreach ($rows as $r) {
-        $certStatusData[$r['status']] = (int)$r['cnt'];
     }
 } catch (PDOException $e) { error_log($e->getMessage()); }
 

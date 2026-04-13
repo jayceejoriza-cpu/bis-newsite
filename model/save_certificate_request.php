@@ -72,7 +72,6 @@ try {
             certificate_name,
             purpose,
             field_values,
-            status,
             date_requested,
             created_at
         ) VALUES (
@@ -81,7 +80,6 @@ try {
             :certificate_name,
             :purpose,
             :field_values,
-            'Pending',
             NOW(),
             NOW()
         )
