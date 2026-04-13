@@ -180,6 +180,56 @@ $reportedBy = $_POST['reported_by'] ?? null;
             $recordId
         ]);
         
+        // ============================================
+        // Handle File Uploads (Update)
+        // ============================================
+        $uploadDir = '../assets/uploads/blotter/';
+        if (!is_dir($uploadDir)) {
+            mkdir($uploadDir, 0777, true);
+        }
+
+        $fileKeys = ['incident_proof' => 'incident', 'settlement_proof' => 'settlement'];
+        foreach ($fileKeys as $postKey => $dbPrefix) {
+            if (!empty($_FILES[$postKey]['name'][0])) {
+                $files = $_FILES[$postKey];
+                $newPaths = [];
+                
+                foreach ($files['tmp_name'] as $key => $tmpName) {
+                    if ($files['error'][$key] !== UPLOAD_ERR_OK) continue;
+
+                    $fileExt = strtolower(pathinfo($files['name'][$key], PATHINFO_EXTENSION));
+                    if (in_array($fileExt, ['jpg', 'jpeg', 'png']) && $files['size'][$key] <= 5 * 1024 * 1024) {
+                        $newFileName = "{$dbPrefix}_{$recordId}_" . time() . "_{$key}.{$fileExt}";
+                        if (move_uploaded_file($tmpName, $uploadDir . $newFileName)) {
+                            $newPaths[] = 'assets/uploads/blotter/' . $newFileName;
+                        }
+                    }
+                }
+
+                if (!empty($newPaths)) {
+                    $column = ($dbPrefix === 'incident') ? 'incident_proof' : 'settlement_proof';
+                    
+                    // Fetch existing to append
+                    $getOld = $pdo->prepare("SELECT $column FROM blotter_records WHERE id = ?");
+                    $getOld->execute([$recordId]);
+                    $oldData = $getOld->fetchColumn();
+                    
+                    $finalPaths = $newPaths;
+                    if ($oldData) {
+                        $existingPaths = explode(',', $oldData);
+                        $finalPaths = array_merge($existingPaths, $newPaths);
+                    }
+
+                    $updateFiles = $pdo->prepare("
+                        UPDATE blotter_records 
+                        SET $column = ? 
+                        WHERE id = ?
+                    ");
+                    $updateFiles->execute([implode(',', $finalPaths), $recordId]);
+                }
+            }
+        }
+
         // Delete existing complainants, victims, and witnesses
         $stmt = $pdo->prepare("DELETE FROM blotter_complainants WHERE blotter_id = ?");
         $stmt->execute([$recordId]);
@@ -445,33 +495,90 @@ This forms the OFFICIAL record." required></textarea>
                         <!-- Step 4: Status, Mediation Schedule, Resolution -->
                         <div class="tab-pane fade" id="edit-step-4-actions">
 
-<div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-    <div class="col-12">
-        <label class="form-label fw-bold">Case Status <span class="text-danger">*</span></label>
-        <select class="form-select" id="edit_status" name="status" required>
-            <option value="">Select Status</option>
-            <option value="Pending">Pending</option>
-            <option value="Scheduled for Mediation">Scheduled for Mediation</option>
-            <option value="Under Investigation">Under Investigation</option>
-            <option value="Settled">Settled</option>
-            <option value="Dismissed">Dismissed</option>
-            <option value="Endorsed to Police">Endorsed to Police</option>
-        </select>
-    </div>
-    <div class="col-12" id="edit_mediation_field" style="display:none;">
-        <label class="form-label fw-bold">Mediation Schedule</label>
-        <input type="datetime-local" class="form-control" id="edit_mediation_date" name="mediation_schedule">
-    </div>
-    <div class="col-12">
-        <label class="form-label fw-bold">Resolution / Actions Taken</label>
-        <textarea class="form-control" id="edit_resolution" name="resolution" rows="4" placeholder="Final resolution, settlement terms, fines imposed, referrals made, signatures obtained, etc."></textarea>
-    </div>
+                            <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+                                <!-- Left Column: Logic & People -->
+                                <div class="space-y-6">
+                                    <div>
+                                        <label class="form-label fw-bold">Case Status <span class="text-danger">*</span></label>
+                                        <select class="form-select" id="edit_status" name="status" required>
+                                            <option value="">Select Status</option>
+                                            <option value="Pending">Pending</option>
+                                            <option value="Scheduled for Mediation">Scheduled for Mediation</option>
+                                            <option value="Under Investigation">Under Investigation</option>
+                                            <option value="Settled">Settled</option>
+                                            <option value="Dismissed">Dismissed</option>
+                                            <option value="Endorsed to Police">Endorsed to Police</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div id="edit_mediation_field" class="min-h-[85px]" style="display:none;">
+                                        <label class="form-label fw-bold">Mediation Schedule</label>
+                                        <input type="datetime-local" class="form-control" id="edit_mediation_date" name="mediation_schedule">
+                                    </div>
 
-                                <div class="col-12 mt-4">
-                                    <h6 class="party-title mb-3"><i class="fas fa-eye text-success"></i> Witnesses</h6>
-                                    <div id="editWitnessesContainer" class="party-section mb-2"></div>
-                                    <button type="button" class="btn btn-outline-success btn-sm" id="editAddWitnessBtn"><i class="fas fa-plus"></i> Add Witness</button>
+                                    <div class="border-t pt-4">
+                                        <h6 class="party-title mb-3"><i class="fas fa-eye text-success"></i> Witnesses</h6>
+                                        <div id="editWitnessesContainer" class="party-section mb-2"></div>
+                                        <button type="button" class="btn btn-outline-success btn-sm" id="editAddWitnessBtn"><i class="fas fa-plus"></i> Add Witness</button>
+                                    </div>
                                 </div>
+
+                                <!-- Right Column: Narrative & Proof -->
+                                <div class="space-y-6">
+                                    <div>
+                                        <label class="form-label fw-bold">Resolution / Actions Taken</label>
+                                        <textarea class="form-control" id="edit_resolution" name="resolution" rows="4" placeholder="Final resolution, settlement terms, fines imposed, referrals made, signatures obtained, etc."></textarea>
+                                    </div>
+
+                                    <div class="border-t pt-4">
+                                        <h6 class="party-title mb-3 text-primary"><i class="fas fa-camera"></i> Incident Proof</h6>
+                                        <!-- Existing Incident Proof Display -->
+                                        <div id="editIncidentProofExisting" style="display:none;" class="mb-3">
+                                            <div class="flex justify-between items-center mb-2">
+                                                <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Existing Proof:</span>
+                                                <button type="button" class="btn btn-sm btn-outline-danger py-1" id="changeIncidentProofBtn">
+                                                    <i class="fas fa-sync-alt me-1"></i> Change / Remove
+                                                </button>
+                                            </div>
+                                            <div id="edit_incident_preview" class="attachment-preview-container"></div>
+                                        </div>
+                                        <div id="editIncidentProofUploadZone" class="attachment-upload-zone">
+                                            <input type="file" id="editIncidentProofInput" name="incident_proof[]" multiple accept="image/png, image/jpeg" class="hidden">
+                                            <div class="upload-zone-content">
+                                                <i class="fas fa-cloud-upload-alt fa-3x mb-3 text-muted"></i>
+                                                <p class="mb-1"><strong>Drag and drop images</strong> here or <span class="text-primary">click to browse</span></p>
+                                                <p class="text-muted small">Supports JPG and PNG (Max 5MB each)</p>
+                                            </div>
+                                        </div>
+                                        <div id="editIncidentProofPreviewContainer" class="attachment-preview-container">
+                                            <!-- Previews will appear here -->
+                                        </div>
+                                    </div>
+
+                                    <!-- Mediation/Settlement Proof Section (Hidden by Default) -->
+                                    <div id="edit_settlement_proof_section" class="border-t pt-4 min-h-[100px]" style="display: none;">
+                                        <h6 class="party-title mb-3 text-success"><i class="fas fa-handshake"></i> Settlement Proof</h6>
+                                        <!-- Existing Settlement Proof Display -->
+                                        <div id="editSettlementProofExisting" style="display:none;" class="mb-3">
+                                            <div class="flex justify-between items-center mb-2">
+                                                <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Existing Settlement Proof:</span>
+                                                <button type="button" class="btn btn-sm btn-outline-danger py-1" id="changeSettlementProofBtn">
+                                                    <i class="fas fa-sync-alt me-1"></i> Change / Remove
+                                                </button>
+                                            </div>
+                                            <div id="edit_settlement_preview" class="attachment-preview-container"></div>
+                                        </div>
+                                        <div id="editSettlementProofUploadZone" class="attachment-upload-zone" style="padding: 20px;">
+                                            <input type="file" id="editSettlementProofInput" name="settlement_proof[]" multiple accept="image/png, image/jpeg" class="hidden">
+                                            <div class="upload-zone-content">
+                                                <i class="fas fa-file-upload fa-2x mb-2 text-muted"></i>
+                                                <p class="mb-0">Upload settlement photos or signed agreements</p>
+                                            </div>
+                                        </div>
+                                        <div id="editSettlementProofPreviewContainer" class="attachment-preview-container"></div>
+                                    </div>
+                                </div>
+
                                 <div id="editActionsContainer" class="d-none"></div>
                             </div>
                         </div>
@@ -634,6 +741,9 @@ This forms the OFFICIAL record." required></textarea>
         populateEditParties('editVictimsContainer', 'victim', data.victims || [], 1);
         populateEditParties('editRespondentsContainer', 'respondent', data.respondents || [], 1);
         populateEditParties('editWitnessesContainer', 'witness', data.witnesses || [], 0);
+        // Handle Existing Proofs
+        handleExistingProofDisplay('Incident', record.incident_proof);
+        handleExistingProofDisplay('Settlement', record.settlement_proof);
         populateEditParties('editActionsContainer', 'action', data.actions || [], 0);
         console.log('✓ Parties populated');
         
@@ -642,10 +752,35 @@ This forms the OFFICIAL record." required></textarea>
         if (mediationField) {
             mediationField.style.display = record.status === 'Scheduled for Mediation' ? 'block' : 'none';
         }
+
+        const settlementSection = document.getElementById('edit_settlement_proof_section');
+        if (settlementSection) {
+            settlementSection.style.display = record.status === 'Settled' ? 'block' : 'none';
+        }
         
         console.log('=== LOAD EDIT DATA COMPLETE ===');
     }
     
+    function handleExistingProofDisplay(type, pathString) {
+        const existingDiv = document.getElementById(`edit${type}ProofExisting`);
+        const uploadZone = document.getElementById(`edit${type}ProofUploadZone`);
+        const previewContainer = document.getElementById(`edit_${type.toLowerCase()}_preview`);
+
+        if (!existingDiv || !uploadZone || !previewContainer) return;
+
+        if (pathString && pathString.trim() !== '') {
+            existingDiv.style.display = 'block';
+            uploadZone.style.display = 'none';
+            previewContainer.innerHTML = pathString.split(',').map(path => `
+                <div class="attachment-preview-item">
+                    <img src="${path.trim()}" alt="Evidence">
+                </div>`).join('');
+        } else {
+            existingDiv.style.display = 'none';
+            uploadZone.style.display = 'block';
+        }
+    }
+
     // Populate parties with minimum guarantee
     function populateEditParties(containerId, type, items, minCount = 0) {
         const container = document.getElementById(containerId);
@@ -885,9 +1020,12 @@ This forms the OFFICIAL record." required></textarea>
         // Status change listener for Step 4
         const statusSelect = document.getElementById('edit_status');
         if (statusSelect) {
-            statusSelect.addEventListener('change', function() {
+                    statusSelect.addEventListener('change', function() {
                 const mediationField = document.getElementById('edit_mediation_field');
                 if (mediationField) mediationField.style.display = this.value === 'Scheduled for Mediation' ? 'block' : 'none';
+                        
+                        const settlementSection = document.getElementById('edit_settlement_proof_section');
+                        if (settlementSection) settlementSection.style.display = this.value === 'Settled' ? 'block' : 'none';
             });
         }
 
@@ -897,6 +1035,45 @@ This forms the OFFICIAL record." required></textarea>
         addSafeListener('editAddRespondentBtn', 'click', () => addEditRespondent());
         addSafeListener('editAddWitnessBtn', 'click', () => addEditWitness());
         
+        // Reusable Preview Logic for Edit Modal
+        function setupFilePreview(zoneId, inputId, containerId) {
+            const zone = document.getElementById(zoneId);
+            const input = document.getElementById(inputId);
+            const container = document.getElementById(containerId);
+            
+            if (zone && input) {
+                zone.addEventListener('click', () => input.click());
+                input.addEventListener('change', e => {
+                    Array.from(e.target.files).forEach(file => {
+                        if (file.type.startsWith('image/')) {
+                            const reader = new FileReader();
+                            reader.onload = ev => {
+                                const item = document.createElement('div');
+                                item.className = 'attachment-preview-item';
+                                item.innerHTML = `<img src="${ev.target.result}"><button type="button" class="remove-btn" onclick="this.parentElement.remove()"><i class="fas fa-times"></i></button>`;
+                                container.appendChild(item);
+                            };
+                            reader.readAsDataURL(file);
+                        }
+                    });
+                });
+            }
+        }
+
+        setupFilePreview('editIncidentProofUploadZone', 'editIncidentProofInput', 'editIncidentProofPreviewContainer');
+        setupFilePreview('editSettlementProofUploadZone', 'editSettlementProofInput', 'editSettlementProofPreviewContainer');
+
+        // Change/Remove Button Handlers
+        addSafeListener('changeIncidentProofBtn', 'click', () => {
+            document.getElementById('editIncidentProofExisting').style.display = 'none';
+            document.getElementById('editIncidentProofUploadZone').style.display = 'block';
+        });
+
+        addSafeListener('changeSettlementProofBtn', 'click', () => {
+            document.getElementById('editSettlementProofExisting').style.display = 'none';
+            document.getElementById('editSettlementProofUploadZone').style.display = 'block';
+        });
+
         // Use Event Delegation for Remove buttons to handle dynamically added rows
         const form = document.getElementById('editRecordForm');
         if (form) {

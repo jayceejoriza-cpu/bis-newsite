@@ -535,7 +535,7 @@ try {
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <form id="createRecordForm">
+                <form id="createRecordForm" enctype="multipart/form-data">
                     <div class="step-indicator transition-all duration-300">
                         <div class="step-item active" data-step="0">
                             <div class="step-icon"><i class="fas fa-info-circle"></i></div>
@@ -629,6 +629,21 @@ try {
                                 <div id="witnessesContainer" class="party-section mb-2"></div>
                                 <button type="button" class="btn btn-outline-success btn-sm" id="addWitnessBtn"><i class="fas fa-plus"></i> Add Witness</button>
                             </div>
+
+                            <div class="mt-6 border-t pt-4">
+                                <h6 class="party-title mb-3"><i class="fas fa-camera text-primary"></i> Initial Incident Proof (Photos/Evidence)</h6>
+                                <div id="incidentProofUploadZone" class="attachment-upload-zone">
+                                    <input type="file" id="incidentProofInput" name="incident_proof[]" multiple accept="image/png, image/jpeg" class="hidden">
+                                    <div class="upload-zone-content">
+                                        <i class="fas fa-cloud-upload-alt fa-3x mb-3 text-muted"></i>
+                                        <p class="mb-1"><strong>Drag and drop images</strong> here or <span class="text-primary">click to browse</span></p>
+                                        <p class="text-muted small">Supports JPG and PNG (Max 5MB each)</p>
+                                    </div>
+                                </div>
+                                <div id="incidentProofPreviewContainer" class="attachment-preview-container">
+                                    <!-- Previews will appear here -->
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </form>
@@ -705,6 +720,25 @@ try {
                                             <label class="block text-xs uppercase font-semibold text-gray-500 tracking-wide mb-1">Incident Details</label>
                                             <div class="bg-gray-50 p-3 rounded-lg text-sm border">
                                                 <textarea id="view_incident_description" rows="6" class="bg-transparent w-full border-none p-0 focus:ring-0 text-sm resize-none" readonly></textarea>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Evidence Grid Container -->
+                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
+                                            <!-- Incident Proof -->
+                                            <div class="bg-gray-50/50 p-3 rounded-xl border border-dashed">
+                                                <label class="block text-[10px] uppercase font-bold text-gray-400 tracking-wider mb-2"><i class="fas fa-camera text-blue-500 mr-1"></i> Incident Evidence</label>
+                                                <div id="view_incident_proof_container" class="grid grid-cols-2 gap-2">
+                                                    <!-- Images load here -->
+                                                </div>
+                                            </div>
+
+                                            <!-- Settlement Proof (Hidden by JS) -->
+                                            <div id="view_settlement_proof_wrapper" class="bg-green-50/30 p-3 rounded-xl border border-dashed border-green-200" style="display: none;">
+                                                <label class="block text-[10px] uppercase font-bold text-green-600 tracking-wider mb-2"><i class="fas fa-handshake mr-1"></i> Settlement Proof</label>
+                                                <div id="view_settlement_proof_container" class="grid grid-cols-2 gap-2">
+                                                    <!-- Images load here -->
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -893,5 +927,51 @@ try {
     <script src="assets/js/table.js"></script>
     <script src="assets/js/blotter.js"></script>
     <script src="assets/js/edit-blotter.js"></script>
+
+    <script>
+    // Attachment Handling Logic for Create Modal
+    document.addEventListener('DOMContentLoaded', function() {
+        const uploadZone = document.getElementById('incidentProofUploadZone');
+        const fileInput = document.getElementById('incidentProofInput');
+        const previewContainer = document.getElementById('incidentProofPreviewContainer');
+
+        if (uploadZone && fileInput) {
+            uploadZone.addEventListener('click', () => fileInput.click());
+
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                uploadZone.addEventListener(eventName, e => { e.preventDefault(); e.stopPropagation(); }, false);
+            });
+
+            uploadZone.addEventListener('dragover', () => uploadZone.classList.add('dragover'));
+            uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('dragover'));
+            uploadZone.addEventListener('drop', (e) => {
+                uploadZone.classList.remove('dragover');
+                const files = e.dataTransfer.files;
+                if (files.length) {
+                    fileInput.files = files;
+                    handlePreviews(files);
+                }
+            });
+
+            fileInput.addEventListener('change', e => handlePreviews(e.target.files));
+        }
+
+        function handlePreviews(files) {
+            previewContainer.innerHTML = '';
+            Array.from(files).forEach(file => {
+                if (file.type.startsWith('image/')) {
+                    const reader = new FileReader();
+                    reader.onload = e => {
+                        const item = document.createElement('div');
+                        item.className = 'attachment-preview-item';
+                        item.innerHTML = `<img src="${e.target.result}"><button type="button" class="remove-btn" onclick="this.parentElement.remove()"><i class="fas fa-times"></i></button>`;
+                        previewContainer.appendChild(item);
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+        }
+    });
+    </script>
 </body>
 </html>

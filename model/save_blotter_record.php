@@ -107,6 +107,59 @@ try {
     
     $blotterId = $pdo->lastInsertId();
     
+    // ============================================
+    // Handle File Uploads
+    // ============================================
+    $uploadDir = '../assets/uploads/blotter/';
+    if (!is_dir($uploadDir)) {
+        mkdir($uploadDir, 0777, true);
+    }
+
+    $uploadedPaths = ['incident' => null, 'settlement' => null];
+    $fileKeys = ['incident_proof' => 'incident', 'settlement_proof' => 'settlement'];
+
+    foreach ($fileKeys as $postKey => $dbPrefix) {
+        if (!empty($_FILES[$postKey]['name'][0])) {
+            $files = $_FILES[$postKey];
+            $paths = [];
+            
+            foreach ($files['tmp_name'] as $key => $tmpName) {
+                if ($files['error'][$key] !== UPLOAD_ERR_OK) continue;
+
+                $fileName = $files['name'][$key];
+                $fileSize = $files['size'][$key];
+                $fileExt = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
+                $allowed = ['jpg', 'jpeg', 'png'];
+
+                // Validation: Extension and 5MB limit
+                if (in_array($fileExt, $allowed) && $fileSize <= 5 * 1024 * 1024) {
+                    $newFileName = "{$dbPrefix}_{$blotterId}_" . time() . "_{$key}.{$fileExt}";
+                    $targetPath = $uploadDir . $newFileName;
+
+                    if (move_uploaded_file($tmpName, $targetPath)) {
+                        $paths[] = 'assets/uploads/blotter/' . $newFileName;
+                    }
+                }
+            }
+            
+            if (!empty($paths)) {
+                // Store multiple paths as a comma-separated string
+                $uploadedPaths[$dbPrefix] = implode(',', $paths);
+            }
+        }
+    }
+
+    // Update record with file paths
+    if ($uploadedPaths['incident'] || $uploadedPaths['settlement']) {
+        $updateStmt = $pdo->prepare("
+            UPDATE blotter_records 
+            SET incident_proof = COALESCE(?, incident_proof), 
+                settlement_proof = COALESCE(?, settlement_proof) 
+            WHERE id = ?
+        ");
+        $updateStmt->execute([$uploadedPaths['incident'], $uploadedPaths['settlement'], $blotterId]);
+    }
+
     // Insert complainants
     if (!empty($_POST['complainant_name']) && is_array($_POST['complainant_name'])) {
         $complainantNames = $_POST['complainant_name'];

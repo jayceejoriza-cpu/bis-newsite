@@ -1069,6 +1069,20 @@ function handleAction(action, recordId) {
         populateViewParties('viewVictimsContainer', data.victims);
         populateViewParties('viewRespondentsContainer', data.respondents);
         populateViewParties('viewWitnessesContainer', data.witnesses);
+        
+        // Handle Proof Galleries
+        renderProofGallery('view_incident_proof_container', record.incident_proof, 'No incident evidence uploaded.');
+        
+        const settlementWrapper = document.getElementById('view_settlement_proof_wrapper');
+        if (settlementWrapper) {
+            if (record.status === 'Settled' || record.status === 'Resolved') {
+                settlementWrapper.style.display = 'block';
+                renderProofGallery('view_settlement_proof_container', record.settlement_proof, 'No settlement documents uploaded.');
+            } else {
+                settlementWrapper.style.display = 'none';
+            }
+        }
+
         populateViewActions('viewActionsContainer', data.actions);
         
         // Setup Print Button
@@ -1080,6 +1094,28 @@ function handleAction(action, recordId) {
         }
     }
     
+    function renderProofGallery(containerId, proofString, emptyMessage) {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+        
+        container.innerHTML = '';
+        if (!proofString || proofString.trim() === '') {
+            container.innerHTML = `<p class="text-xs text-gray-400 italic col-span-full py-2">${emptyMessage}</p>`;
+            return;
+        }
+
+        const paths = proofString.split(',');
+        paths.forEach(path => {
+            container.innerHTML += `
+                <a href="${path}" target="_blank" class="block relative group aspect-video overflow-hidden rounded border bg-white shadow-sm hover:shadow-md transition-all">
+                    <img src="${path}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+                    <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-[10px] font-bold">
+                        <i class="fas fa-search-plus mr-1"></i> VIEW FULL
+                    </div>
+                </a>`;
+        });
+    }
+
     function populateViewParties(containerId, parties) {
         const container = document.getElementById(containerId);
         if (!container) return;
@@ -1880,5 +1916,3 @@ function handleAction(action, recordId) {
 
     console.log('Blotter Records page initialized - Mobile validation active');
 });
-
-
