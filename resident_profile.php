@@ -129,6 +129,27 @@ try {
         }
     }
     
+    // Fetch blotter records where resident is involved
+    $blotterStmt = $pdo->prepare("
+        SELECT br.*, 
+               CASE 
+                   WHEN EXISTS (SELECT 1 FROM blotter_complainants WHERE blotter_id = br.id AND resident_id = ? AND (statement IS NULL OR statement = '' OR statement = 'COMPLAINANT')) THEN 'Complainant'
+                   WHEN EXISTS (SELECT 1 FROM blotter_complainants WHERE blotter_id = br.id AND resident_id = ? AND statement = 'VICTIM') THEN 'Victim'
+                   WHEN EXISTS (SELECT 1 FROM blotter_complainants WHERE blotter_id = br.id AND resident_id = ? AND statement = 'WITNESS') THEN 'Witness'
+                   WHEN EXISTS (SELECT 1 FROM blotter_respondents WHERE blotter_id = br.id AND resident_id = ?) THEN 'Respondent'
+                   ELSE 'Involved'
+               END as role
+        FROM blotter_records br
+        WHERE br.id IN (
+            SELECT blotter_id FROM blotter_complainants WHERE resident_id = ?
+            UNION
+            SELECT blotter_id FROM blotter_respondents WHERE resident_id = ?
+        )
+        ORDER BY br.date_reported DESC
+    ");
+    $blotterStmt->execute([$residentId, $residentId, $residentId, $residentId, $residentId, $residentId]);
+    $blotterRecords = $blotterStmt->fetchAll();
+    
 } catch (PDOException $e) {
     error_log("Error fetching resident: " . $e->getMessage());
     header('Location: residents.php');
@@ -205,6 +226,7 @@ $age = calculateAge($resident['date_of_birth']);
             font-size: 15px !important;
         }
         .print-only { display: none; }
+        .no-print { display: block; }
 
         /* Print layout: Resume style / Resident Info Sheet */
         @media print {
@@ -213,7 +235,8 @@ $age = calculateAge($resident['date_of_birth']);
             
             /* Hide UI Elements */
             .sidebar, .header, .back-navigation, .profile-header-actions, .profile-sidebar { display: none !important; }
-            #service-requests, #blotter-records, #incident-report { display: none !important; }
+            .sidebar, .header, .back-navigation, .profile-header-actions, .profile-sidebar, .no-print { display: none !important; }
+            #blotter-records, #incident-report { display: none !important; }
             .edit-field, .edit-field-conditional, .household-actions, .fas, .photo-upload-actions, .badge { display: none !important; }
             
             .main-content, .dashboard-content { margin: 0 !important; padding: 0 !important; width: 100% !important; }
@@ -222,7 +245,8 @@ $age = calculateAge($resident['date_of_birth']);
             /* Print Header */
             .profile-header { display: none !important; }
             .cert-header.print-only { display: flex !important; justify-content: space-between; align-items: center; margin-bottom: 20px; text-align: center; border-bottom: 3px double #7a51c9; padding-bottom: 10px; }
-            .print-title.print-only { display: block !important; text-align: center; font-weight: bold; font-size: 18pt; margin-bottom: 25px; text-transform: uppercase; letter-spacing: 1px; }
+            .print-title.print-only { display: block !important; text-align: center; font-weight: bold; font-size: 18pt; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px; }
+            .info-item.print-only { display: inline !important; }
             .header-center { flex: 1; }
             .header-center p { margin: 2px 0; font-size: 14px; }
             .header-center .brgy-name { font-weight: bold; font-size: 16px; margin-top: 5px; }
@@ -232,33 +256,72 @@ $age = calculateAge($resident['date_of_birth']);
             /* Section Layouts */
             .profile-content-grid { display: inline !important; gap: 0 !important; }
             .profile-main-content { padding: 0 !important; background: none !important; box-shadow: none !important; line-height: 2 !important; text-align: justify !important; display: inline !important; }
-            form#inlineEditForm, .minor-only, .gov-programs-section { display: inline !important; }
+            form#inlineEditForm, .minor-only, .gov-programs-section { display: block !important; }
             .profile-section { 
-                margin-bottom: 0 !important; 
+                margin-bottom: 20px !important; 
                 padding: 0 !important; 
                 border: none !important; 
                 background: none !important; 
                 box-shadow: none !important;
-                display: inline !important;
+                display: block !important;
             }
-            .section-header { display: none !important; }
-            .section-content { margin: 0 !important; padding: 0 !important; display: inline !important; }
+            .section-header { display: block !important; border-bottom: 2px solid #000; margin-bottom: 10px; padding: 0 !important; }
+
+            /* Merge sections into Personal Details for print */
+            #contact-info .section-header, 
+            #family-info .section-header, 
+            #education-employment .section-header, 
+            #additional-info .section-header,
+            #service-requests .section-header { display: none !important; }
+            
+            #personal-details, #contact-info, #family-info, #education-employment, #additional-info, #household-details { margin-bottom: 0 !important; }
+
+            .section-header h2 { margin: 10px 0 -5px 0 !important; padding: 0 !important; }
+            .section-header p { display: none !important; }
+            .section-content { margin: 0 !important; padding: 0 !important; display: block !important; }
             
             /* Paragraph Form Layout */
-            .info-grid { display: inline !important; }
-            .info-item { display: inline !important; margin-right: 15px !important; }
-            .info-item.full-width { display: inline !important; }
-            .info-item label { display: inline !important; font-size: 10pt !important; color: #333 !important; font-weight: normal !important; margin: 0 !important; text-transform: capitalize; }
+            .info-grid, .info-item, .info-item label, .info-item p, .info-item a { display: inline !important; }
+            .info-item { margin-right: 15px !important; }
+            .info-item label, .info-item p, .info-item a { margin: 0 !important; font-size: 10pt !important; }
+            .info-item label { color: #333 !important; font-weight: normal !important; text-transform: capitalize; }
             .info-item label::after { content: ": "; }
-            .info-item p, .info-item a { display: inline !important; font-size: 10pt !important; color: #000 !important; font-weight: bold !important; margin: 0 !important; border-bottom: 1px solid #000 !important; padding: 0 5px !important; text-decoration: none !important; }
+            .info-item p, .info-item a { color: #000 !important; font-weight: bold !important; border-bottom: 1px solid #000 !important; padding: 0 5px !important; text-decoration: none !important; }
             
+            /* Utility Overrides for Name and Hiding */
+            .no-print { display: none !important; }
+            .print-only, .info-item.print-only { display: inline !important; }
+            .cert-header.print-only { display: flex !important; }
+
             .subsection-title { display: none !important; }
+
+            /* Age-based visibility for print */
+            body.resident-is-minor .adult-only,
+            body.resident-is-minor .voter-only,
+            body.resident-is-minor .gov-programs-section { display: none !important; }
+            body.resident-is-adult .minor-only { display: none !important; }
+            body:not(.resident-is-10-plus) .age-10-plus { display: none !important; }
             
             /* Household Table */
-            .household-info-card, .household-head-card, .household-members-card { padding: 0 !important; border: none !important; background: none !important; box-shadow: none !important; margin-top: 0 !important; display: inline !important; }
+            #household-details .section-content { display: flex !important; flex-wrap: wrap !important; gap: 20px !important; align-items: flex-start !important; }
+            .household-info-card, .household-head-card { flex: 1 !important; padding: 0 !important; border: none !important; background: none !important; box-shadow: none !important; margin-top: 15px !important; display: block !important; page-break-inside: avoid !important; }
+            .household-members-card { flex: 1 1 100% !important; padding: 0 !important; border: none !important; background: none !important; box-shadow: none !important; margin-top: 15px !important; display: block !important; page-break-inside: avoid !important; }
+            #household-details .subsection-title,
+            #service-requests .subsection-title { display: block !important; font-size: 11pt !important; margin-bottom: 5px !important; border-bottom: 1px solid #000 !important; font-weight: bold !important; }
+            #household-details .info-grid { display: table !important; width: 100% !important; border-collapse: collapse !important; border: 1px solid #000 !important; margin-bottom: 15px !important; table-layout: fixed !important; }
+            #household-details .info-item { display: table-row !important; }
+            #household-details .info-item label, #household-details .info-item p { display: table-cell !important; border: 1px solid #000 !important; padding: 6px !important; font-size: 9pt !important; vertical-align: middle !important; word-wrap: break-word !important; }
+            #household-details .info-item label { width: 45% !important; background-color: #f9f9f9 !important; -webkit-print-color-adjust: exact; }
+            #household-details .info-item label::after { content: "" !important; }
+            
             .members-display-table { width: 100% !important; border-collapse: collapse !important; margin-top: 0 !important; }
             .members-display-table th, .members-display-table td { border: 1px solid #000 !important; padding: 3px !important; font-size: 8pt !important; color: #000 !important; }
             .members-display-table th { background-color: #f0f0f0 !important; -webkit-print-color-adjust: exact; }
+
+            /* Service Request Table */
+            .cert-requests-table { width: 100% !important; border-collapse: collapse !important; }
+            .cert-requests-table th, .cert-requests-table td { border: 1px solid #000 !important; padding: 4px !important; font-size: 9pt !important; }
+            .cert-requests-table tbody tr:nth-child(n+6) { display: none !important; }
         }
 
 .autocomplete-dropdown {
@@ -294,7 +357,7 @@ $age = calculateAge($resident['date_of_birth']);
 }
     </style>
 </head>
-<body>
+<body class="<?php echo ($age < 18) ? 'resident-is-minor' : 'resident-is-adult'; ?> <?php echo ($age >= 10) ? 'resident-is-10-plus' : ''; ?> <?php echo ($age >= 15) ? 'resident-is-15-plus' : ''; ?>">
     <!-- Sidebar -->
     <?php include 'components/sidebar.php'; ?>
     
@@ -471,27 +534,31 @@ $age = calculateAge($resident['date_of_birth']);
                     <!-- Personal Information Section -->
                     <section id="personal-details" class="profile-section">
                         <div class="section-header">
-                            <h2><i class="fas fa-user"></i> Personal Information</h2>
-                            <p>Basic personal details and identification</p>
+                            <h2><i class="fas fa-user"></i> Personal Details</h2>
+                            <p>Basic personal information and identification</p>
                         </div>
                         <div class="section-content">
                             <div class="info-grid">
-                                <div class="info-item">
+                                <div class="info-item print-only">
+                                    <label>Full Name</label>
+                                    <p><?php echo strtoupper($fullName); ?></p>
+                                </div>
+                                <div class="info-item no-print">
                                     <label>First Name</label>
                                     <p class="view-field"><?php echo strtoupper($resident['first_name']); ?></p>
                                     <input type="text" name="first_name" class="form-control edit-field" value="<?php echo htmlspecialchars($resident['first_name']); ?>" style="display:none;" required>
                                 </div>
-                                <div class="info-item">
+                                <div class="info-item no-print">
                                     <label>Middle Name</label>
                                     <p class="view-field"><?php echo strtoupper($resident['middle_name'] ?: 'N/A'); ?></p>
                                     <input type="text" name="middle_name" class="form-control edit-field" value="<?php echo htmlspecialchars($resident['middle_name']); ?>" style="display:none;">
                                 </div>
-                                <div class="info-item">
+                                <div class="info-item no-print">
                                     <label>Last Name</label>
                                     <p class="view-field"><?php echo strtoupper($resident['last_name']); ?></p>
                                     <input type="text" name="last_name" class="form-control edit-field" value="<?php echo htmlspecialchars($resident['last_name']); ?>" style="display:none;" required>
                                 </div>
-                                <div class="info-item">
+                                <div class="info-item no-print">
                                     <label>Suffix</label>
                                     <p class="view-field"><?php echo htmlspecialchars($resident['suffix'] ?: 'N/A'); ?></p>
                                     <input type="text" name="suffix" class="form-control edit-field" value="<?php echo htmlspecialchars($resident['suffix']); ?>" style="display:none;">
@@ -743,7 +810,7 @@ $age = calculateAge($resident['date_of_birth']);
                                         <option value="No" <?php echo $resident['fourps_member'] == 'No' ? 'selected' : ''; ?>>No</option>
                                     </select>
                                 </div>
-                                <div class="info-item adult-only">
+                                <div class="info-item adult-only <?php echo ($resident['fourps_member'] !== 'Yes') ? 'no-print' : ''; ?>">
                                     <label>4Ps ID Number</label>
                                     <p class="view-field"><?php echo htmlspecialchars($resident['fourps_id'] ?: 'N/A'); ?></p>
                                     <input type="text" name="fourps_id" class="form-control edit-field" placeholder="XX-YYYY-ZZZZ" maxlength="12" oninput="let v=this.value.replace(/[^a-zA-Z0-9]/g,'').toUpperCase().substring(0,10);if(v.length > 6) this.value = v.slice(0,2) + '-' + v.slice(2,6) + '-' + v.slice(6);else if(v.length > 2) this.value = v.slice(0,2) + '-' + v.slice(2);else this.value = v;" value="<?php echo htmlspecialchars($resident['fourps_id']); ?>" style="display:none;">
@@ -756,7 +823,7 @@ $age = calculateAge($resident['date_of_birth']);
                                         <option value="No" <?php echo $resident['voter_status'] == 'No' ? 'selected' : ''; ?>>No</option>
                                     </select>
                                 </div>
-                                <div class="info-item voter-only">
+                                <div class="info-item voter-only <?php echo ($resident['voter_status'] !== 'Yes') ? 'no-print' : ''; ?>">
                                     <label>Precinct Number</label>
                                     <p class="view-field"><?php echo htmlspecialchars($resident['precinct_number'] ?: 'N/A'); ?></p>
                                     <input type="text" name="precinct_number" class="form-control edit-field" value="<?php echo htmlspecialchars($resident['precinct_number']); ?>" style="display:none;">
@@ -812,12 +879,12 @@ $age = calculateAge($resident['date_of_birth']);
                                       <option value="Yes" <?php echo $resident['pwd_status'] == 'Yes' ? 'selected' : ''; ?>>Yes</option>
                                     </select>
                                 </div>
-                                <div class="info-item" id="profilePwdTypeGroup" style="display: <?php echo ($resident['pwd_status'] ?? '') == 'Yes' ? 'block' : 'none'; ?>;">
+                                <div class="info-item <?php echo ($resident['pwd_status'] !== 'Yes') ? 'no-print' : ''; ?>" id="profilePwdTypeGroup" style="display: <?php echo ($resident['pwd_status'] ?? '') == 'Yes' ? 'block' : 'none'; ?>;">
                                     <label>Type of Disability <span class="required">*</span></label>
                                     <p class="view-field"><?php echo htmlspecialchars($resident['pwd_type'] ?? 'N/A'); ?></p>
                                     <input type="text" name="pwd_type" id="profilePwdType" class="form-control edit-field" value="<?php echo htmlspecialchars($resident['pwd_type'] ?? ''); ?>" style="display:none;">
                                 </div>
-                                <div class="info-item" id="profilePwdIdGroup" style="display: <?php echo ($resident['pwd_status'] ?? '') == 'Yes' ? 'block' : 'none'; ?>;">
+                                <div class="info-item <?php echo ($resident['pwd_status'] !== 'Yes') ? 'no-print' : ''; ?>" id="profilePwdIdGroup" style="display: <?php echo ($resident['pwd_status'] ?? '') == 'Yes' ? 'block' : 'none'; ?>;">
                                     <label>PWD ID Number <span class="text-muted">(Optional)</span></label>
                                     <p class="view-field"><?php echo htmlspecialchars($resident['pwd_id_number'] ?? 'N/A'); ?></p>
                                     <input type="text" name="pwd_id_number" id="profilePwdId" class="form-control edit-field" value="<?php echo htmlspecialchars($resident['pwd_id_number'] ?? ''); ?>" style="display:none;">
@@ -1075,6 +1142,12 @@ $age = calculateAge($resident['date_of_birth']);
                             }
                             ?>
                             
+                            <h3 class="subsection-title"><i class="fas fa-clipboard-list"></i> Service Request</h3>
+                            
+                            <div class="print-only" style="margin-bottom: 10px; font-style: italic; font-size: 9pt;">
+                                Total requests found: <?php echo count($certRequests); ?> (Showing latest 5)
+                            </div>
+
                             <?php if (empty($certRequests)): ?>
                                 <p class="no-data">No service requests found</p>
                             <?php else: ?>
@@ -1111,7 +1184,44 @@ $age = calculateAge($resident['date_of_birth']);
                             <p>Incident and complaint records</p>
                         </div>
                         <div class="section-content">
-                            <p class="no-data">No blotter records found</p>
+                            <?php if (empty($blotterRecords)): ?>
+                                <p class="no-data">No blotter records found</p>
+                            <?php else: ?>
+                                <div class="table-responsive">
+                                    <table class="data-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Record #</th>
+                                                <th>Role</th>
+                                                <th>Incident Type</th>
+                                                <th>Date Reported</th>
+                                                <th>Status</th>
+                                                <th class="no-print">Action</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <?php foreach ($blotterRecords as $record): ?>
+                                                <tr>
+                                                    <td><strong><?php echo htmlspecialchars($record['record_number']); ?></strong></td>
+                                                    <td><?php echo htmlspecialchars($record['role']); ?></td>
+                                                    <td><?php echo htmlspecialchars($record['incident_type']); ?></td>
+                                                    <td><?php echo date('M d, Y', strtotime($record['date_reported'])); ?></td>
+                                                    <td>
+                                                        <span class="badge badge-<?php echo strtolower(str_replace(' ', '-', $record['status'])); ?>">
+                                                            <?php echo htmlspecialchars($record['status']); ?>
+                                                        </span>
+                                                    </td>
+                                                    <td class="no-print">
+                                                        <a href="blotter.php?search=<?php echo urlencode($record['record_number']); ?>" class="btn btn-sm btn-info" title="View in Blotter List">
+                                                            <i class="fas fa-eye"></i>
+                                                        </a>
+                                                    </td>
+                                                </tr>
+                                            <?php endforeach; ?>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            <?php endif; ?>
                         </div>
                     </section>
                     
