@@ -160,7 +160,7 @@
                             data-pending="<?php echo jsonAttr($blotterStackedData['Pending']); ?>"
                             data-investigation="<?php echo jsonAttr($blotterStackedData['Under Investigation']); ?>"
                             data-dismissed="<?php echo jsonAttr($blotterStackedData['Dismissed']); ?>"
-                            data-resolved="<?php echo jsonAttr($blotterStackedData['Resolved']); ?>">
+                            data-settled="<?php echo jsonAttr($blotterStackedData['Settled']); ?>">
                         </canvas>
                     </div>
                 </div>

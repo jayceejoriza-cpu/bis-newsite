@@ -89,6 +89,7 @@ try {
                 r.date_of_birth,
                 r.sex,
                 r.current_address,
+                r.mobile_number,
                 r.activity_status
             FROM residents r
             WHERE " . $statusFilter;

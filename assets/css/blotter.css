@@ -113,9 +113,7 @@
     border-bottom: none;
 }
 
-.blotter-table tbody tr {
-    transition: all 0.2s ease;
-}
+.blotter-table tbody tr {\n    transition: all 0.2s ease;\n}\n\n.clickable-row {\n    cursor: pointer;\n}\n\n.clickable-row:hover {\n    background-color: var(--bg-primary);\n}
 
 .blotter-table tbody tr:hover {
     background-color: var(--bg-primary);
@@ -140,18 +138,18 @@
 }
 
 .badge-pending {
-    background-color: #fef3c7;
-    color: #92400e;
+    background-color: #fef3c7; /* bg-yellow-100 */
+    color: #a16207; /* text-yellow-700 */
 }
 
 .badge-resolved {
-    background-color: #d1fae5;
-    color: #065f46;
+    background-color: #d1fae5; /* bg-green-100 */
+    color: #047857; /* text-green-700 */
 }
 
 .badge-under-investigation {
-    background-color: #dbeafe;
-    color: #1e40af;
+    background-color: #e0f2fe; /* bg-sky-100 */
+    color: #0369a1; /* text-sky-700 */
 }
 
 .badge-dismissed {
@@ -159,20 +157,48 @@
     color: #4b5563;
 }
 
+/* NEW: Missing Status Badges */
+.badge-settled {
+    background-color: #dcfce7;
+    color: #166534;
+}
+body.dark-mode .badge-settled {
+    background-color: #166534;
+    color: #dcfce7;
+}
+
+.badge-scheduled-for-mediation {
+    background-color: #dbeafe;
+    color: #1e40af;
+}
+body.dark-mode .badge-scheduled-for-mediation {
+    background-color: #1e40af;
+    color: #dbeafe;
+}
+
+.badge-endorsed-to-police {
+    background-color: #fecaca;
+    color: #dc2626;
+}
+body.dark-mode .badge-endorsed-to-police {
+    background-color: #dc2626;
+    color: #fecaca;
+}
+
 /* Dark mode badge colors */
 body.dark-mode .badge-pending {
-    background-color: #78350f;
-    color: #fef3c7;
+    background-color: #a16207; /* text-yellow-700 */
+    color: #fef3c7; /* bg-yellow-100 */
 }
 
 body.dark-mode .badge-resolved {
-    background-color: #064e3b;
-    color: #6ee7b7;
+    background-color: #047857; /* text-green-700 */
+    color: #d1fae5; /* bg-green-100 */
 }
 
 body.dark-mode .badge-under-investigation {
-    background-color: #1e3a8a;
-    color: #93c5fd;
+    background-color: #0ea5e9; /* bg-sky-600 equiv */
+    color: #e0f2fe; /* bg-sky-100 */
 }
 
 body.dark-mode .badge-dismissed {
@@ -321,6 +347,24 @@ body.dark-mode .badge-dismissed {
 
 .action-menu-item.danger:hover {
     background-color: #fee2e2;
+}
+
+
+    color: #ffffff;
+}
+body.dark-mode .badge-scheduled-for-mediation {
+    background-color: #1d4ed8;
+    color: #ffffff;
+}
+
+/* NEW: Referred to Police/Court - bg-red-600 text-white */
+.badge-referred-to-police-court {
+    background-color: #dc2626;
+    color: #ffffff;
+}
+body.dark-mode .badge-referred-to-police-court {
+    background-color: #b91c1c;
+    color: #ffffff;
 }
 
 /* Status dot */
@@ -747,7 +791,7 @@ textarea.form-control {
     top: -12px;
 }
 
-.step-item.completed ~ .step-line {
+.step-line.completed {
     background-color: var(--secondary-color);
 }
 
@@ -879,12 +923,90 @@ body.dark-mode .input-group-text {
 .modal-dialog {
     z-index: 1060 !important;
 }
+
+/* Fix horizontal scrollbars in blotter modals */
+#createRecordModal .modal-body,
+#viewRecordModal .modal-body,
+#editRecordModal .modal-body,
+.modal-xl .modal-body {
+    overflow-x: hidden !important;
+    word-break: break-word;
+    word-wrap: break-word;
+}
+
+.modal-xl .input-group {
+    flex-wrap: nowrap;
+    max-width: 100%;
+}
+
+.input-group-text img {
+    max-width: 16px !important;
+    height: auto;
+}
+
+.party-entry,
+.form-control {
+    word-break: break-word;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+/* Responsive modal fixes */
+@media (max-width: 768px) {
+    .modal-xl .grid {
+        grid-template-columns: 1fr !important;
+    }
+}
+
+/* Fix horizontal scrollbars in blotter modals */
+#createRecordModal .modal-body,
+#viewRecordModal .modal-body,
+#editRecordModal .modal-body,
+.modal-xl .modal-body {
+    overflow-x: hidden !important;
+    word-break: break-word;
+    word-wrap: break-word;
+    overflow-x: clip;
+}
+
+.modal-xl .input-group {
+    flex-wrap: nowrap;
+    max-width: 100%;
+}
+
+.input-group-text img {
+    max-width: 16px !important;
+    height: auto;
+    flex-shrink: 0;
+}
+
+.party-entry,
+.form-control,
+textarea.form-control {
+    word-break: break-word;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+/* Responsive modal fixes */
+@media (max-width: 768px) {
+    .modal-xl .grid,
+    .modal-xl [class*="grid-cols"] {
+        grid-template-columns: 1fr !important;
+    }
+    
+    .modal-xl .row > .col-lg-4 {
+        flex: 0 0 100%;
+        max-width: 100%;
+    }
+}
+
 .modal-content {
     background-color: var(--bg-secondary);
     padding: 0;
     border-radius: 12px;
     box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
-    max-width: 6020px;
+    max-width: 95vw;  /* Responsive max width */
     width: 100%;
     animation: slideIn 0.3s;
     overflow: hidden;

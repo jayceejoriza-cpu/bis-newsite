@@ -266,6 +266,27 @@ CREATE TABLE `blotter_records` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Barangay blotter records';
 
 --
+-- Add new columns for Case Outcome enhancement (BLACKBOXAI)
+--
+ALTER TABLE `blotter_records` 
+ADD COLUMN `case_outcome` VARCHAR(50) DEFAULT NULL COMMENT 'Settled|Scheduled for Mediation|Referred to Police/Court (CFA)|Dismissed' AFTER `resolution`,
+ADD COLUMN `mediation_schedule` DATETIME DEFAULT NULL COMMENT 'Mediation date/time if scheduled' AFTER `case_outcome`;
+
+--
+-- Add new columns for Case Outcome enhancement (BLACKBOXAI)
+--
+ALTER TABLE `blotter_records` 
+ADD COLUMN `case_outcome` VARCHAR(50) DEFAULT NULL COMMENT 'Settled|Scheduled for Mediation|Referred to Police/Court (CFA)|Dismissed' AFTER `resolution`,
+ADD COLUMN `mediation_schedule` DATETIME DEFAULT NULL COMMENT 'Mediation date/time if scheduled' AFTER `case_outcome`;
+
+--
+-- Add new columns for Case Outcome enhancement
+--
+ALTER TABLE `blotter_records` 
+ADD COLUMN `case_outcome` VARCHAR(50) DEFAULT NULL COMMENT 'Settled|Scheduled for Mediation|Referred to Police/Court (CFA)|Dismissed' AFTER `resolution`,
+ADD COLUMN `mediation_schedule` DATETIME DEFAULT NULL COMMENT 'Mediation date/time if scheduled' AFTER `case_outcome`;
+
+--
 -- Dumping data for table `blotter_records`
 --
 

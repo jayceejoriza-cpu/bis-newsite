@@ -138,13 +138,18 @@ try {
         $pdo->beginTransaction();
         
         // Prepare blotter record data
-        $status = $_POST['status'];
+        $status = trim($_POST['status'] ?? '');
+        if (empty($status)) {
+            throw new Exception('Case status is required');
+        }
         $incidentDate = $_POST['incident_date'];
         $incidentType = $_POST['incident_type'];
         $incidentLocation = $_POST['incident_location'];
         $incidentDescription = $_POST['incident_description'];
         $resolution = $_POST['resolution'] ?? null;
-        $reportedBy = $_POST['reported_by'] ?? null;
+$reportedBy = $_POST['reported_by'] ?? null;
+        $caseOutcome = $_POST['case_outcome'] ?? null;
+        $mediationSchedule = $_POST['mediation_schedule'] ?? null;
         
         // Update blotter record
         $stmt = $pdo->prepare("
@@ -156,6 +161,8 @@ try {
                 reported_by = ?,
                 status = ?,
                 resolution = ?,
+                case_outcome = ?,
+                mediation_schedule = ?,
                 updated_at = NOW()
             WHERE id = ?
         ");
@@ -168,6 +175,8 @@ try {
             $reportedBy,
             $status,
             $resolution,
+            $caseOutcome,
+            $mediationSchedule,
             $recordId
         ]);
         
@@ -337,8 +346,6 @@ try {
     }
 }
 ?>
-
-<!-- Edit Blotter Record Modal -->
 <div class="modal fade" id="editRecordModal" tabindex="-1">
     <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
         <div class="modal-content">
@@ -350,140 +357,122 @@ try {
                 <form id="editRecordForm">
                     <input type="hidden" name="record_id" id="edit_record_id">
                     
-                    <div class="step-indicator">
-                        <div class="step-item active" data-step="0" id="edit-step-basic-info">
-                            <div class="step-icon">
-                                <i class="fas fa-info-circle"></i>
-                            </div>
-                            <div class="step-label">Basic Info</div>
+<div class="step-indicator transition-all duration-300">
+                        <div class="step-item active" data-step="0">
+                            <div class="step-icon"><i class="fas fa-info-circle"></i></div>
+                            <div class="step-label">Step 1: Basic Info</div>
                         </div>
                         <div class="step-line"></div>
-                        <div class="step-item" data-step="1" id="edit-step-parties">
-                            <div class="step-icon">
-                                <i class="fas fa-users"></i>
-                            </div>
-                            <div class="step-label">Parties Involved</div>
+                        <div class="step-item" data-step="1">
+                            <div class="step-icon"><i class="fas fa-users"></i></div>
+                            <div class="step-label">Step 2: Parties Involved</div>
                         </div>
                         <div class="step-line"></div>
-                        <div class="step-item" data-step="2" id="edit-step-incident">
-                            <div class="step-icon">
-                                <i class="fas fa-exclamation-triangle"></i>
-                            </div>
-                            <div class="step-label">Incident Details</div>
+                        <div class="step-item" data-step="2">
+                            <div class="step-icon"><i class="fas fa-align-left"></i></div>
+                            <div class="step-label">Step 3: Narrative</div>
                         </div>
                         <div class="step-line"></div>
-                        <div class="step-item" data-step="3" id="edit-step-actions">
-                            <div class="step-icon">
-                                <i class="fas fa-clipboard-check"></i>
-                            </div>
-                            <div class="step-label">Actions & Resolution</div>
+                        <div class="step-item" data-step="3">
+                            <div class="step-icon"><i class="fas fa-check-circle"></i></div>
+                            <div class="step-label">Step 4: Actions & Resolution</div>
                         </div>
                     </div>
                     
                     <div class="tab-content">
-                        <div class="tab-pane fade show active" id="edit-basic-info">
+                        <!-- Step 1: Basic Info ONLY (Incident Date, Type, Location) -->
+                        <div class="tab-pane fade show active" id="edit-step-1-basic">
+
+<div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div class="col-span-1">
+        <label class="form-label fw-bold">Incident Date <span class="text-danger">*</span></label>
+        <input type="datetime-local" class="form-control" id="edit_incident_date" name="incident_date" required>
+    </div>
+    <div class="col-span-1">
+        <label class="form-label fw-bold">Incident Type <span class="text-danger">*</span></label>
+        <input type="text" class="form-control" id="edit_incident_type" name="incident_type" placeholder="e.g., Verbal Dispute" required>
+    </div>
+    <div class="col-span-2">
+        <label class="form-label fw-bold">Incident Location <span class="text-danger">*</span></label>
+        <textarea class="form-control" id="edit_incident_location" name="incident_location" rows="2" placeholder="Full address where incident occurred" required></textarea>
+    </div>
+</div>
+
+                        </div>
+
+                        <!-- Step 2: ALL Parties Involved (Complainants, Victims, Respondents) -->
+                        <div class="tab-pane fade" id="edit-step-2-parties">
                             <div class="mt-4">
-                                <div class="row mb-3">
-                                    <div class="col-md-6 mb-3">
-                                        <label class="form-label">Status</label>
-                                        <select class="form-control" name="status" id="edit_status" required>
-                                            <option value="Pending">Pending</option>
-                                            <option value="Under Investigation">Under Investigation</option>
-                                            <option value="Resolved">Resolved</option>
-                                            <option value="Dismissed">Dismissed</option>
-                                        </select>
+                                <div class="row">
+                                    <div class="col-lg-4">
+                                        <h6 class="party-title mb-3"><i class="fas fa-user-shield"></i> Complainants</h6>
+                                        <div id="editComplainantsContainer" class="party-section mb-4"></div>
+                                        <button type="button" class="btn btn-outline-primary btn-sm mb-2" id="editAddComplainantBtn"><i class="fas fa-plus"></i> Add</button>
                                     </div>
-                                    <div class="col-md-6 mb-3">
-                                        <label class="form-label">Incident Date</label>
-                                        <input type="datetime-local" class="form-control" id="edit_incident_date" name="incident_date" required>
+                                    <div class="col-lg-4">
+                                        <h6 class="party-title mb-3"><i class="fas fa-user-injured"></i> Victims</h6>
+                                        <div id="editVictimsContainer" class="party-section mb-4"></div>
+                                        <button type="button" class="btn btn-outline-primary btn-sm mb-2" id="editAddVictimBtn"><i class="fas fa-plus"></i> Add</button>
                                     </div>
-                                </div>
-                                
-                                <!-- Complainant Section -->
-                                <div class="party-section mb-4">
-                                    <div class="party-header">
-                                        <h6 class="party-title"><i class="fas fa-user"></i> Complainant</h6>
-                                        <button type="button" class="btn btn-sm btn-primary" id="editAddComplainantBtn"><i class="fas fa-plus"></i></button>
-                                    </div>
-                                    <div id="editComplainantsContainer">
-                                        <!-- Complainants will be loaded here -->
-                                    </div>
-                                </div>
-                                
-                                <!-- Victims Section -->
-                                <div class="party-section">
-                                    <div class="party-header">
-                                        <h6 class="party-title"><i class="fas fa-user-injured"></i> Victims</h6>
-                                        <button type="button" class="btn btn-sm btn-primary" id="editAddVictimBtn"><i class="fas fa-plus"></i></button>
-                                    </div>
-                                    <div id="editVictimsContainer">
-                                        <!-- Victims will be loaded here -->
+                                    <div class="col-lg-4">
+                                        <h6 class="party-title mb-3"><i class="fas fa-user-shield"></i> Respondents</h6>
+                                        <div id="editRespondentsContainer" class="party-section mb-4"></div>
+                                        <button type="button" class="btn btn-outline-primary btn-sm mb-2" id="editAddRespondentBtn"><i class="fas fa-plus"></i> Add</button>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                        
-                        <div class="tab-pane fade" id="edit-parties">
+
+                        <!-- Step 3: ONLY Narrative -->
+                        <div class="tab-pane fade" id="edit-step-3-narrative">
                             <div class="mt-4">
-                                <div class="party-section mb-4">
-                                    <div class="party-header">
-                                        <h6 class="party-title"><i class="fas fa-user-shield"></i> Respondents</h6>
-                                        <button type="button" class="btn btn-sm btn-primary" id="editAddRespondentBtn"><i class="fas fa-plus"></i></button>
-                                    </div>
-                                    <div id="editRespondentsContainer">
-                                        <!-- Respondents will be loaded here -->
-                                    </div>
-                                </div>
-                                
-                                <div class="party-section">
-                                    <div class="party-header">
-                                        <h6 class="party-title"><i class="fas fa-eye"></i> Witnesses</h6>
-                                        <button type="button" class="btn btn-sm btn-primary" id="editAddWitnessBtn"><i class="fas fa-plus"></i></button>
-                                    </div>
-                                    <div id="editWitnessesContainer">
-                                        <!-- Witnesses will be loaded here -->
-                                    </div>
-                                </div>
+                                <label class="form-label fw-bold text-xl mb-4 d-block">
+                                    <i class="fas fa-align-left text-primary me-2"></i>
+                                    Incident Narrative / Details <span class="text-danger">*</span>
+                                </label>
+                                <textarea class="form-control" id="edit_incident_description" name="incident_description" rows="8" style="resize: vertical; min-height: 300px; font-size: 1.1rem; line-height: 1.6;" placeholder="Provide COMPLETE detailed narrative of the incident:
+- Timeline of events
+- Exact words/actions of parties involved
+- Location details
+- Witnesses present
+- Any evidence/documents
+- Police/other authority involvement if any
+
+This forms the OFFICIAL record." required></textarea>
                             </div>
                         </div>
-                        
-                        <div class="tab-pane fade" id="edit-incident">
-                            <div class="mt-4">
-                                <div class="mb-3">
-                                    <label class="form-label">Incident Date <span class="text-danger">*</span></label>
-                                    <input type="datetime-local" class="form-control" name="incident_date_details" id="edit_incident_date_details" required>
+
+                        <!-- Step 4: Status, Mediation Schedule, Resolution -->
+                        <div class="tab-pane fade" id="edit-step-4-actions">
+
+<div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div class="col-12">
+        <label class="form-label fw-bold">Case Status <span class="text-danger">*</span></label>
+        <select class="form-select" id="edit_status" name="status" required>
+            <option value="">Select Status</option>
+            <option value="Pending">Pending</option>
+            <option value="Scheduled for Mediation">Scheduled for Mediation</option>
+            <option value="Under Investigation">Under Investigation</option>
+            <option value="Settled">Settled</option>
+            <option value="Dismissed">Dismissed</option>
+            <option value="Endorsed to Police">Endorsed to Police</option>
+        </select>
+    </div>
+    <div class="col-12" id="edit_mediation_field" style="display:none;">
+        <label class="form-label fw-bold">Mediation Schedule</label>
+        <input type="datetime-local" class="form-control" id="edit_mediation_date" name="mediation_schedule">
+    </div>
+    <div class="col-12">
+        <label class="form-label fw-bold">Resolution / Actions Taken</label>
+        <textarea class="form-control" id="edit_resolution" name="resolution" rows="4" placeholder="Final resolution, settlement terms, fines imposed, referrals made, signatures obtained, etc."></textarea>
+    </div>
+
+                                <div class="col-12 mt-4">
+                                    <h6 class="party-title mb-3"><i class="fas fa-eye text-success"></i> Witnesses</h6>
+                                    <div id="editWitnessesContainer" class="party-section mb-2"></div>
+                                    <button type="button" class="btn btn-outline-success btn-sm" id="editAddWitnessBtn"><i class="fas fa-plus"></i> Add Witness</button>
                                 </div>
-                                <div class="mb-3">
-                                    <label class="form-label">Incident Type <span class="text-danger">*</span></label>
-                                    <input type="text" class="form-control" name="incident_type" id="edit_incident_type" placeholder="Incident type is required." required>
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label">Incident Location <span class="text-danger">*</span></label>
-                                    <textarea class="form-control" name="incident_location" id="edit_incident_location" rows="2" placeholder="Incident location is required." required></textarea>
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label">Incident Details <span class="text-danger">*</span></label>
-                                    <textarea class="form-control" name="incident_description" id="edit_incident_description" rows="6" placeholder="Incident details is required." required></textarea>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="tab-pane fade" id="edit-actions">
-                            <div class="mt-4">
-                                <div class="party-section mb-4">
-                                    <div class="party-header">
-                                        <h6 class="party-title">Action Taken</h6>
-                                        <button type="button" class="btn btn-sm btn-primary" id="editAddActionBtn"><i class="fas fa-plus"></i></button>
-                                    </div>
-                                    <div id="editActionsContainer">
-                                        <!-- Actions will be loaded here -->
-                                    </div>
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label">Resolution</label>
-                                    <textarea class="form-control" name="resolution" id="edit_resolution" rows="4" placeholder="Enter final resolution details..."></textarea>
-                                    <small class="text-danger">Resolution is required.</small>
-                                </div>
+                                <div id="editActionsContainer" class="d-none"></div>
                             </div>
                         </div>
                     </div>
@@ -508,9 +497,10 @@ try {
 (function() {
     let editRecordModal;
     let editCurrentStep = 0;
-    const editSteps = ['edit-basic-info', 'edit-parties', 'edit-incident', 'edit-actions'];
+    const editSteps = ['edit-step-1-basic', 'edit-step-2-parties', 'edit-step-3-narrative', 'edit-step-4-actions'];
     let editStepItems;
     let editTabPanes;
+    let editStepLines;
     let initialFormHTML = '';
     
     // Counters for dynamic entries
@@ -530,122 +520,162 @@ try {
                 initialFormHTML = formEl.outerHTML;
             }
         }
+
     });
 
-    // Global function to open edit modal
+// Global function to open edit modal - FIXED
     window.openEditBlotterModal = function(recordId) {
-        // Ensure modal is initialized
-        if (!editRecordModal) {
-            editRecordModal = new bootstrap.Modal(document.getElementById('editRecordModal'));
+        console.log('openEditBlotterModal called for record:', recordId);
+        
+        const modalEl = document.getElementById('editRecordModal');
+        if (!modalEl) {
+            console.error('Edit modal element not found');
+            alert('Edit modal not available. Please refresh.');
+            return;
         }
         
-        // Ensure we have the form HTML saved
-        if (!initialFormHTML) {
-            const formEl = document.getElementById('editRecordForm');
-            if (formEl) initialFormHTML = formEl.outerHTML;
-        }
+        editRecordModal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
         
-        // Show loading state
-        document.querySelector('#editRecordModal .modal-body').innerHTML = '<div class="text-center p-5"><i class="fas fa-spinner fa-spin fa-3x"></i><p class="mt-3">Loading record...</p></div>';
+        // Show loading
+        const modalBody = modalEl.querySelector('.modal-body');
+        modalBody.innerHTML = '<div class="text-center p-5"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div><p class="mt-3 mb-0">Loading record details...</p></div>';
         
-        // Show modal
         editRecordModal.show();
         
-        // Fetch record data
+        // Fetch data
         fetch(`model/edit_blotter.php?ajax=true&id=${recordId}`)
-            .then(response => response.json())
+            .then(res => {
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                return res.json();
+            })
             .then(data => {
+                console.log('Edit data loaded:', data);
                 if (data.success) {
                     loadEditRecordData(data.data);
                 } else {
-                    alert('Error loading record: ' + data.message);
-                    editRecordModal.hide();
+                    throw new Error(data.message || 'Failed to load record');
                 }
             })
-            .catch(error => {
-                console.error('Error fetching record:', error);
-                alert('An error occurred while loading the record.');
-                editRecordModal.hide();
+            .catch(err => {
+                console.error('Edit fetch error:', err);
+                modalBody.innerHTML = `<div class="alert alert-danger p-4"><i class="fas fa-exclamation-triangle me-2"></i><strong>Error:</strong> ${err.message}<br><small>Please refresh and try again.</small></div>`;
             });
     };
     
-    // Function to load record data into form
+// FIXED: Self-contained form population - no initialFormHTML needed
     function loadEditRecordData(data) {
-        // Restore modal body HTML
-        const modalBody = document.querySelector('#editRecordModal .modal-body');
-        if (modalBody && initialFormHTML) {
+        console.log('=== LOAD EDIT DATA START ===');
+        console.log('Data received:', data);
+        
+        const modalEl = document.getElementById('editRecordModal');
+        const modalBody = modalEl.querySelector('.modal-body');
+        
+        // 1. FIRST: Restore form HTML
+        if (initialFormHTML) {
             modalBody.innerHTML = initialFormHTML;
+            console.log('✓ Form HTML restored');
         }
         
-        // Re-query elements
-        editStepItems = document.querySelectorAll('#editRecordModal .step-item');
-        editTabPanes = document.querySelectorAll('#editRecordModal .tab-pane');
+        // 2. IMMEDIATELY attach listeners BEFORE any step manipulation
+        attachEditEventListeners();
+        console.log('✓ Listeners attached BEFORE step reset');
+
+        const record = data.record || {};
+        
+        // Reset counters
+        editComplainantCount = 0; editVictimCount = 0; editRespondentCount = 0; 
+        editWitnessCount = 0; editActionCount = 0;
+
+        // Handle "Resolved" to "Settled" transition or empty status
+        const displayStatus = (record.status === 'Resolved') ? 'Settled' : (record.status || 'Pending');
+        
+        // Populate fields
+        const fields = {
+            'edit_record_id': record.id || '',
+            'edit_status': displayStatus,
+            'edit_incident_date': formatDateTimeLocal(record.incident_date || ''),
+            'edit_incident_type': record.incident_type || '',
+            'edit_incident_location': record.incident_location || '',
+            'edit_incident_description': record.incident_description || '',
+            'edit_resolution': record.resolution || ''
+        };
+        Object.entries(fields).forEach(([id, value]) => {
+            const el = document.getElementById(id);
+            if (el) el.value = value;
+        });
+        console.log('✓ Fields populated');
+        
+        // Re-query DOM elements
+        // CRITICAL FIX: Force exact step activation for Step 0
+        reQueryEditElements();
+        console.log('Tab panes found:', editTabPanes?.length || 0, 'IDs:', Array.from(editTabPanes).map(p=>p.id));
+        
         editCurrentStep = 0;
         
-        updateEditStepIndicator();
-        updateEditFooterButtons();
-        
-        const record = data.record;
-        
-        // Set basic fields
-        document.getElementById('edit_record_id').value = record.id;
-        document.getElementById('edit_status').value = record.status;
-        document.getElementById('edit_incident_date').value = formatDateTimeLocal(record.incident_date);
-        document.getElementById('edit_incident_date_details').value = formatDateTimeLocal(record.incident_date);
-        document.getElementById('edit_incident_type').value = record.incident_type;
-        document.getElementById('edit_incident_location').value = record.incident_location;
-        document.getElementById('edit_incident_description').value = record.incident_description;
-        document.getElementById('edit_resolution').value = record.resolution || '';
-        
-        // Load complainants
-        editComplainantCount = 0;
-        const complainantsContainer = document.getElementById('editComplainantsContainer');
-        complainantsContainer.innerHTML = '';
-        data.complainants.forEach((complainant, index) => {
-            editComplainantCount++;
-            addEditComplainant(complainant);
+        // MANUALLY activate Step 0 - bypass updateEditStepIndicator index math
+        editTabPanes.forEach((pane, index) => {
+            pane.classList.remove('show', 'active');
+            if (index === 0) {
+                pane.classList.add('show', 'active');
+            }
         });
-        
-        // Load victims
-        editVictimCount = 0;
-        const victimsContainer = document.getElementById('editVictimsContainer');
-        victimsContainer.innerHTML = '';
-        data.victims.forEach((victim, index) => {
-            editVictimCount++;
-            addEditVictim(victim);
-        });
-        
-        // Load respondents
-        editRespondentCount = 0;
-        const respondentsContainer = document.getElementById('editRespondentsContainer');
-        respondentsContainer.innerHTML = '';
-        data.respondents.forEach((respondent, index) => {
-            editRespondentCount++;
-            addEditRespondent(respondent);
-        });
-        
-        // Load witnesses
-        editWitnessCount = 0;
-        const witnessesContainer = document.getElementById('editWitnessesContainer');
-        witnessesContainer.innerHTML = '';
-        data.witnesses.forEach((witness, index) => {
-            editWitnessCount++;
-            addEditWitness(witness);
-        });
-        
-        // Load actions
-        editActionCount = 0;
-        const actionsContainer = document.getElementById('editActionsContainer');
-        actionsContainer.innerHTML = '';
-        if (data.actions && data.actions.length > 0) {
-            data.actions.forEach((action, index) => {
-                editActionCount++;
-                addEditAction(action);
-            });
+        if (editStepItems && editStepItems[0]) editStepItems[0].classList.add('active');
+        if (editStepItems) {
+            for (let i = 1; i < editStepItems.length; i++) {
+                editStepItems[i].classList.remove('active');
+            }
         }
         
-        // Re-attach event listeners
-        attachEditEventListeners();
+        updateEditFooterButtons();
+        console.log('✓ Step 0 MANUALLY activated. Active pane:', document.querySelector('#editRecordModal .tab-pane.show')?.id);
+        
+        // Populate parties AFTER listeners
+        populateEditParties('editComplainantsContainer', 'complainant', data.complainants || [], 1);
+        populateEditParties('editVictimsContainer', 'victim', data.victims || [], 1);
+        populateEditParties('editRespondentsContainer', 'respondent', data.respondents || [], 1);
+        populateEditParties('editWitnessesContainer', 'witness', data.witnesses || [], 0);
+        populateEditParties('editActionsContainer', 'action', data.actions || [], 0);
+        console.log('✓ Parties populated');
+        
+        // Mediation visibility
+        const mediationField = document.getElementById('edit_mediation_field');
+        if (mediationField) {
+            mediationField.style.display = record.status === 'Scheduled for Mediation' ? 'block' : 'none';
+        }
+        
+        console.log('=== LOAD EDIT DATA COMPLETE ===');
+    }
+    
+    // Populate parties with minimum guarantee
+    function populateEditParties(containerId, type, items, minCount = 0) {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+        
+        let count = 0;
+        container.innerHTML = '';
+        
+        const addFunctions = {
+            complainant: addEditComplainant,
+            victim: addEditVictim,
+            respondent: addEditRespondent,
+            witness: addEditWitness,
+            action: addEditAction
+        };
+        
+        const addFn = addFunctions[type];
+        if (!addFn) return;
+
+        // Load existing
+        items.forEach(item => {
+            count++;
+            addFn(item);
+        });
+        
+        // Add minimum empty if needed
+        while (count < minCount) {
+            count++;
+            addFn();
+        }
     }
     
     // Helper function to format datetime for input
@@ -662,6 +692,7 @@ try {
     
     // Functions to add party entries with data
     function addEditComplainant(data = null) {
+        editComplainantCount++;
         const container = document.getElementById('editComplainantsContainer');
         const mobile = data && data.contact_number ? data.contact_number.replace(/^\+63/, '').replace(/\s/g, '') : '';
         
@@ -681,19 +712,17 @@ try {
                         </div>
                         <input type="hidden" name="complainant_resident_id[]" value="${data && data.resident_id ? data.resident_id : ''}">
                     </div>
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
+                    <div class="mb-2">
                             <label class="form-label">Address</label>
                             <input type="text" class="form-control" name="complainant_address[]" value="${data && data.address ? data.address : ''}">
                         </div>
-                        <div class="col-md-6 mb-3">
+                    <div class="mb-2">
                             <label class="form-label">Mobile Number</label>
                             <div class="input-group">
                                 <span class="input-group-text"><img src="assets/image/contactph.png" alt="PH" style="width:20px;"> +63</span>
-                                <input type="text" class="form-control" name="complainant_contact[]" value="${mobile}" placeholder="9XX XXX XXXX">
+<input type="tel" class="form-control phone-input" name="complainant_contact[]" value="${mobile}" inputmode="tel" maxlength="12" placeholder="912 345 6789">
                             </div>
                         </div>
-                    </div>
                 </div>
             </div>
         `;
@@ -701,6 +730,7 @@ try {
     }
     
     function addEditVictim(data = null) {
+        editVictimCount++;
         const container = document.getElementById('editVictimsContainer');
         const mobile = data && data.contact_number ? data.contact_number.replace(/^\+63/, '').replace(/\s/g, '') : '';
         
@@ -720,19 +750,17 @@ try {
                         </div>
                         <input type="hidden" name="victim_resident_id[]" value="${data && data.resident_id ? data.resident_id : ''}">
                     </div>
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
+                    <div class="mb-2">
                             <label class="form-label">Address</label>
                             <input type="text" class="form-control" name="victim_address[]" value="${data && data.address ? data.address : ''}">
                         </div>
-                        <div class="col-md-6 mb-3">
+                    <div class="mb-2">
                             <label class="form-label">Mobile Number</label>
                             <div class="input-group">
                                 <span class="input-group-text"><img src="assets/image/contactph.png" alt="PH" style="width:20px;"> +63</span>
-                                <input type="text" class="form-control" name="victim_contact[]" value="${mobile}" placeholder="9XX XXX XXXX">
+<input type="tel" class="form-control phone-input" name="victim_contact[]" value="${mobile}" inputmode="tel" maxlength="12" placeholder="912 345 6789">
                             </div>
                         </div>
-                    </div>
                 </div>
             </div>
         `;
@@ -740,6 +768,7 @@ try {
     }
     
     function addEditRespondent(data = null) {
+        editRespondentCount++;
         const container = document.getElementById('editRespondentsContainer');
         const mobile = data && data.contact_number ? data.contact_number.replace(/^\+63/, '').replace(/\s/g, '') : '';
         
@@ -759,19 +788,17 @@ try {
                         </div>
                         <input type="hidden" name="respondent_resident_id[]" value="${data && data.resident_id ? data.resident_id : ''}">
                     </div>
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
+                    <div class="mb-2">
                             <label class="form-label">Address</label>
                             <input type="text" class="form-control" name="respondent_address[]" value="${data && data.address ? data.address : ''}">
                         </div>
-                        <div class="col-md-6 mb-3">
+                    <div class="mb-2">
                             <label class="form-label">Mobile Number</label>
                             <div class="input-group">
                                 <span class="input-group-text"><img src="assets/image/contactph.png" alt="PH" style="width:20px;"> +63</span>
-                                <input type="text" class="form-control" name="respondent_contact[]" value="${mobile}" placeholder="9XX XXX XXXX">
+                                <input type="tel" class="form-control phone-input" name="respondent_contact[]" value="${mobile}" inputmode="tel" maxlength="12" placeholder="912 345 6789">
                             </div>
                         </div>
-                    </div>
                 </div>
             </div>
         `;
@@ -779,6 +806,7 @@ try {
     }
     
     function addEditWitness(data = null) {
+        editWitnessCount++;
         const container = document.getElementById('editWitnessesContainer');
         const mobile = data && data.contact_number ? data.contact_number.replace(/^\+63/, '').replace(/\s/g, '') : '';
         
@@ -798,19 +826,17 @@ try {
                         </div>
                         <input type="hidden" name="witness_resident_id[]" value="${data && data.resident_id ? data.resident_id : ''}">
                     </div>
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
+                    <div class="mb-2">
                             <label class="form-label">Address</label>
                             <input type="text" class="form-control" name="witness_address[]" value="${data && data.address ? data.address : ''}">
                         </div>
-                        <div class="col-md-6 mb-3">
+                    <div class="mb-2">
                             <label class="form-label">Mobile Number</label>
                             <div class="input-group">
                                 <span class="input-group-text"><img src="assets/image/contactph.png" alt="PH" style="width:20px;"> +63</span>
-                                <input type="text" class="form-control" name="witness_contact[]" value="${mobile}" placeholder="9XX XXX XXXX">
+                                <input type="tel" class="form-control phone-input" name="witness_contact[]" value="${mobile}" inputmode="tel" maxlength="12" placeholder="912 345 6789">
                             </div>
                         </div>
-                    </div>
                 </div>
             </div>
         `;
@@ -818,6 +844,7 @@ try {
     }
     
     function addEditAction(data = null) {
+        editActionCount++;
         const container = document.getElementById('editActionsContainer');
         
         const html = `
@@ -847,38 +874,37 @@ try {
         container.insertAdjacentHTML('beforeend', html);
     }
     
+    // Utility to safely add listeners (moved to closure scope for wider access)
+    function addSafeListener(id, event, fn) {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener(event, fn);
+    };
+
     // Attach event listeners
     function attachEditEventListeners() {
-        // Add buttons
-        document.getElementById('editAddComplainantBtn').addEventListener('click', function() {
-            editComplainantCount++;
-            addEditComplainant();
-        });
+        // Status change listener for Step 4
+        const statusSelect = document.getElementById('edit_status');
+        if (statusSelect) {
+            statusSelect.addEventListener('change', function() {
+                const mediationField = document.getElementById('edit_mediation_field');
+                if (mediationField) mediationField.style.display = this.value === 'Scheduled for Mediation' ? 'block' : 'none';
+            });
+        }
+
+        // Add buttons for parties
+        addSafeListener('editAddComplainantBtn', 'click', () => addEditComplainant());
+        addSafeListener('editAddVictimBtn', 'click', () => addEditVictim());
+        addSafeListener('editAddRespondentBtn', 'click', () => addEditRespondent());
+        addSafeListener('editAddWitnessBtn', 'click', () => addEditWitness());
         
-        document.getElementById('editAddVictimBtn').addEventListener('click', function() {
-            editVictimCount++;
-            addEditVictim();
-        });
-        
-        document.getElementById('editAddRespondentBtn').addEventListener('click', function() {
-            editRespondentCount++;
-            addEditRespondent();
-        });
-        
-        document.getElementById('editAddWitnessBtn').addEventListener('click', function() {
-            editWitnessCount++;
-            addEditWitness();
-        });
-        
-        document.getElementById('editAddActionBtn').addEventListener('click', function() {
-            editActionCount++;
-            addEditAction();
-        });
-        
-        // Remove buttons
-        document.querySelectorAll('.remove-edit-party-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-                const entry = this.closest('.party-entry');
+        // Use Event Delegation for Remove buttons to handle dynamically added rows
+        const form = document.getElementById('editRecordForm');
+        if (form) {
+            form.addEventListener('click', function(e) {
+                const btn = e.target.closest('.remove-edit-party-btn');
+                if (!btn) return;
+
+                const entry = btn.closest('.party-entry');
                 const container = entry.parentElement;
                 
                 // Check minimum requirements
@@ -897,105 +923,80 @@ try {
                 
                 entry.remove();
                 
-                // Renumber entries
+                // Renumber remaining entries
                 const entries = container.querySelectorAll('.party-entry');
                 entries.forEach((e, index) => {
                     const label = e.querySelector('.party-entry-header span');
                     if (label) {
+                        // Extract base type (Complainant, Victim, etc.) from container ID
                         const type = container.id.replace('edit', '').replace('Container', '').replace('s', '');
                         label.textContent = `${type} ${index + 1}`;
                     }
                 });
                 
-                // Update counter
+                // Sync global counters with remaining length
                 if (container.id === 'editComplainantsContainer') editComplainantCount = entries.length;
                 if (container.id === 'editVictimsContainer') editVictimCount = entries.length;
                 if (container.id === 'editRespondentsContainer') editRespondentCount = entries.length;
                 if (container.id === 'editWitnessesContainer') editWitnessCount = entries.length;
                 if (container.id === 'editActionsContainer') editActionCount = entries.length;
             });
-        });
-        
-        // Step navigation
-        document.getElementById('editModalNextBtn').addEventListener('click', function() {
-            if (!validateEditCurrentStep()) {
-                return;
-            }
-            
-            if (editCurrentStep < editSteps.length - 1) {
-                editCurrentStep++;
-                updateEditStepIndicator();
-                updateEditFooterButtons();
-            }
-        });
-        
-        document.getElementById('editModalBackBtn').addEventListener('click', function() {
-            if (editCurrentStep > 0) {
-                editCurrentStep--;
-                updateEditStepIndicator();
-                updateEditFooterButtons();
-            }
-        });
-        
-        // Update button
-        document.getElementById('updateRecordBtn').addEventListener('click', function() {
-            const form = document.getElementById('editRecordForm');
-            
-            if (!form.checkValidity()) {
-                form.reportValidity();
-                return;
-            }
-            
-            const formData = new FormData(form);
-            
-            // Show loading state
-            this.disabled = true;
-            this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Updating...';
-            
-            fetch('model/edit_blotter.php', {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    alert('Blotter record updated successfully!');
-                    editRecordModal.hide();
-                    location.reload();
-                } else {
-                    alert('Error: ' + data.message);
-                    this.disabled = false;
-                    this.innerHTML = '<i class="fas fa-save"></i> Update Record';
-                }
-            })
-            .catch(error => {
-                console.error('Error updating record:', error);
-                alert('An error occurred while updating the record.');
-                this.disabled = false;
-                this.innerHTML = '<i class="fas fa-save"></i> Update Record';
-            });
-        });
+        }
     }
     
-    // Step indicator update
+    // CRITICAL: Event delegation for ALL footer buttons - survives HTML restore
+    document.addEventListener('click', function(e) {
+        if (e.target.matches('#editModalNextBtn')) {
+            handleEditNextClick();
+        } else if (e.target.matches('#editModalBackBtn')) {
+            handleEditBackClick();
+        } else if (e.target.matches('#updateRecordBtn')) {
+            handleEditUpdateClick(e);
+        }
+    });
+
+    // FIXED: Robust element re-query + reset with logging - Moved outside to be accessible by all functions
+    function reQueryEditElements() {
+        editStepItems = Array.from(document.querySelectorAll('#editRecordModal .step-item'));
+        editTabPanes = Array.from(document.querySelectorAll('#editRecordModal .tab-pane'));
+        editStepLines = Array.from(document.querySelectorAll('#editRecordModal .step-line'));
+        console.log('DEBUG: Re-queried - Steps:', editStepItems ? editStepItems.length : 0, 'Panes:', editTabPanes ? editTabPanes.length : 0, 'Lines:', editStepLines ? editStepLines.length : 0);
+    }
+
+    // FIXED: Robust step update with re-query
     function updateEditStepIndicator() {
-        if (!editStepItems) return;
+        reQueryEditElements();
+        
+        console.log('DEBUG: Updating indicator for step', editCurrentStep, '- Panes:', editTabPanes?.length);
+        
+        if (!editTabPanes || editTabPanes.length !== 4) {
+            console.error('CRITICAL: Wrong number of tab panes!', editTabPanes?.length);
+            return;
+        }
+        
+        // Steps
         editStepItems.forEach((item, index) => {
             item.classList.remove('active', 'completed');
-            if (index < editCurrentStep) {
-                item.classList.add('completed');
-            } else if (index === editCurrentStep) {
-                item.classList.add('active');
-            }
+            if (index < editCurrentStep) item.classList.add('completed');
+            else if (index === editCurrentStep) item.classList.add('active');
+        });
+
+        // Lines  
+        editStepLines.forEach((line, index) => {
+            if (index < editCurrentStep) line.classList.add('completed');
+            else line.classList.remove('completed');
         });
         
-        if (!editTabPanes) return;
+        // TABS - Exact index match
         editTabPanes.forEach((pane, index) => {
+            console.log(`Tab ${index}:`, pane.id, 'Target active:', index === editCurrentStep);
             pane.classList.remove('show', 'active');
             if (index === editCurrentStep) {
                 pane.classList.add('show', 'active');
             }
         });
+        
+        console.log('Active tab now:', document.querySelector('#editRecordModal .tab-pane.show.active')?.id);
     }
     
     // Footer buttons update
@@ -1019,20 +1020,104 @@ try {
         }
     }
     
-    // Validate current step
+    // FIXED: Enhanced validation - blocks Next + visual feedback + logging
     function validateEditCurrentStep() {
-        if (!editTabPanes || !editTabPanes[editCurrentStep]) return true;
-        const currentPane = editTabPanes[editCurrentStep];
-        const requiredFields = currentPane.querySelectorAll('[required]');
+        reQueryEditElements();
         
-        for (let field of requiredFields) {
-            if (!field.value || field.value.trim() === '') {
-                field.reportValidity();
-                return false;
-            }
+        console.log('DEBUG: Validating step', editCurrentStep);
+        
+        if (!editTabPanes || !editTabPanes[editCurrentStep]) {
+            console.warn('DEBUG: No tab pane at step', editCurrentStep);
+            return false;
         }
         
-        return true;
+        const currentPane = editTabPanes[editCurrentStep];
+        const requiredFields = currentPane.querySelectorAll('[required]');
+        console.log('DEBUG: Checking', requiredFields.length, 'required fields');
+        
+        let isValid = true;
+        requiredFields.forEach(field => {
+            field.classList.remove('is-invalid');
+            if (!field.value.trim()) {
+                field.classList.add('is-invalid');
+                isValid = false;
+            }
+        });
+        
+        if (!isValid) {
+            const firstError = currentPane.querySelector('.is-invalid');
+            if (firstError) {
+                firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                firstError.focus();
+            }
+            console.log('DEBUG: VALIDATION FAILED at step', editCurrentStep);
+            alert('Please fill all required fields in current step before proceeding.');
+        } else {
+            console.log('DEBUG: VALIDATION PASSED step', editCurrentStep);
+        }
+        
+        return isValid;
     }
-})();
+
+    // NEW: Next button handler (inline for immediate access)
+    const handleEditNextClick = function() {
+        console.log('DEBUG: Next clicked at step', editCurrentStep);
+        if (!validateEditCurrentStep()) return;
+        
+        if (editCurrentStep < editSteps.length - 1) {
+            editCurrentStep++;
+            console.log('DEBUG: Moving to step', editCurrentStep);
+            updateEditStepIndicator();
+            updateEditFooterButtons();
+        }
+    }
+
+    // NEW: Back button handler
+    const handleEditBackClick = function() {
+        console.log('DEBUG: Back clicked at step', editCurrentStep);
+        if (editCurrentStep > 0) {
+            editCurrentStep--;
+            updateEditStepIndicator();
+            updateEditFooterButtons();
+        }
+    };
+
+    // NEW: Update button handler  
+    const handleEditUpdateClick = function(e) { // Accept event object
+        console.log('DEBUG: Update clicked at step', editCurrentStep);
+        const form = document.getElementById('editRecordForm');
+        if (!form.checkValidity()) {
+            form.reportValidity();
+            return;
+        }
+
+        const formData = new FormData(form);
+const btn = e.target;
+        const originalText = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Updating...';
+
+        fetch('model/edit_blotter.php', {
+            method: 'POST',
+            body: formData
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                alert('Record updated successfully!');
+                location.reload();
+            } else {
+                alert('Error: ' + data.message);
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+            }
+        })
+        .catch(err => {
+            console.error('Update error:', err);
+            alert('Update failed');
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+        });
+    };
+})(); // End of self-executing anonymous function
 </script>
