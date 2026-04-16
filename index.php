@@ -61,7 +61,7 @@ $totalMale        = 0;
 $totalFemale      = 0;
 
 try {
-    $totalResidents  = (int)$pdo->query("SELECT COUNT(*) FROM residents WHERE activity_status != 'Archived'")->fetchColumn();
+    $totalResidents  = (int)$pdo->query("SELECT COUNT(*) FROM residents WHERE activity_status = 'Alive'")->fetchColumn();
     $totalHouseholds = (int)$pdo->query("SELECT COUNT(*) FROM households")->fetchColumn();
     $totalBlotter    = (int)$pdo->query("SELECT COUNT(*) FROM blotter_records")->fetchColumn();
     $totalCertReqs   = (int)$pdo->query("SELECT COUNT(*) FROM certificate_requests")->fetchColumn();
@@ -74,7 +74,7 @@ try {
 // ============================================
 $genderData = [];
 try {
-    $rows = $pdo->query("SELECT sex, COUNT(*) as cnt FROM residents WHERE activity_status != 'Archived' GROUP BY sex ORDER BY cnt DESC")->fetchAll();
+    $rows = $pdo->query("SELECT sex, COUNT(*) as cnt FROM residents WHERE activity_status = 'Alive' GROUP BY sex ORDER BY cnt DESC")->fetchAll();
     foreach ($rows as $r) {
         $genderData[$r['sex'] ?: 'Unknown'] = (int)$r['cnt'];
     }
@@ -100,7 +100,7 @@ try {
     $stmt = $pdo->query("
         SELECT age_health_group, COUNT(*) AS cnt 
         FROM residents 
-        WHERE activity_status != 'Archived' 
+        WHERE activity_status = 'Alive' 
         AND age_health_group IS NOT NULL
         GROUP BY age_health_group
     ");
@@ -121,7 +121,7 @@ try {
 // ============================================
 $civilStatusData = [];
 try {
-    $rows = $pdo->query("SELECT civil_status, COUNT(*) as cnt FROM residents WHERE activity_status != 'Archived' AND civil_status IS NOT NULL AND civil_status != '' GROUP BY civil_status ORDER BY cnt DESC")->fetchAll();
+    $rows = $pdo->query("SELECT civil_status, COUNT(*) as cnt FROM residents WHERE activity_status = 'Alive' AND civil_status IS NOT NULL AND civil_status != '' GROUP BY civil_status ORDER BY cnt DESC")->fetchAll();
     foreach ($rows as $r) {
         $civilStatusData[$r['civil_status']] = (int)$r['cnt'];
     }
@@ -132,7 +132,7 @@ try {
 // ============================================
 $employmentData = [];
 try {
-    $rows = $pdo->query("SELECT employment_status, COUNT(*) as cnt FROM residents WHERE activity_status != 'Archived' AND employment_status IS NOT NULL AND employment_status != '' GROUP BY employment_status ORDER BY cnt DESC")->fetchAll();
+    $rows = $pdo->query("SELECT employment_status, COUNT(*) as cnt FROM residents WHERE activity_status = 'Alive' AND employment_status IS NOT NULL AND employment_status != '' GROUP BY employment_status ORDER BY cnt DESC")->fetchAll();
     foreach ($rows as $r) {
         $employmentData[$r['employment_status']] = (int)$r['cnt'];
     }
@@ -143,7 +143,7 @@ try {
 // ============================================
 $educationData = [];
 try {
-    $rows = $pdo->query("SELECT educational_attainment, COUNT(*) as cnt FROM residents WHERE activity_status != 'Archived' AND educational_attainment IS NOT NULL AND educational_attainment != '' GROUP BY educational_attainment ORDER BY cnt DESC")->fetchAll();
+    $rows = $pdo->query("SELECT educational_attainment, COUNT(*) as cnt FROM residents WHERE activity_status = 'Alive' AND educational_attainment IS NOT NULL AND educational_attainment != '' GROUP BY educational_attainment ORDER BY cnt DESC")->fetchAll();
     foreach ($rows as $r) {
         $educationData[$r['educational_attainment']] = (int)$r['cnt'];
     }
@@ -162,7 +162,7 @@ try {
             SUM(CASE WHEN age_health_group = 'Senior Citizen (60+ years)' THEN 1 ELSE 0 END) AS seniors,
             SUM(CASE WHEN indigent       = 'Yes' THEN 1 ELSE 0 END) AS indigent
         FROM residents
-        WHERE activity_status != 'Archived'
+        WHERE activity_status = 'Alive'
     ")->fetch();
     if ($row) {
         $specialGroups = [
@@ -187,7 +187,7 @@ try {
             SUM(CASE WHEN purok = '3' THEN 1 ELSE 0 END) AS p3,
             SUM(CASE WHEN purok = '4' THEN 1 ELSE 0 END) AS p4
         FROM residents
-        WHERE activity_status != 'Archived'
+        WHERE activity_status = 'Alive'
     ")->fetch();
     if ($row) {
         $purokCounts = [
@@ -205,7 +205,7 @@ try {
 $verificationData = [];
 $activityData     = [];
 try {
-    $rows = $pdo->query("SELECT verification_status, COUNT(*) as cnt FROM residents WHERE activity_status != 'Archived' GROUP BY verification_status")->fetchAll();
+    $rows = $pdo->query("SELECT verification_status, COUNT(*) as cnt FROM residents WHERE activity_status = 'Alive' GROUP BY verification_status")->fetchAll();
     foreach ($rows as $r) { $verificationData[$r['verification_status']] = (int)$r['cnt']; }
 
     $rows = $pdo->query("SELECT activity_status, COUNT(*) as cnt FROM residents GROUP BY activity_status")->fetchAll();
@@ -332,8 +332,8 @@ for ($i = 11; $i >= 0; $i--) {
 
 try {
     // Population Growth (Rolling 12 Months)
-    $basePop = (int)$pdo->query("SELECT COUNT(*) FROM residents WHERE activity_status != 'Archived' AND created_at < DATE_SUB(CURDATE(), INTERVAL 12 MONTH)")->fetchColumn();
-    $stmt = $pdo->query("SELECT DATE_FORMAT(created_at, '%Y-%m') as ym, COUNT(*) as cnt FROM residents WHERE activity_status != 'Archived' AND created_at >= DATE_SUB(CURDATE(), INTERVAL 12 MONTH) GROUP BY ym ORDER BY ym ASC");
+    $basePop = (int)$pdo->query("SELECT COUNT(*) FROM residents WHERE activity_status = 'Alive' AND created_at < DATE_SUB(CURDATE(), INTERVAL 12 MONTH)")->fetchColumn();
+    $stmt = $pdo->query("SELECT DATE_FORMAT(created_at, '%Y-%m') as ym, COUNT(*) as cnt FROM residents WHERE activity_status = 'Alive' AND created_at >= DATE_SUB(CURDATE(), INTERVAL 12 MONTH) GROUP BY ym ORDER BY ym ASC");
     $monthlyAdds = [];
     while($r = $stmt->fetch()) { $monthlyAdds[$r['ym']] = (int)$r['cnt']; }
     

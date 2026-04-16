@@ -1,6 +1,7 @@
 let isEditModeActive = false;
 let formIsDirty = false;
 let inlineWebcamActive = false;
+let modalWebcamActive = false;
 let capturedPhotoData = null;
 let originalPhotoSrc = '';
 
@@ -16,6 +17,24 @@ document.addEventListener('DOMContentLoaded', () => {
             if (isEditModeActive) formIsDirty = true;
         });
     }
+
+    // Close Webcam Modal on outside click
+    window.addEventListener('click', (e) => {
+        const modal = document.getElementById('webcamModal');
+        if (e.target === modal) {
+            if (typeof closeWebcamModal === 'function') closeWebcamModal();
+        }
+    });
+
+    // Close Webcam Modal on Escape key
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            const modal = document.getElementById('webcamModal');
+            if (modal && modal.style.display === 'flex') {
+                if (typeof closeWebcamModal === 'function') closeWebcamModal();
+            }
+        }
+    });
 
     // Navigation Guards
     window.addEventListener('beforeunload', function(e) {
@@ -952,3 +971,94 @@ function setupAutocomplete(inputId, dropdownId, filterSex = null, requireOlder =
         }
     });
 }
+
+// ===================================
+// Webcam Modal Functionality
+// ===================================
+window.openWebcamModal = function() {
+    const modal = document.getElementById('webcamModal');
+    if (!modal) return;
+    
+    modal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+    
+    // Reset modal state
+    const webcamContainer = document.getElementById('webcamContainer');
+    const capturedImageContainer = document.getElementById('capturedImageContainer');
+    const webcamInitialActions = document.getElementById('webcamInitialActions');
+    const webcamCapturedActions = document.getElementById('webcamCapturedActions');
+    
+    if (webcamContainer) webcamContainer.style.display = 'block';
+    if (capturedImageContainer) capturedImageContainer.style.display = 'none';
+    if (webcamInitialActions) webcamInitialActions.style.display = 'flex';
+    if (webcamCapturedActions) webcamCapturedActions.style.display = 'none';
+    
+    if (typeof Webcam !== 'undefined') {
+        Webcam.set({
+            width: 640,
+            height: 480,
+            image_format: 'jpeg',
+            jpeg_quality: 90,
+            force_flash: false,
+            flip_horiz: true,
+            fps: 45
+        });
+        
+        setTimeout(() => {
+            Webcam.attach('#webcamPreview');
+            modalWebcamActive = true;
+        }, 100);
+    }
+};
+
+window.closeWebcamModal = function() {
+    const modal = document.getElementById('webcamModal');
+    if (modal) {
+        if (typeof Webcam !== 'undefined' && modalWebcamActive) {
+            Webcam.reset();
+            modalWebcamActive = false;
+        }
+        modal.style.display = 'none';
+        document.body.style.overflow = '';
+    }
+};
+
+window.capturePhoto = function() {
+    if (typeof Webcam !== 'undefined' && modalWebcamActive) {
+        Webcam.snap(function(data_uri) {
+            capturedPhotoData = data_uri;
+            const capturedImg = document.getElementById('capturedImage');
+            if (capturedImg) capturedImg.src = data_uri;
+            
+            document.getElementById('webcamContainer').style.display = 'none';
+            document.getElementById('capturedImageContainer').style.display = 'block';
+            document.getElementById('webcamInitialActions').style.display = 'none';
+            document.getElementById('webcamCapturedActions').style.display = 'flex';
+            Webcam.freeze();
+        });
+    }
+};
+
+window.retakePhoto = function() {
+    document.getElementById('webcamContainer').style.display = 'block';
+    document.getElementById('capturedImageContainer').style.display = 'none';
+    document.getElementById('webcamInitialActions').style.display = 'flex';
+    document.getElementById('webcamCapturedActions').style.display = 'none';
+    Webcam.unfreeze();
+    capturedPhotoData = null;
+};
+
+window.useWebcamPhoto = function() {
+    if (capturedPhotoData) {
+        const preview = document.getElementById('photoPreview');
+        const placeholder = document.querySelector('.profile-photo-placeholder');
+        if (preview) {
+            preview.src = capturedPhotoData;
+            preview.style.display = 'block';
+        }
+        if (placeholder) placeholder.style.display = 'none';
+        
+        formIsDirty = true;
+        closeWebcamModal();
+    }
+};

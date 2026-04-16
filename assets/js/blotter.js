@@ -1025,6 +1025,16 @@ function handleAction(action, recordId) {
     function populateViewModal(data) {
         const record = data.record;
         
+        // Set hidden record ID first
+        const recordIdEl = document.getElementById('view_record_id');
+        if (recordIdEl) recordIdEl.value = record.id || '';
+
+        // Update modal title with record number
+        const modalTitle = document.querySelector('#viewRecordModal .modal-title');
+        if (modalTitle && record.record_number) {
+            modalTitle.textContent = `Blotter Record #${record.record_number}`;
+        }
+
         // Basic Info
         const statusEl = document.getElementById('view_status');
         if (statusEl) statusEl.value = record.status;
@@ -1085,13 +1095,7 @@ function handleAction(action, recordId) {
 
         populateViewActions('viewActionsContainer', data.actions);
         
-        // Setup Print Button
-        const printBtn = document.getElementById('printRecordBtn');
-        if(printBtn) {
-            printBtn.onclick = function() {
-                window.open(`print_blotter.php?id=${record.id}`, '_blank');
-            };
-        }
+        console.log('View modal populated for record:', record.id);
     }
     
     function renderProofGallery(containerId, proofString, emptyMessage) {

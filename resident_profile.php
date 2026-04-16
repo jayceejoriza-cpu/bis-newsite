@@ -214,6 +214,61 @@ $age = calculateAge($resident['date_of_birth']);
     <link rel="stylesheet" href="assets/css/style.css">
     <link rel="stylesheet" href="assets/css/resident-profile.css">
 
+    <style>
+        /* Webcam Modal Styles */
+        .webcam-modal {
+            display: none;
+            position: fixed;
+            z-index: 3000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            align-items: center;
+            justify-content: center;
+        }
+        .webcam-modal-content {
+            background-color: var(--bg-secondary);
+            border-radius: 12px;
+            width: 95%;
+            max-width: 680px;
+            overflow: hidden;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);
+        }
+        .webcam-modal-header {
+            padding: 15px 20px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .webcam-modal-body {
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: #000;
+        }
+        .webcam-container, .captured-image-container {
+            width: 640px;
+            max-width: 100%;
+            height: 480px;
+            background: #111;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .webcam-modal-footer {
+            padding: 15px 20px;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: flex-end;
+        }
+        .webcam-actions {
+            display: flex;
+            gap: 10px;
+        }
+    </style>
     <!-- Dark Mode Init: must be in <head> to prevent flash of light mode -->
     <script src="assets/js/dark-mode-init.js"></script>
     <style>
@@ -419,8 +474,8 @@ $age = calculateAge($resident['date_of_birth']);
                                 <button type="button" class="btn btn-sm btn-info" onclick="document.getElementById('photoInput').click()">
                                     <i class="fas fa-upload"></i> <?php echo !empty($resident['photo']) ? 'Change Photo' : 'Upload Photo'; ?>
                                 </button>
-                                <button type="button" class="btn btn-sm btn-info" id="takePhotoBtn" onclick="toggleInlineWebcam()">
-                                    <i class="fas fa-camera"></i> <span id="cameraButtonText">Start Camera</span>
+                                <button type="button" class="btn btn-sm btn-info" id="takePhotoBtn" onclick="openWebcamModal()">
+                                    <i class="fas fa-camera"></i> <span id="cameraButtonText">Open Camera</span>
                                 </button>
                                 <button type="button" class="btn btn-sm btn-success" id="captureInlineBtn" onclick="captureInlinePhoto()" style="display: none;">
                                     <i class="fas fa-camera"></i> Capture
@@ -1124,7 +1179,6 @@ $age = calculateAge($resident['date_of_birth']);
                                         reference_no,
                                         certificate_name,
                                         purpose,
-                                        status,
                                         date_requested
                                     FROM certificate_requests
                                     WHERE resident_id = ?
@@ -1359,11 +1413,47 @@ $age = calculateAge($resident['date_of_birth']);
         </div>
     </div>
 
-    <!-- Custom JavaScript -->
-    <script src="assets/js/script.js"></script>
-    
-    <!-- WebcamJS Library -->
+    <!-- Webcam Modal -->
+    <div id="webcamModal" class="webcam-modal">
+        <div class="webcam-modal-content">
+            <div class="webcam-modal-header">
+                <h3><i class="fas fa-camera"></i> Take Photo</h3>
+                <button type="button" class="btn-close-modal" onclick="closeWebcamModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="webcam-modal-body">
+                <div id="webcamContainer" class="webcam-container">
+                    <div id="webcamPreview"></div>
+                </div>
+                <div id="capturedImageContainer" class="captured-image-container" style="display: none; width: 640px; height: 480px; max-width: 100%; background: #111; border-radius: 8px; overflow: hidden;">
+                    <img id="capturedImage" src="" alt="Captured Photo" style="width:100%; height:100%; object-fit:cover;">
+                </div>
+            </div>
+            <div class="webcam-modal-footer">
+                <div id="webcamInitialActions" class="webcam-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeWebcamModal()">
+                        <i class="fas fa-times"></i> Cancel
+                    </button>
+                    <button type="button" class="btn btn-primary" id="captureBtn" onclick="capturePhoto()">
+                        <i class="fas fa-camera"></i> Capture Photo
+                    </button>
+                </div>
+                <div id="webcamCapturedActions" class="webcam-actions" style="display: none;">
+                    <button type="button" class="btn btn-secondary" onclick="retakePhoto()">
+                        <i class="fas fa-redo"></i> Retake
+                    </button>
+                    <button type="button" class="btn btn-success" onclick="useWebcamPhoto()">
+                        <i class="fas fa-check"></i> Use This Photo
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- External Scripts -->
     <script src="assets/webcamjs/webcam.min.js"></script>
+    <script src="assets/js/script.js"></script>
     <script>
         window.RESIDENT_AGE = <?php echo json_encode($age); ?>;
         window.RESIDENT_DATA = {

@@ -82,7 +82,7 @@ function getPopulationGrowthData($conn) {
             SELECT COUNT(*) as base_count
             FROM residents
             WHERE YEAR(created_at) < $yearFilter
-              AND activity_status != 'Archived'
+              AND activity_status = 'Alive'
         ";
         $baseResult    = $conn->query($baseQuery);
         $basePopulation = 0;
@@ -98,7 +98,7 @@ function getPopulationGrowthData($conn) {
                 COUNT(*) as new_residents
             FROM residents
             WHERE YEAR(created_at) = $yearFilter
-              AND activity_status != 'Archived'
+              AND activity_status = 'Alive'
             GROUP BY ym
             ORDER BY ym ASC
         ";
@@ -138,7 +138,7 @@ function getPopulationGrowthData($conn) {
                 COUNT(*) as new_residents
             FROM residents
             WHERE created_at >= DATE_SUB(CURDATE(), INTERVAL 12 MONTH)
-              AND activity_status != 'Archived'
+              AND activity_status = 'Alive'
             GROUP BY ym
             ORDER BY ym ASC
         ";
@@ -149,7 +149,7 @@ function getPopulationGrowthData($conn) {
             SELECT COUNT(*) as base_count
             FROM residents
             WHERE created_at < DATE_SUB(CURDATE(), INTERVAL 12 MONTH)
-              AND activity_status != 'Archived'
+              AND activity_status = 'Alive'
         ";
         $baseResult    = $conn->query($baseQuery);
         $basePopulation = 0;
@@ -323,7 +323,7 @@ function getDemographicsData($conn) {
             age_health_group as age_group,
             COUNT(*) as count
         FROM residents
-        WHERE activity_status != 'Archived' AND age_health_group IS NOT NULL
+        WHERE activity_status = 'Alive' AND age_health_group IS NOT NULL
         GROUP BY age_group
     ";
     

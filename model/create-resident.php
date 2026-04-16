@@ -220,9 +220,9 @@ if (isset($conn)) {
                                         <i class="fas fa-upload"></i>
                                         Upload Photo
                                     </button>
-                                    <button type="button" class="btn btn-primary" id="takePhotoBtn" onclick="toggleInlineWebcam()">
+                                    <button type="button" class="btn btn-primary" id="takePhotoBtn" onclick="openWebcamModal()">
                                         <i class="fas fa-camera"></i>
-                                        <span id="cameraButtonText">Start Camera</span>
+                                        <span id="cameraButtonText">Open Camera</span>
                                     </button>
                                     <button type="button" class="btn btn-success" id="captureInlineBtn" onclick="captureInlinePhoto()" style="display: none;">
                                         <i class="fas fa-camera"></i>
@@ -244,7 +244,7 @@ if (isset($conn)) {
                             
                             <!-- Personal Information Fields -->
                             <div class="row">
-                                <div class="col-md-1" style="margin-right: 20px;">
+                                <div class="col-sm-2">
                                     <div class="form-group">
                                         <label>Resident ID</label>
                                         <input type="text" class="form-control" value="<?php echo $nextResidentId; ?>" disabled>

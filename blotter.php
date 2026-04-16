@@ -461,13 +461,6 @@ try {
                                                 </div>
                                             </div>
                                             <?php endif; ?>
-                                            <?php if (hasPermission('perm_blotter_print')): ?>
-                                         
-                                            <button class="action-menu-item" data-action="print">
-                                                <i class="fas fa-print"></i>
-                                                <span>Print Details</span>
-                                            </button>
-                                            <?php endif; ?>
                                             <?php if (hasPermission('perm_blotter_archive')): ?>
                                              <div class="action-menu-divider" style="
                                                 height: 1px;
@@ -672,6 +665,7 @@ try {
                 </div>
                 <div class="modal-body max-h-[70vh] overflow-y-auto p-6">
                     <form id="viewRecordForm" class="space-y-6">
+                        <input type="hidden" id="view_record_id">
                         <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
                             <!-- Left Column: Case Information (col-span-7) -->
                             <div class="lg:col-span-7 space-y-6">
@@ -819,7 +813,7 @@ try {
                             Close
                         </button>
                         <?php if (hasPermission('perm_blotter_print')): ?>
-                        <button type="button" class="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg flex items-center gap-2 transition-all duration-200" id="printRecordBtn">
+                        <button type="button" id="viewPrintBtn" class="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg flex items-center gap-2 transition-all duration-200" data-action="print">
                             <i class="fas fa-print"></i> 
                             Print Record
                         </button>
@@ -970,6 +964,150 @@ try {
                     reader.readAsDataURL(file);
                 }
             });
+        }
+    });
+    </script>
+    <script>
+    // Print data from PHP - fixes PHP-in-JS syntax issue
+    window.blotterPrintData = {
+        sessionName: '<?php echo htmlspecialchars($_SESSION['full_name'] ?? 'Authorized Staff'); ?>',
+        captainName: '<?php echo htmlspecialchars($captainName); ?>',
+        brgyInfo: {
+            province_name: '<?php echo htmlspecialchars($barangayInfo["province_name"] ?? "Province"); ?>',
+            town_name: '<?php echo htmlspecialchars($barangayInfo["town_name"] ?? "Municipality"); ?>',
+            barangay_name: '<?php echo htmlspecialchars($barangayInfo["barangay_name"] ?? "Barangay"); ?>',
+            barangay_logo: '<?php echo htmlspecialchars($barangayInfo["barangay_logo"] ?? "assets/image/brgylogo.jpg"); ?>',
+            municipal_logo: '<?php echo htmlspecialchars($barangayInfo["municipal_logo"] ?? "assets/image/citylogo.png"); ?>'
+        }
+    };
+    </script>
+    <script>
+    /**
+     * Handle Print action from View Modal using dynamic iframe generation
+     * following the Official Philippine Government Print Format.
+     */
+    document.addEventListener('click', async function(e) {
+        const printBtn = e.target.closest('button[data-action="print"]');
+        if (printBtn && printBtn.closest('#viewRecordModal')) {
+            const recordIdEl = document.getElementById('view_record_id');
+            const recordId = recordIdEl ? recordIdEl.value : null;
+            if (!recordId) {
+                console.error('Print failed: No record ID found');
+                alert('Cannot print: Record not loaded properly. Please refresh.');
+                return;
+            }
+
+            console.log('Printing record:', recordId);
+
+            // Get data from modal fields with fallbacks
+            const recordNoEl = document.querySelector('#viewRecordModal h5.modal-title');
+            const recordNo = recordNoEl ? recordNoEl.textContent.trim().replace(/[^\w\s-]/g, '').replace(/\s+/g, ' ').trim() || `BL-${recordId.padStart(4, '0')}` : recordId;
+            const status = document.getElementById('view_status')?.value || 'N/A';
+            const incidentDate = document.getElementById('view_incident_date')?.value || 'N/A';
+            const incidentType = document.getElementById('view_incident_type')?.value || 'N/A';
+            const location = document.getElementById('view_incident_location')?.value || 'N/A';
+            const description = document.getElementById('view_incident_description')?.value || 'N/A';
+            const resolution = document.getElementById('view_resolution')?.value || 'Case Pending';
+            
+            const complainants = Array.from(document.querySelectorAll('#viewComplainantsContainer li'))
+                .map(li => li.textContent.trim()).filter(Boolean).join(', ') || 'None';
+            const respondents = Array.from(document.querySelectorAll('#viewRespondentsContainer li'))
+                .map(li => li.textContent.trim()).filter(Boolean).join(', ') || 'None';
+            const witnesses = Array.from(document.querySelectorAll('#viewWitnessesContainer li'))
+                .map(li => li.textContent.trim()).filter(Boolean).join(', ') || 'None';
+
+            console.log('Print data:', {recordId, recordNo, status, complainants: complainants.slice(0,50)+'...', respondents: respondents.slice(0,50)+'...'});
+
+            // Create hidden iframe for printing
+            let printFrame = document.getElementById('blotterRecordPrintFrame');
+            if (printFrame) printFrame.remove();
+            printFrame = document.createElement('iframe');
+            printFrame.id = 'blotterRecordPrintFrame';
+            printFrame.style.cssText = 'position:fixed;bottom:0;right:0;width:0;height:0;border:none;z-index:99999;';
+            document.body.appendChild(printFrame);
+
+            const doc = printFrame.contentWindow.document;
+            doc.open();
+            doc.write(`
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>Blotter Record - ${recordNo}</title>
+                    <style>
+                        @page { size: A4; margin: 1in; }
+                        body { background: white !important; color: #000 !important; font-family: "Times New Roman", Georgia, serif !important; font-size: 12pt; line-height: 1.5; margin: 0; padding: 0; }
+                        .data-table { width: 100% !important; border-collapse: collapse !important; border: 1px solid #000 !important; margin-top: 20px; }
+                        .data-table th, .data-table td { border: 1px solid #000 !important; padding: 8px !important; text-align: left; page-break-inside: avoid; vertical-align: top; }
+                        .data-table th { background-color: #f3f4f6 !important; font-weight: bold; -webkit-print-color-adjust: exact; width: 25%; }
+                        .print-header { text-align: center; margin-bottom: 30px; }
+                        .header-logos { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+                        .logo-placeholder { width: 80px; height: 80px; object-fit: contain; }
+                        .header-text p { margin: 0; line-height: 1.4; }
+                        .office-name { font-weight: bold; font-size: 14pt; margin-top: 5px !important; }
+                        .report-title { font-weight: bold; text-decoration: underline; margin-top: 25px; font-size: 16pt; text-align: center; }
+                        .print-footer { margin-top: 60px; }
+                        .signatories { display: flex; justify-content: space-between; margin-bottom: 40px; }
+                        .signatory-item { width: 40%; text-align: center; }
+                        .sig-line { border-bottom: 1px solid #000; margin: 50px auto 5px; width: 100%; }
+                        .sig-name { font-weight: bold; text-transform: uppercase; margin-bottom: 0; }
+                        .sig-title { font-size: 10pt; margin-top: 0; }
+                        .print-metadata { position: fixed; bottom: 0; right: 0; font-size: 8pt; color: #333; text-align: right; width: 100%; }
+                        .page-number:after { content: "Page " counter(page); }
+                    </style>
+                </head>
+                <body>
+                    <div class="print-header">
+                        <div class="header-logos">
+                            <img src="${window.blotterPrintData.brgyInfo.barangay_logo}" class="logo-placeholder" onerror="this.style.display='none'">
+                            <div class="header-text">
+                                <p>Republic of the Philippines</p>
+                                <p>Province of ${window.blotterPrintData.brgyInfo.province_name}</p>
+                                <p>Municipality of ${window.blotterPrintData.brgyInfo.town_name}</p>
+                                <p class="office-name">OFFICE OF THE SANGGUNIANG BARANGAY OF ${window.blotterPrintData.brgyInfo.barangay_name.toUpperCase()}</p>
+                            </div>
+                            <img src="${window.blotterPrintData.brgyInfo.municipal_logo}" class="logo-placeholder" onerror="this.style.display='none'">
+                        </div>
+                        <h2 class="report-title">OFFICIAL BLOTTER RECORD</h2>
+                    </div>
+                    <table class="data-table">
+                        <tr><th>Record Number</th><td><strong>${recordNo}</strong></td></tr>
+                        <tr><th>Incident Type</th><td>${incidentType}</td></tr>
+                        <tr><th>Incident Date</th><td>${incidentDate}</td></tr>
+                        <tr><th>Location</th><td>${location}</td></tr>
+                        <tr><th>Complainant(s)</th><td>${complainants}</td></tr>
+                        <tr><th>Respondent(s)</th><td>${respondents}</td></tr>
+                        <tr><th>Witness(es)</th><td>${witnesses}</td></tr>
+                        <tr><th>Status</th><td>${status}</td></tr>
+                        <tr><th>Narrative</th><td>${description}</td></tr>
+                        <tr><th>Resolution</th><td>${resolution}</td></tr>
+                    </table>
+                    <div class="print-footer">
+                        <div class="signatories">
+                            <div class="signatory-item">
+                                <p>Prepared by:</p>
+                                <div class="sig-line"></div>
+                                <p class="sig-name">${window.blotterPrintData.sessionName}</p>
+                                <p class="sig-title">Duty Officer / Staff</p>
+                            </div>
+                            <div class="signatory-item">
+                                <p>Attested by:</p>
+                                <div class="sig-line"></div>
+                                <p class="sig-name">${window.blotterPrintData.captainName}</p>
+                                <p class="sig-title">Barangay Captain</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="print-metadata"><p>Printed: ${new Date().toLocaleString()}</p></div>
+                </body>
+                </html>
+            `);
+            doc.close();
+            
+            setTimeout(() => {
+                printFrame.contentWindow.focus();
+                printFrame.contentWindow.print();
+                console.log('Print dialog opened');
+            }, 250);
         }
     });
     </script>

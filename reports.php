@@ -17,15 +17,15 @@ $fromDate = $_GET['from_date'] ?? date('Y-m-01');
 $toDate   = $_GET['to_date']   ?? date('Y-m-t');
 
 // 1. Current Population Snapshot (Independent of Date Range)
-$totalResidents = (int)$pdo->query("SELECT COUNT(*) FROM residents WHERE activity_status != 'Archived'")->fetchColumn();
+$totalResidents = (int)$pdo->query("SELECT COUNT(*) FROM residents WHERE activity_status = 'Alive'")->fetchColumn();
 $totalHouseholds = (int)$pdo->query("SELECT COUNT(*) FROM households")->fetchColumn();
 
-$genderData = $pdo->query("SELECT sex, COUNT(*) as cnt FROM residents WHERE activity_status != 'Archived' GROUP BY sex")->fetchAll(PDO::FETCH_KEY_PAIR);
-$purokData = $pdo->query("SELECT purok, COUNT(*) as cnt FROM residents WHERE activity_status != 'Archived' AND purok IS NOT NULL AND purok != '' GROUP BY purok ORDER BY purok ASC")->fetchAll(PDO::FETCH_KEY_PAIR);
-$ageGroupData = $pdo->query("SELECT age_health_group, COUNT(*) as cnt FROM residents WHERE activity_status != 'Archived' AND age_health_group IS NOT NULL AND age_health_group != '' GROUP BY age_health_group")->fetchAll(PDO::FETCH_KEY_PAIR);
-$civilStatusData = $pdo->query("SELECT civil_status, COUNT(*) as cnt FROM residents WHERE activity_status != 'Archived' AND civil_status IS NOT NULL AND civil_status != '' GROUP BY civil_status")->fetchAll(PDO::FETCH_KEY_PAIR);
+$genderData = $pdo->query("SELECT sex, COUNT(*) as cnt FROM residents WHERE activity_status = 'Alive' GROUP BY sex")->fetchAll(PDO::FETCH_KEY_PAIR);
+$purokData = $pdo->query("SELECT purok, COUNT(*) as cnt FROM residents WHERE activity_status = 'Alive' AND purok IS NOT NULL AND purok != '' GROUP BY purok ORDER BY purok ASC")->fetchAll(PDO::FETCH_KEY_PAIR);
+$ageGroupData = $pdo->query("SELECT age_health_group, COUNT(*) as cnt FROM residents WHERE activity_status = 'Alive' AND age_health_group IS NOT NULL AND age_health_group != '' GROUP BY age_health_group")->fetchAll(PDO::FETCH_KEY_PAIR);
+$civilStatusData = $pdo->query("SELECT civil_status, COUNT(*) as cnt FROM residents WHERE activity_status = 'Alive' AND civil_status IS NOT NULL AND civil_status != '' GROUP BY civil_status")->fetchAll(PDO::FETCH_KEY_PAIR);
 
-$ethnicityData = $pdo->query("SELECT ethnicity, COUNT(*) as cnt FROM residents WHERE activity_status != 'Archived' AND ethnicity IS NOT NULL AND ethnicity != '' GROUP BY ethnicity")->fetchAll(PDO::FETCH_KEY_PAIR);
+$ethnicityData = $pdo->query("SELECT ethnicity, COUNT(*) as cnt FROM residents WHERE activity_status = 'Alive' AND ethnicity IS NOT NULL AND ethnicity != '' GROUP BY ethnicity")->fetchAll(PDO::FETCH_KEY_PAIR);
 
 $waterSourceData = $pdo->query("SELECT water_source_type, COUNT(*) as cnt FROM households WHERE water_source_type IS NOT NULL AND water_source_type != '' GROUP BY water_source_type")->fetchAll(PDO::FETCH_KEY_PAIR);
 
@@ -53,7 +53,7 @@ $specialGroups = $pdo->query("
         SUM(CASE WHEN fourps_member = 'Yes' THEN 1 ELSE 0 END) AS fourps,
         SUM(CASE WHEN pwd_status = 'Yes' THEN 1 ELSE 0 END) AS pwd,
         SUM(CASE WHEN voter_status = 'Yes' THEN 1 ELSE 0 END) AS voters
-    FROM residents WHERE activity_status != 'Archived'
+    FROM residents WHERE activity_status = 'Alive'
 ")->fetch();
 
 // 2. Period Statistics (Based on Date Range)
@@ -71,7 +71,7 @@ $stmt = $pdo->prepare("SELECT incident_type, COUNT(*) as cnt FROM blotter_record
 $stmt->execute([$fromDate, $toDate]);
 $periodBlotterType = $stmt->fetchAll(PDO::FETCH_KEY_PAIR);
 
-$stmt = $pdo->prepare("SELECT COUNT(*) FROM residents WHERE DATE(created_at) BETWEEN ? AND ? AND activity_status != 'Archived'");
+$stmt = $pdo->prepare("SELECT COUNT(*) FROM residents WHERE DATE(created_at) BETWEEN ? AND ? AND activity_status = 'Alive'");
 $stmt->execute([$fromDate, $toDate]);
 $newResidentsPeriod = $stmt->fetchColumn();
 
@@ -260,8 +260,8 @@ function pct($val, $total) {
                     </table>
                 </div>
                 
-                <div class="report-table-box">
-                    <div class="report-table-box-title">Age Groups & Vulnerable Sectors</div>
+<div class="report-table-box">
+                    <div class="report-table-box-title">Age Groups</div>
                     <table class="report-table">
                         <thead>
                             <tr>
@@ -279,7 +279,20 @@ function pct($val, $total) {
                                     <td class="text-right"><?php echo pct($v, $totalResidents); ?></td>
                                 </tr>
                             <?php endforeach; ?>
-                            
+                        </tbody>
+                    </table>
+                </div>
+                <div class="report-table-box">
+                    <div class="report-table-box-title">Vulnerable Sectors</div>
+                    <table class="report-table">
+                        <thead>
+                            <tr>
+                                <th>Category</th>
+                                <th class="text-right">Count</th>
+                                <th class="text-right">% of Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
                             <tr><td colspan="3" style="background:var(--bg-secondary); font-weight:600;">Special Groups</td></tr>
                             <tr>
                                 <td>Registered Voters</td>

@@ -62,12 +62,7 @@ $pageTitle = 'Households';
                         Print Masterlist
                     </button>
                     <?php endif; ?>
-                    <?php if (hasPermission('perm_household_create')): ?>
-                    <button class="btn btn-primary" id="createHouseholdBtn" onclick="showCreateHouseholdModal()">
-                        <i class="fas fa-plus"></i>
-                        Create Household
-                    </button>
-                    <?php endif; ?>
+    
                 </div>
             </div>
             
