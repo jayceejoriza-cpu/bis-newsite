@@ -4,27 +4,33 @@ require_once 'config.php';
 require_once 'auth_check.php';
 require_once 'permissions.php';
 
-// New permissions (add to roles.php later)
-// requirePermission('perm_event_view');
-
-// Page title
 $pageTitle = 'Barangay Events & Scheduling';
 
-// Fetch upcoming events from database
+// Fetch upcoming events for the table
 $events = [];
 if (isset($conn)) {
     try {
+        date_default_timezone_set('Asia/Manila');
         $currentDate = date('Y-m-d');
-        $stmt = $conn->prepare("SELECT id, title, event_date, start_time, location FROM events WHERE event_date >= ? ORDER BY event_date ASC LIMIT 10");
+
+        // Updated query to join with residents table to get the organizer name
+        $query = "SELECT e.id, e.title, e.event_date, e.start_time, e.end_time, e.location, e.description, e.event_type,
+                         TRIM(CONCAT(r.first_name, ' ', IFNULL(CONCAT(r.middle_name, ' '), ''), r.last_name, ' ', IFNULL(r.suffix, ''))) AS resident_name
+                  FROM events e
+                  LEFT JOIN residents r ON e.resident_id = r.id
+                  WHERE e.event_date >= ? 
+                  ORDER BY event_date ASC LIMIT 10";
+                  
+        $stmt = $conn->prepare($query);
         $stmt->bind_param("s", $currentDate);
         $stmt->execute();
         $res = $stmt->get_result();
+        
         while ($row = $res->fetch_assoc()) {
             $events[] = $row;
         }
-        $stmt->close();
     } catch (Exception $e) {
-        error_log("Error fetching events: " . $e->getMessage());
+        error_log("Database Error in events.php: " . $e->getMessage());
     }
 }
 ?>
@@ -88,7 +94,7 @@ if (isset($conn)) {
             <!-- Page Header -->
             <div class="page-header-section">
                 <div>
-                    <h1 class="page-title">Barangay Events</h1>
+                    <h1 class="page-title"><?php echo $pageTitle; ?></h1>
                     <p class="page-subtitle">Community events calendar and scheduling system</p>
                 </div>
                 <div class="page-header-actions">
@@ -117,54 +123,102 @@ if (isset($conn)) {
                                 <th>Time</th>
                                 <th>Title</th>
                                 <th>Location</th>
+                                <th>Organizer</th>
                                 <th>Action</th>
                             </tr>
                         </thead>
                         <tbody id="eventsTableBody">
                             <?php if (empty($events)): ?>
-                                <tr><td colspan="5" style="text-align: center;">No upcoming events found.</td></tr>
+                                <tr><td colspan="6" style="text-align: center;">No upcoming events found.</td></tr>
                             <?php else: ?>
-                            <?php foreach ($events as $event): ?>
-                            <tr>
-                                <td><?php echo date('M d, Y', strtotime($event['event_date'])); ?></td>
-                                <td><?php echo $event['start_time'] ?? 'All day'; ?></td>
-                                <td><?php echo htmlspecialchars($event['title']); ?></td>
-                                <td><?php echo htmlspecialchars($event['location']); ?></td>
-                                <td>
-                                    <button class="btn-action" onclick="showEventDetails(<?php echo $event['id']; ?>)">
-                                        <i class="fas fa-ellipsis-h"></i>
-                                    </button>
-                                </td>
-                            </tr>
-                            <?php endforeach; ?>
+                                <?php foreach ($events as $event): 
+                                ?>
+                                <tr>
+                                    <td><?php echo date('M d, Y', strtotime($event['event_date'])); ?></td>
+                                    <td>
+                                        <?php 
+                                        $start = !empty($event['start_time']) ? date('g:i A', strtotime($event['start_time'])) : '---';
+                                        $end = !empty($event['end_time']) ? date('g:i A', strtotime($event['end_time'])) : '';
+                                        echo $start . ($end ? " - $end" : "");
+                                        ?>
+                                    </td>
+                                    <td><?php echo htmlspecialchars($event['title']); ?></td>
+                                    <td><?php echo htmlspecialchars($event['location']); ?></td>
+                                    <td>
+                                        <?php 
+                                        if ($event['event_type'] === 'Barangay') {
+                                            echo 'Barangay Officials';
+                                        } else {
+                                            echo htmlspecialchars($event['resident_name'] ?? 'Unknown Resident');
+                                        }
+                                        ?>
+                                    </td>
+                                    <td>
+                                        <div class="action-menu-container">
+                                            <button class="btn-action" data-event-id="<?php echo $event['id']; ?>">
+                                                <i class="fas fa-ellipsis-h"></i>
+                                            </button>
+                                            <div class="action-menu" data-event-id="<?php echo $event['id']; ?>">
+                                                <button type="button" class="action-menu-item" data-action="view">
+                                                    <i class="fas fa-eye"></i> View Details
+                                                </button>
+                                                <button type="button" class="action-menu-item" data-action="edit">
+                                                    <i class="fas fa-edit"></i> Edit Event
+                                                </button>
+                                                <div class="action-menu-divider"></div>
+                                                <button type="button" class="action-menu-item danger" data-action="delete">
+                                                    <i class="fas fa-trash"></i> Delete Event
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <?php endforeach; ?>
                             <?php endif; ?>
                         </tbody>
                     </table>
-                </div>
             </div>
         </div>
     </main>
     
     <!-- Event Details Modal -->
-    <div id="eventDetailModal" class="modal" style="display: none;">
+    <div id="eventDetailModal" class="modal">
         <div class="modal-content" style="max-width: 500px;">
             <div class="modal-header">
                 <h3 id="eventDetailTitle">Event Details</h3>
                 <button id="closeEventDetail" style="background: none; border: none; font-size: 24px;">&times;</button>
             </div>
             <div class="modal-body">
-                <p><strong>Description:</strong></p>
-                <p id="eventDetailDesc"></p>
-                <p><strong>Date:</strong> <span id="eventDetailDate"></span></p>
-                <p><strong>Time:</strong> <span id="eventDetailTime"></span></p>
-                <p><strong>Location:</strong> <span id="eventDetailLocation"></span></p>
+                <div style="margin-bottom: 25px;">
+                    <label style="display: block; font-weight: 600; color: var(--text-secondary); margin-bottom: 8px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;">Description</label>
+                    <p id="eventDetailDesc" style="line-height: 1.6; color: var(--text-primary); white-space: pre-wrap; margin: 0;"></p>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 25px;">
+                    <div>
+                        <label style="display: block; font-weight: 600; color: var(--text-secondary); margin-bottom: 8px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;">Date</label>
+                        <p id="eventDetailDate" style="font-weight: 500; color: var(--text-primary); margin: 0;"></p>
+                    </div>
+                    <div>
+                        <label style="display: block; font-weight: 600; color: var(--text-secondary); margin-bottom: 8px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;">Time</label>
+                        <p id="eventDetailTime" style="font-weight: 500; color: var(--text-primary); margin: 0;"></p>
+                    </div>
+                </div>
+
+                <div>
+                    <label style="display: block; font-weight: 600; color: var(--text-secondary); margin-bottom: 8px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;">Location</label>
+                    <p id="eventDetailLocation" style="font-weight: 500; color: var(--text-primary); margin: 0;"></p>
+                </div>
+            </div>
+            <div class="modal-footer" style="padding: 15px; border-top: 1px solid var(--border-color); display: flex; justify-content: flex-end;">
+                <button class="btn btn-secondary" onclick="document.getElementById('eventDetailModal').style.display='none'">Close</button>
             </div>
         </div>
     </div>
     
     <!-- Create/Edit Event Modal -->
     <div id="eventModal" class="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1050; align-items: center; justify-content: center;">
-        <div class="modal-content" style="width: 550px; height: 550px; max-width: 95vw; max-height: 95vh; border-radius: 12px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.2);">
+        <div class="modal-content" style="width: 600px; height: 600px; max-width: 95vw; max-height: 95vh; border-radius: 12px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.2); background-color: var(--bg-secondary);">
             <div class="modal-header">
                 <h5 id="eventModalTitle">New Event</h5>
                 <button id="closeEventModal" style="background: none; border: none; font-size: 24px;">&times;</button>
@@ -197,8 +251,18 @@ if (isset($conn)) {
                         <input type="text" id="eventTitle" class="form-control" required>
                     </div>
                     <div class="form-group">
-                        <label>Date & Time <span style="color: red;">*</span></label>
-                        <input type="datetime-local" id="eventDateTime" class="form-control" required>
+                        <label>Date <span style="color: red;">*</span></label>
+                        <input type="date" id="eventDate" class="form-control" required>
+                    </div>
+                    <div style="display: flex; gap: 15px; margin-bottom: 20px;">
+                        <div style="flex: 1;">
+                            <label>Start Time <span style="color: red;">*</span></label>
+                            <input type="time" id="eventStartTime" class="form-control" required>
+                        </div>
+                        <div style="flex: 1;">
+                            <label>End Time</label>
+                            <input type="time" id="eventEndTime" class="form-control">
+                        </div>
                     </div>
                     <div class="form-group">
                         <label>Description</label>
@@ -210,7 +274,7 @@ if (isset($conn)) {
                     </div>
                 </form>
             </div>
-            <div class="modal-footer">
+            <div class="modal-footer" style="padding: 15px; border-top: 1px solid var(--border-color); display: flex; justify-content: flex-end; background: var(--bg-primary);">
                 <button class="btn btn-secondary" id="cancelEvent" onclick="document.getElementById('eventModal').style.display='none'">Cancel</button>
                 <button class="btn btn-primary" id="saveEventBtn">Save Event</button>
             </div>
@@ -367,11 +431,6 @@ if (isset($conn)) {
             });
         }
     });
-
-    // Temp mock functions until models ready
-    function showEventDetails(id) {
-      alert('Event details for ID: ' + id + '\n(Connect to model/get_event.php)');
-    }
     </script>
 </body>
 </html>

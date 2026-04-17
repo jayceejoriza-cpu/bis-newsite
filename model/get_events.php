@@ -1,35 +1,31 @@
 <?php
-// model/get_events.php - JSON API for FullCalendar
 header('Content-Type: application/json');
+require_once '../config.php';
 
-try {
-    require_once '../config.php';
-    
-    $currentYear = date('Y');
-    $currentMonth = date('m');
-    
-    // Query for events this year (FullCalendar fetches range)
-    $stmt = $conn->prepare("
-        SELECT 
-            id, 
-            title, 
-            description,
-            event_date as start,
-            start_time, 
-            end_time,
-            location
-        FROM events 
-        WHERE YEAR(event_date) = ? 
-        ORDER BY event_date ASC
-    ");
-    $stmt->bind_param("i", $currentYear);
-    $stmt->execute();
-    $events = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
-    
-    echo json_encode($events);
-    
-} catch (Exception $e) {
-    echo json_encode(['error' => 'Database error']);
+$query = "SELECT e.*, 
+          TRIM(CONCAT(r.first_name, ' ', IFNULL(CONCAT(r.middle_name, ' '), ''), r.last_name, ' ', IFNULL(r.suffix, ''))) AS resident_name
+          FROM events e
+          LEFT JOIN residents r ON e.resident_id = r.id";
+$result = $conn->query($query);
+
+$events = [];
+while ($row = $result->fetch_assoc()) {
+    $start = $row['event_date'] . 'T' . $row['start_time'];
+    $end = !empty($row['end_time']) ? ($row['event_date'] . 'T' . $row['end_time']) : null;
+
+    $events[] = [
+        'id' => $row['id'],
+        'title' => $row['title'],
+        'start' => $start,
+        'end' => $end,
+        'allDay' => false,          // Forces it to show at a specific time
+        'extendedProps' => [
+            'location' => $row['location'],
+            'description' => $row['description'],
+            'event_type' => $row['event_type'],
+            'resident_id' => $row['resident_id'],
+            'resident_name' => $row['resident_name']
+        ]
+    ];
 }
-?>
-
+echo json_encode($events);
