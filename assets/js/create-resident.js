@@ -75,6 +75,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     setupAutocomplete('fatherName', 'fatherNameDropdown', 'Male', true);
     setupAutocomplete('motherName', 'motherNameDropdown', 'Female', true);
+    setupAutocomplete('landlordName', 'landlordNameDropdown');
     
     console.log('Create Resident page loaded successfully');
 });
@@ -255,6 +256,19 @@ function initializeForm() {
     if (usingFpMethodSelect) {
         handleFpMethodChange();
         usingFpMethodSelect.addEventListener('change', handleFpMethodChange);
+    }
+
+    // OFW Employment handlers
+    if (employmentStatusSelect) {
+        handleEmploymentStatusChange();
+        employmentStatusSelect.addEventListener('change', handleEmploymentStatusChange);
+    }
+
+    // House occupancy handlers
+    const isHouseOccupiedSelect = document.getElementById('isHouseOccupied');
+    if (isHouseOccupiedSelect) {
+        handleHouseOccupiedChange();
+        isHouseOccupiedSelect.addEventListener('change', handleHouseOccupiedChange);
     }
 }
 
@@ -622,6 +636,7 @@ function updateMinorStatus() {
         if (philhealthIdInput) philhealthIdInput.removeAttribute('disabled');
         if (membershipTypeSelect) membershipTypeSelect.removeAttribute('disabled');
         if (philhealthCategorySelect) philhealthCategorySelect.removeAttribute('disabled');
+        handleEmploymentStatusChange();
 
         // Allow adult to be household head by default
         const yesRadio = document.getElementById('householdHeadYes');
@@ -792,6 +807,7 @@ function updateMinorStatus() {
             employmentStatusSelect.value = '';
             employmentStatusSelect.setAttribute('disabled', 'disabled');
         }
+        handleEmploymentStatusChange();
         
         if (occupationContainer) occupationContainer.style.display = 'none';
         if (occupationInput) {
@@ -908,6 +924,40 @@ function updateMinorStatus() {
     }
     
     saveFormData();
+}
+
+function handleEmploymentStatusChange() {
+    const ofwSection = document.getElementById('ofwHouseSection');
+    if (employmentStatusSelect && employmentStatusSelect.value === 'OFW' && !isMinor) {
+        if (ofwSection) ofwSection.style.display = 'block';
+    } else {
+        if (ofwSection) {
+            ofwSection.style.display = 'none';
+        }
+    }
+}
+
+function handleHouseOccupiedChange() {
+    const isOccupiedSelect = document.getElementById('isHouseOccupied');
+    const caretakerGroup = document.getElementById('caretakerInfoGroup');
+    const caretakerName = document.getElementById('caretakerName');
+    const caretakerContact = document.getElementById('caretakerContact');
+
+    if (isOccupiedSelect && isOccupiedSelect.value === 'No') {
+        if (caretakerGroup) caretakerGroup.style.display = 'block';
+        if (caretakerName) caretakerName.setAttribute('required', 'required');
+        if (caretakerContact) caretakerContact.setAttribute('required', 'required');
+    } else {
+        if (caretakerGroup) caretakerGroup.style.display = 'none';
+        if (caretakerName) {
+            caretakerName.removeAttribute('required');
+            caretakerName.value = '';
+        }
+        if (caretakerContact) {
+            caretakerContact.removeAttribute('required');
+            caretakerContact.value = '';
+        }
+    }
 }
 
 function handleCivilStatusChange() {
@@ -1349,6 +1399,10 @@ function initializePhoneNumberFormatting() {
     const mobileNumberInput = document.getElementById('mobileNumber');
     applyPhoneNumberFormatting(mobileNumberInput);
 
+    // Apply to caretaker contact field
+    const caretakerContactInput = document.getElementById('caretakerContact');
+    applyPhoneNumberFormatting(caretakerContactInput);
+
     // Apply to guardian contact field
     const guardianContactInput = document.getElementById('guardianContact');
     applyPhoneNumberFormatting(guardianContactInput);
@@ -1492,6 +1546,32 @@ function initializeHouseholdInfo() {
     if (clearBtn) {
         clearBtn.addEventListener('click', clearSelectedHousehold);
     }
+
+    // Ownership Status toggle
+    const ownershipRadios = document.getElementsByName('ownershipStatus');
+    const landlordNameGroup = document.getElementById('landlordNameGroup');
+    const landlordNameInput = document.getElementById('landlordName');
+
+    const updateLandlordVisibility = () => {
+        const checkedRadio = Array.from(ownershipRadios).find(r => r.checked);
+        if (checkedRadio && checkedRadio.value === 'Rent') {
+            if (landlordNameGroup) landlordNameGroup.style.display = 'block';
+            if (landlordNameInput) landlordNameInput.setAttribute('required', 'required');
+        } else {
+            if (landlordNameGroup) landlordNameGroup.style.display = 'none';
+            if (landlordNameInput) {
+                landlordNameInput.removeAttribute('required');
+                landlordNameInput.value = '';
+                const landlordId = document.getElementById('landlordNameId');
+                if (landlordId) landlordId.value = '';
+            }
+        }
+    };
+
+    ownershipRadios.forEach(radio => {
+        radio.addEventListener('change', updateLandlordVisibility);
+    });
+    updateLandlordVisibility(); // Initial check
 }
 
 function autoFillHouseholdContact() {
@@ -2205,6 +2285,18 @@ function populateReviewModal() {
         familyInfoHTML += createField('Guardian\'s Mobile Number', getValue('guardianContact'));
     }
     familyInfoHTML += '</div>';
+
+    // Add OFW Information if applicable
+    if (getValue('employmentStatus') === 'OFW') {
+        familyInfoHTML += '<h5 style="margin: 20px 0 15px 0; color: var(--primary-color);"><i class="fas fa-plane-departure"></i> OFW Additional Information</h5>';
+        familyInfoHTML += '<div class="review-fields-grid">';
+        familyInfoHTML += createField('House Occupied?', getValue('isHouseOccupied'));
+        if (getValue('isHouseOccupied') === 'No') {
+            familyInfoHTML += createField('Caretaker Name', getValue('caretakerName'));
+            familyInfoHTML += createField('Caretaker Contact', getValue('caretakerContact'));
+        }
+        familyInfoHTML += '</div>';
+    }
     
     document.getElementById('reviewFamilyInfo').innerHTML = familyInfoHTML;
     
@@ -2215,6 +2307,11 @@ function populateReviewModal() {
 
     if (householdHeadValue === 'Yes') {
         householdHTML += createField('Household Number', getValue('householdNumber'));
+        const ownership = form.querySelector('input[name="ownershipStatus"]:checked')?.value || 'Owned';
+        householdHTML += createField('Ownership Status', ownership);
+        if (ownership === 'Rent') {
+            householdHTML += createField("Landlord's Name", getValue('landlordName'));
+        }
         householdHTML += createField('Household Contact', getValue('householdContact'));
         householdHTML += createField('Household Address', getValue('householdAddress'));
         householdHTML += createField('Water Source Type', getValue('waterSourceType'));

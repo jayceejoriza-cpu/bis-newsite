@@ -76,18 +76,25 @@ try {
                       address = ?,
                       water_source_type = ?,
                       toilet_facility_type = ?,
+                      ownership_status = ?,
+                      landlord_resident_id = ?,
+                      landlord_name = ?,
                       notes = ?,
                       updated_at = NOW()
                       WHERE id = ?";
         
         $updateStmt = $conn->prepare($updateSql);
+        $landlordId = !empty($data['landlordResidentId']) ? intval($data['landlordResidentId']) : null;
         $updateStmt->bind_param(
-            'isssssi',
+            'isssssissi',
             $data['householdHeadId'],
             $data['householdContact'],
             $data['householdAddress'],
             $data['waterSource'],
             $data['toiletFacility'],
+            $data['ownershipStatus'],
+            $landlordId,
+            $data['landlordName'],
             $data['householdNotes'],
             $householdId
         );
@@ -335,19 +342,26 @@ try {
             address,
             water_source_type,
             toilet_facility_type,
+            ownership_status,
+            landlord_resident_id,
+            landlord_name,
             notes,
             created_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, NOW())";
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())";
         
         $stmt = $conn->prepare($sql);
+        $landlordId = !empty($data['landlordResidentId']) ? intval($data['landlordResidentId']) : null;
         $stmt->bind_param(
-            'sisssss',
+            'sisssssiss',
             $data['householdNumber'],
             $data['householdHeadId'],
             $data['householdContact'],
             $data['householdAddress'],
             $data['waterSource'],
             $data['toiletFacility'],
+            $data['ownershipStatus'],
+            $landlordId,
+            $data['landlordName'],
             $data['householdNotes']
         );
         

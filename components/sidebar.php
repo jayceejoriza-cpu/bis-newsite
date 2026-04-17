@@ -117,6 +117,17 @@ $show_settings = $can_view_brgy_info || $can_view_activity_logs || $can_view_arc
             </li>
             <?php endif; ?>
 
+
+             <!-- ── Blotter Records ── -->
+            <?php if (hasPermission('perm_blotter_view')): ?>
+            <li class="nav-item <?php echo $current_page === 'events.php' ? 'active' : ''; ?>">
+                <a href="events.php" class="nav-link">
+                    <i class="fas fa-calendar"></i>
+                    <span>Barangay Events</span>
+                </a>
+            </li>
+            <?php endif; ?>
+
             <!-- ── Blotter Records ── -->
             <?php if (hasPermission('perm_blotter_view')): ?>
             <li class="nav-item <?php echo $current_page === 'blotter.php' ? 'active' : ''; ?>">

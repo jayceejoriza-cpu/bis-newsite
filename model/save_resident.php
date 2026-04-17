@@ -196,11 +196,21 @@ try {
     $fpMethodsUsed = $conn->real_escape_string($_POST['fpMethodsUsed'] ?? '');
     $fpStatus = $conn->real_escape_string($_POST['fpStatus'] ?? '');
     
+    // OFW Specific Information
+    $isHouseOccupied = $conn->real_escape_string($_POST['isHouseOccupied'] ?? 'Yes');
+    $caretakerName = $conn->real_escape_string(trim($_POST['caretakerName'] ?? ''));
+    $caretakerContact = $conn->real_escape_string(trim($_POST['caretakerContact'] ?? ''));
+
     // Additional Information
     $remarks = $conn->real_escape_string(trim($_POST['remarks'] ?? ''));
     
     // Status fields
     $activityStatus = $conn->real_escape_string($_POST['activityStatus'] ?? 'Alive');
+
+    // Extract household ownership fields (Available for both Create and Update logic)
+    $ownershipStatus = $conn->real_escape_string(trim($_POST['ownershipStatus'] ?? 'Owned'));
+    $landlordResidentId = !empty($_POST['landlordResidentId']) ? intval($_POST['landlordResidentId']) : null;
+    $landlordName = $conn->real_escape_string(trim($_POST['landlordName'] ?? ''));
 
     // If minor, default civil status to Single if not provided (since it's disabled in UI)
     if ($age !== null && $age < 18 && empty($civilStatus)) {
@@ -355,6 +365,9 @@ try {
             using_fp_method = " . ($usingFpMethod ? "'$usingFpMethod'" : "NULL") . ",
             fp_methods_used = " . ($fpMethodsUsed ? "'$fpMethodsUsed'" : "NULL") . ",
             fp_status = " . ($fpStatus ? "'$fpStatus'" : "NULL") . ",
+            is_house_occupied = '$isHouseOccupied',
+            caretaker_name = " . ($caretakerName ? "'$caretakerName'" : "NULL") . ",
+            caretaker_contact = " . ($caretakerContact ? "'$caretakerContact'" : "NULL") . ",
             remarks = " . ($remarks ? "'$remarks'" : "NULL") . ",
             activity_status = '$activityStatus',
             status_changed_at = NOW()" .
@@ -387,10 +400,16 @@ try {
                         throw new Exception("Household number '$householdNumber' already exists.");
                     }
                     
+                    // Fixed duplicate malformed query removed - use main CREATE logic or prepared statement if needed
                     $hhSql = "INSERT INTO households (
-                        household_number, household_head_id, household_contact, address, water_source_type, toilet_facility_type, created_at
+                        household_number, household_head_id, household_contact, address, water_source_type, toilet_facility_type,
+                        ownership_status, landlord_resident_id, landlord_name, created_at
                     ) VALUES (
-                        '$householdNumber', $residentId, " . ($householdContact ? "'$householdContact'" : "NULL") . ", " . ($householdAddress ? "'$householdAddress'" : "''") . ", " . ($waterSourceType ? "'$waterSourceType'" : "NULL") . ", " . ($toiletFacilityType ? "'$toiletFacilityType'" : "NULL") . ", NOW()
+                        '$householdNumber', $residentId, " . ($householdContact ? "'$householdContact'" : "NULL") . ", 
+                        " . ($householdAddress ? "'$householdAddress'" : "NULL") . ", " . ($waterSourceType ? "'$waterSourceType'" : "NULL") . ", 
+                        " . ($toiletFacilityType ? "'$toiletFacilityType'" : "NULL") . ",
+                        '$ownershipStatus', " . ($landlordResidentId ? $landlordResidentId : "NULL") . ", 
+                        " . ($landlordName ? "'$landlordName'" : "NULL") . ", NOW()
                     )";
                     if (!$conn->query($hhSql)) {
                         throw new Exception('Failed to create household: ' . $conn->error);
@@ -534,7 +553,7 @@ try {
         // CREATE MODE - Insert New Resident Record
         // ============================================
     
-    $sql = "INSERT INTO residents (
+$sql = "INSERT INTO residents (
         photo, first_name, middle_name, last_name, suffix, sex, date_of_birth, place_of_birth, age, religion, ethnicity,
         mobile_number, purok, street_name, current_address,
         civil_status, spouse_name,  father_name, father_resident_id, 
@@ -545,6 +564,7 @@ try {
         fourps_member, fourps_id, voter_status, precinct_number,
         philhealth_id, membership_type, philhealth_category, age_health_group, medical_history,
         lmp_date, using_fp_method, fp_methods_used, fp_status,
+        is_house_occupied, caretaker_name, caretaker_contact,
         remarks, activity_status
     ) VALUES (
         " . ($photoPath ? "'" . $conn->real_escape_string($photoPath) . "'" : "NULL") . ",
@@ -552,7 +572,7 @@ try {
         '$sex', '$dateOfBirth', " . ($placeOfBirth ? "'$placeOfBirth'" : "NULL") . ", " . ($age !== null ? $age : "NULL") . ", " . ($religion ? "'$religion'" : "NULL") . ", " . ($ethnicity ? "'$ethnicity'" : "NULL") . ",
         '$mobileNumber', " . ($purok ? "'$purok'" : "NULL") . ", " . ($streetName ? "'$streetName'" : "NULL") . ", '$currentAddress',
         '$civilStatus', " . ($spouseName ? "'$spouseName'" : "NULL") . ", " . ($fatherName ? "'$fatherName'" : "NULL") . ", 
-        " . ($fatherResidentId ? "'$fatherResidentId'" : "NULL") . ", " . ($motherName ? "'$motherName'" : "NULL") . ", " . ($motherResidentId ? "'$motherResidentId'" : "NULL") . ", $numberOfChildren,
+        " . ($fatherResidentId ? $fatherResidentId : "NULL") . ", " . ($motherName ? "'$motherName'" : "NULL") . ", " . ($motherResidentId ? $motherResidentId : "NULL") . ", $numberOfChildren,
         " . ($guardianName ? "'$guardianName'" : "NULL") . ", " . ($guardianRelationship ? "'$guardianRelationship'" : "NULL") . ", " . ($guardianContact ? "'$guardianContact'" : "NULL") . ",
         " . ($educationalAttainment ? "'$educationalAttainment'" : "NULL") . ", " . ($employmentStatus ? "'$employmentStatus'" : "NULL") . ",
         " . ($occupation ? "'$occupation'" : "NULL") . ", '$pwdStatus',
@@ -564,6 +584,7 @@ try {
         " . ($medicalHistory ? "'$medicalHistory'" : "NULL") . ",
         " . ($lmpDate ? "'$lmpDate'" : "NULL") . ", " . ($usingFpMethod ? "'$usingFpMethod'" : "NULL") . ",
         " . ($fpMethodsUsed ? "'$fpMethodsUsed'" : "NULL") . ", " . ($fpStatus ? "'$fpStatus'" : "NULL") . ",
+        '$isHouseOccupied', " . ($caretakerName ? "'$caretakerName'" : "NULL") . ", " . ($caretakerContact ? "'$caretakerContact'" : "NULL") . ",
         " . ($remarks ? "'$remarks'" : "NULL") . ", 'Alive'
     )";
 
@@ -613,27 +634,33 @@ try {
                 throw new Exception("Household number '$householdNumber' already exists. Please use a different number.");
             }
 
-            $hhSql = "INSERT INTO households (
-                household_number,
-                household_head_id,
-                household_contact,
-                address,
-                water_source_type,
-                toilet_facility_type,
-                created_at
-            ) VALUES (
-                '$householdNumber',
-                $residentId,
-                " . ($householdContact ? "'$householdContact'" : "NULL") . ",
-                " . ($householdAddress ? "'$householdAddress'" : "''") . ",
-                " . ($waterSourceType ? "'$waterSourceType'" : "NULL") . ",
-                " . ($toiletFacilityType ? "'$toiletFacilityType'" : "NULL") . ",
-                NOW()
-            )";
+                $hhSql = "INSERT INTO households (
+                    household_number,
+                    household_head_id,
+                    household_contact,
+                    address,
+                    water_source_type,
+                    toilet_facility_type,
+                    ownership_status,
+                    landlord_resident_id,
+                    landlord_name,
+                    created_at
+                ) VALUES (
+                    '$householdNumber',
+                    $residentId,
+                    " . ($householdContact ? "'$householdContact'" : "NULL") . ",
+                    " . ($householdAddress ? "'$householdAddress'" : "NULL") . ",
+                    " . ($waterSourceType ? "'$waterSourceType'" : "NULL") . ",
+                    " . ($toiletFacilityType ? "'$toiletFacilityType'" : "NULL") . ",
+                    '$ownershipStatus',
+                    " . ($landlordResidentId ? $landlordResidentId : "NULL") . ",
+                    " . ($landlordName ? "'$landlordName'" : "NULL") . ",
+                    NOW()
+                )";
 
-            if (!$conn->query($hhSql)) {
-                throw new Exception('Failed to create household: ' . $conn->error);
-            }
+                if (!$conn->query($hhSql)) {
+                    throw new Exception('Failed to create household: ' . $conn->error);
+                }
         }
 
     } elseif ($householdHeadValue === 'No') {

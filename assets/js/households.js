@@ -61,7 +61,7 @@ function loadHouseholdsData() {
     // Show loading state
     tbody.innerHTML = `
         <tr>
-            <td colspan="4" style="text-align: center; padding: 40px;">
+            <td colspan="5" style="text-align: center; padding: 40px;">
                 <i class="fas fa-spinner fa-spin" style="font-size: 24px; color: var(--primary-color);"></i>
                 <p style="margin-top: 10px; color: var(--text-secondary);">Loading households...</p>
             </td>
@@ -79,7 +79,7 @@ function loadHouseholdsData() {
             } else {
                 tbody.innerHTML = `
                     <tr>
-                        <td colspan="4" style="text-align: center; padding: 40px;">
+                        <td colspan="5" style="text-align: center; padding: 40px;">
                             <i class="fas fa-home" style="font-size: 48px; color: var(--text-secondary); opacity: 0.3;"></i>
                             <p style="margin-top: 15px; color: var(--text-secondary); font-size: 16px;">No households found</p>
                             <p style="margin-top: 5px; color: var(--text-secondary); font-size: 14px;">Click "Create Household" to add your first household</p>
@@ -93,7 +93,7 @@ function loadHouseholdsData() {
             console.error('Error loading households:', error);
             tbody.innerHTML = `
                 <tr>
-                    <td colspan="4" style="text-align: center; padding: 40px;">
+                    <td colspan="5" style="text-align: center; padding: 40px;">
                         <i class="fas fa-exclamation-triangle" style="font-size: 48px; color: #ef4444;"></i>
                         <p style="margin-top: 15px; color: var(--text-secondary);">Error loading households</p>
                     </td>
@@ -116,6 +116,7 @@ function displayHouseholds(households) {
         row.setAttribute('data-household-id', household.id);
         row.setAttribute('data-water-source', household.water_source_type || '');
         row.setAttribute('data-toilet-facility', household.toilet_facility_type || '');
+        row.setAttribute('data-ownership-status', household.ownership_status || '');
         
         // Get initials for avatar
         const initials = household.head_first_name && household.head_last_name 
@@ -148,6 +149,7 @@ function displayHouseholds(households) {
                     <span class="member-indicator active"></span>
                 </div>
             </td>
+            <td>${household.ownership_status || 'N/A'}</td>
             <td>
                 <button class="btn-action">
                     <i class="fas fa-ellipsis-h"></i>
@@ -237,9 +239,11 @@ function initializeAdvancedFilters() {
             const hSize = document.getElementById('filterFamilySize');
             const hWat = document.getElementById('filterWaterSource');
             const hToi = document.getElementById('filterToiletFacility');
+            const hOwn = document.getElementById('filterOwnershipStatus');
             if (hSize) hSize.value = '';
             if (hWat) hWat.value = '';
             if (hToi) hToi.value = '';
+            if (hOwn) hOwn.value = '';
             applyFilters();
         });
     }
@@ -296,6 +300,7 @@ function applyFilters() {
     const filterFamilySize = document.getElementById('filterFamilySize')?.value.trim() || '';
     const filterWaterSource = document.getElementById('filterWaterSource')?.value || '';
     const filterToiletFacility = document.getElementById('filterToiletFacility')?.value || '';
+    const filterOwnershipStatus = document.getElementById('filterOwnershipStatus')?.value || '';
 
     // Update URL parameters
     const url = new URL(window.location);
@@ -314,12 +319,16 @@ function applyFilters() {
     if (filterToiletFacility) url.searchParams.set('toilet', filterToiletFacility);
     else url.searchParams.delete('toilet');
     
+    if (filterOwnershipStatus) url.searchParams.set('ownership', filterOwnershipStatus);
+    else url.searchParams.delete('ownership');
+    
     window.history.replaceState({}, '', url);
 
     let activeFiltersCount = 0;
     if (filterFamilySize) activeFiltersCount++;
     if (filterWaterSource) activeFiltersCount++;
     if (filterToiletFacility) activeFiltersCount++;
+    if (filterOwnershipStatus) activeFiltersCount++;
     
     updateFilterNotification(activeFiltersCount);
 
@@ -355,6 +364,11 @@ function applyFilters() {
         if (filterToiletFacility) {
             const toiletFacility = row.getAttribute('data-toilet-facility') || '';
             if (toiletFacility !== filterToiletFacility) return false;
+        }
+
+        if (filterOwnershipStatus) {
+            const ownershipStatus = row.getAttribute('data-ownership-status') || '';
+            if (ownershipStatus !== filterOwnershipStatus) return false;
         }
 
         return true;
@@ -413,6 +427,14 @@ function applyUrlFilters() {
         const el = document.getElementById('filterToiletFacility');
         if (el) {
             el.value = urlParams.get('toilet');
+            hasFilters = true;
+        }
+    }
+    
+    if (urlParams.has('ownership')) {
+        const el = document.getElementById('filterOwnershipStatus');
+        if (el) {
+            el.value = urlParams.get('ownership');
             hasFilters = true;
         }
     }
@@ -728,6 +750,12 @@ function resetHouseholdForm() {
     
     document.getElementById('householdContact').removeAttribute('readonly');
     document.getElementById('householdAddress').removeAttribute('readonly');
+    document.getElementById('ownershipStatus').removeAttribute('disabled');
+    document.getElementById('ownershipStatus').value = 'Owned';
+    document.getElementById('landlordName').value = '';
+    document.getElementById('landlordName').removeAttribute('readonly');
+    document.getElementById('landlordNameId').value = '';
+    document.getElementById('landlordNameGroup').style.display = 'none';
     
     const waterSourceInput = document.getElementById('waterSource');
     if (waterSourceInput) { waterSourceInput.removeAttribute('disabled'); waterSourceInput.style.cursor = ''; }
@@ -805,9 +833,11 @@ function refreshData() {
         const hSize = document.getElementById('filterFamilySize');
         const hWat = document.getElementById('filterWaterSource');
         const hToi = document.getElementById('filterToiletFacility');
+        const hOwn = document.getElementById('filterOwnershipStatus');
         if (hSize) hSize.value = '';
         if (hWat) hWat.value = '';
         if (hToi) hToi.value = '';
+        if (hOwn) hOwn.value = '';
         currentTabFilter = 'all';
         applyFilters();
 
@@ -989,6 +1019,9 @@ function viewHousehold(householdId) {
                 document.getElementById('householdNumber').value = data.household.household_number;
                 document.getElementById('householdContact').value = data.household.household_contact || '';
                 document.getElementById('householdAddress').value = data.household.address;
+                document.getElementById('ownershipStatus').value = data.household.ownership_status || 'Owned';
+                document.getElementById('landlordName').value = data.household.landlord_name || '';
+                document.getElementById('landlordNameId').value = data.household.landlord_resident_id || '';
                 document.getElementById('waterSource').value = data.household.water_source_type || '';
                 document.getElementById('toiletFacility').value = data.household.toilet_facility_type || '';
                 document.getElementById('householdNotes').value = data.household.notes || '';
@@ -1007,6 +1040,8 @@ function viewHousehold(householdId) {
                 document.getElementById('householdNumber').setAttribute('readonly', 'readonly');
                 document.getElementById('householdContact').setAttribute('readonly', 'readonly');
                 document.getElementById('householdAddress').setAttribute('readonly', 'readonly');
+                document.getElementById('ownershipStatus').setAttribute('disabled', 'disabled');
+                document.getElementById('landlordName').setAttribute('readonly', 'readonly');
                 document.getElementById('waterSource').setAttribute('disabled', 'disabled');
                 document.getElementById('toiletFacility').setAttribute('disabled', 'disabled');
                 document.getElementById('householdNotes').setAttribute('readonly', 'readonly');
@@ -1016,6 +1051,8 @@ function viewHousehold(householdId) {
                 document.getElementById('addMemberBtn').style.display = 'none';
                 document.getElementById('saveHouseholdBtn').style.display = 'none';
                 
+                handleOwnershipStatusChange();
+                
                 const actionTh = document.querySelector('.members-table th:last-child');
                 if (actionTh) actionTh.style.display = 'none';
                 
@@ -1024,6 +1061,9 @@ function viewHousehold(householdId) {
                 form.setAttribute('data-view-mode', 'true');
                 
                 if (data.members && data.members.length > 0) {
+// Sort members youngest to oldest (ascending age)
+                    data.members.sort((a, b) => new Date(a.date_of_birth) - new Date(b.date_of_birth));
+                    
                     const tbody = document.getElementById('membersTableBody');
                     tbody.innerHTML = '';
                     
@@ -1097,6 +1137,9 @@ function editHousehold(householdId) {
                 
                 document.getElementById('householdContact').value = data.household.household_contact || '';
                 document.getElementById('householdAddress').value = data.household.address;
+                document.getElementById('ownershipStatus').value = data.household.ownership_status || 'Owned';
+                document.getElementById('landlordName').value = data.household.landlord_name || '';
+                document.getElementById('landlordNameId').value = data.household.landlord_resident_id || '';
                 document.getElementById('waterSource').value = data.household.water_source_type || '';
                 document.getElementById('toiletFacility').value = data.household.toilet_facility_type || '';
                 document.getElementById('householdNotes').value = data.household.notes || '';
@@ -1115,6 +1158,10 @@ function editHousehold(householdId) {
                 document.getElementById('householdContact').removeAttribute('readonly');
                 document.getElementById('householdAddress').removeAttribute('readonly');
                 document.getElementById('householdNotes').removeAttribute('readonly');
+                document.getElementById('ownershipStatus').removeAttribute('disabled');
+                document.getElementById('landlordName').removeAttribute('readonly');
+                
+                handleOwnershipStatusChange();
                 
                 const waterSourceEl = document.getElementById('waterSource');
                 if (waterSourceEl) {
@@ -1132,6 +1179,9 @@ function editHousehold(householdId) {
                 document.getElementById('saveHouseholdBtn').innerHTML = '<i class="fas fa-save"></i> Update';
                 
                 if (data.members && data.members.length > 0) {
+// Sort members youngest to oldest (ascending age)
+                    data.members.sort((a, b) => new Date(a.date_of_birth) - new Date(b.date_of_birth));
+                    
                     const tbody = document.getElementById('membersTableBody');
                     tbody.innerHTML = '';
                     
@@ -1255,6 +1305,9 @@ function initializeModalEventListeners() {
             saveHousehold();
         });
     }
+
+    // Initialize autocomplete once
+    setupAutocomplete('landlordName', 'landlordNameDropdown');
     
     const phoneInput = document.getElementById('householdContact');
     if (phoneInput) {
@@ -1844,6 +1897,9 @@ function saveHousehold() {
     const formData = {
         householdContact: document.getElementById('householdContact').value.trim(),
         householdAddress: document.getElementById('householdAddress').value.trim(),
+        ownershipStatus: document.getElementById('ownershipStatus').value,
+        landlordResidentId: document.getElementById('landlordNameId').value,
+        landlordName: document.getElementById('landlordName').value.trim(),
         waterSource: document.getElementById('waterSource').value,
         toiletFacility: document.getElementById('toiletFacility').value,
         householdNotes: document.getElementById('householdNotes').value.trim(),
@@ -2325,6 +2381,80 @@ async function printHousehold(householdId) {
     }
 }
 
+// ===================================
+// Ownership & Autocomplete Logic
+// ===================================
+function handleOwnershipStatusChange() {
+    const status = document.getElementById('ownershipStatus').value;
+    const landlordGroup = document.getElementById('landlordNameGroup');
+    const landlordNameInput = document.getElementById('landlordName');
+    
+    if (status === 'Rent') {
+        landlordGroup.style.display = 'block';
+    } else {
+        landlordGroup.style.display = 'none';
+    }
+}
+
+function setupAutocomplete(inputId, dropdownId) {
+    const input = document.getElementById(inputId);
+    const dropdown = document.getElementById(dropdownId);
+    let timeout = null;
+
+    if (!input || !dropdown) return;
+
+    input.addEventListener('input', function(e) {
+        const hiddenId = document.getElementById(inputId + 'Id');
+        if (hiddenId) hiddenId.value = '';
+
+        clearTimeout(timeout);
+        const query = this.value.trim();
+
+        if (query.length < 2) {
+            dropdown.style.display = 'none';
+            return;
+        }
+
+        timeout = setTimeout(() => {
+            fetch(`model/search_residents.php?search=${encodeURIComponent(query)}&include_deceased=true`)
+                .then(res => res.json())
+                .then(data => {
+                    dropdown.innerHTML = '';
+                    if (data.success && data.data && data.data.length > 0) {
+                        data.data.forEach(resident => {
+                            const item = document.createElement('div');
+                            item.className = 'autocomplete-item';
+                            const regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+                            let displayHtml = resident.full_name.replace(regex, '<strong>$1</strong>');
+                            if (resident.activity_status === 'Deceased') displayHtml += ' <span style="font-size: 11px; color: #ef4444; font-style: italic;">(Deceased)</span>';
+                            item.innerHTML = displayHtml;
+                            
+                            item.addEventListener('click', () => {
+                                input.value = resident.full_name;
+                                dropdown.style.display = 'none';
+                                if (hiddenId) hiddenId.value = resident.id;
+                            });
+                            dropdown.appendChild(item);
+                        });
+                        dropdown.style.display = 'block';
+                    } else {
+                        dropdown.style.display = 'none';
+                    }
+                })
+                .catch(err => {
+                    console.error('Error fetching residents:', err);
+                    dropdown.style.display = 'none';
+                });
+        }, 300);
+    });
+
+    document.addEventListener('click', function(e) {
+        if (e.target !== input && e.target !== dropdown) {
+            dropdown.style.display = 'none';
+        }
+    });
+}
+
 // Export functions for external use
 window.householdsPage = {
     refresh: refreshData,
@@ -2342,3 +2472,4 @@ window.openTransferHeadModal = openTransferHeadModal;
 window.closeTransferHeadModal = closeTransferHeadModal;
 window.updateTransferRelationships = updateTransferRelationships;
 window.saveTransferHead = saveTransferHead;
+window.handleOwnershipStatusChange = handleOwnershipStatusChange;

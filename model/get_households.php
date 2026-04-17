@@ -18,7 +18,7 @@ if (!isset($_SESSION['user_id'])) {
 
 try {
     // Fetch all households with head information and member count
-    $sql = "SELECT 
+$sql = "SELECT 
                 h.id,
                 h.household_number,
                 h.household_contact,
@@ -27,6 +27,9 @@ try {
                 h.toilet_facility_type,
                 h.notes,
                 h.created_at,
+                h.ownership_status,
+                h.landlord_resident_id,
+                h.landlord_name,
                 h.household_head_id,
                 CONCAT(r.first_name, ' ', IFNULL(CONCAT(r.middle_name, ' '), ''), r.last_name, IFNULL(CONCAT(' ', r.suffix), '')) AS head_name,
                 r.first_name AS head_first_name,

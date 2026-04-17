@@ -388,6 +388,7 @@ try {
                                 <option value="Unemployed">Unemployed</option>
                                 <option value="Self-Employed">Self-Employed</option>
                                 <option value="Student">Student</option>
+                                <option value="OFW">OFW</option>
                                 <option value="Retired">Retired</option>
                             </select>
                         </div>

@@ -21,7 +21,7 @@
 .filter-tabs {
     display: flex;
     gap: 10px;
-    margin-bottom: 20px;
+    margin: 10px 0 10px;
     flex-wrap: wrap;
 }
 
@@ -113,7 +113,17 @@
     border-bottom: none;
 }
 
-.blotter-table tbody tr {\n    transition: all 0.2s ease;\n}\n\n.clickable-row {\n    cursor: pointer;\n}\n\n.clickable-row:hover {\n    background-color: var(--bg-primary);\n}
+.blotter-table tbody tr {
+    transition: all 0.2s ease;
+}
+
+.clickable-row {
+    cursor: pointer;
+}
+
+.clickable-row:hover {
+    background-color: var(--bg-primary);
+}
 
 .blotter-table tbody tr:hover {
     background-color: var(--bg-primary);
@@ -350,8 +360,6 @@ body.dark-mode .badge-dismissed {
 }
 
 
-    color: #ffffff;
-}
 body.dark-mode .badge-scheduled-for-mediation {
     background-color: #1d4ed8;
     color: #ffffff;

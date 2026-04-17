@@ -59,10 +59,10 @@ try {
         exit;
     }
     
-    // Fetch household information where resident is the household head
+// Fetch household information where resident is the household head
     $householdStmt = $pdo->prepare("
         SELECT h.*, 
-               CONCAT(r.last_name, ', ', r.first_name, ' ', COALESCE(r.middle_name, '')) as head_name, -- Already in desired format
+               CONCAT(r.last_name, ', ', r.first_name, ' ', COALESCE(r.middle_name, '')) as head_name,
                r.date_of_birth as head_dob,
                r.sex as head_sex
         FROM households h
@@ -89,7 +89,7 @@ try {
         $membersStmt->execute([$householdInfo['id']]);
         $householdMembers = $membersStmt->fetchAll();
     } else {
-        // Check if resident is a member of any household
+// Check if resident is a member of any household
         $memberStmt = $pdo->prepare("
             SELECT h.*, 
                    CONCAT(r.last_name, ', ', r.first_name, ' ', COALESCE(r.middle_name, '')) as head_name,
@@ -825,12 +825,13 @@ $age = calculateAge($resident['date_of_birth']);
                                 <div class="info-item adult-only">
                                     <label>Employment Status</label>
                                     <p class="view-field"><?php echo htmlspecialchars($resident['employment_status'] ?: 'N/A'); ?></p>
-                                    <select name="employment_status" class="form-control edit-field" style="display:none;">
+                                    <select name="employment_status" id="employmentStatusSelect" class="form-control edit-field" style="display:none;" onchange="handleEmploymentStatusChange()">
                                         <option value="" <?php echo empty($resident['employment_status']) ? 'selected' : ''; ?>>Select</option>
                                         <option value="Employed" <?php echo $resident['employment_status'] == 'Employed' ? 'selected' : ''; ?>>Employed</option>
                                         <option value="Unemployed" <?php echo $resident['employment_status'] == 'Unemployed' ? 'selected' : ''; ?>>Unemployed</option>
                                         <option value="Self-Employed" <?php echo $resident['employment_status'] == 'Self-Employed' ? 'selected' : ''; ?>>Self-Employed</option>
                                         <option value="Student" <?php echo $resident['employment_status'] == 'Student' ? 'selected' : ''; ?>>Student</option>
+                                        <option value="OFW" <?php echo $resident['employment_status'] == 'OFW' ? 'selected' : ''; ?>>OFW</option>
                                         <option value="Retired" <?php echo $resident['employment_status'] == 'Retired' ? 'selected' : ''; ?>>Retired</option>
                                     </select>
                                 </div>
@@ -943,6 +944,31 @@ $age = calculateAge($resident['date_of_birth']);
                                     <label>Medical History</label>
                                     <p class="view-field"><?php echo htmlspecialchars($resident['medical_history'] ?: 'N/A'); ?></p>
                                    
+                                </div>
+                            </div>
+                            
+                            <!-- OFW Section -->
+                            <div id="ofwHouseSection" class="<?php echo ($resident['employment_status'] !== 'OFW') ? 'edit-field-conditional' : ''; ?>" style="<?php echo ($resident['employment_status'] !== 'OFW') ? 'display: none;' : ''; ?>">
+                                <h3 class="subsection-title"><i class="fas fa-plane-departure"></i> OFW Additional Information</h3>
+                                <div class="info-grid">
+                                    <div class="info-item">
+                                        <label>Is House Occupied?</label>
+                                        <p class="view-field"><?php echo htmlspecialchars($resident['is_house_occupied'] ?? 'Yes'); ?></p>
+                                        <select name="is_house_occupied" id="isHouseOccupiedSelect" class="form-control edit-field" style="display:none;" onchange="handleHouseOccupiedChange()">
+                                            <option value="Yes" <?php echo ($resident['is_house_occupied'] ?? 'Yes') == 'Yes' ? 'selected' : ''; ?>>Yes</option>
+                                            <option value="No" <?php echo ($resident['is_house_occupied'] ?? '') == 'No' ? 'selected' : ''; ?>>No</option>
+                                        </select>
+                                    </div>
+                                    <div class="info-item" id="caretakerInfoGroup" style="display: <?php echo ($resident['is_house_occupied'] ?? '') == 'No' ? 'block' : 'none'; ?>;">
+                                        <label>Caretaker Name</label>
+                                        <p class="view-field"><?php echo htmlspecialchars($resident['caretaker_name'] ?: 'N/A'); ?></p>
+                                        <input type="text" name="caretaker_name" id="caretakerNameInput" class="form-control edit-field" value="<?php echo htmlspecialchars($resident['caretaker_name'] ?? ''); ?>" style="display:none;">
+                                    </div>
+                                    <div class="info-item" id="caretakerContactGroup" style="display: <?php echo ($resident['is_house_occupied'] ?? '') == 'No' ? 'block' : 'none'; ?>;">
+                                        <label>Caretaker Contact Number</label>
+                                        <p class="view-field"><?php echo htmlspecialchars($resident['caretaker_contact'] ?: 'N/A'); ?></p>
+                                        <input type="text" name="caretaker_contact" id="caretakerContactInput" class="form-control edit-field" value="<?php echo htmlspecialchars($resident['caretaker_contact'] ?? ''); ?>" style="display:none;" oninput="let v=this.value.replace(/\\D/g,'').substring(0,10);if(v.length>6)this.value=v.slice(0,3)+' '+v.slice(3,6)+' '+v.slice(6);else if(v.length>3)this.value=v.slice(0,3)+' '+v.slice(3);else this.value=v;">
+                                    </div>
                                 </div>
                             </div>
                             
@@ -1066,6 +1092,22 @@ $age = calculateAge($resident['date_of_birth']);
                                         <div class="info-item">
                                             <label>Toilet Facility Type</label>
                                             <p><?php echo htmlspecialchars(($householdInfo['toilet_facility_type'] ?? '') ?: 'N/A'); ?></p>
+                                        </div>
+                                        <div class="info-item">
+                                            <label>Ownership Status</label>
+                                            <p><?php echo htmlspecialchars(($householdInfo['ownership_status'] ?? '') ?: 'N/A'); ?></p>
+                                        </div>
+                                        <div class="info-item position-relative" style="position: relative;">
+                                            <label>Landlord Name</label>
+                                            <p class="view-field">
+                                                <?php if (!empty($householdInfo['landlord_resident_id'])): ?>
+                                                    <a href="resident_profile.php?id=<?php echo htmlspecialchars($householdInfo['landlord_resident_id']); ?>" style="color: var(--primary-color); text-decoration: none; font-weight: 500;">
+                                                        <?php echo htmlspecialchars($householdInfo['landlord_name'] ?: 'N/A'); ?>
+                                                    </a>
+                                                <?php else: ?>
+                                                    <?php echo htmlspecialchars($householdInfo['landlord_name'] ?: 'N/A'); ?>
+                                                <?php endif; ?>
+                                            </p>
                                         </div>
                                         <?php if (!empty($householdInfo['notes'])): ?>
                                             <div class="info-item full-width">

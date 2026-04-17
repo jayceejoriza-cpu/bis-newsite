@@ -174,7 +174,7 @@
 }
 
 .households-table td {
-    padding: 18px 20px;
+    padding: 10px 20px;
     transition: background-color 0.2s ease;
     border-bottom: 1px solid var(--border-color);
 }
@@ -283,6 +283,33 @@
 }
 
 /* Pagination */
+/* Ownership & Landlord Display */
+
+
+.ownership-status {
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--text-primary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    display: inline-block;
+    white-space: nowrap;
+}
+
+.ownership-status.owned {
+    background-color: rgba(16, 185, 129, 0.1);
+    color: #10b981;
+}
+
+.ownership-status.rent {
+    background-color: rgba(245, 158, 11, 0.1);
+    color: #f59e0b;
+}
+
+
+/* Pagination Container */
 .pagination-container {
     display: flex;
     justify-content: space-between;

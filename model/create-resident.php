@@ -548,6 +548,27 @@ if (isset($conn)) {
                                                 <option value="WO - Without Latrine">WO - Without Latrine</option>
                                             </select>
                                         </div>
+
+                                        <div class="form-group">
+                                            <label>Ownership Status <span class="required">*</span></label>
+                                            <div style="display: flex; gap: 20px; margin-top: 10px;">
+                                                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-weight: 500;">
+                                                    <input type="radio" name="ownershipStatus" id="ownershipOwned" value="Owned" style="width: 18px; height: 18px; cursor: pointer;" checked>
+                                                    Owned
+                                                </label>
+                                                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-weight: 500;">
+                                                    <input type="radio" name="ownershipStatus" id="ownershipRent" value="Rent" style="width: 18px; height: 18px; cursor: pointer;">
+                                                    Rent
+                                                </label>
+                                            </div>
+                                        </div>
+
+                                        <div class="form-group position-relative" id="landlordNameGroup" style="display: none;">
+                                            <label for="landlordName">Landlord's Name <span class="required">*</span></label>
+                                            <input type="hidden" id="landlordNameId" name="landlordResidentId" value="">
+                                            <input type="text" id="landlordName" name="landlordName" class="form-control" placeholder="Search resident..." autocomplete="off">
+                                            <div id="landlordNameDropdown" class="autocomplete-dropdown" style="display: none;"></div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -633,6 +654,7 @@ if (isset($conn)) {
                                             <option value="Unemployed">Unemployed</option>
                                             <option value="Self-Employed">Self-Employed</option>
                                             <option value="Student">Student</option>
+                                            <option value="OFW">OFW</option>
                                             <option value="Retired">Retired</option>
                                         </select>
                                     </div>
@@ -819,7 +841,38 @@ if (isset($conn)) {
                                     </div>
                                 </div>
                             </div>
-                            
+                                <!-- OFW Section (Conditional) -->
+                            <div id="ofwHouseSection" class="form-card" style="display: none; margin-top: 30px;">
+                                <h5 style="margin: 0 0 15px 0; color: var(--primary-color);"><i class="fas fa-plane-departure"></i> OFW Additional Information</h5>
+                                <hr style="margin: 0 0 20px 0;">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="isHouseOccupied">Is someone currently residing in your house while you are abroad? <span class="required">*</span></label>
+                                            <select id="isHouseOccupied" name="isHouseOccupied" class="form-control">
+                                                <option value="Yes">Yes</option>
+                                                <option value="No">No</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div id="caretakerInfoGroup" class="col-md-6" style="display: none;">
+                                        <div class="form-group">
+                                            <label for="caretakerName">Caretaker Name <span class="required">*</span></label>
+                                            <input type="text" id="caretakerName" name="caretakerName" class="form-control" placeholder="Enter Full Name">
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="caretakerContact">Caretaker Contact Number <span class="required">*</span></label>
+                                            <div class="phone-input-group">
+                                                <span class="phone-prefix">
+                                                    <img src="../assets/image/contactph.png" alt="PH" class="flag-icon">
+                                                    +63
+                                                </span>
+                                                <input type="tel" id="caretakerContact" name="caretakerContact" class="form-control phone-input" placeholder="9XX XXX XXXX" maxlength="12">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                             <!-- Remarks Section -->
                             <h5 style="margin: 30px 0 15px 0; color: var(--primary-color);"><i class="fas fa-sticky-note"></i> Additional Notes</h5>
                             <hr style="margin: 0 0 20px 0;">
@@ -830,6 +883,8 @@ if (isset($conn)) {
                                     <textarea id="remarks" name="remarks" class="form-control" rows="4" placeholder="Additional information or notes..."></textarea>
                                 </div>
                             </div>
+
+                        
                         </div>
                     </div>
                     
@@ -876,6 +931,31 @@ if (isset($conn)) {
         });
     </script>
     <script>
+        // Ownership Status Handler
+        document.addEventListener('DOMContentLoaded', function() {
+            const ownershipRadios = document.querySelectorAll('input[name="ownershipStatus"]');
+            const landlordGroup = document.getElementById('landlordNameGroup');
+            const landlordInput = document.getElementById('landlordName');
+
+            function toggleLandlordField() {
+                if (document.getElementById('ownershipRent').checked) {
+                    landlordGroup.style.display = 'block';
+                    landlordInput.required = true;
+                } else {
+                    landlordGroup.style.display = 'none';
+                    landlordInput.required = false;
+                    landlordInput.value = '';
+                }
+            }
+
+            ownershipRadios.forEach(radio => {
+                radio.addEventListener('change', toggleLandlordField);
+            });
+
+            // Initial check
+            toggleLandlordField();
+        });
+
         // Override phone number formatting to use spaces instead of hyphens
         function formatPhoneNumber(value) {
             const numbers = value.replace(/\D/g, '');

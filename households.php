@@ -38,6 +38,31 @@ $pageTitle = 'Households';
     </style>
     <!-- Dark Mode Init: must be in <head> to prevent flash of light mode -->
     <script src="assets/js/dark-mode-init.js"></script>
+    <style>
+        .autocomplete-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            width: 100%;
+            z-index: 1000;
+            background: var(--bg-primary, #ffffff);
+            border: 1px solid var(--border-color, #ccc);
+            border-radius: 0 0 8px 8px;
+            max-height: 200px;
+            overflow-y: auto;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            margin-top: 2px;
+        }
+        .autocomplete-item {
+            padding: 8px 12px;
+            cursor: pointer;
+            border-bottom: 1px solid var(--border-color, #eee);
+            color: var(--text-primary, #333);
+            font-size: 14px;
+        }
+        .autocomplete-item:hover { background-color: var(--bg-secondary, #f8f9fa); }
+        .autocomplete-item strong { color: var(--primary-color, #0d6efd); font-weight: bold; }
+    </style>
 </head>
 <body>
     <!-- Sidebar -->
@@ -122,6 +147,14 @@ $pageTitle = 'Households';
                                     <label for="filterFamilySize">Household Family Size</label>
                                     <input type="number" id="filterFamilySize" class="filter-select" placeholder="Enter Family Size" min="1">
                                 </div>
+                                <div class="filter-item">
+                                    <label for="filterOwnershipStatus">Ownership Status</label>
+                                    <select id="filterOwnershipStatus" class="filter-select">
+                                        <option value="">All</option>
+                                        <option value="Owned">Owned</option>
+                                        <option value="Rent">Rent</option>
+                                    </select>
+                                </div>
                             <div class="filter-item">
                                 <label for="filterWaterSource">Water Source Type</label>
                                 <select id="filterWaterSource" class="filter-select">
@@ -171,6 +204,8 @@ $pageTitle = 'Households';
                             <th>Household Number </th>
                             <th>Household Head </th>
                             <th>Household Member</th>
+                            <th>Ownership Status</th>
+                           
                             <th class="text-center">Action</th>
                         </tr>
                     </thead>
@@ -310,6 +345,22 @@ $pageTitle = 'Households';
                         <div class="form-group">
                             <label for="householdAddress">Address</label>
                             <textarea id="householdAddress" name="householdAddress" class="form-control" rows="3" placeholder="Enter household address"></textarea>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group half-width">
+                                <label for="ownershipStatus">Ownership Status</label>
+                                <select id="ownershipStatus" name="ownershipStatus" class="form-control" onchange="handleOwnershipStatusChange()">
+                                    <option value="Owned">Owned</option>
+                                    <option value="Rent">Rent</option>
+                                </select>
+                            </div>
+                            <div class="form-group half-width position-relative" id="landlordNameGroup" style="display: none;">
+                                <label for="landlordName">Landlord Name</label>
+                                <input type="text" id="landlordName" name="landlordName" class="form-control" placeholder="Search resident..." autocomplete="off">
+                                <input type="hidden" id="landlordNameId" name="landlordResidentId">
+                                <div id="landlordNameDropdown" class="autocomplete-dropdown" style="display: none;"></div>
+                            </div>
                         </div>
                         
                         <div class="form-row">

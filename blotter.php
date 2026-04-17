@@ -299,6 +299,7 @@ try {
                     <h1 class="page-title"><?php echo $pageTitle; ?></h1>
                     <p class="page-subtitle">View and manage official barangay blotter entries, including complaints, incidents, and case statuses.</p>
                 </div>
+                <div class="page-header-actions">
                 <?php if (hasPermission('perm_blotter_print')): ?>
                 <button class="btn btn-outline-secondary no-print" id="printMasterlistBtn">
                     <i class="fas fa-print"></i>
@@ -311,6 +312,7 @@ try {
                     Create Record
                 </button>
                 <?php endif; ?>
+            </div>
             </div>
             
             <div class="filter-tabs">

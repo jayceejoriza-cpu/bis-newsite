@@ -26,6 +26,8 @@ try {
         $householdAddress = $conn->real_escape_string(trim($_POST['householdAddress'] ?? ''));
         $waterSourceType = $conn->real_escape_string(trim($_POST['waterSourceType'] ?? ''));
         $toiletFacilityType = $conn->real_escape_string(trim($_POST['toiletFacilityType'] ?? ''));
+        $ownershipStatus = $conn->real_escape_string(trim($_POST['ownershipStatus'] ?? 'Owned'));
+        $landlordId = !empty($_POST['landlordResidentId']) ? intval($_POST['landlordResidentId']) : "NULL";
 
         if (empty($householdNumber)) {
             throw new Exception("Household number is required.");
@@ -37,8 +39,8 @@ try {
             throw new Exception("Household number '$householdNumber' already exists.");
         }
 
-        $sql = "INSERT INTO households (household_number, household_head_id, household_contact, address, water_source_type, toilet_facility_type, created_at)
-                VALUES ('$householdNumber', $residentId, " . ($householdContact ? "'$householdContact'" : "NULL") . ", " . ($householdAddress ? "'$householdAddress'" : "''") . ", " . ($waterSourceType ? "'$waterSourceType'" : "NULL") . ", " . ($toiletFacilityType ? "'$toiletFacilityType'" : "NULL") . ", NOW())";
+        $sql = "INSERT INTO households (household_number, household_head_id, household_contact, address, water_source_type, toilet_facility_type, ownership_status, landlord_resident_id, created_at)
+                VALUES ('$householdNumber', $residentId, " . ($householdContact ? "'$householdContact'" : "NULL") . ", " . ($householdAddress ? "'$householdAddress'" : "''") . ", " . ($waterSourceType ? "'$waterSourceType'" : "NULL") . ", " . ($toiletFacilityType ? "'$toiletFacilityType'" : "NULL") . ", '$ownershipStatus', $landlordId, NOW())";
         
         if (!$conn->query($sql)) {
             throw new Exception("Failed to create household: " . $conn->error);

@@ -289,6 +289,8 @@ function toggleEditMode(enable) {
         editActions.forEach(a => a.style.display = 'inline-flex');
         if (typeof toggleOtherReligion === 'function') toggleOtherReligion();
         if (typeof toggleOtherEthnicity === 'function') toggleOtherEthnicity();
+        if (typeof handleEmploymentStatusChange === 'function') handleEmploymentStatusChange();
+        if (typeof handleHouseOccupiedChange === 'function') handleHouseOccupiedChange();
         if (typeof handleCivilStatusChange === 'function') handleCivilStatusChange();
         if (typeof toggleOtherFpMethod === 'function') toggleOtherFpMethod();
     } else {
@@ -334,6 +336,33 @@ function toggleOtherEthnicity() {
             otherInput.style.display = 'block';
         } else {
             otherInput.style.display = 'none';
+        }
+    }
+}
+
+function handleEmploymentStatusChange() {
+    const select = document.getElementById('employmentStatusSelect');
+    const ofwSection = document.getElementById('ofwHouseSection');
+    if (select && ofwSection) {
+        if (select.value === 'OFW') {
+            ofwSection.style.display = 'block';
+        } else {
+            ofwSection.style.display = 'none';
+        }
+    }
+}
+
+function handleHouseOccupiedChange() {
+    const select = document.getElementById('isHouseOccupiedSelect');
+    const caretakerGroup = document.getElementById('caretakerInfoGroup');
+    const caretakerContactGroup = document.getElementById('caretakerContactGroup');
+    if (select && caretakerGroup && caretakerContactGroup) {
+        if (select.value === 'No') {
+            caretakerGroup.style.display = 'block';
+            caretakerContactGroup.style.display = 'block';
+        } else {
+            caretakerGroup.style.display = 'none';
+            caretakerContactGroup.style.display = 'none';
         }
     }
 }
@@ -448,6 +477,11 @@ function saveProfile() {
         formData.append('fpMethodsUsed', '');
     }
     formData.append('fpStatus', rawData.get('fp_status') || '');
+    
+    // OFW info
+    formData.append('isHouseOccupied', rawData.get('is_house_occupied') || 'Yes');
+    formData.append('caretakerName', rawData.get('caretaker_name') || '');
+    formData.append('caretakerContact', rawData.get('caretaker_contact') || '');
     
     formData.append('remarks', rawData.get('remarks') || '');
     
