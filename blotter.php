@@ -137,6 +137,22 @@ try {
             overflow: visible !important;
         }
 
+        .btn-print {
+            padding: 9px 18px;
+            background-color: var(--bg-secondary);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--color-transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-family: 'Inter', sans-serif;
+        }
+
         /* Action Menu Fixes */
         .action-menu {
             display: none;
@@ -301,7 +317,7 @@ try {
                 </div>
                 <div class="page-header-actions">
                 <?php if (hasPermission('perm_blotter_print')): ?>
-                <button class="btn btn-outline-secondary no-print" id="printMasterlistBtn">
+                <button class="btn-print no-print" id="printMasterlistBtn">
                     <i class="fas fa-print"></i>
                     Print Report
                 </button>
@@ -778,7 +794,7 @@ try {
                                             <i class="fas fa-user text-blue-500 w-4 h-4"></i>
                                             Complainant
                                         </h6>
-                                        <ul id="viewComplainantsContainer" class="space-y-2 border-b pb-3"></ul>
+                                        <ul id="viewComplainantsContainer" class="space-y-1 border-b pb-3 list-none p-0"></ul>
                                     </div>
                                     <!-- Victims -->
                                     <div>
@@ -786,7 +802,7 @@ try {
                                             <i class="fas fa-user-injured text-red-500 w-4 h-4"></i>
                                             Victims
                                         </h6>
-                                        <ul id="viewVictimsContainer" class="space-y-2 border-b pb-3"></ul>
+                                        <ul id="viewVictimsContainer" class="space-y-1 border-b pb-3 list-none p-0"></ul>
                                     </div>
                                     <!-- Respondents -->
                                     <div>
@@ -794,7 +810,7 @@ try {
                                             <i class="fas fa-user-shield text-orange-500 w-4 h-4"></i>
                                             Respondents
                                         </h6>
-                                        <ul id="viewRespondentsContainer" class="space-y-2 border-b pb-3"></ul>
+                                        <ul id="viewRespondentsContainer" class="space-y-1 border-b pb-3 list-none p-0"></ul>
                                     </div>
                                     <!-- Witnesses -->
                                     <div>
@@ -802,7 +818,7 @@ try {
                                             <i class="fas fa-eye text-green-500 w-4 h-4"></i>
                                             Witnesses
                                         </h6>
-                                        <ul id="viewWitnessesContainer" class="space-y-2"></ul>
+                                        <ul id="viewWitnessesContainer" class="space-y-1 list-none p-0"></ul>
                                     </div>
                                 </div>
                             </div>

@@ -35,8 +35,6 @@ if (!$barangay_info) {
         'province_name' => 'Province Name',
         'town_name' => 'Town/City Name',
         'barangay_name' => 'Barangay Name',
-        'contact_number' => '',
-        'dashboard_text' => '',
         'municipal_logo' => null,
         'barangay_logo' => null,
         'official_emblem' => null,
@@ -464,28 +462,7 @@ if (!$barangay_info) {
                                     required
                                 >
                             </div>
-                            
-                            <div class="form-group">
-                                <label for="contact_number" class="form-label">Contact Number</label>
-                                <input 
-                                    type="text" 
-                                    id="contact_number" 
-                                    name="contact_number" 
-                                    class="form-input" 
-                                    value="<?php echo htmlspecialchars($barangay_info['contact_number'] ?? ''); ?>"
-                                    placeholder="Enter contact number"
-                                >
-                            </div>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="dashboard_text" class="form-label">Dashboard Text</label>
-                            <textarea 
-                                id="dashboard_text" 
-                                name="dashboard_text" 
-                                class="form-textarea" 
-                                placeholder="Enter dashboard welcome text or description"
-                            ><?php echo htmlspecialchars($barangay_info['dashboard_text'] ?? ''); ?></textarea>
+                            <div class="form-group"></div>
                         </div>
                     </div>
                     

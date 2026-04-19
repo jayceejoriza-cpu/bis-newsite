@@ -558,10 +558,6 @@ $age = calculateAge($resident['date_of_birth']);
                             <span>Blotter Records</span>
                         </a>
                        
-                        <a href="#incident-report" class="profile-nav-item">
-                            <i class="fas fa-exclamation-triangle"></i>
-                            <span>Incident Report</span>
-                        </a>
                     </nav>
                 </div>
                 
@@ -1316,17 +1312,6 @@ $age = calculateAge($resident['date_of_birth']);
                         </div>
                     </section>
                     
-                   
-                    
-                    <section id="incident-report" class="profile-section">
-                        <div class="section-header">
-                            <h2><i class="fas fa-exclamation-triangle"></i> Incident Report</h2>
-                            <p>Reported incidents and violations</p>
-                        </div>
-                        <div class="section-content">
-                            <p class="no-data">No incident reports found</p>
-                        </div>
-                    </section>
                 </div>
             </div>
         </div>
@@ -1506,6 +1491,77 @@ $age = calculateAge($resident['date_of_birth']);
             statusRemarks: <?php echo json_encode($resident['status_remarks'] ?? ''); ?>,
             existingPhoto: <?php echo json_encode($resident['photo'] ?? ''); ?>
         };
+    </script>
+    <script>
+        /**
+         * Setup Autocomplete functionality for resident search fields
+         */
+        function setupAutocomplete(inputId, dropdownId, hiddenId) {
+            const input = document.getElementById(inputId);
+            const dropdown = document.getElementById(dropdownId);
+            const hidden = document.getElementById(hiddenId);
+            
+            if (!input || !dropdown || !hidden) return;
+
+            let timeout = null;
+
+            input.addEventListener('input', function() {
+                clearTimeout(timeout);
+                const query = this.value.trim();
+
+                if (query.length < 2) {
+                    dropdown.style.display = 'none';
+                    return;
+                }
+
+                timeout = setTimeout(() => {
+                    fetch(`model/search_residents.php?search=${encodeURIComponent(query)}`)
+                        .then(res => res.json())
+                        .then(data => {
+                            dropdown.innerHTML = '';
+                            if (data.success && data.data.length > 0) {
+                                data.data.forEach(resident => {
+                                    // Don't show current resident in their own relative suggestions
+                                    if (resident.id == <?php echo $residentId; ?>) return;
+
+                                    const item = document.createElement('div');
+                                    item.className = 'autocomplete-item';
+                                    
+                                    const regex = new RegExp(`(${query})`, 'gi');
+                                    let displayHtml = resident.full_name.replace(regex, '<strong>$1</strong>');
+                                    displayHtml += `<br><small style="color: #667085;">ID: ${resident.resident_id || 'N/A'}</small>`;
+                                    
+                                    item.innerHTML = displayHtml;
+                                    item.addEventListener('click', () => {
+                                        input.value = resident.full_name;
+                                        hidden.value = resident.id;
+                                        dropdown.style.display = 'none';
+                                    });
+                                    dropdown.appendChild(item);
+                                });
+                                dropdown.style.display = 'block';
+                            } else {
+                                dropdown.style.display = 'none';
+                            }
+                        })
+                        .catch(err => console.error('Error fetching residents:', err));
+                }, 300);
+            });
+
+            // Close dropdown when clicking outside
+            document.addEventListener('click', function(e) {
+                if (e.target !== input && !dropdown.contains(e.target)) {
+                    dropdown.style.display = 'none';
+                }
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // Initialize dropdowns for family and household fields
+            setupAutocomplete('fatherName', 'fatherNameDropdown', 'fatherNameId');
+            setupAutocomplete('motherName', 'motherNameDropdown', 'motherNameId');
+            setupAutocomplete('landlordName', 'landlordNameDropdown', 'landlordNameId');
+        });
     </script>
     <script src="assets/js/edit-resident.js"></script>
 </body>

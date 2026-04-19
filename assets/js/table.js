@@ -238,16 +238,13 @@ class EnhancedTable {
         const totalRows = this.filteredRows.length;
         const totalPages = Math.ceil(totalRows / this.options.pageSize);
         
-        const halfRows = Math.max(1, Math.ceil(totalRows / 2));
-        const allRows = Math.max(1, totalRows);
-        
         // Define and sort size options numerically to prevent out-of-order lists
         let optionsHtml = '';
         const sizeOptions = [
             { val: 10, text: '10' },
-            { val: 100, text: '100' },
-            { val: halfRows, text: `${halfRows}` },
-            { val: allRows, text: `${allRows}` }
+            { val: 20, text: '20' },
+            { val: 50, text: '50' },
+            { val: 100, text: '100' }
         ];
         
         sizeOptions.sort((a, b) => a.val - b.val);

@@ -38,6 +38,12 @@ function initOfficials() {
         createBtn.addEventListener('click', openCreateOfficialModal);
     }
 
+    // Print Officials Button
+    const printOfficialsBtn = document.getElementById('printOfficialsBtn');
+    if (printOfficialsBtn) {
+        printOfficialsBtn.addEventListener('click', handlePrintOfficials);
+    }
+
     // Create Official Submit
     const submitBtn = document.getElementById('createOfficialSubmitBtn');
     if (submitBtn) {
@@ -903,6 +909,106 @@ function deleteOfficial(officialId, officialName = 'Official') {
         
         archiveModal.style.display = 'block';
     }
+}
+
+// ── Print Officials List ──────────────────────────────────────────────────────
+async function handlePrintOfficials() {
+    // Fetch Barangay Info for header
+    let brgyInfo = {
+        province_name: 'Province',
+        town_name: 'Municipality',
+        barangay_name: 'Barangay',
+        barangay_logo: '',
+        official_emblem: ''
+    };
+    
+    try {
+        const response = await fetch('model/get_barangay_info.php');
+        if (response.ok) {
+            const data = await response.json();
+            if (data.success && data.data) {
+                brgyInfo = data.data;
+            }
+        }
+    } catch (error) {
+        console.error('Error fetching barangay info:', error);
+    }
+    
+    // Prepare Print Iframe
+    let printFrame = document.getElementById('officialsPrintFrame');
+    if (!printFrame) {
+        printFrame = document.createElement('iframe');
+        printFrame.id = 'officialsPrintFrame';
+        printFrame.style.position = 'fixed';
+        printFrame.style.bottom = '0';
+        printFrame.style.right = '0';
+        printFrame.style.width = '0';
+        printFrame.style.height = '0';
+        printFrame.style.border = 'none';
+        document.body.appendChild(printFrame);
+    }
+
+    const doc = printFrame.contentWindow.document;
+    doc.open();
+
+    let rowsHtml = '';
+    let rowsToPrint = (officialsTable && officialsTable.filteredRows) 
+        ? officialsTable.filteredRows 
+        : Array.from(document.querySelectorAll('#officialsTableBody tr:not([style*="display: none"])'));
+    
+    rowsToPrint.forEach((row, index) => {
+        if (row.id === 'officialsEmptyRow' || row.cells.length < 7) return;
+        
+        const no = index + 1;
+        const name = row.querySelector('.official-info-name')?.textContent.trim() || '';
+        const position = row.querySelector('.official-info-position')?.textContent.trim() || '';
+        const chairmanship = row.cells[1]?.textContent.trim() || 'N/A';
+        const termPeriod = row.cells[2]?.textContent.trim() || '';
+        const contact = row.cells[5]?.textContent.trim() || '';
+
+        rowsHtml += `
+            <tr>
+                <td style="text-align: center;">${no}</td>
+                <td><strong>${name}</strong></td>
+                <td>${chairmanship}</td>
+                <td>${position}</td>
+                <td>${termPeriod}</td>
+                <td>${contact}</td>
+            </tr>`;
+    });
+
+    const brgyLogoHtml = brgyInfo.barangay_logo 
+        ? `<img src="${brgyInfo.barangay_logo}" style="width: 80px; height: 80px; object-fit: contain;">`
+        : `<div style="width: 80px; height: 80px; border: 1px solid #ddd;"></div>`;
+        
+    const govLogoHtml = brgyInfo.official_emblem
+        ? `<img src="${brgyInfo.official_emblem}" style="width: 80px; height: 80px; object-fit: contain;">`
+        : `<div style="width: 80px; height: 80px; border: 1px solid #ddd;"></div>`;
+
+    doc.write(`
+        <html>
+        <head>
+            <title>Barangay Officials List</title>
+            <style>
+                @page { size: A4 landscape; margin: 15mm; }
+                body { font-family: Arial, sans-serif; margin: 0; padding: 0; }
+                .cert-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 3px double #7a51c9; padding-bottom: 10px; }
+                .header-center { flex: 1; text-align: center; }
+                .header-center p { margin: 2px 0; font-size: 14px; }
+                .brgy-name { font-weight: bold; font-size: 16px; text-transform: uppercase; }
+                .report-title { text-align: center; font-size: 18px; font-weight: bold; margin: 20px 0; text-transform: uppercase; text-decoration: underline; }
+                .data-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+                .data-table th, .data-table td { border: 1px solid #000; padding: 8px; text-align: left; }
+                .data-table th { background-color: #f3f4f6 !important; -webkit-print-color-adjust: exact; }
+            </style>
+        </head>
+        <body>
+            <div class="cert-header">${brgyLogoHtml}<div class="header-center"><p>Republic of the Philippines</p><p>Province of ${brgyInfo.province_name}</p><p>Municipality of ${brgyInfo.town_name}</p><p class="brgy-name">${brgyInfo.barangay_name}</p></div>${govLogoHtml}</div>
+            <div class="report-title">Barangay Officials Masterlist</div>
+            <table class="data-table"><thead><tr><th>#</th><th>Official Name</th><th>Chairmanship</th><th>Position</th><th>Term Period</th><th>Contact Number</th></tr></thead><tbody>${rowsHtml}</tbody></table>
+        </body></html>`);
+    doc.close();
+    setTimeout(() => { printFrame.contentWindow.focus(); printFrame.contentWindow.print(); }, 500);
 }
 
 // ── Utilities ─────────────────────────────────────────────────────────────────

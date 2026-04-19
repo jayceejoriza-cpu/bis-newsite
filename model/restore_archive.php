@@ -52,6 +52,11 @@ try {
             $message = "Resident record restored successfully";
             break;
             
+        case 'event':
+            restoreEvent($conn, $recordData);
+            $message = "Event record restored successfully";
+            break;
+            
         case 'official':
             restoreOfficial($conn, $recordData);
             $message = "Official record restored successfully";
@@ -187,6 +192,55 @@ function restoreResident($conn, $data) {
     }
     
     $residentId = $stmt->insert_id;
+    $stmt->close();
+}
+
+function restoreEvent($conn, $data) {
+    // List of columns to restore
+    $allowedColumns = [
+        'title', 'description', 'event_date', 'start_time', 'end_time', 
+        'location', 'event_type', 'resident_id', 'status', 'created_by', 'created_at'
+    ];
+    
+    $columns = [];
+    $values = [];
+    $types = '';
+    
+    foreach ($allowedColumns as $column) {
+        if (array_key_exists($column, $data)) {
+            $columns[] = "`$column`";
+            $values[] = $data[$column];
+            
+            if (in_array($column, ['resident_id', 'created_by'])) {
+                $types .= 'i';
+            } else {
+                $types .= 's';
+            }
+        }
+    }
+    
+    if (empty($columns)) {
+        throw new Exception("No valid data to restore for event");
+    }
+    
+    $sql = "INSERT INTO events (" . implode(', ', $columns) . ") VALUES (" . str_repeat('?, ', count($columns) - 1) . "?)";
+    $stmt = $conn->prepare($sql);
+    
+    if (!$stmt) {
+        throw new Exception("Failed to prepare statement: " . $conn->error);
+    }
+    
+    $bindParams = [];
+    $bindParams[] = $types;
+    for ($i = 0; $i < count($values); $i++) {
+        $bindParams[] = &$values[$i];
+    }
+    call_user_func_array([$stmt, 'bind_param'], $bindParams);
+    
+    if (!$stmt->execute()) {
+        throw new Exception("Failed to restore event: " . $stmt->error);
+    }
+    
     $stmt->close();
 }
 

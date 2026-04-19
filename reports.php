@@ -1,6 +1,9 @@
 <?php
 require_once 'config.php';
 require_once 'auth_check.php';
+require_once 'permissions.php';
+
+requirePermission('perm_reports_view');
 
 $pageTitle = 'Statistical Reports';
 
@@ -199,9 +202,11 @@ function pct($val, $total) {
                     <p class="page-subtitle">Detailed tabular statistics and period-based reporting</p>
                 </div>
                 <div class="reports-header-right">
+                    <?php if (hasPermission('perm_reports_print')): ?>
                     <button class="btn-print" onclick="window.print()">
                         <i class="fas fa-print"></i> Print Report
                     </button>
+                    <?php endif; ?>
                 </div>
             </div>
 

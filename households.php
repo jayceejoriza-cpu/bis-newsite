@@ -53,6 +53,21 @@ $pageTitle = 'Households';
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
             margin-top: 2px;
         }
+        .btn-print {
+            padding: 9px 18px;
+            background-color: var(--bg-secondary);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--color-transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-family: 'Inter', sans-serif;
+        }
         .autocomplete-item {
             padding: 8px 12px;
             cursor: pointer;
@@ -82,7 +97,7 @@ $pageTitle = 'Households';
                 </div>
                 <div class="page-header-actions">
                     <?php if (hasPermission('perm_household_view')): ?>
-                    <button class="btn btn-outline-secondary" id="printMasterlistBtn" title="Print Masterlist">
+                    <button class="btn-print" id="printMasterlistBtn" title="Print Masterlist">
                         <i class="fas fa-print"></i>
                         Print Masterlist
                     </button>
@@ -396,11 +411,6 @@ $pageTitle = 'Households';
                             <label for="householdNotes">Notes</label>
                             <textarea id="householdNotes" name="householdNotes" class="form-control" rows="3" placeholder="Additional notes or remarks"></textarea>
                         </div>
-                        
-                        <button type="button" class="btn btn-search" id="searchResidentBtn">
-                            <i class="fas fa-search"></i>
-                            Search Resident
-                        </button>
                     </div>
                     
                  

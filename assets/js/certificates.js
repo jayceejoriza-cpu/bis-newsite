@@ -1611,7 +1611,7 @@ if (lowIncomePrintBtn) {
     function renderSoloParentDropdown(residents, certType) {
         if (!soloParentDropdown) return;
         var limit = getCertificateLimit(certType);
-        if (residents.length === 0) { soloParentDropdown.innerHTML = '<div class="resident-dropdown-empty">No resident found.</div>'; soloParentDropdown.style.display = 'block'; return; }
+        if (residents.length === 0) { soloParentDropdown.innerHTML = '<div class="resident-dropdown-empty">No resident found. <a href="model/create-resident.php">Click here to register.</a></div>'; soloParentDropdown.style.display = 'block'; return; }
         soloParentDropdown.innerHTML = '';
         residents.forEach(function (r) {
             var limitInfo = r.resident_limits ? r.resident_limits[certType] : null;
@@ -1737,7 +1737,7 @@ if (lowIncomePrintBtn) {
     function renderVesselDockingDropdown(residents, certType) {
         if (!vesselDockingDropdown) return;
         var limit = getCertificateLimit(certType);
-        if (residents.length === 0) { vesselDockingDropdown.innerHTML = '<div class="resident-dropdown-empty">No resident found.</div>'; vesselDockingDropdown.style.display = 'block'; return; }
+        if (residents.length === 0) { vesselDockingDropdown.innerHTML = '<div class="resident-dropdown-empty">No resident found. <a href="model/create-resident.php">Click here to register.</a></div>'; vesselDockingDropdown.style.display = 'block'; return; }
         vesselDockingDropdown.innerHTML = '';
         residents.forEach(function (r) {
             var limitInfo = r.resident_limits ? r.resident_limits[certType] : null;
@@ -1858,7 +1858,7 @@ if (lowIncomePrintBtn) {
     function renderBusinessPermitDropdown(residents, certType) {
         if (!businessPermitDropdown) return;
         var limit = getCertificateLimit(certType);
-        if (residents.length === 0) { businessPermitDropdown.innerHTML = '<div class="resident-dropdown-empty">No resident found.</div>'; businessPermitDropdown.style.display = 'block'; return; }
+        if (residents.length === 0) { businessPermitDropdown.innerHTML = '<div class="resident-dropdown-empty">No resident found. <a href="model/create-resident.php">Click here to register.</a></div>'; businessPermitDropdown.style.display = 'block'; return; }
         businessPermitDropdown.innerHTML = '';
         residents.forEach(function (r) {
             var limitInfo = r.resident_limits ? r.resident_limits[certType] : null;
@@ -1979,7 +1979,7 @@ if (lowIncomePrintBtn) {
     function renderBrgyBusinessDropdown(residents, certType) {
         if (!brgyBusinessDropdown) return;
         var limit = getCertificateLimit(certType);
-        if (residents.length === 0) { brgyBusinessDropdown.innerHTML = '<div class="resident-dropdown-empty">No resident found.</div>'; brgyBusinessDropdown.style.display = 'block'; return; }
+        if (residents.length === 0) { brgyBusinessDropdown.innerHTML = '<div class="resident-dropdown-empty">No resident found. <a href="model/create-resident.php">Click here to register.</a></div>'; brgyBusinessDropdown.style.display = 'block'; return; }
         brgyBusinessDropdown.innerHTML = '';
         residents.forEach(function (r) {
             var limitInfo = r.resident_limits ? r.resident_limits[certType] : null;
@@ -2096,7 +2096,7 @@ if (lowIncomePrintBtn) {
     function renderBrgyClearanceDropdown(residents, certType) {
         if (!brgyClearanceDropdown) return;
         var limit = getCertificateLimit(certType);
-        if (residents.length === 0) { brgyClearanceDropdown.innerHTML = '<div class="resident-dropdown-empty">No resident found.</div>'; brgyClearanceDropdown.style.display = 'block'; return; }
+        if (residents.length === 0) { brgyClearanceDropdown.innerHTML = '<div class="resident-dropdown-empty">No resident found. <a href="model/create-resident.php">Click here to register.</a></div>'; brgyClearanceDropdown.style.display = 'block'; return; }
         brgyClearanceDropdown.innerHTML = '';
         residents.forEach(function (r) {
             var limitInfo = r.resident_limits ? r.resident_limits[certType] : null;
@@ -2218,7 +2218,7 @@ if (lowIncomePrintBtn) {
     function renderRbcDropdown(residents, certType) {
         if (!rbcDropdown) return;
         var limit = getCertificateLimit(certType);
-        if (residents.length === 0) { rbcDropdown.innerHTML = '<div class="resident-dropdown-empty">No resident found.</div>'; rbcDropdown.style.display = 'block'; return; }
+        if (residents.length === 0) { rbcDropdown.innerHTML = '<div class="resident-dropdown-empty">No resident found. <a href="model/create-resident.php">Click here to register.</a></div>'; rbcDropdown.style.display = 'block'; return; }
         rbcDropdown.innerHTML = '';
         residents.forEach(function (r) {
             var limitInfo = r.resident_limits ? r.resident_limits[certType] : null;
@@ -2306,7 +2306,7 @@ if (lowIncomePrintBtn) {
 
     function renderRbcChildDropdown(residents) {
         if (!rbcChildDropdown) return;
-        if (residents.length === 0) { rbcChildDropdown.innerHTML = '<div class="resident-dropdown-empty">No resident found.</div>'; rbcChildDropdown.style.display = 'block'; return; }
+        if (residents.length === 0) { rbcChildDropdown.innerHTML = '<div class="resident-dropdown-empty">No resident found. <a href="model/create-resident.php">Click here to register.</a></div>'; rbcChildDropdown.style.display = 'block'; return; }
         rbcChildDropdown.innerHTML = '';
         residents.forEach(function (r) {
             var item = document.createElement('div');

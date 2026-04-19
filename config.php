@@ -72,59 +72,70 @@ $menu_items = [
     [
         'title' => 'Users',
         'icon' => 'fa-users',
-        'url' => 'users.php',
-        'has_submenu' => true
+        'url' => 'official-user.php',
+        'has_submenu' => true,
+        'permission' => 'perm_office_view'
     ],
     [
         'title' => 'Roles',
         'icon' => 'fa-user-shield',
-        'url' => 'roles.php'
+        'url' => 'roles.php',
+        'permission' => 'perm_roles_view'
     ],
     [
         'title' => 'Resident Records',
         'icon' => 'fa-address-book',
-        'url' => 'residents.php'
+        'url' => 'residents.php',
+        'permission' => 'perm_resident_view'
     ],
     [
         'title' => 'Community Households',
         'icon' => 'fa-home',
-        'url' => 'households.php'
+        'url' => 'households.php',
+        'permission' => 'perm_household_view'
     ],
     [
         'title' => 'Certificate Issuance',
         'icon' => 'fa-certificate',
-        'url' => 'certificates.php'
+        'url' => 'certificates.php',
+        'permission' => 'perm_cert_view'
     ],
     [
         'title' => 'Service Requests',
         'icon' => 'fa-file-alt',
-        'url' => 'requests.php'
+        'url' => 'requests.php',
+        'permission' => 'perm_req_view'
     ],
     [
         'title' => 'Blotter Records',
         'icon' => 'fa-chart-bar',
-        'url' => 'blotter.php'
+        'url' => 'blotter.php',
+        'permission' => 'perm_blotter_view'
     ],
     [
-        'title' => 'Incident Reports',
-        'icon' => 'fa-exclamation-circle',
-        'url' => 'incidents.php'
+        'title' => 'Barangay Events',
+        'icon' => 'fa-calendar-alt',
+        'url' => 'events.php',
+        'permission' => 'perm_events_view'
     ],
     [
         'title' => 'Barangay Officials',
         'icon' => 'fa-user-tie',
-        'url' => 'officials.php'
+        'url' => 'officials.php',
+        'permission' => 'perm_officials_view'
     ],
     [
-        'title' => 'Reports',
+        'title' => 'Statistical Reports',
         'icon' => 'fa-file-invoice',
-        'url' => 'reports.php'
+        'url' => 'reports.php',
+        'permission' => 'perm_reports_view'
     ],
     [
         'title' => 'Settings',
         'icon' => 'fa-cog',
         'url' => 'settings.php',
-        'has_submenu' => true
+        'has_submenu' => true,
+        'permission' => 'perm_settings_logs_view'
     ]
 ];
 

@@ -24,8 +24,6 @@ try {
     $province_name = trim($_POST['province_name'] ?? '');
     $town_name = trim($_POST['town_name'] ?? '');
     $barangay_name = trim($_POST['barangay_name'] ?? '');
-    $contact_number = trim($_POST['contact_number'] ?? '');
-    $dashboard_text = trim($_POST['dashboard_text'] ?? '');
     
     // Validate required fields
     if (empty($province_name) || empty($town_name) || empty($barangay_name)) {
@@ -184,15 +182,13 @@ try {
     // Update database
     $stmt = $conn->prepare("
         INSERT INTO barangay_info 
-        (id, province_name, town_name, barangay_name, contact_number, dashboard_text, 
+        (id, province_name, town_name, barangay_name, 
          municipal_logo, barangay_logo, official_emblem, dashboard_image, updated_by) 
-        VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?)
         ON DUPLICATE KEY UPDATE 
         province_name = VALUES(province_name),
         town_name = VALUES(town_name),
         barangay_name = VALUES(barangay_name),
-        contact_number = VALUES(contact_number),
-        dashboard_text = VALUES(dashboard_text),
         municipal_logo = VALUES(municipal_logo),
         barangay_logo = VALUES(barangay_logo),
         official_emblem = VALUES(official_emblem),
@@ -203,12 +199,10 @@ try {
     
     $user_id = $_SESSION['user_id'];
     $stmt->bind_param(
-        "sssssssssi",
+        "ssssssssi",
         $province_name,
         $town_name,
         $barangay_name,
-        $contact_number,
-        $dashboard_text,
         $municipal_logo_path,
         $barangay_logo_path,
         $official_emblem_path,

@@ -344,7 +344,7 @@ foreach ($certificateTypes as $cert) {
                                        id="indigencyResidentName"
                                        class="cert-input"
                                        style="width: 100%;"
-                                       placeholder="Select resident"
+                                       placeholder="Enter Resident Name or ID"
                                        autocomplete="off"
                                        required>
                                 <input type="hidden" id="indigencyResidentId">
@@ -387,7 +387,7 @@ foreach ($certificateTypes as $cert) {
                                id="indigencyDate"
                                class="cert-input"
                                value="<?php echo date('Y-m-d'); ?>"
-                               required>
+                               disabled>
                     </div>
 
                     <div class="cert-field-group">
@@ -445,7 +445,7 @@ foreach ($certificateTypes as $cert) {
 <input type="text"
                                        id="residencyResidentName"
                                        class="form-control cert-input"
-                                       placeholder="Select resident"
+                                       placeholder="Enter Resident Name or ID"
                                        autocomplete="off"
                                        required>
                                 <input type="hidden" id="residencyResidentId">
@@ -468,7 +468,7 @@ foreach ($certificateTypes as $cert) {
                                id="residencyDate"
                                class="form-control cert-input"
                                value="<?php echo date('Y-m-d'); ?>"
-                               required>
+                               disabled>
                     </div>
 
                     <!-- Purpose -->
@@ -563,7 +563,7 @@ foreach ($certificateTypes as $cert) {
 
                 <div class="cert-field-group">
                     <label class="cert-field-label">ISSUED DATE <span class="required-star">*</span></label>
-                    <input type="date" id="lowIncomeDate" class="form-control cert-input" value="<?= date('Y-m-d') ?>" required>
+                    <input type="date" id="lowIncomeDate" class="form-control cert-input" value="<?= date('Y-m-d') ?>" disabled>
                 </div>
             </div>
             <div class="modal-footer cert-modal-footer">
@@ -592,7 +592,7 @@ foreach ($certificateTypes as $cert) {
                         <label class="cert-field-label">RESIDENT FULL NAME <span class="required-star">*</span></label>
                         <div class="resident-search-wrap">
                             <div class="resident-input-group">
-                                <input type="text" id="soloParentResidentName" class="form-control cert-input" placeholder="Select resident" autocomplete="off" required>
+                                <input type="text" id="soloParentResidentName" class="form-control cert-input" placeholder="Enter Resident Name or ID" autocomplete="off" required>
                                 <input type="hidden" id="soloParentResidentId">
                                 <button type="button" class="btn btn-primary btn-resident" id="soloParentResidentBtn"><i class="fas fa-user"></i></button>
                             </div>
@@ -601,7 +601,7 @@ foreach ($certificateTypes as $cert) {
                     </div>
                     <div class="cert-field-group">
                         <label class="cert-field-label">ISSUED DATE <span class="required-star">*</span></label>
-                        <input type="date" id="soloParentDate" class="form-control cert-input" value="<?php echo date('Y-m-d'); ?>" required>
+                        <input type="date" id="soloParentDate" class="form-control cert-input" value="<?php echo date('Y-m-d'); ?>" disabled>
                     </div>
                     <div class="cert-field-group">
                         <label class="cert-field-label">PURPOSE</label>
@@ -656,7 +656,7 @@ foreach ($certificateTypes as $cert) {
                     </div>
                     <div class="cert-field-group">
                         <label class="cert-field-label">ISSUED DATE <span class="required-star">*</span></label>
-                        <input type="date" id="rbcDate" class="form-control cert-input" value="<?php echo date('Y-m-d'); ?>" required>
+                        <input type="date" id="rbcDate" class="form-control cert-input" value="<?php echo date('Y-m-d'); ?>" disabled>
                     </div>
                     <div class="cert-field-group">
                         <label class="cert-field-label">PURPOSE</label>
@@ -689,7 +689,7 @@ foreach ($certificateTypes as $cert) {
                         <label class="cert-field-label">RESIDENT FULL NAME <span class="required-star">*</span></label>
                         <div class="resident-search-wrap">
                             <div class="resident-input-group">
-<input type="text" id="fishingResidentName" class="form-control cert-input" placeholder="Select resident" autocomplete="off" required>
+<input type="text" id="fishingResidentName" class="form-control cert-input" placeholder="Enter Resident Name or ID" autocomplete="off" required>
                                 <input type="hidden" id="fishingResidentId">
                                 <button type="button" class="btn btn-primary btn-resident" id="fishingResidentBtn"><i class="fas fa-user"></i> </button>
                             </div>
@@ -702,7 +702,7 @@ foreach ($certificateTypes as $cert) {
                     </div>
                     <div class="cert-field-group">
                         <label class="cert-field-label">ISSUED DATE <span class="required-star">*</span></label>
-                        <input type="date" id="fishingDate" class="form-control cert-input" value="<?php echo date('Y-m-d'); ?>" required>
+                        <input type="date" id="fishingDate" class="form-control cert-input" value="<?php echo date('Y-m-d'); ?>" disabled>
                     </div>
                     <div class="cert-field-group">
                         <label class="cert-field-label">PURPOSE</label>
@@ -735,7 +735,7 @@ foreach ($certificateTypes as $cert) {
                         <label class="cert-field-label">RESIDENT FULL NAME <span class="required-star">*</span></label>
                         <div class="resident-search-wrap">
                             <div class="resident-input-group">
-<input type="text" id="ftJobseekerResidentName" class="form-control cert-input" placeholder="Select resident" autocomplete="off" required>
+<input type="text" id="ftJobseekerResidentName" class="form-control cert-input" placeholder="Enter Resident Name or ID" autocomplete="off" required>
                                 <input type="hidden" id="ftJobseekerResidentId">
                                 <button type="button" class="btn btn-primary btn-resident" id="ftJobseekerResidentBtn"><i class="fas fa-user"></i> </button>
                             </div>
@@ -744,7 +744,7 @@ foreach ($certificateTypes as $cert) {
                     </div>
                     <div class="cert-field-group">
                         <label class="cert-field-label">ISSUED DATE <span class="required-star">*</span></label>
-                        <input type="date" id="ftJobseekerDate" class="form-control cert-input" value="<?php echo date('Y-m-d'); ?>" required>
+                        <input type="date" id="ftJobseekerDate" class="form-control cert-input" value="<?php echo date('Y-m-d'); ?>" disabled>
                     </div>
                     <div class="cert-field-group">
                         <label class="cert-field-label">PURPOSE</label>
@@ -777,7 +777,7 @@ foreach ($certificateTypes as $cert) {
                         <label class="cert-field-label">RESIDENT FULL NAME <span class="required-star">*</span></label>
                         <div class="resident-search-wrap">
                             <div class="resident-input-group">
-<input type="text" id="gmrcResidentName" class="form-control cert-input" placeholder="Select resident" autocomplete="off" required>
+<input type="text" id="gmrcResidentName" class="form-control cert-input" placeholder="Enter Resident Name or ID" autocomplete="off" required>
                                 <input type="hidden" id="gmrcResidentId">
                                 <button type="button" class="btn btn-primary btn-resident" id="gmrcResidentBtn"><i class="fas fa-user"></i> </button>
                             </div>
@@ -786,7 +786,7 @@ foreach ($certificateTypes as $cert) {
                     </div>
                     <div class="cert-field-group">
                         <label class="cert-field-label">ISSUED DATE <span class="required-star">*</span></label>
-                        <input type="date" id="gmrcDate" class="form-control cert-input" value="<?php echo date('Y-m-d'); ?>" required>
+                        <input type="date" id="gmrcDate" class="form-control cert-input" value="<?php echo date('Y-m-d'); ?>" disabled>
                     </div>
                     <div class="cert-field-group">
                         <label class="cert-field-label">PURPOSE <span class="required-star">*</span></label>
@@ -824,7 +824,7 @@ foreach ($certificateTypes as $cert) {
                         <label class="cert-field-label">RESIDENT FULL NAME <span class="required-star">*</span></label>
                         <div class="resident-search-wrap">
                             <div class="resident-input-group">
-<input type="text" id="oathResidentName" class="form-control cert-input" placeholder="Select resident" autocomplete="off" required>
+<input type="text" id="oathResidentName" class="form-control cert-input" placeholder="Enter Resident Name or ID" autocomplete="off" required>
                                 <input type="hidden" id="oathResidentId">
                                 <button type="button" class="btn btn-primary btn-resident" id="oathResidentBtn"><i class="fas fa-user"></i> </button>
                             </div>
@@ -833,7 +833,7 @@ foreach ($certificateTypes as $cert) {
                     </div>
                     <div class="cert-field-group">
                         <label class="cert-field-label">ISSUED DATE <span class="required-star">*</span></label>
-                        <input type="date" id="oathDate" class="form-control cert-input" value="<?php echo date('Y-m-d'); ?>" required>
+                        <input type="date" id="oathDate" class="form-control cert-input" value="<?php echo date('Y-m-d'); ?>" disabled>
                     </div>
                     <div class="cert-field-group">
                         <label class="cert-field-label">PURPOSE</label>
@@ -866,7 +866,7 @@ foreach ($certificateTypes as $cert) {
                         <label class="cert-field-label">RESIDENT FULL NAME <span class="required-star">*</span></label>
                         <div class="resident-search-wrap">
                             <div class="resident-input-group">
-<input type="text" id="brgyClearanceResidentName" class="form-control cert-input" placeholder="Select resident" autocomplete="off" required>
+<input type="text" id="brgyClearanceResidentName" class="form-control cert-input" placeholder="Enter Resident Name or ID" autocomplete="off" required>
                                 <input type="hidden" id="brgyClearanceResidentId">
                                 <button type="button" class="btn btn-primary btn-resident" id="brgyClearanceResidentBtn"><i class="fas fa-user"></i> </button>
                             </div>
@@ -875,7 +875,7 @@ foreach ($certificateTypes as $cert) {
                     </div>
                     <div class="cert-field-group">
                         <label class="cert-field-label">ISSUED DATE <span class="required-star">*</span></label>
-                        <input type="date" id="brgyClearanceDate" class="form-control cert-input" value="<?php echo date('Y-m-d'); ?>" required>
+                        <input type="date" id="brgyClearanceDate" class="form-control cert-input" value="<?php echo date('Y-m-d'); ?>" disabled>
                     </div>
                     <div class="cert-field-group">
                         <label class="cert-field-label">PURPOSE <span class="required-star">*</span></label>
@@ -920,7 +920,7 @@ foreach ($certificateTypes as $cert) {
                         <label class="cert-field-label">BUSINESS OWNER NAME <span class="required-star">*</span></label>
                         <div class="resident-search-wrap">
                             <div class="resident-input-group">
-                                <input type="text" id="brgyBusinessClearanceResidentName" class="form-control cert-input" placeholder="Select resident" autocomplete="off" required>
+                                <input type="text" id="brgyBusinessClearanceResidentName" class="form-control cert-input" placeholder="Enter Resident Name or ID" autocomplete="off" required>
                                 <input type="hidden" id="brgyBusinessClearanceResidentId">
                                 <button type="button" class="btn btn-primary btn-resident" id="brgyBusinessClearanceResidentBtn"><i class="fas fa-user"></i> </button>
                             </div>
@@ -950,7 +950,7 @@ foreach ($certificateTypes as $cert) {
                     </div>
                     <div class="cert-field-group">
                         <label class="cert-field-label">ISSUED DATE <span class="required-star">*</span></label>
-                        <input type="date" id="brgyBusinessClearanceDate" class="form-control cert-input" value="<?php echo date('Y-m-d'); ?>" required>
+                        <input type="date" id="brgyBusinessClearanceDate" class="form-control cert-input" value="<?php echo date('Y-m-d'); ?>" disabled>
                     </div>
                 </div>
                 <div class="modal-footer cert-modal-footer">
@@ -979,7 +979,7 @@ foreach ($certificateTypes as $cert) {
                         <label class="cert-field-label">BUSINESS OWNER NAME <span class="required-star">*</span></label>
                         <div class="resident-search-wrap">
                             <div class="resident-input-group">
-                                <input type="text" id="businessPermitResidentName" class="form-control cert-input" placeholder="Select resident" autocomplete="off" required>
+                                <input type="text" id="businessPermitResidentName" class="form-control cert-input" placeholder="Enter Resident Name or ID" autocomplete="off" required>
                                 <input type="hidden" id="businessPermitResidentId">
                                 <button type="button" class="btn btn-primary btn-resident" id="businessPermitResidentBtn"><i class="fas fa-user"></i> </button>
                             </div>
@@ -1010,7 +1010,7 @@ foreach ($certificateTypes as $cert) {
                     </div>
                     <div class="cert-field-group">
                         <label class="cert-field-label">ISSUED DATE <span class="required-star">*</span></label>
-                        <input type="date" id="businessPermitDate" class="form-control cert-input" value="<?php echo date('Y-m-d'); ?>" required>
+                        <input type="date" id="businessPermitDate" class="form-control cert-input" value="<?php echo date('Y-m-d'); ?>" disabled>
                     </div>
                 </div>
                 <div class="modal-footer cert-modal-footer">
@@ -1039,7 +1039,7 @@ foreach ($certificateTypes as $cert) {
                         <label class="cert-field-label">RESIDENT FULL NAME <span class="required-star">*</span></label>
                         <div class="resident-search-wrap">
                             <div class="resident-input-group">
-<input type="text" id="vesselDockingResidentName" class="form-control cert-input" placeholder="Select resident" autocomplete="off" required>
+<input type="text" id="vesselDockingResidentName" class="form-control cert-input" placeholder="Enter Resident Name or ID" autocomplete="off" required>
                                 <input type="hidden" id="vesselDockingResidentId">
                                 <button type="button" class="btn btn-primary btn-resident" id="vesselDockingResidentBtn"><i class="fas fa-user"></i> </button>
                             </div>
@@ -1060,7 +1060,7 @@ foreach ($certificateTypes as $cert) {
                     </div>
                     <div class="cert-field-group">
                         <label class="cert-field-label">ISSUED DATE <span class="required-star">*</span></label>
-                        <input type="date" id="vesselDockingDate" class="form-control cert-input" value="<?php echo date('Y-m-d'); ?>" required>
+                        <input type="date" id="vesselDockingDate" class="form-control cert-input" value="<?php echo date('Y-m-d'); ?>" disabled>
                     </div>
                 </div>
                 <div class="modal-footer cert-modal-footer">

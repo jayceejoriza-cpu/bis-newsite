@@ -143,3 +143,116 @@
   from { opacity: 0; transform: translateY(-10px); }
   to { opacity: 1; transform: translateY(0); }
 }
+
+/* Filter Tabs */
+.filter-tabs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.tab-btn {
+    padding: 8px 20px;
+    border: 1px solid var(--border-color);
+    background-color: var(--bg-secondary);
+    color: var(--text-secondary);
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.tab-btn:hover {
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    border-color: var(--primary-color);
+}
+
+.tab-btn.active {
+    background-color: var(--primary-color);
+    color: white !important;
+    border-color: var(--primary-color);
+    font-weight: 600;
+}
+
+/* Highlight Postponed Rows in Table */
+.data-table tbody tr[data-status="Postponed"] {
+    background-color: rgba(239, 68, 68, 0.1) !important;
+    border-left: 4px solid #ef4444 !important;
+}
+
+.data-table tbody tr[data-status="Postponed"]:hover {
+    background-color: rgba(239, 68, 68, 0.15) !important;
+}
+
+/* Status Badge Styling in Table */
+.badge-active {
+    background-color: rgba(59, 130, 246, 0.1);
+    color: var(--primary-color);
+    border: 1px solid rgba(59, 130, 246, 0.2);
+}
+
+.badge-postponed {
+    background-color: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+    border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+/* Advanced Filter Panel */
+.filter-panel {
+    display: none;
+    position: absolute;
+    top: 100%;
+    right: 0;
+    z-index: 1000;
+    width: 300px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    box-shadow: var(--shadow-lg);
+    padding: 20px;
+    margin-top: 10px;
+    animation: fadeIn 0.2s ease;
+    text-align: left;
+}
+
+.filter-panel-header {
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+/* Toast Notification Styles */
+.notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 15px 20px;
+    border-radius: 8px;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    z-index: 10000;
+    color: white;
+    min-width: 320px;
+    max-width: 480px;
+    pointer-events: none;
+    line-height: 1.4;
+}
+
+.notification-success { background-color: #10b981; }
+.notification-error { background-color: #ef4444; }
+.notification-info { background-color: #3b82f6; }
+.notification-warning { background-color: #f59e0b; }
+
+@keyframes slideIn {
+    from { transform: translateX(400px); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes slideOut {
+    from { transform: translateX(0); opacity: 1; }
+    to { transform: translateX(400px); opacity: 0; }
+}

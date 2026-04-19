@@ -442,6 +442,7 @@ if ($rolesResult) {
                                         <div class="perm-add-option" data-perm="perm_officials_view">View</div>
                                         <div class="perm-add-option" data-perm="perm_officials_edit">Edit</div>
                                         <div class="perm-add-option" data-perm="perm_officials_status">Change Status</div>
+                                        <div class="perm-add-option" data-perm="perm_officials_print">Print</div>
                                         <div class="perm-add-option" data-perm="perm_officials_archive">Archive</div>
                                     </div>
                                 </div>
@@ -463,9 +464,71 @@ if ($rolesResult) {
                                     <input type="checkbox" name="perm_officials_status" class="perm-cb" checked hidden>
                                     Change Status <button class="perm-badge-remove" type="button" title="Remove">×</button>
                                 </span>
+                                <span class="perm-badge-item" data-perm="perm_officials_print">
+                                    <input type="checkbox" name="perm_officials_print" class="perm-cb" checked hidden>
+                                    Print <button class="perm-badge-remove" type="button" title="Remove">×</button>
+                                </span>
                                 <span class="perm-badge-item" data-perm="perm_officials_archive">
                                     <input type="checkbox" name="perm_officials_archive" class="perm-cb" checked hidden>
                                     Archive <button class="perm-badge-remove" type="button" title="Remove">×</button>
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- ── Barangay Events ── -->
+                        <div class="perm-group">
+                            <div class="perm-group-header">
+                                <span>Barangay Events</span>
+                                <div class="perm-add-wrapper">
+                                    <button class="perm-add-btn" type="button" title="Add permission"><i class="fas fa-plus"></i></button>
+                                    <div class="perm-add-dropdown">
+                                        <div class="perm-add-option" data-perm="perm_events_view">View</div>
+                                        <div class="perm-add-option" data-perm="perm_events_create">Create</div>
+                                        <div class="perm-add-option" data-perm="perm_events_edit">Edit</div>
+                                        <div class="perm-add-option" data-perm="perm_events_archive">Archive</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="perm-badges-row perm-badges-row--indented">
+                                <span class="perm-badge-item" data-perm="perm_events_view">
+                                    <input type="checkbox" name="perm_events_view" class="perm-cb" checked hidden>
+                                    View <button class="perm-badge-remove" type="button" title="Remove">×</button>
+                                </span>
+                                <span class="perm-badge-item" data-perm="perm_events_create">
+                                    <input type="checkbox" name="perm_events_create" class="perm-cb" checked hidden>
+                                    Create <button class="perm-badge-remove" type="button" title="Remove">×</button>
+                                </span>
+                                <span class="perm-badge-item" data-perm="perm_events_edit">
+                                    <input type="checkbox" name="perm_events_edit" class="perm-cb" checked hidden>
+                                    Edit <button class="perm-badge-remove" type="button" title="Remove">×</button>
+                                </span>
+                                <span class="perm-badge-item" data-perm="perm_events_archive">
+                                    <input type="checkbox" name="perm_events_archive" class="perm-cb" checked hidden>
+                                    Archive <button class="perm-badge-remove" type="button" title="Remove">×</button>
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- ── Statistical Reports ── -->
+                        <div class="perm-group">
+                            <div class="perm-group-header">
+                                <span>Statistical Reports</span>
+                                <div class="perm-add-wrapper">
+                                    <button class="perm-add-btn" type="button" title="Add permission"><i class="fas fa-plus"></i></button>
+                                    <div class="perm-add-dropdown">
+                                        <div class="perm-add-option" data-perm="perm_reports_view">View</div>
+                                        <div class="perm-add-option" data-perm="perm_reports_print">Print Report</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="perm-badges-row perm-badges-row--indented">
+                                <span class="perm-badge-item" data-perm="perm_reports_view">
+                                    <input type="checkbox" name="perm_reports_view" class="perm-cb" checked hidden>
+                                    View <button class="perm-badge-remove" type="button" title="Remove">×</button>
+                                </span>
+                                <span class="perm-badge-item" data-perm="perm_reports_print">
+                                    <input type="checkbox" name="perm_reports_print" class="perm-cb" checked hidden>
+                                    Print Report <button class="perm-badge-remove" type="button" title="Remove">×</button>
                                 </span>
                             </div>
                         </div>

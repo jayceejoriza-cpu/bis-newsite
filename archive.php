@@ -356,6 +356,7 @@ if (isset($conn)) {
                                 $badgeClass = 'badge-default';
                                 $badgeIcon = 'fa-archive';
                                 if($archive['archive_type'] == 'resident') { $badgeClass = 'badge-resident'; $badgeIcon = 'fa-user'; }
+                                elseif($archive['archive_type'] == 'event') { $badgeClass = 'badge-default'; $badgeIcon = 'fa-calendar-alt'; }
                                 elseif($archive['archive_type'] == 'official') { $badgeClass = 'badge-official'; $badgeIcon = 'fa-user-tie'; }
                                 elseif($archive['archive_type'] == 'blotter') { $badgeClass = 'badge-blotter'; $badgeIcon = 'fa-file-alt'; }
                                 elseif($archive['archive_type'] == 'household') { $badgeClass = 'badge-household'; $badgeIcon = 'fa-home'; }
@@ -372,6 +373,8 @@ if (isset($conn)) {
                                     $lastName = $data['last_name'] ?? '';
                                     $suffix = $data['suffix'] ?? '';
                                     $displayName = trim(preg_replace('/\s+/', ' ', "$firstName $middleName $lastName $suffix"));
+                                } elseif ($archive['archive_type'] == 'event') {
+                                    $displayName = $data['title'] ?? 'N/A';
                                 } elseif ($archive['archive_type'] == 'official') {
                                     if (!empty($data['fullname'])) {
                                         $displayName = $data['fullname'];
@@ -661,6 +664,16 @@ if (isset($conn)) {
                 html += createRow('Gender', data.gender || data.sex || 'N/A');
                 html += createRow('Address', data.address || data.current_address || 'N/A');
                 html += createRow('Contact', data.number || data.mobile_number || 'N/A');
+                if (data.archive_reason) {
+                    html += createRow('Archive Reason', data.archive_reason);
+                }
+            } else if (type === 'event') {
+                html += createRow('Title', data.title || 'N/A');
+                html += createRow('Type', data.event_type || 'N/A');
+                html += createRow('Date', data.event_date || 'N/A');
+                html += createRow('Time', (data.start_time || 'N/A') + (data.end_time ? ' - ' + data.end_time : ''));
+                html += createRow('Location', data.location || 'N/A');
+                html += createRow('Description', data.description || 'N/A');
                 if (data.archive_reason) {
                     html += createRow('Archive Reason', data.archive_reason);
                 }

@@ -119,7 +119,7 @@ $show_settings = $can_view_brgy_info || $can_view_activity_logs || $can_view_arc
 
 
              <!-- ── Blotter Records ── -->
-            <?php if (hasPermission('perm_blotter_view')): ?>
+            <?php if (hasPermission('perm_events_view')): ?>
             <li class="nav-item <?php echo $current_page === 'events.php' ? 'active' : ''; ?>">
                 <a href="events.php" class="nav-link">
                     <i class="fas fa-calendar"></i>
@@ -128,7 +128,7 @@ $show_settings = $can_view_brgy_info || $can_view_activity_logs || $can_view_arc
             </li>
             <?php endif; ?>
 
-            <!-- ── Blotter Records ── -->
+             <!-- ── Barangay Events ── -->
             <?php if (hasPermission('perm_blotter_view')): ?>
             <li class="nav-item <?php echo $current_page === 'blotter.php' ? 'active' : ''; ?>">
                 <a href="blotter.php" class="nav-link">
@@ -149,12 +149,14 @@ $show_settings = $can_view_brgy_info || $can_view_activity_logs || $can_view_arc
             <?php endif; ?>
 
             <!-- ── Statistical Reports ── -->
+            <?php if (hasPermission('perm_reports_view')): ?>
             <li class="nav-item <?php echo $current_page === 'reports.php' ? 'active' : ''; ?>">
                 <a href="reports.php" class="nav-link">
                     <i class="fas fa-chart-line"></i>
                     <span>Statistical Reports</span>
                 </a>
             </li>
+            <?php endif; ?>
 
             <!-- ── Settings ── -->
             <?php if ($show_settings): ?>

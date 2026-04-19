@@ -247,6 +247,7 @@ if (isset($conn)) {
                                 <div class="col-sm-2">
                                     <div class="form-group">
                                         <label>Resident ID</label>
+                                        <input type="hidden" name="resident_id" value="<?php echo $nextResidentId; ?>">
                                         <input type="text" class="form-control" value="<?php echo $nextResidentId; ?>" disabled>
                                     </div>
                                 </div>
@@ -345,7 +346,7 @@ if (isset($conn)) {
                     <div class="form-step" data-step="2">
                         <div class="form-content">
                             <div class="row">
-                                <div class="col-md-2">
+                                <div class="col-md-3">
                                     <div class="form-group">
                                         <label for="mobileNumber">Mobile Number <span class="required">*</span></label>
                                         <div class="phone-input-group">
@@ -357,7 +358,7 @@ if (isset($conn)) {
                                         </div>
                                     </div>
                                 </div>
-                                <div class="col-md-2">
+                                <div class="col-md-3">
                                     <div class="form-group">
                                         <label for="purok">Purok <span class="required">*</span></label>
                                         <select id="purok" name="purok" class="form-control" required>
@@ -369,7 +370,7 @@ if (isset($conn)) {
                                         </select>       
                                     </div>
                                 </div>
-                                <div class="col-md-2">
+                                <div class="col-md-3">
                                     <div class="form-group">
                                         <label for="streetName">Street Name</label>
                                         <input type="text" id="streetName" name="streetName" class="form-control" placeholder="Street Name" autocomplete="address-line1">
@@ -929,6 +930,7 @@ if (isset($conn)) {
                 dateFormat: "Y-m-d",       // How your PHP/Database receives it (e.g., 2000-01-01)
             });
         });
+
     </script>
     <script>
         // Ownership Status Handler
@@ -965,10 +967,11 @@ if (isset($conn)) {
             return limited.substring(0, 3) + ' ' + limited.substring(3, 6) + ' ' + limited.substring(6);
         }
 
-        // Fix sidebar links for subdirectory (handles hardcoded links in sidebar)
+        // Fix sidebar and header links/images for subdirectory (handles hardcoded elements)
         document.addEventListener('DOMContentLoaded', function() {
-            const sidebarLinks = document.querySelectorAll('.sidebar a, .sidebar-wrapper a, .nav-item a');
-            sidebarLinks.forEach(link => {
+            // Fix relative links (href) in sidebar, header, and dropdowns
+            const links = document.querySelectorAll('.sidebar a, .header a, .nav-item a, .dropdown-item, .user-profile-link, .logout-link');
+            links.forEach(link => {
                 const href = link.getAttribute('href');
                 // Check if link is relative and doesn't start with ../ or other protocols
                 if (href && 
@@ -979,6 +982,15 @@ if (isset($conn)) {
                     !href.startsWith('../')) {
                     
                     link.setAttribute('href', '../' + href);
+                }
+            });
+
+            // Fix relative image paths (src) - needed for profile pictures and logos in header/sidebar
+            const images = document.querySelectorAll('.sidebar img, .header img, .user-avatar img');
+            images.forEach(img => {
+                const src = img.getAttribute('src');
+                if (src && !/^(http|https|\/|data:|\.\.\/)/.test(src)) {
+                    img.setAttribute('src', '../' + src);
                 }
             });
         });

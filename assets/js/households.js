@@ -765,12 +765,6 @@ function resetHouseholdForm() {
     
     document.getElementById('householdNotes').removeAttribute('readonly');
     
-    // Show all buttons (in case they were hidden in view mode)
-    const searchResidentBtn = document.getElementById('searchResidentBtn');
-    if (searchResidentBtn) {
-        searchResidentBtn.style.display = '';
-    }
-    
     const addMemberBtn = document.getElementById('addMemberBtn');
     if (addMemberBtn) {
         addMemberBtn.style.display = '';
@@ -1046,8 +1040,6 @@ function viewHousehold(householdId) {
                 document.getElementById('toiletFacility').setAttribute('disabled', 'disabled');
                 document.getElementById('householdNotes').setAttribute('readonly', 'readonly');
 
-                
-                document.getElementById('searchResidentBtn').style.display = 'none';
                 document.getElementById('addMemberBtn').style.display = 'none';
                 document.getElementById('saveHouseholdBtn').style.display = 'none';
                 
@@ -1289,13 +1281,6 @@ function initializeModalEventListeners() {
             if (e.target === modal) {
                 closeCreateHouseholdModal();
             }
-        });
-    }
-    
-    const searchResidentBtn = document.getElementById('searchResidentBtn');
-    if (searchResidentBtn) {
-        searchResidentBtn.addEventListener('click', () => {
-            searchResident();
         });
     }
     

@@ -1140,7 +1140,10 @@ function handleAction(action, recordId) {
                 <li class="flex items-start gap-3 py-2 border-b border-gray-100 last:border-b-0 hover:bg-gray-50 p-2 rounded">
                     <i class="mt-1 w-4 h-4 flex-shrink-0 ${iconClass}"></i>
                     <div class="flex-1 min-w-0">
-                        <span class="font-medium text-sm text-gray-900 block">${party.name}</span>
+                        ${party.resident_id 
+                            ? `<a href="resident_profile.php?id=${party.resident_id}" class="text-blue-600 hover:text-blue-800 hover:underline font-medium transition-colors block text-sm">${party.name}</a>`
+                            : `<span class="font-medium text-sm text-gray-900 block">${party.name}</span>`
+                        }
                         <p class="text-xs text-gray-500 mt-0.5 leading-tight">
                             ${party.contact_number ? `<i class="fas fa-phone-alt mr-1"></i>${party.contact_number}` : ''}
                             ${party.address ? (party.contact_number ? ' | ' : '') + `<i class="fas fa-map-marker-alt mr-1 ml-1"></i>${party.address}` : ''}

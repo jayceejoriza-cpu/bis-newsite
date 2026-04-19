@@ -138,6 +138,22 @@ if (isset($conn)) {
             margin-top: 5px;
         }
 
+        .btn-print {
+            padding: 9px 18px;
+            background-color: var(--bg-secondary);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--color-transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-family: 'Inter', sans-serif;
+        }
+
         /* Search Bar */
         .search-filter-bar {
             display: flex;
@@ -269,7 +285,7 @@ if (isset($conn)) {
                 </div>
                 <div class="page-header-actions">
                     <?php if (hasPermission('perm_settings_logs_print')): ?>
-                    <button class="btn btn-outline-secondary" id="printMasterlistBtn" title="Print Masterlist">
+                    <button class="btn-print" id="printMasterlistBtn" title="Print Masterlist">
                         <i class="fas fa-print"></i>
                         Print Masterlist
                     </button>
@@ -413,15 +429,9 @@ if (isset($conn)) {
                     <span>Showing 
                         <select class="form-select form-select-sm" id="pageSizeList" style="display: inline-block; width: auto; margin: 0 5px; padding: 2px 24px 2px 8px; cursor: pointer; min-height: 26px;" onchange="window.location.href='?limit='+this.value+'&search=<?php echo urlencode($search); ?>&filter_user=<?php echo urlencode($filter_user); ?>&filter_action=<?php echo urlencode($filter_action); ?>&filter_from_date=<?php echo urlencode($filter_from_date); ?>&filter_to_date=<?php echo urlencode($filter_to_date); ?>'">
                             <option value="10" <?php echo $limit == 10 ? 'selected' : ''; ?>>10</option>
+                            <option value="20" <?php echo $limit == 20 ? 'selected' : ''; ?>>20</option>
+                            <option value="50" <?php echo $limit == 50 ? 'selected' : ''; ?>>50</option>
                             <option value="100" <?php echo $limit == 100 ? 'selected' : ''; ?>>100</option>
-                            <?php $half = max(1, ceil($total_records / 2)); ?>
-                            <?php if (!in_array($half, [10, 100])): ?>
-                            <option value="<?php echo $half; ?>" <?php echo $limit == $half ? 'selected' : ''; ?>><?php echo $half; ?></option>
-                            <?php endif; ?>
-                            <?php $all = max(1, $total_records); ?>
-                            <?php if (!in_array($all, [10, 100, $half])): ?>
-                            <option value="<?php echo $all; ?>" <?php echo $limit == $all ? 'selected' : ''; ?>><?php echo $all; ?></option>
-                            <?php endif; ?>
                         </select>
                         of <strong><?php echo number_format($total_records); ?></strong></span>
                 </div>

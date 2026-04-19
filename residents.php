@@ -164,6 +164,22 @@ try {
     
     <style>
         .print-only { display: none !important; }
+
+        .btn-print {
+            padding: 9px 18px;
+            background-color: var(--bg-secondary);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--color-transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-family: 'Inter', sans-serif;
+        }
     </style>
     <!-- Dark Mode Init: must be in <head> to prevent flash of light mode -->
     <script src="assets/js/dark-mode-init.js"></script>
@@ -186,7 +202,7 @@ try {
                 </div>
                 <div class="page-header-actions">
                     <?php if (hasPermission('perm_resident_print_list')): ?>
-                    <button class="btn btn-outline-secondary" id="printMasterlistBtn" title="Print Masterlist">
+                    <button class="btn-print" id="printMasterlistBtn" title="Print Masterlist">
                         <i class="fas fa-print"></i>
                         Print Masterlist
                     </button>
@@ -685,9 +701,9 @@ try {
                     <span>Showing 
                         <select class="form-select form-select-sm" id="pageSizeList" style="display: inline-block; width: auto; margin: 0 5px;">
                             <option value="10">10</option>
+                            <option value="20">20</option>
+                            <option value="50">50</option>
                             <option value="100">100</option>
-                            <option value="<?php echo max(1, ceil($totalResidents / 2)); ?>"><?php echo max(1, ceil($totalResidents / 2)); ?></option>
-                            <option value="<?php echo max(1, $totalResidents); ?>"><?php echo max(1, $totalResidents); ?></option>
                         </select>
                         of <strong><?php echo number_format($totalResidents); ?></strong></span>
                 </div>

@@ -73,6 +73,21 @@ if ($viewAll) {
 }
 
 // ============================================
+// Determine Org Chart Title
+// ============================================
+$orgChartTitle = 'PRESENT OFFICIALS';
+if ($viewAll) {
+    $orgChartTitle = 'ALL BARANGAY OFFICIALS';
+} elseif ($selectedTermStart && $selectedTermEnd) {
+    $today = date('Y-m-d');
+    if ($today < $selectedTermStart || $today > $selectedTermEnd) {
+        $startYear = date('Y', strtotime($selectedTermStart));
+        $endYear   = date('Y', strtotime($selectedTermEnd));
+        $orgChartTitle = "{$startYear}–{$endYear} OFFICIALS";
+    }
+}
+
+// ============================================
 // Fetch Officials Data
 // ============================================
 $officials = [];
@@ -164,6 +179,23 @@ try {
     <link rel="stylesheet" href="assets/css/officials.css">
     <!-- Dark Mode Init: must be in <head> to prevent flash of light mode -->
     <script src="assets/js/dark-mode-init.js"></script>
+    <style>
+        .btn-print {
+            padding: 9px 18px;
+            background-color: var(--bg-secondary);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--color-transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
 </head>
 <body>
     <?php include 'components/sidebar.php'; ?>
@@ -179,11 +211,19 @@ try {
                     <h1 class="page-title"><?php echo $pageTitle; ?></h1>
                     <p class="page-subtitle">View and manage barangay officials</p>
                 </div>
-                <?php if (hasPermission('perm_officials_create')): ?>
-                <button class="btn btn-primary" id="createOfficialBtn">
-                    <i class="fas fa-plus"></i> Create Brgy Official
-                </button>
-                <?php endif; ?>
+                <div class="page-header-actions">
+                    <?php if (hasPermission('perm_officials_print')): ?>
+                    <button class="btn-print" id="printOfficialsBtn" title="Print Officials List">
+                        <i class="fas fa-print"></i>
+                        Print List
+                    </button>
+                    <?php endif; ?>
+                    <?php if (hasPermission('perm_officials_create')): ?>
+                    <button class="btn btn-primary" id="createOfficialBtn">
+                        <i class="fas fa-plus"></i> Create Brgy Official
+                    </button>
+                    <?php endif; ?>
+                </div>
             </div>
 
              <!-- Organizational Chart Section -->
@@ -191,7 +231,7 @@ try {
                 <div class="org-chart-header">
                     <h2 class="org-chart-title">
                         <i class="fas fa-sitemap"></i>
-                        PRESENT OFFICIALS
+                        <?php echo htmlspecialchars($orgChartTitle); ?>
                     </h2>
                 </div>
                 
@@ -878,7 +918,8 @@ try {
         officials_edit:   <?php echo hasPermission('perm_officials_edit')   ? 'true' : 'false'; ?>,
         officials_delete: <?php echo hasPermission('perm_officials_delete') ? 'true' : 'false'; ?>,
         officials_status: <?php echo hasPermission('perm_officials_status') ? 'true' : 'false'; ?>,
-        officials_archive:<?php echo hasPermission('perm_officials_archive') ? 'true' : 'false'; ?>
+        officials_archive:<?php echo hasPermission('perm_officials_archive') ? 'true' : 'false'; ?>,
+        officials_print:  <?php echo hasPermission('perm_officials_print')   ? 'true' : 'false'; ?>
     };
     </script>
 

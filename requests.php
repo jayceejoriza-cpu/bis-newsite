@@ -102,6 +102,22 @@ try {
     <link rel="stylesheet" href="assets/css/requests.css">
     <style>
         .print-only { display: none !important; }
+
+        .btn-print {
+            padding: 9px 18px;
+            background-color: var(--bg-secondary);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--color-transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-family: 'Inter', sans-serif;
+        }
     </style>
     <!-- Dark Mode Init: must be in <head> to prevent flash of light mode -->
     <script src="assets/js/dark-mode-init.js"></script>
@@ -124,7 +140,7 @@ try {
                 </div>
                 <div class="page-header-actions">
                     <?php if (hasPermission('perm_req_print')): ?>
-                    <button class="btn btn-outline-secondary" id="printMasterlistBtn" title="Print Masterlist">
+                    <button class="btn-print" id="printMasterlistBtn" title="Print Masterlist">
                         <i class="fas fa-print"></i>
                         Print Masterlist
                     </button>

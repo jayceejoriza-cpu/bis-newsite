@@ -53,7 +53,9 @@ if ($_currentUserId > 0) {
                 'perm_office_' => 'perm_office_view',
                 'perm_roles_' => 'perm_roles_view',
                 'perm_cert_' => 'perm_cert_view',
-                'perm_settings_logs_' => 'perm_settings_logs_view'
+                'perm_settings_logs_' => 'perm_settings_logs_view',
+                'perm_events_' => 'perm_events_view',
+                'perm_reports_' => 'perm_reports_view'
             ];
             
             while ($permRow = $permResult->fetch_assoc()) {
