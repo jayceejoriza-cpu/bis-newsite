@@ -137,6 +137,32 @@ try {
         // Start transaction
         $pdo->beginTransaction();
         
+        // 1. Audit Trail: Capture OLD values for comparison BEFORE update
+        $old_stmt = $pdo->prepare("SELECT status, mediation_schedule FROM blotter_records WHERE id = ?");
+        $old_stmt->execute([$recordId]);
+        $old_data = $old_stmt->fetch();
+        
+        if (!$old_data) {
+            throw new Exception("Record not found for history logging.");
+        }
+
+        // Smart Date Comparison: Convert to Unix timestamps (ignoring seconds)
+        $old_sched_ts = $old_data['mediation_schedule'] ? strtotime(date('Y-m-d H:i', strtotime($old_data['mediation_schedule']))) : 0;
+        $new_sched_ts = !empty($_POST['mediation_schedule']) ? strtotime($_POST['mediation_schedule']) : 0;
+
+        $status_changed = ($old_data['status'] !== $_POST['status']);
+        $schedule_changed = ($old_sched_ts !== $new_sched_ts);
+
+        // Determine History Action Type
+        $action_type = '';
+        if ($status_changed && $schedule_changed) {
+            $action_type = "Status & Schedule Updated";
+        } elseif ($status_changed) {
+            $action_type = "Status Updated";
+        } elseif ($schedule_changed) {
+            $action_type = "Rescheduled";
+        }
+
         // Prepare blotter record data
         $status = trim($_POST['status'] ?? '');
         if (empty($status)) {
@@ -179,6 +205,24 @@ $reportedBy = $_POST['reported_by'] ?? null;
             $mediationSchedule,
             $recordId
         ]);
+
+        // 2. Insert to History if changes were detected
+        if ($action_type !== '') {
+            // Format readable strings for audit readability
+            $old_val_str = "Status: " . $old_data['status'] . ($old_data['mediation_schedule'] ? " | Sched: " . date('F j, Y h:i A', strtotime($old_data['mediation_schedule'])) : "");
+            $new_val_str = "Status: " . $status . ($mediationSchedule ? " | Sched: " . date('F j, Y h:i A', strtotime($mediationSchedule)) : "");
+            
+            // Use 'Resolution / Actions Taken' field as remarks for the history log
+            $hist_remarks = !empty($resolution) ? $resolution : 'Updated via Edit Modal';
+            $user_id = $_SESSION['user_id'] ?? 0;
+            
+            $history_stmt = $pdo->prepare("INSERT INTO blotter_history (blotter_id, action_type, old_value, new_value, remarks, changed_by, created_at) VALUES (?, ?, ?, ?, ?, ?, NOW())");
+            
+            if (!$history_stmt->execute([$recordId, $action_type, $old_val_str, $new_val_str, $hist_remarks, $user_id])) {
+                throw new Exception("History Log Failed.");
+            }
+            $history_stmt->closeCursor();
+        }
         
         // ============================================
         // Handle File Uploads (Update)
@@ -512,7 +556,7 @@ This forms the OFFICIAL record." required></textarea>
                                     </div>
                                     
                                     <div id="edit_mediation_field" class="min-h-[85px]" style="display:none;">
-                                        <label class="form-label fw-bold">Mediation Schedule</label>
+                                        <label class="form-label fw-bold">Mediation Schedule <span class="text-danger">*</span></label>
                                         <input type="datetime-local" class="form-control" id="edit_mediation_date" name="mediation_schedule">
                                     </div>
 
@@ -521,13 +565,21 @@ This forms the OFFICIAL record." required></textarea>
                                         <div id="editWitnessesContainer" class="party-section mb-2"></div>
                                         <button type="button" class="btn btn-outline-success btn-sm" id="editAddWitnessBtn"><i class="fas fa-plus"></i> Add Witness</button>
                                     </div>
+
+                                    <!-- Case History Timeline (Added for Edit Modal) -->
+                                    <div class="mt-6 border-t pt-4">
+                                        <h6 class="text-sm font-semibold text-blue-600 mb-4 flex items-center gap-2">
+                                            <i class="fas fa-history text-indigo-500"></i> Case History Timeline
+                                        </h6>
+                                        <div id="edit-case-history-timeline" class="relative pl-6 space-y-6"></div>
+                                    </div>
                                 </div>
 
                                 <!-- Right Column: Narrative & Proof -->
                                 <div class="space-y-6">
                                     <div>
-                                        <label class="form-label fw-bold">Resolution / Actions Taken</label>
-                                        <textarea class="form-control" id="edit_resolution" name="resolution" rows="4" placeholder="Final resolution, settlement terms, fines imposed, referrals made, signatures obtained, etc."></textarea>
+                                        <label class="form-label fw-bold">Resolution / Actions Taken <span class="text-danger">*</span></label>
+                                        <textarea class="form-control" id="edit_resolution" name="resolution" rows="4" placeholder="Final resolution, settlement terms, fines imposed, referrals made, signatures obtained, etc." required></textarea>
                                     </div>
 
                                     <div class="border-t pt-4">
@@ -746,11 +798,22 @@ This forms the OFFICIAL record." required></textarea>
         handleExistingProofDisplay('Settlement', record.settlement_proof);
         populateEditParties('editActionsContainer', 'action', data.actions || [], 0);
         console.log('✓ Parties populated');
+
+        // Fetch and Render Timeline for Edit Modal
+        if (typeof window.loadBlotterHistory === 'function') {
+            window.loadBlotterHistory(record.id, 'edit-case-history-timeline');
+        }
         
-        // Mediation visibility
+        // Mediation visibility and validation
         const mediationField = document.getElementById('edit_mediation_field');
+        const mediationInput = document.getElementById('edit_mediation_date');
         if (mediationField) {
-            mediationField.style.display = record.status === 'Scheduled for Mediation' ? 'block' : 'none';
+            const isMediation = record.status === 'Scheduled for Mediation';
+            mediationField.style.display = isMediation ? 'block' : 'none';
+            if (mediationInput) {
+                if (isMediation) mediationInput.setAttribute('required', 'required');
+                else mediationInput.removeAttribute('required');
+            }
         }
 
         const settlementSection = document.getElementById('edit_settlement_proof_section');
@@ -1020,9 +1083,21 @@ This forms the OFFICIAL record." required></textarea>
         // Status change listener for Step 4
         const statusSelect = document.getElementById('edit_status');
         if (statusSelect) {
-                    statusSelect.addEventListener('change', function() {
+            statusSelect.addEventListener('change', function() {
                 const mediationField = document.getElementById('edit_mediation_field');
-                if (mediationField) mediationField.style.display = this.value === 'Scheduled for Mediation' ? 'block' : 'none';
+                const mediationInput = document.getElementById('edit_mediation_date');
+                if (mediationField) {
+                    const isMediation = this.value === 'Scheduled for Mediation';
+                    mediationField.style.display = isMediation ? 'block' : 'none';
+                    if (mediationInput) {
+                        if (isMediation) {
+                            mediationInput.setAttribute('required', 'required');
+                        } else {
+                            mediationInput.removeAttribute('required');
+                            mediationInput.classList.remove('is-invalid');
+                        }
+                    }
+                }
                         
                         const settlementSection = document.getElementById('edit_settlement_proof_section');
                         if (settlementSection) settlementSection.style.display = this.value === 'Settled' ? 'block' : 'none';

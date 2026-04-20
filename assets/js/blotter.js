@@ -1097,6 +1097,9 @@ function handleAction(action, recordId) {
         populateViewParties('viewRespondentsContainer', data.respondents);
         populateViewParties('viewWitnessesContainer', data.witnesses);
         
+        // Fetch and Render Timeline
+        loadBlotterHistory(record.id);
+
         // Handle Proof Galleries
         renderProofGallery('view_incident_proof_container', record.incident_proof, 'No incident evidence uploaded.');
         
@@ -1113,6 +1116,64 @@ function handleAction(action, recordId) {
         populateViewActions('viewActionsContainer', data.actions);
         
         console.log('View modal populated for record:', record.id);
+    }
+
+    /**
+     * Fetch and render the vertical timeline for case history
+     */
+    window.loadBlotterHistory = function(blotterId, containerId = 'case-history-timeline') {
+        const timelineContainer = document.getElementById(containerId);
+        if (!timelineContainer) return;
+
+        console.log('Fetching history for ID:', blotterId);
+        timelineContainer.innerHTML = '<div class="text-xs text-gray-400 italic">Loading history...</div>';
+
+        fetch(`model/get_blotter_history.php?id=${blotterId}`)
+            .then(res => res.json())
+            .then(data => {
+                console.log('API Response:', data);
+
+                // Clear existing text/loading state
+                timelineContainer.innerHTML = '';
+
+                // Handle empty history or failure gracefully
+                if (!data.success || !data.data || data.data.length === 0) {
+                    timelineContainer.innerHTML = '<div class="text-xs text-gray-400 italic">No history recorded for this case.</div>';
+                    return;
+                }
+
+                // Draw vertical line
+                timelineContainer.insertAdjacentHTML('afterbegin', '<div class="absolute left-2.5 top-0 bottom-0 w-0.5 bg-gray-200"></div>');
+
+                data.data.forEach(item => {
+                    const dateObj = new Date(item.created_at);
+                    const formattedDate = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) + ' ' + 
+                                          dateObj.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+                    
+                    const timelineItem = `
+                        <div class="relative flex flex-col group mb-4 last:mb-0">
+                            <div class="absolute -left-[22px] top-1.5 w-3.5 h-3.5 rounded-full border-2 border-white bg-blue-500 shadow-sm z-10"></div>
+                            <div class="flex flex-col">
+                                <span class="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">${formattedDate}</span>
+                                <h6 class="text-sm font-bold text-gray-800 leading-tight">${item.action_type}</h6>
+                                <div class="text-xs text-gray-500 mt-1">
+                                    <span class="font-medium text-blue-600">New Value:</span> ${item.new_value}
+                                </div>
+                                ${item.remarks ? `
+                                <div class="mt-1 p-2 bg-gray-50 rounded border-l-4 border-gray-300 italic text-[11px] text-gray-600">
+                                    "${item.remarks}"
+                                </div>` : ''}
+                                <span class="text-[9px] text-gray-400 mt-1 italic">By: ${item.officer_name || 'System'}</span>
+                            </div>
+                        </div>`;
+                    
+                    timelineContainer.insertAdjacentHTML('beforeend', timelineItem);
+                });
+            })
+            .catch(err => {
+                console.error('History Error:', err);
+                timelineContainer.innerHTML = '<div class="text-xs text-red-500 font-medium italic">Error loading history</div>';
+            });
     }
     
     function renderProofGallery(containerId, proofString, emptyMessage) {

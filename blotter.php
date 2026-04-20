@@ -452,33 +452,6 @@ try {
                                                 <span>Edit</span>
                                             </button>
                                             <?php endif; ?>
-                                            <?php if (hasPermission('perm_blotter_status')): ?>
-                                            <div class="action-menu-item has-submenu" data-action="status">
-                                                <i class="fas fa-circle status-dot"></i>
-                                                <span>Change Status</span>
-                                                <i class="fas fa-chevron-right submenu-arrow"></i>
-                                                <div class="action-submenu">
-                                                    <button type="button" class="action-menu-item" data-action="status-pending">
-                                                        <span>Pending</span>
-                                                    </button>
-                                                    <button type="button" class="action-menu-item" data-action="status-investigation">
-                                                        <span>Under Investigation</span>
-                                                    </button>
-                                                    <button type="button" class="action-menu-item" data-action="status-mediation">
-                                                        <span>Scheduled for Mediation</span>
-                                                    </button>
-                                                    <button type="button" class="action-menu-item" data-action="status-settled">
-                                                        <span>Settled</span>
-                                                    </button>
-                                                    <button type="button" class="action-menu-item" data-action="status-dismissed">
-                                                        <span>Dismissed</span>
-                                                    </button>
-                                                    <button type="button" class="action-menu-item" data-action="status-endorsed">
-                                                        <span>Endorsed to Police</span>
-                                                    </button>
-                                                </div>
-                                            </div>
-                                            <?php endif; ?>
                                             <?php if (hasPermission('perm_blotter_archive')): ?>
                                              <div class="action-menu-divider" style="
                                                 height: 1px;
@@ -773,6 +746,17 @@ try {
                                     <div id="view_referral_notice" class="bg-blue-50 border border-blue-200 p-3 rounded-lg text-sm text-blue-800 mb-4 hidden">
                                         <i class="fas fa-info-circle mr-2"></i> Note: This case is tagged for Certificate to File Action.
                                     </div>
+                                    
+                                    <!-- Case History Timeline Section -->
+                                    <div class="mt-6 border-t pt-4">
+                                        <h5 class="text-lg font-semibold text-blue-600 mb-4 flex items-center gap-2">
+                                            <i class="fas fa-history text-indigo-500"></i> Case History Timeline
+                                        </h5>
+                                        <div id="case-history-timeline" class="relative pl-6 space-y-6">
+                                            <!-- History items injected here -->
+                                        </div>
+                                    </div>
+
                                     <div id="viewActionsContainer" class="space-y-3 mb-4"></div>
                                     <div>
                                         <label class="block text-xs uppercase font-semibold text-gray-500 tracking-wide mb-1">Resolution</label>
