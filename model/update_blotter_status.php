@@ -20,6 +20,7 @@ try {
 
     $id = isset($_POST['id']) ? intval($_POST['id']) : 0;
     $status = isset($_POST['status']) ? ucwords(strtolower(trim($_POST['status']))) : '';
+    $mediation_schedule = isset($_POST['mediation_schedule']) ? trim($_POST['mediation_schedule']) : null;
 
     if ($id <= 0 || empty($status)) {
         throw new Exception('Invalid input parameters.');
@@ -31,18 +32,24 @@ try {
         error_log("Invalid status '$status' for record $id. Allowed: " . implode(', ', $allowedStatuses));
         throw new Exception("Invalid status: '$status'. Must be one of: " . implode(', ', $allowedStatuses));
     }
-    if (!in_array($status, $allowedStatuses)) {
-        throw new Exception('Invalid status value.');
+
+    // Enforce schedule requirement for mediation
+    if ($status === 'Scheduled for Mediation' && empty($mediation_schedule)) {
+        throw new Exception('A mediation schedule is required when setting the status to "Scheduled for Mediation".');
     }
 
     // Prepare statement to update status
-    $stmt = $conn->prepare("UPDATE blotter_records SET status = ?, updated_at = NOW() WHERE id = ?");
+    if ($status === 'Scheduled for Mediation') {
+        $stmt = $conn->prepare("UPDATE blotter_records SET status = ?, mediation_schedule = ?, updated_at = NOW() WHERE id = ?");
+        $stmt->bind_param("ssi", $status, $mediation_schedule, $id);
+    } else {
+        $stmt = $conn->prepare("UPDATE blotter_records SET status = ?, updated_at = NOW() WHERE id = ?");
+        $stmt->bind_param("si", $status, $id);
+    }
+
     if (!$stmt) {
         throw new Exception('Database preparation error: ' . $conn->error);
     }
-    
-    $stmt->bind_param("si", $status, $id);
-    
     if (!$stmt->execute()) {
         throw new Exception('Failed to update status: ' . $stmt->error);
     }

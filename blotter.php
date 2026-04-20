@@ -575,14 +575,16 @@ try {
                             <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div class="col-span-1">
                                     <label class="form-label fw-bold">Case Status <span class="text-danger">*</span></label>
-                                    <select class="form-select" name="status" required>
-                                        <option value="Pending">Pending</option>
+                                    <select class="form-select bg-gray-100 cursor-not-allowed" disabled title="Status defaults to Pending upon creation">
+                                        <option value="Pending" selected>Pending</option>
                                         <option value="Scheduled for Mediation">Scheduled for Mediation</option>
                                         <option value="Under Investigation">Under Investigation</option>
                                         <option value="Settled">Settled</option>
                                         <option value="Dismissed">Dismissed</option>
                                         <option value="Endorsed to Police">Endorsed to Police</option>
                                     </select>
+                                    <input type="hidden" name="status" value="Pending">
+                                    <p class="text-[11px] text-gray-500 mt-1 italic"><i class="fas fa-info-circle mr-1"></i> Status defaults to Pending upon creation.</p>
                                 </div>
                                 <div class="col-span-1">
                                     <label class="form-label fw-bold">Incident Date <span class="text-danger">*</span></label>
@@ -947,6 +949,8 @@ try {
         const fileInput = document.getElementById('incidentProofInput');
         const previewContainer = document.getElementById('incidentProofPreviewContainer');
 
+        let selectedFiles = []; // Persistent list of files to be uploaded
+
         if (uploadZone && fileInput) {
             uploadZone.addEventListener('click', () => fileInput.click());
 
@@ -958,29 +962,44 @@ try {
             uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('dragover'));
             uploadZone.addEventListener('drop', (e) => {
                 uploadZone.classList.remove('dragover');
-                const files = e.dataTransfer.files;
-                if (files.length) {
-                    fileInput.files = files;
-                    handlePreviews(files);
-                }
+                addFiles(e.dataTransfer.files);
             });
 
-            fileInput.addEventListener('change', e => handlePreviews(e.target.files));
+            fileInput.addEventListener('change', e => addFiles(e.target.files));
         }
 
-        function handlePreviews(files) {
-            previewContainer.innerHTML = '';
+        function addFiles(files) {
             Array.from(files).forEach(file => {
                 if (file.type.startsWith('image/')) {
-                    const reader = new FileReader();
-                    reader.onload = e => {
-                        const item = document.createElement('div');
-                        item.className = 'attachment-preview-item';
-                        item.innerHTML = `<img src="${e.target.result}"><button type="button" class="remove-btn" onclick="this.parentElement.remove()"><i class="fas fa-times"></i></button>`;
-                        previewContainer.appendChild(item);
-                    };
-                    reader.readAsDataURL(file);
+                    selectedFiles.push(file);
                 }
+            });
+            updateUI();
+        }
+
+        function removeFile(index) {
+            selectedFiles.splice(index, 1);
+            updateUI();
+        }
+
+        function updateUI() {
+            // Sync the file input with our master list using DataTransfer
+            const dt = new DataTransfer();
+            selectedFiles.forEach(file => dt.items.add(file));
+            fileInput.files = dt.files;
+
+            // Re-render previews
+            previewContainer.innerHTML = '';
+            selectedFiles.forEach((file, index) => {
+                const reader = new FileReader();
+                reader.onload = e => {
+                    const item = document.createElement('div');
+                    item.className = 'attachment-preview-item';
+                    item.innerHTML = `<img src="${e.target.result}"><button type="button" class="remove-btn"><i class="fas fa-times"></i></button>`;
+                    item.querySelector('.remove-btn').onclick = () => removeFile(index);
+                    previewContainer.appendChild(item);
+                };
+                reader.readAsDataURL(file);
             });
         }
     });

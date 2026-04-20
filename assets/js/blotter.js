@@ -950,12 +950,21 @@ function handleAction(action, recordId) {
                 updateBlotterStatus(recordId, 'Under Investigation');
                 break;
                 
-            case 'status-resolved':
+            case 'status-mediation':
                 if (window.BIS_PERMS && window.BIS_PERMS.blotter_status === false) {
                     alert('Permission denied to update blotter status.');
                     return;
                 }
-                updateBlotterStatus(recordId, 'Resolved');
+                updateBlotterStatus(recordId, 'Scheduled for Mediation');
+                break;
+
+            case 'status-settled':
+            case 'status-resolved': // Support legacy naming if any
+                if (window.BIS_PERMS && window.BIS_PERMS.blotter_status === false) {
+                    alert('Permission denied to update blotter status.');
+                    return;
+                }
+                updateBlotterStatus(recordId, 'Settled');
                 break;
                 
             case 'status-dismissed':
@@ -964,6 +973,14 @@ function handleAction(action, recordId) {
                     return;
                 }
                 updateBlotterStatus(recordId, 'Dismissed');
+                break;
+
+            case 'status-endorsed':
+                if (window.BIS_PERMS && window.BIS_PERMS.blotter_status === false) {
+                    alert('Permission denied to update blotter status.');
+                    return;
+                }
+                updateBlotterStatus(recordId, 'Endorsed to Police');
                 break;
                 
             case 'archive':
@@ -1195,17 +1212,35 @@ function handleAction(action, recordId) {
     // Edit blotter record
 
     
-    // Update blotter status
-    function updateBlotterStatus(recordId, newStatus) {
+    /**
+     * Update blotter status.
+     * Enforces schedule requirement for 'Scheduled for Mediation'.
+     */
+    function updateBlotterStatus(recordId, newStatus, schedule = null) {
+        // Enforce schedule for mediation
+        if (newStatus === 'Scheduled for Mediation' && !schedule) {
+            const input = prompt("Please enter the mediation schedule\n(Format: YYYY-MM-DD HH:MM)");
+            
+            if (input === null) return; // User clicked Cancel
+            
+            if (input.trim() === '') {
+                alert("Mediation schedule is required. Status update cancelled.");
+                return;
+            }
+            schedule = input.trim();
+        }
+
         if (!confirm(`Change status to "${newStatus}"?`)) {
             return;
         }
         
-        console.log('Updating status:', recordId, newStatus);
-        
         const formData = new FormData();
         formData.append('id', recordId);
         formData.append('status', newStatus);
+        
+        if (schedule) {
+            formData.append('mediation_schedule', schedule);
+        }
         
         // Send AJAX request to update status
         fetch('model/update_blotter_status.php', {
@@ -1895,16 +1930,28 @@ function handleAction(action, recordId) {
         });
     }
     
-    // Mobile number formatting function (numbers only, 10 digits, xxx xxx xxxx)
+    /**
+     * Strictly validates mobile number inputs:
+     * 1. Must start with 9
+     * 2. Numbers only
+     * 3. Max length of 10 digits
+     */
     function formatMobileNumber(input) {
-        let value = input.value.replace(/\D/g, '').substring(0, 10);
-        if (value.length > 6) {
-            input.value = value.slice(0, 3) + ' ' + value.slice(3, 6) + ' ' + value.slice(6);
-        } else if (value.length > 3) {
-            input.value = value.slice(0, 3) + ' ' + value.slice(3);
-        } else {
-            input.value = value;
+        // Remove non-numeric characters
+        let value = input.value.replace(/\D/g, '');
+
+        // Ensure it starts with 9
+        if (value.length > 0 && value[0] !== '9') {
+            input.classList.add('!border-red-500', 'ring-2', 'ring-red-200');
+            value = ''; // Clear the input
+            
+            setTimeout(() => {
+                input.classList.remove('!border-red-500', 'ring-2', 'ring-red-200');
+            }, 600);
         }
+
+        // Limit to 10 digits total
+        input.value = value.substring(0, 10);
     }
 
     // Global event delegation for phone inputs (create/edit modals + dynamic)
