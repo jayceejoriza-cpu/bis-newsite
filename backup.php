@@ -158,6 +158,7 @@ if (file_exists($settingsFile)) {
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<link rel="icon" type="image/png" href="uploads/favicon.png">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Database Backup - <?php echo defined('SITE_NAME') ? SITE_NAME : 'BIS'; ?></title>
@@ -486,7 +487,8 @@ if (file_exists($settingsFile)) {
             background-color: #4b5563;
         }
     </style>
-    <!-- Dark Mode Init: must be in <head> to prevent flash of light mode -->
+    <!-- Dark Mode Init: must be in <head>
+<link rel="icon" type="image/png" href="uploads/favicon.png"> to prevent flash of light mode -->
     <script src="assets/js/dark-mode-init.js"></script>
 </head>
 <body>

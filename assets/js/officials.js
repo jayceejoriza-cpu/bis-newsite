@@ -988,6 +988,7 @@ async function handlePrintOfficials() {
     doc.write(`
         <html>
         <head>
+<link rel="icon" type="image/png" href="uploads/favicon.png">
             <title>Barangay Officials List</title>
             <style>
                 @page { size: A4 landscape; margin: 15mm; }

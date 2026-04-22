@@ -130,6 +130,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['restore'])) {
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<link rel="icon" type="image/png" href="uploads/favicon.png">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Database Restore - <?php echo defined('SITE_NAME') ? SITE_NAME : 'BIS'; ?></title>
@@ -544,7 +545,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['restore'])) {
             background-color: #047857;
         }
     </style>
-    <!-- Dark Mode Init: must be in <head> to prevent flash of light mode -->
+    <!-- Dark Mode Init: must be in <head>
+<link rel="icon" type="image/png" href="uploads/favicon.png"> to prevent flash of light mode -->
     <script src="assets/js/dark-mode-init.js"></script>
 </head>
 <body>

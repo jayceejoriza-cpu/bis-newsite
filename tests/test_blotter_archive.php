@@ -364,6 +364,7 @@ $failed = array_filter($results, fn($r) => !$r['passed']);
 <!DOCTYPE html>
 <html>
 <head>
+<link rel="icon" type="image/png" href="uploads/favicon.png">
     <title>Blotter Archive Test Results</title>
     <style>
         body { font-family: monospace; padding: 20px; background: #f5f5f5; }

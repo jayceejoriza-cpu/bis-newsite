@@ -71,6 +71,7 @@ $dateIssued   = isset($resident['date_issued']) ? date('m/d/Y', strtotime($resid
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<link rel="icon" type="image/png" href="uploads/favicon.png">
     <meta charset="UTF-8">
     <title>Barangay ID Card</title>
     <style>

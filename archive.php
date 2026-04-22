@@ -67,6 +67,7 @@ if (isset($conn)) {
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<link rel="icon" type="image/png" href="uploads/favicon.png">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo $pageTitle; ?> - <?php echo SITE_NAME; ?></title>
@@ -79,7 +80,8 @@ if (isset($conn)) {
     
     <!-- Custom CSS -->
     <link rel="stylesheet" href="assets/css/style.css?v=<?php echo filemtime('assets/css/style.css'); ?>">
-    <!-- Dark Mode Init: must be in <head> to prevent flash of light mode -->
+    <!-- Dark Mode Init: must be in <head>
+<link rel="icon" type="image/png" href="uploads/favicon.png"> to prevent flash of light mode -->
     <script src="assets/js/dark-mode-init.js"></script>
     <style>
         /* Table Styling (Matched from Activity Logs) */

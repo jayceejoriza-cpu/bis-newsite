@@ -87,6 +87,7 @@ $stmt->close();
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<link rel="icon" type="image/png" href="uploads/favicon.png">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>User Profile - <?php echo defined('SITE_NAME') ? SITE_NAME : 'BIS'; ?></title>

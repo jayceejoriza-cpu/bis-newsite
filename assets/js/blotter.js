@@ -23,6 +23,11 @@ document.addEventListener('DOMContentLoaded', function() {
     
     let currentFilter = 'all';
     let searchTerm = '';
+    let selectedFiles = []; // Persistent list of files to be uploaded
+
+    const uploadZone = document.getElementById('incidentProofUploadZone');
+    const fileInput = document.getElementById('incidentProofInput');
+    const previewContainer = document.getElementById('incidentProofPreviewContainer');
 
     // ============================================
     // Initialize EnhancedTable for Pagination
@@ -252,6 +257,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 <!DOCTYPE html>
                 <html>
                 <head>
+<link rel="icon" type="image/png" href="uploads/favicon.png">
                     <title>Blotter Records Masterlist</title>
                     ${styles}
                     <style>
@@ -337,6 +343,10 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Clear all party containers
             clearPartyContainers();
+
+            // Clear attachments
+            selectedFiles = [];
+            updateUI();
             
             // Reset step to 0
             currentStep = 0;
@@ -436,6 +446,70 @@ document.addEventListener('DOMContentLoaded', function() {
         if (typeof addComplainantEntry === 'function') addComplainantEntry();
         if (typeof addVictimEntry === 'function') addVictimEntry();
         if (typeof addRespondentEntry === 'function') addRespondentEntry();
+    }
+
+    // ============================================
+    // Incident Proof Attachment Handling
+    // ============================================
+    if (uploadZone && fileInput) {
+        uploadZone.addEventListener('click', () => fileInput.click());
+
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            uploadZone.addEventListener(eventName, e => { e.preventDefault(); e.stopPropagation(); }, false);
+        });
+
+        uploadZone.addEventListener('dragover', () => uploadZone.classList.add('dragover'));
+        uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('dragover'));
+        uploadZone.addEventListener('drop', (e) => {
+            uploadZone.classList.remove('dragover');
+            addFiles(e.dataTransfer.files);
+        });
+
+        fileInput.addEventListener('change', e => addFiles(e.target.files));
+    }
+
+    function addFiles(files) {
+        Array.from(files).forEach(file => {
+            if (file.type.startsWith('image/')) {
+                selectedFiles.push(file);
+            }
+        });
+        updateUI();
+    }
+
+    function updateUI() {
+        if (!fileInput || !uploadZone) return;
+
+        const dt = new DataTransfer();
+        selectedFiles.forEach(file => dt.items.add(file));
+        fileInput.files = dt.files;
+
+        const zoneContent = uploadZone.querySelector('.upload-zone-content');
+        previewContainer.innerHTML = '';
+
+        if (selectedFiles.length > 0) {
+            uploadZone.classList.add('is-compact');
+            zoneContent.innerHTML = `<i class="fas fa-plus text-primary mb-1"></i><p class="mb-0 text-[10px] fw-bold">Add More</p>`;
+            
+            selectedFiles.forEach((file, index) => {
+                const item = document.createElement('div');
+                item.className = 'attachment-preview-item';
+                const imgUrl = URL.createObjectURL(file);
+                item.innerHTML = `<img src="${imgUrl}"><button type="button" class="remove-btn"><i class="fas fa-times"></i></button>`;
+                item.querySelector('.remove-btn').onclick = (e) => {
+                    e.stopPropagation();
+                    selectedFiles.splice(index, 1);
+                    updateUI();
+                };
+                previewContainer.appendChild(item);
+            });
+        } else {
+            uploadZone.classList.remove('is-compact');
+            zoneContent.innerHTML = `
+                <i class="fas fa-cloud-upload-alt fa-3x mb-3 text-muted"></i>
+                <p class="mb-1"><strong>Drag and drop images</strong> here or <span class="text-primary">click to browse</span></p>
+                <p class="text-muted small">Supports JPG and PNG (Max 5MB each)</p>`;
+        }
     }
 
     // NEW: Case Outcome Dropdown Handler
@@ -950,12 +1024,21 @@ function handleAction(action, recordId) {
                 updateBlotterStatus(recordId, 'Under Investigation');
                 break;
                 
-            case 'status-resolved':
+            case 'status-mediation':
                 if (window.BIS_PERMS && window.BIS_PERMS.blotter_status === false) {
                     alert('Permission denied to update blotter status.');
                     return;
                 }
-                updateBlotterStatus(recordId, 'Resolved');
+                updateBlotterStatus(recordId, 'Scheduled for Mediation');
+                break;
+
+            case 'status-settled':
+            case 'status-resolved': // Support legacy naming if any
+                if (window.BIS_PERMS && window.BIS_PERMS.blotter_status === false) {
+                    alert('Permission denied to update blotter status.');
+                    return;
+                }
+                updateBlotterStatus(recordId, 'Settled');
                 break;
                 
             case 'status-dismissed':
@@ -964,6 +1047,14 @@ function handleAction(action, recordId) {
                     return;
                 }
                 updateBlotterStatus(recordId, 'Dismissed');
+                break;
+
+            case 'status-endorsed':
+                if (window.BIS_PERMS && window.BIS_PERMS.blotter_status === false) {
+                    alert('Permission denied to update blotter status.');
+                    return;
+                }
+                updateBlotterStatus(recordId, 'Endorsed to Police');
                 break;
                 
             case 'archive':
@@ -1036,8 +1127,23 @@ function handleAction(action, recordId) {
         }
 
         // Basic Info
-        const statusEl = document.getElementById('view_status');
-        if (statusEl) statusEl.value = record.status;
+        const statusBadgeContainer = document.getElementById('view_status_badge_container');
+        if (statusBadgeContainer) {
+            const statusMap = {
+                'Pending': 'bg-red-100 text-red-700 border-red-200',
+                'Scheduled for Mediation': 'bg-blue-100 text-blue-700 border-blue-200',
+                'Settled': 'bg-green-100 text-green-700 border-green-200',
+                'Resolved': 'bg-green-100 text-green-700 border-green-200',
+                'Endorsed to Police': 'bg-orange-100 text-orange-700 border-orange-200',
+                'Dismissed': 'bg-gray-100 text-gray-700 border-gray-200',
+                'Under Investigation': 'bg-purple-100 text-purple-700 border-purple-200'
+            };
+            const badgeClass = statusMap[record.status] || 'bg-gray-100 text-gray-700 border-gray-200';
+            statusBadgeContainer.innerHTML = `
+                <span class="px-3 py-1 rounded-full text-xs font-bold border ${badgeClass}">
+                    ${record.status.toUpperCase()}
+                </span>`;
+        }
         
         const dateEl = document.getElementById('view_incident_date');
         if (dateEl) dateEl.value = formatDateTime(record.incident_date);
@@ -1052,19 +1158,25 @@ function handleAction(action, recordId) {
         const descEl = document.getElementById('view_incident_description');
         if (descEl) descEl.value = record.incident_description;
         
-        const resEl = document.getElementById('view_resolution');
-        if (resEl) resEl.value = record.resolution || 'No resolution recorded.';
+        const resTextEl = document.getElementById('view_resolution_text');
+        if (resTextEl) resTextEl.textContent = record.resolution || 'No formal resolution has been recorded for this case yet.';
+
+        // Handle Print CFA Button visibility in View Modal
+        const btnPrintCFA = document.getElementById('btnPrintCFA');
+        if (btnPrintCFA) {
+            btnPrintCFA.style.display = (record.status === 'Endorsed to Police') ? 'inline-flex' : 'none';
+        }
 
         // Handle Mediation and Referral Display
         const mediationField = document.getElementById('view_mediation_field');
         const mediationDateInput = document.getElementById('view_mediation_date');
         const referralNotice = document.getElementById('view_referral_notice');
 
-        if (mediationField && mediationDateInput) {
+        if (mediationField) {
             if (record.status === 'Scheduled for Mediation') {
-                mediationField.style.display = 'block';
+                mediationField.classList.remove('hidden');
                 const mediationVal = record.mediation_schedule;
-                mediationDateInput.value = mediationVal ? formatDateTime(mediationVal) : 'No schedule set';
+                if (mediationDateInput) mediationDateInput.textContent = mediationVal ? formatDateTime(mediationVal) : 'No schedule set';
             } else {
                 mediationField.style.display = 'none';
             }
@@ -1080,6 +1192,9 @@ function handleAction(action, recordId) {
         populateViewParties('viewRespondentsContainer', data.respondents);
         populateViewParties('viewWitnessesContainer', data.witnesses);
         
+        // Fetch and Render Timeline
+        loadBlotterHistory(record.id);
+
         // Handle Proof Galleries
         renderProofGallery('view_incident_proof_container', record.incident_proof, 'No incident evidence uploaded.');
         
@@ -1097,6 +1212,68 @@ function handleAction(action, recordId) {
         
         console.log('View modal populated for record:', record.id);
     }
+
+    /**
+     * Fetch and render the vertical timeline for case history
+     */
+    window.loadBlotterHistory = function(blotterId, containerId = 'case-history-timeline') {
+        const timelineContainer = document.getElementById(containerId);
+        if (!timelineContainer) return;
+
+        console.log('Fetching history for ID:', blotterId);
+        timelineContainer.innerHTML = '<div class="text-xs text-gray-400 italic">Loading history...</div>';
+
+        fetch(`model/get_blotter_history.php?id=${blotterId}`)
+            .then(res => res.json())
+            .then(data => {
+                console.log('API Response:', data);
+
+                // Clear existing text/loading state
+                timelineContainer.innerHTML = '';
+
+                // Handle empty history or failure gracefully
+                if (!data.success || !data.data || data.data.length === 0) {
+                    timelineContainer.innerHTML = '<div class="text-xs text-gray-400 italic">No history recorded for this case.</div>';
+                    return;
+                }
+
+                // Draw vertical line
+                timelineContainer.insertAdjacentHTML('afterbegin', '<div class="absolute left-2.5 top-0 bottom-0 w-0.5 bg-gray-200"></div>');
+
+                // Logic: Hide the static "No actions recorded" box if we have dynamic history
+                const actionsBox = document.getElementById('viewActionsContainer');
+                if (actionsBox && data.data.length > 0) {
+                    actionsBox.classList.add('hidden');
+                }
+
+                data.data.forEach(item => {
+                    const formattedDate = formatDateTime(item.created_at);
+                    
+                    const timelineItem = `
+                        <div class="relative flex flex-col group mb-4 last:mb-0">
+                            <div class="absolute -left-[22px] top-1.5 w-3.5 h-3.5 rounded-full border-2 border-white bg-blue-500 shadow-sm z-10"></div>
+                            <div class="flex flex-col">
+                                <span class="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">${formattedDate}</span>
+                                <h6 class="text-sm font-bold text-gray-800 leading-tight">${item.action_type}</h6>
+                                <div class="text-xs text-gray-500 mt-1">
+                                    <span class="font-medium text-blue-600">New Value:</span> ${item.new_value}
+                                </div>
+                                ${item.remarks ? `
+                                <div class="mt-1 p-2 bg-gray-50 rounded border-l-4 border-gray-300 italic text-[11px] text-gray-600">
+                                    "${item.remarks}"
+                                </div>` : ''}
+                                <span class="text-[9px] text-gray-400 mt-1 italic">By: ${item.officer_name || 'System'}</span>
+                            </div>
+                        </div>`;
+                    
+                    timelineContainer.insertAdjacentHTML('beforeend', timelineItem);
+                });
+            })
+            .catch(err => {
+                console.error('History Error:', err);
+                timelineContainer.innerHTML = '<div class="text-xs text-red-500 font-medium italic">Error loading history</div>';
+            });
+    }
     
     function renderProofGallery(containerId, proofString, emptyMessage) {
         const container = document.getElementById(containerId);
@@ -1111,8 +1288,8 @@ function handleAction(action, recordId) {
         const paths = proofString.split(',');
         paths.forEach(path => {
             container.innerHTML += `
-                <a href="${path}" target="_blank" class="block relative group aspect-video overflow-hidden rounded border bg-white shadow-sm hover:shadow-md transition-all">
-                    <img src="${path}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+                <a href="${path}" target="_blank" class="block relative group aspect-square overflow-hidden rounded-lg border bg-white shadow-sm hover:shadow-lg transition-all">
+                    <img src="${path}" class="w-full h-full object-cover group-hover:scale-125 transition-transform duration-500">
                     <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-[10px] font-bold">
                         <i class="fas fa-search-plus mr-1"></i> VIEW FULL
                     </div>
@@ -1127,29 +1304,40 @@ function handleAction(action, recordId) {
         container.innerHTML = '';
         
         if (!parties || parties.length === 0) {
-            container.innerHTML = '<li class="py-2 text-sm text-gray-500 italic flex items-center gap-2"><i class="fas fa-user-slash text-gray-400 w-4"></i>No records found.</li>';
+            container.innerHTML = '<div class="py-2 text-sm text-gray-500 italic flex items-center gap-2"><i class="fas fa-user-slash text-gray-400 w-4"></i>No records found.</div>';
             return;
         }
         
         parties.forEach((party, index) => {
+            // Generate initials for avatar
+            const initials = party.name ? party.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() : '?';
+            // Cycle through a few colors for avatars
+            const avatarColorClasses = ['blue', 'pink', 'teal', 'yellow', 'green', 'orange', 'lime', 'indigo', 'cyan', 'purple'];
+            const avatarColorClass = avatarColorClasses[index % avatarColorClasses.length];
+
+
             const iconClass = containerId.includes('Complainants') ? 'fa-user text-blue-500' :
                              containerId.includes('Victims') ? 'fa-user-injured text-red-500' :
                              containerId.includes('Respondents') ? 'fa-user-shield text-orange-500' :
                              'fa-eye text-green-500';
             const html = `
-                <li class="flex items-start gap-3 py-2 border-b border-gray-100 last:border-b-0 hover:bg-gray-50 p-2 rounded">
-                    <i class="mt-1 w-4 h-4 flex-shrink-0 ${iconClass}"></i>
-                    <div class="flex-1 min-w-0">
-                        ${party.resident_id 
-                            ? `<a href="resident_profile.php?id=${party.resident_id}" class="text-blue-600 hover:text-blue-800 hover:underline font-medium transition-colors block text-sm">${party.name}</a>`
-                            : `<span class="font-medium text-sm text-gray-900 block">${party.name}</span>`
-                        }
-                        <p class="text-xs text-gray-500 mt-0.5 leading-tight">
-                            ${party.contact_number ? `<i class="fas fa-phone-alt mr-1"></i>${party.contact_number}` : ''}
-                            ${party.address ? (party.contact_number ? ' | ' : '') + `<i class="fas fa-map-marker-alt mr-1 ml-1"></i>${party.address}` : ''}
-                        </p>
+                <div class="blotter-party-card">
+                    <div class="blotter-party-avatar avatar-${avatarColorClass}">
+                        ${initials}
                     </div>
-                </li>
+                    <div class="blotter-party-details">
+                        ${party.resident_id 
+                            ? `<div class="blotter-party-name"><a href="resident_profile.php?id=${party.resident_id}" class="text-blue-600 hover:text-blue-800 hover:underline font-medium transition-colors">${party.name}</a></div>`
+                            : `<div class="blotter-party-name"><span class="font-medium text-gray-900">${party.name}</span></div>`
+                        }
+                        <div class="blotter-party-contact">
+                            <i class="fas fa-phone-alt"></i> <span>${party.contact_number || 'N/A'}</span>
+                        </div>
+                        <div class="blotter-party-address">
+                            <i class="fas fa-map-marker-alt"></i> <span>${party.address || 'N/A'}</span>
+                        </div>
+                    </div>
+                </div>
             `;
             container.insertAdjacentHTML('beforeend', html);
         });
@@ -1184,9 +1372,10 @@ function handleAction(action, recordId) {
     }
 
     function formatDateTime(dateString) {
-        if (!dateString) return '';
-        const date = new Date(dateString);
-        return date.toLocaleString('en-US', { 
+        if (!dateString || dateString === '0000-00-00 00:00:00') return 'N/A';
+        const dateObj = new Date(dateString);
+        if (isNaN(dateObj.getTime()) || dateObj.getTime() === 0) return 'N/A';
+        return dateObj.toLocaleString('en-US', { 
             year: 'numeric', month: 'long', day: 'numeric', 
             hour: '2-digit', minute: '2-digit' 
         });
@@ -1195,17 +1384,54 @@ function handleAction(action, recordId) {
     // Edit blotter record
 
     
-    // Update blotter status
-    function updateBlotterStatus(recordId, newStatus) {
+    /**
+     * Update blotter status.
+     * Enforces schedule requirement for 'Scheduled for Mediation'.
+     */
+    function updateBlotterStatus(recordId, newStatus, schedule = null) {
+        // Enforce schedule for mediation
+        if (newStatus === 'Scheduled for Mediation' && !schedule) {
+            const input = prompt("Please enter the mediation schedule\n(Format: YYYY-MM-DD HH:MM)");
+            
+            if (input === null) return; // User clicked Cancel
+            
+            if (input.trim() === '') {
+                alert("Mediation schedule is required. Status update cancelled.");
+                return;
+            }
+            schedule = input.trim();
+        }
+
+        // NEW: Enforce remarks for endorsement to police
+        let remarks = null;
+        if (newStatus === 'Endorsed to Police') {
+            remarks = prompt("Escalation Action: Please provide the reason why mediation failed and why this is being endorsed to the police.\n(This will be saved in the case history)");
+            
+            if (remarks === null) return; // User cancelled
+            
+            if (remarks.trim() === '') {
+                alert("Remarks are required to endorse a case to the police.");
+                return;
+            }
+            
+            alert("Action Required: Case Escalated. Please ensure you prepare the Endorsement Letter / Certificate to File Action (CFA) documents.");
+        }
+
         if (!confirm(`Change status to "${newStatus}"?`)) {
             return;
         }
         
-        console.log('Updating status:', recordId, newStatus);
-        
         const formData = new FormData();
         formData.append('id', recordId);
         formData.append('status', newStatus);
+        
+        if (schedule) {
+            formData.append('mediation_schedule', schedule);
+        }
+
+        if (remarks) {
+            formData.append('remarks', remarks.trim());
+        }
         
         // Send AJAX request to update status
         fetch('model/update_blotter_status.php', {
@@ -1235,6 +1461,69 @@ function handleAction(action, recordId) {
         });
     }
     
+    /**
+     * Locking Logic for Edit Modal
+     * Disables form elements if the status is terminal (Settled/Endorsed)
+     */
+    window.applyBlotterLockingLogic = function(status, modalId = 'editRecordModal') {
+        const modal = document.getElementById(modalId);
+        if (!modal) return;
+
+        const isLocked = (status === 'Settled' || status === 'Resolved' || status === 'Endorsed to Police');
+        const inputs = modal.querySelectorAll('input, textarea, select');
+        const saveBtn = modal.querySelector('#updateRecordBtn') || modal.querySelector('[data-action="save"]');
+        
+        // Print CFA Button Visibility Logic for Edit Modal
+        const btnPrintCFA = modal.querySelector('#btnPrintCFA');
+        if (btnPrintCFA) {
+            btnPrintCFA.style.display = (status === 'Endorsed to Police') ? 'inline-flex' : 'none';
+        }
+
+        // Add event listener to Status dropdown if not already present
+        const statusSelect = modal.querySelector('#edit_case_status') || modal.querySelector('#edit_status');
+        if (statusSelect && !statusSelect.dataset.cfaListenerSet) {
+            statusSelect.addEventListener('change', function() {
+                const currentStatus = this.value;
+                if (btnPrintCFA) {
+                    btnPrintCFA.style.display = (currentStatus === 'Endorsed to Police') ? 'inline-flex' : 'none';
+                }
+            });
+            statusSelect.dataset.cfaListenerSet = 'true';
+        }
+
+        // Check for documentation alert area
+        let alertBox = modal.querySelector('.escalation-alert');
+        
+        if (isLocked) {
+            inputs.forEach(input => {
+                if (input.id !== 'edit_status') { // Allow status to be changed back if needed by authorized users
+                    input.setAttribute('disabled', 'disabled');
+                    input.classList.add('bg-gray-50', 'cursor-not-allowed');
+                }
+            });
+            if (saveBtn) saveBtn.style.display = 'none';
+            
+            // Show specialized alert if Endorsed
+            if (status === 'Endorsed to Police') {
+                if (!alertBox) {
+                    alertBox = document.createElement('div');
+                    alertBox.className = 'escalation-alert alert alert-warning mt-3 flex items-center gap-3';
+                    alertBox.innerHTML = `
+                        <i class="fas fa-file-export fa-lg"></i>
+                        <div>
+                            <strong>Escalated Case:</strong> This record is locked. 
+                            <button type="button" class="btn btn-sm btn-dark ms-2" onclick="alert('Generating Endorsement Letter...')">Prepare Endorsement Letter / CFA</button>
+                        </div>`;
+                    modal.querySelector('.modal-body').prepend(alertBox);
+                }
+            }
+        } else {
+            inputs.forEach(input => input.removeAttribute('disabled'));
+            if (saveBtn) saveBtn.style.display = 'inline-block';
+            if (alertBox) alertBox.remove();
+        }
+    };
+
     // Archive blotter record
     function archiveBlotterRecord(recordId) {
         const archiveModal = document.getElementById('archiveModal');
@@ -1895,16 +2184,28 @@ function handleAction(action, recordId) {
         });
     }
     
-    // Mobile number formatting function (numbers only, 10 digits, xxx xxx xxxx)
+    /**
+     * Strictly validates mobile number inputs:
+     * 1. Must start with 9
+     * 2. Numbers only
+     * 3. Max length of 10 digits
+     */
     function formatMobileNumber(input) {
-        let value = input.value.replace(/\D/g, '').substring(0, 10);
-        if (value.length > 6) {
-            input.value = value.slice(0, 3) + ' ' + value.slice(3, 6) + ' ' + value.slice(6);
-        } else if (value.length > 3) {
-            input.value = value.slice(0, 3) + ' ' + value.slice(3);
-        } else {
-            input.value = value;
+        // Remove non-numeric characters
+        let value = input.value.replace(/\D/g, '');
+
+        // Ensure it starts with 9
+        if (value.length > 0 && value[0] !== '9') {
+            input.classList.add('!border-red-500', 'ring-2', 'ring-red-200');
+            value = ''; // Clear the input
+            
+            setTimeout(() => {
+                input.classList.remove('!border-red-500', 'ring-2', 'ring-red-200');
+            }, 600);
         }
+
+        // Limit to 10 digits total
+        input.value = value.substring(0, 10);
     }
 
     // Global event delegation for phone inputs (create/edit modals + dynamic)

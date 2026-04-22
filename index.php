@@ -377,6 +377,7 @@ try {
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<link rel="icon" type="image/png" href="uploads/favicon.png">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo SITE_NAME; ?> - Dashboard</title>
@@ -397,7 +398,8 @@ try {
     <link rel="stylesheet" href="assets/css/style.css">
     <link rel="stylesheet" href="assets/css/reports.css">
     
-    <!-- Dark Mode Init: must be in <head> to prevent flash of light mode -->
+    <!-- Dark Mode Init: must be in <head>
+<link rel="icon" type="image/png" href="uploads/favicon.png"> to prevent flash of light mode -->
     <script src="assets/js/dark-mode-init.js"></script>
 
     <style>
