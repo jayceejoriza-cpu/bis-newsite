@@ -159,8 +159,7 @@ try {
             SUM(CASE WHEN fourps_member  = 'Yes' THEN 1 ELSE 0 END) AS fourps,
             SUM(CASE WHEN voter_status   = 'Yes' THEN 1 ELSE 0 END) AS voters,
             SUM(CASE WHEN pwd_status     = 'Yes' THEN 1 ELSE 0 END) AS pwd,
-            SUM(CASE WHEN age_health_group = 'Senior Citizen (60+ years)' THEN 1 ELSE 0 END) AS seniors,
-            SUM(CASE WHEN indigent       = 'Yes' THEN 1 ELSE 0 END) AS indigent
+            SUM(CASE WHEN age_health_group = 'Senior Citizen (60+ years)' THEN 1 ELSE 0 END) AS seniors
         FROM residents
         WHERE activity_status = 'Alive'
     ")->fetch();
@@ -170,7 +169,7 @@ try {
             'voters'  => (int)$row['voters'],
             'pwd'     => (int)$row['pwd'],
             'seniors' => (int)$row['seniors'],
-            'indigent'=> (int)$row['indigent'],
+           
         ];
     }
 } catch (PDOException $e) { error_log($e->getMessage()); }

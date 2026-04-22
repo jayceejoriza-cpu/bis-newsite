@@ -301,7 +301,7 @@ if (isset($conn)) {
                     <img src="assets/image/brgylogo.jpg" alt="Barangay Logo" class="print-logo">
                 </div>
                 <div class="print-header-info">
-                    <h2 class="print-barangay-name"><?php echo defined('SITE_NAME') ? htmlspecialchars(SITE_NAME) : 'Barangay Information System'; ?></h2>
+                    <h2 class="print-barangay-name"><?php echo defined('SITE_NAME') ? htmlspecialchars(SITE_NAME) : 'Barangay Management System'; ?></h2>
                     <h3 class="print-list-title">Activity Logs Masterlist</h3>
                     <p class="print-meta">
                         Date Printed: <strong><?php echo date('F d, Y'); ?></strong>
