@@ -78,10 +78,12 @@ try {
         SELECT 
             br.id, br.record_number, br.incident_type, br.incident_date,
             br.date_reported, br.status,
-            COUNT(DISTINCT bc.id) AS complainant_count,
+            COUNT(DISTINCT CASE WHEN bc.statement = 'COMPLAINANT' OR bc.statement IS NULL OR bc.statement = '' THEN bc.id END) AS complainant_count,
             COUNT(DISTINCT brd.id) AS respondent_count,
-            GROUP_CONCAT(DISTINCT bc.name ORDER BY bc.id SEPARATOR '|||') AS complainant_names,
-            GROUP_CONCAT(DISTINCT brd.name ORDER BY brd.id SEPARATOR '|||') AS respondent_names
+            GROUP_CONCAT(DISTINCT CASE WHEN bc.statement = 'COMPLAINANT' OR bc.statement IS NULL OR bc.statement = '' THEN bc.name END ORDER BY bc.id SEPARATOR '|||') AS complainant_names,
+            GROUP_CONCAT(DISTINCT brd.name ORDER BY brd.id SEPARATOR '|||') AS respondent_names,
+            GROUP_CONCAT(DISTINCT CASE WHEN bc.statement = 'VICTIM' THEN bc.name END ORDER BY bc.id SEPARATOR '|||') AS victim_names,
+            GROUP_CONCAT(DISTINCT CASE WHEN bc.statement = 'WITNESS' THEN bc.name END ORDER BY bc.id SEPARATOR '|||') AS witness_names
         FROM blotter_records br
         LEFT JOIN blotter_complainants bc ON br.id = bc.blotter_id
         LEFT JOIN blotter_respondents brd ON br.id = brd.blotter_id
@@ -134,6 +136,63 @@ try {
     <script src="assets/js/dark-mode-init.js"></script>
     <style>
 
+        /* Modern Redesign Styles */
+        .modal-content.modern-modal {
+            border-radius: 1rem;
+            border: 1px solid #e5e7eb;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+        }
+        
+        .modern-modal .modal-header {
+            padding: 1.5rem 1.5rem 1rem;
+            border-bottom: 1px solid #f3f4f6;
+        }
+
+        .narrative-box {
+            background-color: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.75rem;
+            padding: 1.25rem;
+            line-height: 1.6;
+            color: #1e293b;
+        }
+
+        /* Tight Party List Styling */
+        .blotter-party-card {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.5rem 0;
+            border: none !important;
+            background: transparent !important;
+        }
+
+        .blotter-party-avatar {
+            width: 40px !important;
+            height: 40px !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            font-size: 0.875rem !important; /* 14px */
+            font-weight: 800 !important;
+            border-radius: 9999px !important;
+            flex-shrink: 0;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+            transition: transform 0.2s ease;
+        }
+
+        /* Role-Based Color Coding */
+        .avatar-complainant { background-color: #dbeafe !important; color: #1d4ed8 !important; border: 1.5px solid #bfdbfe !important; }
+        .avatar-victim      { background-color: #dcfce7 !important; color: #15803d !important; border: 1.5px solid #bbf7d0 !important; }
+        .avatar-respondent  { background-color: #ffedd5 !important; color: #b91c1c !important; border: 1.5px solid #fecaca !important; }
+        .avatar-witness     { background-color: #f3f4f6 !important; color: #4b5563 !important; border: 1.5px solid #e5e7eb !important; }
+
+        .blotter-party-details {
+            gap: 1px !important;
+        }
+
+        .blotter-party-name { font-size: 13px !important; font-weight: 600 !important; }
+        .blotter-party-contact, .blotter-party-address { font-size: 11px !important; opacity: 0.7; }
 
         .table-container {
             overflow: visible !important;
@@ -389,10 +448,16 @@ try {
                                 $statusBadge = 'badge-' . strtolower(str_replace(' ', '-', $status));
                                 $complainants = !empty($record['complainant_names']) ? explode('|||', $record['complainant_names']) : [];
                                 $respondents = !empty($record['respondent_names']) ? explode('|||', $record['respondent_names']) : [];
+                                $victimStr = !empty($record['victim_names']) ? str_replace('|||', ', ', $record['victim_names']) : '---';
+                                $witnessStr = !empty($record['witness_names']) ? str_replace('|||', ', ', $record['witness_names']) : '---';
                                 $complainantCount = $record['complainant_count'];
                                 $respondentCount = $record['respondent_count'];
                             ?>
-<tr class="clickable-row" data-id="<?php echo $record['id']; ?>" data-status="<?php echo strtolower(str_replace(' ', '-', $status)); ?>">
+<tr class="clickable-row" 
+    data-id="<?php echo $record['id']; ?>" 
+    data-status="<?php echo strtolower(str_replace(' ', '-', $status)); ?>"
+    data-victims="<?php echo htmlspecialchars($victimStr); ?>"
+    data-witnesses="<?php echo htmlspecialchars($witnessStr); ?>">
                                 <td><span class="record-number"><?php echo $recordNumber; ?></span></td>
                                 <td><?php echo $dateReported; ?></td>
                                 <td><span class="badge <?php echo $statusBadge; ?>"><?php echo htmlspecialchars($status); ?></span></td>
@@ -655,132 +720,75 @@ try {
     <!-- View Blotter Record Modal -->
     <div class="modal fade" id="viewRecordModal" tabindex="-1">
         <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">View Blotter Record Details</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            <div class="modal-content modern-modal">
+                <div class="modal-header flex flex-col items-start">
+                    <div class="flex items-center justify-between w-full">
+                        <div class="flex items-center gap-3">
+                            <h5 class="modal-title text-2xl font-bold text-gray-800 m-0">Record #<span id="view_header_record_number"></span></h5>
+                            <div id="view_status_badge_container"></div>
+                        </div>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <p class="text-[11px] text-gray-500 font-medium mt-1 flex items-center gap-1">
+                        <i class="far fa-clock"></i> DATE LOGGED: <span id="view_date_created">N/A</span>
+                    </p>
                 </div>
-                <div class="modal-body max-h-[70vh] overflow-y-auto p-6">
+                <div class="modal-body p-8">
                     <form id="viewRecordForm" class="space-y-6">
                         <input type="hidden" id="view_record_id">
                         
-                        <!-- Main Dashboard Grid -->
-                        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                        <!-- Two-Column Layout (60/40) -->
+                        <div class="grid grid-cols-1 lg:grid-cols-10 gap-10">
                             
-                            <!-- LEFT COLUMN: Incident & Evidence -->
-                            <div class="lg:col-span-7 space-y-6">
+                            <!-- LEFT COLUMN (60%): Basic & Incident Details -->
+                            <div class="lg:col-span-6 space-y-8">
                                 
-                                <!-- Basic Info Card -->
-                                <div class="bg-white p-5 border border-gray-100 rounded-xl shadow-sm">
-                                    <h5 class="text-lg font-semibold text-blue-600 mb-4 flex items-center gap-2">
-                                        <i class="fas fa-info-circle text-blue-500"></i> 
-                                        Basic Information
-                                    </h5>
-                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div class="space-y-6">
+                                    <!-- Top Row: Date & Type -->
+                                    <div class="grid grid-cols-2 gap-6">
                                         <div>
-                                            <label class="block text-[10px] uppercase font-bold text-gray-400 tracking-wider mb-1">Current Status</label>
-                                            <div id="view_status_badge_container">
-                                            </div>
+                                            <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-1">Incident Date</label>
+                                            <input type="text" class="text-sm font-semibold text-gray-700 bg-transparent border-none p-0 focus:ring-0" id="view_incident_date" readonly>
                                         </div>
                                         <div>
-                                            <label class="block text-xs uppercase font-semibold text-gray-500 tracking-wide mb-1">Incident Date</label>
-                                            <div class="bg-gray-50 p-3 rounded-lg text-sm border">
-                                                <input type="text" class="bg-transparent w-full border-none p-0 focus:ring-0 text-sm font-medium" id="view_incident_date" readonly>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Incident Details Card -->
-                                <div class="bg-white p-5 border border-gray-100 rounded-xl shadow-sm">
-                                    <h5 class="text-lg font-semibold text-blue-600 mb-4 flex items-center gap-2">
-                                        <i class="fas fa-exclamation-triangle text-yellow-500"></i> 
-                                        Incident Details
-                                    </h5>
-                                    <div class="space-y-4">
-                                        <div>
-                                            <label class="block text-xs uppercase font-semibold text-gray-500 tracking-wide mb-1">Incident Type</label>
-                                            <div class="bg-gray-50 p-3 rounded-lg text-sm border">
-                                                <input type="text" class="bg-transparent w-full border-none p-0 focus:ring-0 text-sm font-medium" id="view_incident_type" readonly>
-                                            </div>
-                                        </div>
-                                        <div>
-                                            <label class="block text-xs uppercase font-semibold text-gray-500 tracking-wide mb-1">Incident Location</label>
-                                            <div class="bg-gray-50 p-3 rounded-lg text-sm border">
-                                                <textarea id="view_incident_location" rows="2" class="bg-transparent w-full border-none p-0 focus:ring-0 text-sm resize-none" readonly></textarea>
-                                            </div>
-                                        </div>
-                                        <div>
-                                            <label class="block text-xs uppercase font-semibold text-gray-500 tracking-wide mb-1">Incident Details</label>
-                                            <div class="bg-gray-50 p-3 rounded-lg text-sm border">
-                                                <textarea id="view_incident_description" rows="6" class="bg-transparent w-full border-none p-0 focus:ring-0 text-sm resize-none" readonly></textarea>
-                                            </div>
-                                        </div>
-                                        
-                                        <!-- Evidence Grid Container -->
-                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
-                                            <!-- Incident Proof -->
-                                            <div class="bg-gray-50/50 p-3 rounded-xl border border-dashed">
-                                                <label class="block text-[10px] uppercase font-bold text-gray-400 tracking-wider mb-2"><i class="fas fa-camera text-blue-500 mr-1"></i> Incident Evidence</label>
-                                                <div id="view_incident_proof_container" class="grid grid-cols-2 gap-2">
-                                                    <!-- Images load here -->
-                                                </div>
-                                            </div>
-
-                                            <!-- Settlement Proof (Hidden by JS) -->
-                                            <div id="view_settlement_proof_wrapper" class="bg-green-50/30 p-3 rounded-xl border border-dashed border-green-200" style="display: none;">
-                                                <label class="block text-[10px] uppercase font-bold text-green-600 tracking-wider mb-2"><i class="fas fa-handshake mr-1"></i> Settlement Proof</label>
-                                                <div id="view_settlement_proof_container" class="grid grid-cols-2 gap-2">
-                                                    <!-- Images load here -->
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Actions & Resolution -->
-                                <div>
-                                    <h5 class="text-lg font-semibold text-blue-600 mb-4 flex items-center gap-2">
-                                        <i class="fas fa-clipboard-check text-green-500"></i> 
-                                        Actions & Resolution
-                                    </h5>
-                                    <div id="view_mediation_field" class="mb-4" style="display: none;">
-                                        <label class="block text-xs uppercase font-semibold text-gray-500 tracking-wide mb-1">Mediation Schedule</label>
-                                        <div class="bg-gray-50 p-3 rounded-lg text-sm border">
-                                            <input type="text" class="bg-transparent w-full border-none p-0 focus:ring-0 text-sm font-medium" id="view_mediation_date" readonly>
-                                        </div>
-                                    </div>
-                                    <div id="view_referral_notice" class="bg-blue-50 border border-blue-200 p-3 rounded-lg text-sm text-blue-800 mb-4 hidden">
-                                        <i class="fas fa-info-circle mr-2"></i> Note: This case is tagged for Certificate to File Action.
-                                    </div>
-                                    
-                                    <!-- Case History Timeline Section -->
-                                    <div class="mt-6 border-t pt-4">
-                                        <h5 class="text-lg font-semibold text-blue-600 mb-4 flex items-center gap-2">
-                                            <i class="fas fa-history text-indigo-500"></i> Case History Timeline
-                                        </h5>
-                                        <div id="case-history-timeline" class="relative pl-6 space-y-6">
-                                            <!-- History items injected here -->
+                                            <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-1">Incident Type</label>
+                                            <input type="text" class="text-sm font-semibold text-blue-600 bg-transparent border-none p-0 focus:ring-0" id="view_incident_type" readonly>
                                         </div>
                                     </div>
 
-                                    <div id="viewActionsContainer" class="space-y-3 mb-4"></div>
                                     <div>
-                                        <label class="block text-xs uppercase font-semibold text-gray-500 tracking-wide mb-1">Resolution</label>
-                                        <div class="bg-gray-50 p-3 rounded-lg text-sm border">
-                                            <textarea id="view_resolution" rows="4" class="bg-transparent w-full border-none p-0 focus:ring-0 text-sm resize-none" readonly></textarea>
+                                        <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-1">Incident Location</label>
+                                        <input type="text" class="text-sm font-medium text-gray-600 bg-transparent border-none p-0 w-full focus:ring-0" id="view_incident_location" readonly>
+                                    </div>
+
+                                    <div>
+                                        <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-2">Incident Narrative</label>
+                                        <div class="narrative-box" id="view_incident_description_text">
+                                            <!-- Text populated by JS -->
+                                        </div>
+                                        <textarea id="view_incident_description" class="hidden"></textarea>
+                                    </div>
+
+                                    <!-- Evidence -->
+                                    <div class="grid grid-cols-2 gap-4">
+                                        <div id="view_incident_proof_wrapper">
+                                            <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-2">Evidence / Photos</label>
+                                            <div id="view_incident_proof_container" class="grid grid-cols-3 gap-2"></div>
+                                        </div>
+                                        <div id="view_settlement_proof_wrapper" style="display:none;">
+                                            <label class="text-[10px] font-bold text-green-600 uppercase tracking-widest block mb-2">Settlement Proof</label>
+                                            <div id="view_settlement_proof_container" class="grid grid-cols-3 gap-2"></div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
 
-                            <!-- Right Column: Parties Involved (col-span-5) -->
-                            <div class="lg:col-span-5">
-                                <h5 class="text-lg font-semibold text-blue-600 mb-4 flex items-center gap-2">
-                                    <i class="fas fa-users text-purple-500"></i> 
-                                    Parties Involved
-                                </h5>
-                                <div class="space-y-3">
+                            <!-- RIGHT COLUMN (40%): Parties Involved -->
+                            <div class="lg:col-span-4 border-l pl-10">
+                                <h6 class="text-sm font-bold text-gray-800 mb-6 flex items-center gap-2">
+                                    <i class="fas fa-users text-blue-500"></i> Parties Involved
+                                </h6>
+                                <div class="space-y-8">
                                     <!-- Complainant -->
                                     <div>
                                         <h6 class="text-sm font-semibold text-gray-800 mb-2 flex items-center gap-2">
@@ -816,26 +824,37 @@ try {
                                 </div>
                             </div>
                         </div>
+
+                        <!-- FULL WIDTH: Case History Timeline -->
+                        <div class="mt-12 border-t pt-10">
+                            <h5 class="text-xs font-bold text-gray-400 uppercase tracking-[0.2em] mb-8">Case History & Audit Trail</h5>
+                            <div id="case-history-timeline" class="relative pl-10">
+                                <!-- Timeline items injected here -->
+                            </div>
+                            <div id="viewActionsContainer" class="hidden"></div>
+                            <div id="view_referral_notice" class="bg-blue-50 border border-blue-100 p-4 rounded-lg text-sm text-blue-700 mt-4 hidden">
+                                <i class="fas fa-info-circle mr-2"></i> Note: This case is officially tagged for CFA / Legal Escalation.
+                            </div>
+                        </div>
                     </form>
                 </div>
-                <div class="sticky bottom-0 bg-white border-t p-4 z-10 shadow-2xl mt-auto">
-                    <div class="flex justify-end gap-3">
-                        <button type="button" class="px-6 py-2 bg-gray-500 hover:bg-gray-600 text-white font-medium rounded-lg transition-all duration-200" data-bs-dismiss="modal">
-                            Close Details
-                        </button>
+                <div class="modal-footer flex justify-between items-center bg-gray-50 border-t px-8 py-4">
+                    <div class="flex gap-3">
                         <?php if (hasPermission('perm_blotter_print')): ?>
-                        <button type="button" id="btnPrintCFA" class="px-8 py-2 bg-gray-600 hover:bg-gray-700 text-white font-bold rounded-lg flex items-center gap-2 transition-all duration-200 shadow-lg shadow-gray-200" style="display: none;" data-action="print-cfa">
+                        <button type="button" id="viewPrintBtn" class="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg flex items-center gap-2 transition-all shadow-sm" data-action="print">
+                            <i class="fas fa-print"></i> PRINT RECORD
+                        </button>
+                        <?php endif; ?>
+                        <?php if (hasPermission('perm_blotter_print')): ?>
+                        <button type="button" id="btnPrintCFA" class="px-6 py-2 bg-gray-700 hover:bg-gray-800 text-white font-bold rounded-lg flex items-center gap-2 transition-all shadow-sm" style="display: none;" data-action="print-cfa">
                             <i class="fas fa-file-export"></i> 
                             PRINT CFA / ENDORSEMENT
                         </button>
                         <?php endif; ?>
-                        <?php if (hasPermission('perm_blotter_print')): ?>
-                        <button type="button" id="viewPrintBtn" class="px-8 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg flex items-center gap-2 transition-all duration-200 shadow-lg shadow-blue-200" data-action="print">
-                            <i class="fas fa-print"></i> 
-                            PRINT OFFICIAL RECORD
-                        </button>
-                        <?php endif; ?>
                     </div>
+                    <button type="button" class="px-6 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold rounded-lg transition-all" data-bs-dismiss="modal">
+                        Close Details
+                    </button>
                 </div>
             </div>
         </div>
@@ -971,21 +990,35 @@ try {
             console.log('Printing record:', recordId);
 
             // Get data from modal fields with fallbacks
-            const recordNoEl = document.querySelector('#viewRecordModal h5.modal-title');
-            const recordNo = recordNoEl ? recordNoEl.textContent.trim().replace(/[^\w\s-]/g, '').replace(/\s+/g, ' ').trim() || `BL-${recordId.padStart(4, '0')}` : recordId;
-            const status = document.getElementById('view_status')?.value || 'N/A';
+            const recordNo = document.getElementById('view_header_record_number')?.textContent || `BL-${recordId.padStart(4, '0')}`;
+            const status = document.getElementById('view_status_badge_container')?.textContent.trim() || 'PENDING';
             const incidentDate = document.getElementById('view_incident_date')?.value || 'N/A';
             const incidentType = document.getElementById('view_incident_type')?.value || 'N/A';
             const location = document.getElementById('view_incident_location')?.value || 'N/A';
             const description = document.getElementById('view_incident_description')?.value || 'N/A';
-            const resolution = document.getElementById('view_resolution')?.value || 'Case Pending';
+
+            /**
+             * NEW: Fetch Resolution/Remarks from the history trail (blotter_history)
+             * instead of the static resolution field in the main record.
+             */
+            const historyTrail = document.getElementById('case-history-timeline');
+            const latestHistoryRemark = historyTrail?.querySelector('.bg-gray-50');
             
-            const complainants = Array.from(document.querySelectorAll('#viewComplainantsContainer li'))
-                .map(li => li.textContent.trim()).filter(Boolean).join(', ') || 'None';
-            const respondents = Array.from(document.querySelectorAll('#viewRespondentsContainer li'))
-                .map(li => li.textContent.trim()).filter(Boolean).join(', ') || 'None';
-            const witnesses = Array.from(document.querySelectorAll('#viewWitnessesContainer li'))
-                .map(li => li.textContent.trim()).filter(Boolean).join(', ') || 'None';
+            const resolution = latestHistoryRemark 
+                ? latestHistoryRemark.textContent.trim().replace(/^"|"$/g, '') 
+                : (document.getElementById('view_resolution')?.value || 'Case Pending');
+            
+            const getNamesFromContainer = (containerId) => {
+                return Array.from(document.querySelectorAll(`#${containerId} .blotter-party-name`))
+                    .map(el => el.textContent.trim())
+                    .filter(Boolean)
+                    .join(', ') || '---';
+            };
+
+            const complainants = getNamesFromContainer('viewComplainantsContainer');
+            const victims = getNamesFromContainer('viewVictimsContainer');
+            const respondents = getNamesFromContainer('viewRespondentsContainer');
+            const witnesses = getNamesFromContainer('viewWitnessesContainer');
 
             console.log('Print data:', {recordId, recordNo, status, complainants: complainants.slice(0,50)+'...', respondents: respondents.slice(0,50)+'...'});
 
@@ -1047,6 +1080,7 @@ try {
                         <tr><th>Incident Date</th><td>${incidentDate}</td></tr>
                         <tr><th>Location</th><td>${location}</td></tr>
                         <tr><th>Complainant(s)</th><td>${complainants}</td></tr>
+                        <tr><th>Victim(s)</th><td>${victims}</td></tr>
                         <tr><th>Respondent(s)</th><td>${respondents}</td></tr>
                         <tr><th>Witness(es)</th><td>${witnesses}</td></tr>
                         <tr><th>Status</th><td>${status}</td></tr>
@@ -1080,6 +1114,20 @@ try {
                 printFrame.contentWindow.print();
                 console.log('Print dialog opened');
             }, 250);
+        }
+
+        // Handle Print CFA action
+        const printCFABtn = e.target.closest('button[data-action="print-cfa"]');
+        if (printCFABtn && printCFABtn.closest('#viewRecordModal')) {
+            const recordIdEl = document.getElementById('view_record_id');
+            const recordId = recordIdEl ? recordIdEl.value : null;
+            
+            if (recordId) {
+                window.location.href = `print_cfa.php?id=${recordId}`;
+            } else {
+                console.error('Print CFA failed: No record ID found');
+                alert('Cannot print: Record not loaded properly.');
+            }
         }
     });
     </script>
