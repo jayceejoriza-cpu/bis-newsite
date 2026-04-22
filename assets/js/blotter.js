@@ -169,7 +169,9 @@ document.addEventListener('DOMContentLoaded', function() {
                         <th>Date Reported</th>
                         <th>Status</th>
                         <th>Complainants</th>
+                        <th>Victims</th>
                         <th>Respondents</th>
+                        <th>Witnesses</th>
                         <th>Incident Type</th>
                         <th>Incident Date</th>
                     </tr>
@@ -208,6 +210,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
                 const respStr = respondents.join(', ');
 
+                const victStr = row.getAttribute('data-victims') || '---';
+                const witnStr = row.getAttribute('data-witnesses') || '---';
+
                 const incType = row.cells[5]?.textContent.trim() || '';
                 const incDate = row.cells[6]?.textContent.trim() || '';
 
@@ -218,7 +223,9 @@ document.addEventListener('DOMContentLoaded', function() {
                         <td>${dateRep}</td>
                         <td>${status}</td>
                         <td>${compStr}</td>
+                        <td>${victStr}</td>
                         <td>${respStr}</td>
+                        <td>${witnStr}</td>
                         <td>${incType}</td>
                         <td>${incDate}</td>
                     </tr>
@@ -999,6 +1006,14 @@ function handleAction(action, recordId) {
                 }
                 printBlotterDetails(recordId);
                 break;
+
+            case 'print-cfa':
+                if (window.BIS_PERMS && window.BIS_PERMS.blotter_print === false) {
+                    alert('Permission denied to print blotter records.');
+                    return;
+                }
+                window.location.href = 'print_cfa.php?id=' + recordId;
+                break;
                 
             case 'update-status':
                 if (window.BIS_PERMS && window.BIS_PERMS.blotter_status === false) {
@@ -1120,17 +1135,22 @@ function handleAction(action, recordId) {
         const recordIdEl = document.getElementById('view_record_id');
         if (recordIdEl) recordIdEl.value = record.id || '';
 
-        // Update modal title with record number
-        const modalTitle = document.querySelector('#viewRecordModal .modal-title');
-        if (modalTitle && record.record_number) {
-            modalTitle.textContent = `Blotter Record #${record.record_number}`;
+        // Update Modern Header elements
+        const headerRecNo = document.getElementById('view_header_record_number');
+        if (headerRecNo) headerRecNo.textContent = record.record_number;
+
+        const dateCreated = document.getElementById('view_date_created');
+        if (dateCreated) {
+            dateCreated.textContent = record.date_reported 
+                ? new Date(record.date_reported).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' }) 
+                : 'N/A';
         }
 
         // Basic Info
         const statusBadgeContainer = document.getElementById('view_status_badge_container');
         if (statusBadgeContainer) {
             const statusMap = {
-                'Pending': 'bg-red-100 text-red-700 border-red-200',
+                'Pending': 'bg-amber-100 text-amber-700 border-amber-200',
                 'Scheduled for Mediation': 'bg-blue-100 text-blue-700 border-blue-200',
                 'Settled': 'bg-green-100 text-green-700 border-green-200',
                 'Resolved': 'bg-green-100 text-green-700 border-green-200',
@@ -1158,8 +1178,12 @@ function handleAction(action, recordId) {
         const descEl = document.getElementById('view_incident_description');
         if (descEl) descEl.value = record.incident_description;
         
-        const resTextEl = document.getElementById('view_resolution_text');
-        if (resTextEl) resTextEl.textContent = record.resolution || 'No formal resolution has been recorded for this case yet.';
+        // Modern Narrative Box
+        const narrativeBox = document.getElementById('view_incident_description_text');
+        if (narrativeBox) narrativeBox.textContent = record.incident_description || 'No details provided.';
+
+        const resTextEl = document.getElementById('view_resolution');
+        if (resTextEl) resTextEl.value = record.resolution || '';
 
         // Handle Print CFA Button visibility in View Modal
         const btnPrintCFA = document.getElementById('btnPrintCFA');
@@ -1311,10 +1335,16 @@ function handleAction(action, recordId) {
         parties.forEach((party, index) => {
             // Generate initials for avatar
             const initials = party.name ? party.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() : '?';
-            // Cycle through a few colors for avatars
-            const avatarColorClasses = ['blue', 'pink', 'teal', 'yellow', 'green', 'orange', 'lime', 'indigo', 'cyan', 'purple'];
-            const avatarColorClass = avatarColorClasses[index % avatarColorClasses.length];
-
+            
+            // Determine role-based CSS class based on the container ID
+            let roleClass = 'avatar-witness';
+            if (containerId.includes('Complainants')) {
+                roleClass = 'avatar-complainant';
+            } else if (containerId.includes('Victims')) {
+                roleClass = 'avatar-victim';
+            } else if (containerId.includes('Respondents')) {
+                roleClass = 'avatar-respondent';
+            }
 
             const iconClass = containerId.includes('Complainants') ? 'fa-user text-blue-500' :
                              containerId.includes('Victims') ? 'fa-user-injured text-red-500' :
@@ -1322,7 +1352,7 @@ function handleAction(action, recordId) {
                              'fa-eye text-green-500';
             const html = `
                 <div class="blotter-party-card">
-                    <div class="blotter-party-avatar avatar-${avatarColorClass}">
+                    <div class="blotter-party-avatar ${roleClass}">
                         ${initials}
                     </div>
                     <div class="blotter-party-details">
