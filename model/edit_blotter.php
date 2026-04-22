@@ -584,50 +584,37 @@ This forms the OFFICIAL record." required></textarea>
 
                                     <div class="border-t pt-4">
                                         <h6 class="party-title mb-3 text-primary"><i class="fas fa-camera"></i> Incident Proof</h6>
-                                        <!-- Existing Incident Proof Display -->
-                                        <div id="editIncidentProofExisting" style="display:none;" class="mb-3">
-                                            <div class="flex justify-between items-center mb-2">
-                                                <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Existing Proof:</span>
-                                                <button type="button" class="btn btn-sm btn-outline-danger py-1" id="changeIncidentProofBtn">
-                                                    <i class="fas fa-sync-alt me-1"></i> Change / Remove
-                                                </button>
-                                            </div>
+                                        <div class="attachment-upload-wrapper">
                                             <div id="edit_incident_preview" class="attachment-preview-container"></div>
-                                        </div>
-                                        <div id="editIncidentProofUploadZone" class="attachment-upload-zone">
-                                            <input type="file" id="editIncidentProofInput" name="incident_proof[]" multiple accept="image/png, image/jpeg" class="hidden">
-                                            <div class="upload-zone-content">
-                                                <i class="fas fa-cloud-upload-alt fa-3x mb-3 text-muted"></i>
-                                                <p class="mb-1"><strong>Drag and drop images</strong> here or <span class="text-primary">click to browse</span></p>
-                                                <p class="text-muted small">Supports JPG and PNG (Max 5MB each)</p>
+                                            <div id="editIncidentProofPreviewContainer" class="attachment-preview-container">
+                                                <!-- New Previews will appear here -->
                                             </div>
-                                        </div>
-                                        <div id="editIncidentProofPreviewContainer" class="attachment-preview-container">
-                                            <!-- Previews will appear here -->
+                                            <div id="editIncidentProofUploadZone" class="attachment-upload-zone">
+                                                <input type="file" id="editIncidentProofInput" name="incident_proof[]" multiple accept="image/png, image/jpeg" class="hidden">
+                                                <div class="upload-zone-content">
+                                                    <i class="fas fa-cloud-upload-alt fa-3x mb-3 text-muted"></i>
+                                                    <p class="mb-1"><strong>Drag and drop images</strong> here or <span class="text-primary">click to browse</span></p>
+                                                    <p class="text-muted small">Supports JPG and PNG (Max 5MB each)</p>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
 
                                     <!-- Mediation/Settlement Proof Section (Hidden by Default) -->
                                     <div id="edit_settlement_proof_section" class="border-t pt-4 min-h-[100px]" style="display: none;">
                                         <h6 class="party-title mb-3 text-success"><i class="fas fa-handshake"></i> Settlement Proof</h6>
-                                        <!-- Existing Settlement Proof Display -->
-                                        <div id="editSettlementProofExisting" style="display:none;" class="mb-3">
-                                            <div class="flex justify-between items-center mb-2">
-                                                <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Existing Settlement Proof:</span>
-                                                <button type="button" class="btn btn-sm btn-outline-danger py-1" id="changeSettlementProofBtn">
-                                                    <i class="fas fa-sync-alt me-1"></i> Change / Remove
-                                                </button>
-                                            </div>
+                                        <div class="attachment-upload-wrapper">
                                             <div id="edit_settlement_preview" class="attachment-preview-container"></div>
-                                        </div>
-                                        <div id="editSettlementProofUploadZone" class="attachment-upload-zone" style="padding: 20px;">
-                                            <input type="file" id="editSettlementProofInput" name="settlement_proof[]" multiple accept="image/png, image/jpeg" class="hidden">
-                                            <div class="upload-zone-content">
-                                                <i class="fas fa-file-upload fa-2x mb-2 text-muted"></i>
-                                                <p class="mb-0">Upload settlement photos or signed agreements</p>
+                                            <div id="editSettlementProofPreviewContainer" class="attachment-preview-container"></div>
+                                            <div id="editSettlementProofUploadZone" class="attachment-upload-zone">
+                                                <input type="file" id="editSettlementProofInput" name="settlement_proof[]" multiple accept="image/png, image/jpeg" class="hidden">
+                                                <div class="upload-zone-content">
+                                                    <i class="fas fa-handshake fa-3x mb-3 text-muted"></i>
+                                                    <p class="mb-1"><strong>Upload settlement photos</strong> here</p>
+                                                    <p class="text-muted small">Supports JPG and PNG</p>
+                                                </div>
                                             </div>
                                         </div>
-                                        <div id="editSettlementProofPreviewContainer" class="attachment-preview-container"></div>
                                     </div>
                                 </div>
 
@@ -825,22 +812,32 @@ This forms the OFFICIAL record." required></textarea>
     }
     
     function handleExistingProofDisplay(type, pathString) {
-        const existingDiv = document.getElementById(`edit${type}ProofExisting`);
         const uploadZone = document.getElementById(`edit${type}ProofUploadZone`);
         const previewContainer = document.getElementById(`edit_${type.toLowerCase()}_preview`);
 
-        if (!existingDiv || !uploadZone || !previewContainer) return;
+        if (!uploadZone || !previewContainer) return;
 
         if (pathString && pathString.trim() !== '') {
-            existingDiv.style.display = 'block';
-            uploadZone.style.display = 'none';
+            uploadZone.classList.add('is-compact');
+            const zoneContent = uploadZone.querySelector('.upload-zone-content');
+            if (zoneContent) {
+                zoneContent.innerHTML = `<i class="fas fa-plus text-primary mb-1"></i><p class="mb-0 text-[10px] fw-bold">Add More</p>`;
+            }
+            
             previewContainer.innerHTML = pathString.split(',').map(path => `
                 <div class="attachment-preview-item">
                     <img src="${path.trim()}" alt="Evidence">
                 </div>`).join('');
         } else {
-            existingDiv.style.display = 'none';
-            uploadZone.style.display = 'block';
+            uploadZone.classList.remove('is-compact');
+            const zoneContent = uploadZone.querySelector('.upload-zone-content');
+            if (zoneContent) {
+                if (type === 'Incident') {
+                    zoneContent.innerHTML = `<i class="fas fa-cloud-upload-alt fa-3x mb-3 text-muted"></i><p class="mb-1"><strong>Drag and drop images</strong> here</p>`;
+                } else {
+                    zoneContent.innerHTML = `<i class="fas fa-handshake fa-3x mb-3 text-muted"></i><p class="mb-1"><strong>Upload settlement photos</strong> here</p>`;
+                }
+            }
         }
     }
 
@@ -1119,7 +1116,15 @@ This forms the OFFICIAL record." required></textarea>
             if (zone && input) {
                 zone.addEventListener('click', () => input.click());
                 input.addEventListener('change', e => {
-                    Array.from(e.target.files).forEach(file => {
+                    const files = Array.from(e.target.files);
+                    if (files.length > 0) {
+                        zone.classList.add('is-compact');
+                        const zoneContent = zone.querySelector('.upload-zone-content');
+                        if (zoneContent) {
+                            zoneContent.innerHTML = `<i class="fas fa-plus text-primary mb-1"></i><p class="mb-0 text-[10px] fw-bold">Add More</p>`;
+                        }
+                    }
+                    files.forEach(file => {
                         if (file.type.startsWith('image/')) {
                             const reader = new FileReader();
                             reader.onload = ev => {
@@ -1138,16 +1143,6 @@ This forms the OFFICIAL record." required></textarea>
         setupFilePreview('editIncidentProofUploadZone', 'editIncidentProofInput', 'editIncidentProofPreviewContainer');
         setupFilePreview('editSettlementProofUploadZone', 'editSettlementProofInput', 'editSettlementProofPreviewContainer');
 
-        // Change/Remove Button Handlers
-        addSafeListener('changeIncidentProofBtn', 'click', () => {
-            document.getElementById('editIncidentProofExisting').style.display = 'none';
-            document.getElementById('editIncidentProofUploadZone').style.display = 'block';
-        });
-
-        addSafeListener('changeSettlementProofBtn', 'click', () => {
-            document.getElementById('editSettlementProofExisting').style.display = 'none';
-            document.getElementById('editSettlementProofUploadZone').style.display = 'block';
-        });
 
         // Use Event Delegation for Remove buttons to handle dynamically added rows
         const form = document.getElementById('editRecordForm');

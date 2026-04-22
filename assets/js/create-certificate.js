@@ -1083,7 +1083,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // ============================================
     document.getElementById('previewPrint').addEventListener('click', function() {
         const printWindow = window.open('', '_blank');
-        printWindow.document.write('<html><head><title>Print Certificate Preview</title>');
+        printWindow.document.write('<html><head><link rel="icon" type="image/png" href="uploads/favicon.png"><title>Print Certificate Preview</title>');
         printWindow.document.write('<style>body{margin:0;padding:20px;display:flex;justify-content:center;align-items:center;min-height:100vh;background:#f5f5f5;}img{max-width:100%;height:auto;box-shadow:0 4px 12px rgba(0,0,0,0.15);}</style>');
         printWindow.document.write('</head><body>');
         printWindow.document.write('<img src="' + previewCanvas.toDataURL('image/png') + '" />');

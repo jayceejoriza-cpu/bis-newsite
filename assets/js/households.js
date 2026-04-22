@@ -626,6 +626,7 @@ function initializeButtons() {
                 <!DOCTYPE html>
                 <html>
                 <head>
+<link rel="icon" type="image/png" href="uploads/favicon.png">
                     <title>Household Masterlist</title>
                     ${styles}
                     <style>
@@ -2274,6 +2275,7 @@ async function printHousehold(householdId) {
             <!DOCTYPE html>
             <html>
             <head>
+<link rel="icon" type="image/png" href="uploads/favicon.png">
                 <title>Print Household - ${household.household_number}</title>
                 <style>
                     @page { size: A4; margin: 15mm; }

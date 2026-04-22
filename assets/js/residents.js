@@ -511,6 +511,7 @@ function initializeButtons() {
                 <!DOCTYPE html>
                 <html>
                 <head>
+<link rel="icon" type="image/png" href="uploads/favicon.png">
                     <title>Resident Masterlist</title>
                     ${styles}
                     <style>

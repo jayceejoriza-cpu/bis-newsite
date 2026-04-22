@@ -781,7 +781,7 @@
                 if (data.success) {
                     // Create a temporary container for printing
                     const printWindow = window.open('', '_blank');
-                    printWindow.document.write('<html><head><title>Print Certificate</title>');
+                    printWindow.document.write('<html><head><link rel="icon" type="image/png" href="uploads/favicon.png"><title>Print Certificate</title>');
                     printWindow.document.write('<style>');
                     printWindow.document.write('body { margin: 0; padding: 20px; display: flex; justify-content: center; align-items: center; }');
                     printWindow.document.write('canvas { max-width: 100%; height: auto; }');

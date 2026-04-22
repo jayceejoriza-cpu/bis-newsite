@@ -1,7 +1,8 @@
 /**
  * Dark Mode Initialization Script
  * 
- * This script MUST be loaded in <head> BEFORE any CSS or other scripts.
+ * This script MUST be loaded in <head>
+<link rel="icon" type="image/png" href="uploads/favicon.png"> BEFORE any CSS or other scripts.
  * It prevents the Flash of Unstyled Content (FOUC) by:
  *   1. Immediately disabling all CSS transitions (no-transition class)
  *   2. Applying dark-mode class to <html> before the page renders

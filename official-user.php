@@ -97,6 +97,7 @@ function getUserAvatarColor($index) {
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<link rel="icon" type="image/png" href="uploads/favicon.png">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo $pageTitle; ?> - <?php echo SITE_NAME; ?></title>
@@ -110,7 +111,8 @@ function getUserAvatarColor($index) {
     <!-- Custom CSS -->
     <link rel="stylesheet" href="assets/css/style.css">
     <link rel="stylesheet" href="assets/css/official-user.css">
-    <!-- Dark Mode Init: must be in <head> to prevent flash of light mode -->
+    <!-- Dark Mode Init: must be in <head>
+<link rel="icon" type="image/png" href="uploads/favicon.png"> to prevent flash of light mode -->
     <script src="assets/js/dark-mode-init.js"></script>
 </head>
 <body>

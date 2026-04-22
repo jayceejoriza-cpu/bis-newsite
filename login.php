@@ -85,9 +85,11 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<link rel="icon" type="image/png" href="uploads/favicon.png">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- Dark Mode Init: must be at the very top of <head> to prevent flash of light mode -->
+    <!-- Dark Mode Init: must be at the very top of <head>
+<link rel="icon" type="image/png" href="uploads/favicon.png"> to prevent flash of light mode -->
     <script src="assets/js/dark-mode-init.js"></script>
 
     <title>Login - <?php echo SITE_NAME; ?></title>
@@ -180,7 +182,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 </div>
 
 <script>
-    // dark-mode-init.js already applied dark-mode to <html> in <head>.
+    // dark-mode-init.js already applied dark-mode to <html> in <head>
+<link rel="icon" type="image/png" href="uploads/favicon.png">.
     // Here we sync <body> and the toggle icon, then wire up the toggle button.
     const toggleBtn = document.getElementById('darkModeToggle');
     const body = document.body;

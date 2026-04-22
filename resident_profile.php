@@ -200,6 +200,7 @@ $age = calculateAge($resident['date_of_birth']);
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<link rel="icon" type="image/png" href="uploads/favicon.png">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo htmlspecialchars($fullName); ?> - <?php echo SITE_NAME; ?></title>
@@ -269,7 +270,8 @@ $age = calculateAge($resident['date_of_birth']);
             gap: 10px;
         }
     </style>
-    <!-- Dark Mode Init: must be in <head> to prevent flash of light mode -->
+    <!-- Dark Mode Init: must be in <head>
+<link rel="icon" type="image/png" href="uploads/favicon.png"> to prevent flash of light mode -->
     <script src="assets/js/dark-mode-init.js"></script>
     <style>
         .edit-field, .edit-field-conditional {

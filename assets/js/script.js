@@ -206,7 +206,8 @@ window.addEventListener('resize', () => {
 const themeToggle = document.getElementById('themeToggle');
 
 // Sync body class and icon with the html class already set by dark-mode-init.js
-// dark-mode-init.js runs in <head> and applies dark-mode to <html> immediately.
+// dark-mode-init.js runs in <head>
+// <link rel="icon" type="image/png" href="uploads/favicon.png"> and applies dark-mode to <html> immediately.
 // Here we just sync <body> and update the toggle icon — no flash, no re-animation.
 (function syncThemeOnLoad() {
     const isDark = document.documentElement.classList.contains('dark-mode');

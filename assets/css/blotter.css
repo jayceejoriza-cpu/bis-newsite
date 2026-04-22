@@ -919,6 +919,30 @@ body.dark-mode .input-group-text {
     color: #9ca3af;
 }
 
+/* Adjustments for the list container */
+.view-party-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.view-party-list .blotter-party-card:last-child {
+    margin-bottom: 0;
+}
+
+.view-party-list .text-blue-600 { /* Ensure link color is consistent */
+    color: var(--primary-color);
+}
+.view-party-list .text-blue-600:hover {
+    color: var(--primary-hover);
+}
+
+/* Dark mode adjustments for new elements */
+body.dark-mode .blotter-party-card {
+    background-color: var(--bg-secondary);
+    border-color: var(--border-color-dark);
+}
+
 /* Modal Z-Index Fix */
 .modal-backdrop {
     z-index: 1040 !important;
@@ -1315,6 +1339,13 @@ textarea.form-control {
 }
 
 /* Attachment Upload Styles */
+.attachment-upload-wrapper {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    align-items: flex-start;
+}
+
 .attachment-upload-zone {
     border: 2px dashed var(--border-color);
     border-radius: 12px;
@@ -1327,20 +1358,32 @@ textarea.form-control {
     margin-bottom: 20px;
 }
 
+.attachment-upload-zone.is-compact {
+    width: 80px;
+    height: 80px;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    margin-bottom: 0;
+}
+
 .attachment-upload-zone:hover, .attachment-upload-zone.dragover {
     border-color: var(--primary-color);
     background-color: rgba(59, 130, 246, 0.05);
 }
 
 .attachment-preview-container {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+    display: flex;
+    flex-wrap: wrap;
     gap: 15px;
-    margin-top: 15px;
+    margin-top: 0;
 }
 
 .attachment-preview-item {
     position: relative;
+    width: 80px;
+    height: 80px;
     aspect-ratio: 1;
     border-radius: 8px;
     overflow: hidden;

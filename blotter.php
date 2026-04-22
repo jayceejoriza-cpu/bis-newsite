@@ -119,6 +119,7 @@ try {
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<link rel="icon" type="image/png" href="uploads/favicon.png">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo $pageTitle; ?> - <?php echo SITE_NAME; ?></title>
@@ -128,7 +129,8 @@ try {
     <link rel="stylesheet" href="assets/css/style.css">
 <link rel="stylesheet" href="assets/css/blotter.css">
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Dark Mode Init: must be in <head> to prevent flash of light mode -->
+    <!-- Dark Mode Init: must be in <head>
+<link rel="icon" type="image/png" href="uploads/favicon.png"> to prevent flash of light mode -->
     <script src="assets/js/dark-mode-init.js"></script>
     <style>
 
@@ -618,16 +620,18 @@ try {
 
                             <div class="mt-6 border-t pt-4">
                                 <h6 class="party-title mb-3"><i class="fas fa-camera text-primary"></i> Initial Incident Proof (Photos/Evidence)</h6>
-                                <div id="incidentProofUploadZone" class="attachment-upload-zone">
-                                    <input type="file" id="incidentProofInput" name="incident_proof[]" multiple accept="image/png, image/jpeg" class="hidden">
-                                    <div class="upload-zone-content">
-                                        <i class="fas fa-cloud-upload-alt fa-3x mb-3 text-muted"></i>
-                                        <p class="mb-1"><strong>Drag and drop images</strong> here or <span class="text-primary">click to browse</span></p>
-                                        <p class="text-muted small">Supports JPG and PNG (Max 5MB each)</p>
+                                <div class="attachment-upload-wrapper">
+                                    <div id="incidentProofPreviewContainer" class="attachment-preview-container">
+                                        <!-- Previews will appear here -->
                                     </div>
-                                </div>
-                                <div id="incidentProofPreviewContainer" class="attachment-preview-container">
-                                    <!-- Previews will appear here -->
+                                    <div id="incidentProofUploadZone" class="attachment-upload-zone">
+                                        <input type="file" id="incidentProofInput" name="incident_proof[]" multiple accept="image/png, image/jpeg" class="hidden">
+                                        <div class="upload-zone-content">
+                                            <i class="fas fa-cloud-upload-alt fa-3x mb-3 text-muted"></i>
+                                            <p class="mb-1"><strong>Drag and drop images</strong> here or <span class="text-primary">click to browse</span></p>
+                                            <p class="text-muted small">Supports JPG and PNG (Max 5MB each)</p>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -659,20 +663,23 @@ try {
                 <div class="modal-body max-h-[70vh] overflow-y-auto p-6">
                     <form id="viewRecordForm" class="space-y-6">
                         <input type="hidden" id="view_record_id">
+                        
+                        <!-- Main Dashboard Grid -->
                         <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                            <!-- Left Column: Case Information (col-span-7) -->
+                            
+                            <!-- LEFT COLUMN: Incident & Evidence -->
                             <div class="lg:col-span-7 space-y-6">
-                                <!-- Basic Info -->
-                                <div>
+                                
+                                <!-- Basic Info Card -->
+                                <div class="bg-white p-5 border border-gray-100 rounded-xl shadow-sm">
                                     <h5 class="text-lg font-semibold text-blue-600 mb-4 flex items-center gap-2">
                                         <i class="fas fa-info-circle text-blue-500"></i> 
                                         Basic Information
                                     </h5>
                                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div>
-                                            <label class="block text-xs uppercase font-semibold text-gray-500 tracking-wide mb-1">Status</label>
-                                            <div class="bg-gray-50 p-3 rounded-lg text-sm border">
-                                                <input type="text" class="bg-transparent w-full border-none p-0 focus:ring-0 text-sm font-medium" id="view_status" readonly>
+                                            <label class="block text-[10px] uppercase font-bold text-gray-400 tracking-wider mb-1">Current Status</label>
+                                            <div id="view_status_badge_container">
                                             </div>
                                         </div>
                                         <div>
@@ -684,8 +691,8 @@ try {
                                     </div>
                                 </div>
 
-                                <!-- Incident Details -->
-                                <div>
+                                <!-- Incident Details Card -->
+                                <div class="bg-white p-5 border border-gray-100 rounded-xl shadow-sm">
                                     <h5 class="text-lg font-semibold text-blue-600 mb-4 flex items-center gap-2">
                                         <i class="fas fa-exclamation-triangle text-yellow-500"></i> 
                                         Incident Details
@@ -814,12 +821,18 @@ try {
                 <div class="sticky bottom-0 bg-white border-t p-4 z-10 shadow-2xl mt-auto">
                     <div class="flex justify-end gap-3">
                         <button type="button" class="px-6 py-2 bg-gray-500 hover:bg-gray-600 text-white font-medium rounded-lg transition-all duration-200" data-bs-dismiss="modal">
-                            Close
+                            Close Details
                         </button>
                         <?php if (hasPermission('perm_blotter_print')): ?>
-                        <button type="button" id="viewPrintBtn" class="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg flex items-center gap-2 transition-all duration-200" data-action="print">
+                        <button type="button" id="btnPrintCFA" class="px-8 py-2 bg-gray-600 hover:bg-gray-700 text-white font-bold rounded-lg flex items-center gap-2 transition-all duration-200 shadow-lg shadow-gray-200" style="display: none;" data-action="print-cfa">
+                            <i class="fas fa-file-export"></i> 
+                            PRINT CFA / ENDORSEMENT
+                        </button>
+                        <?php endif; ?>
+                        <?php if (hasPermission('perm_blotter_print')): ?>
+                        <button type="button" id="viewPrintBtn" class="px-8 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg flex items-center gap-2 transition-all duration-200 shadow-lg shadow-blue-200" data-action="print">
                             <i class="fas fa-print"></i> 
-                            Print Record
+                            PRINT OFFICIAL RECORD
                         </button>
                         <?php endif; ?>
                     </div>
@@ -925,69 +938,6 @@ try {
     <script src="assets/js/table.js"></script>
     <script src="assets/js/blotter.js"></script>
     <script src="assets/js/edit-blotter.js"></script>
-
-    <script>
-    // Attachment Handling Logic for Create Modal
-    document.addEventListener('DOMContentLoaded', function() {
-        const uploadZone = document.getElementById('incidentProofUploadZone');
-        const fileInput = document.getElementById('incidentProofInput');
-        const previewContainer = document.getElementById('incidentProofPreviewContainer');
-
-        let selectedFiles = []; // Persistent list of files to be uploaded
-
-        if (uploadZone && fileInput) {
-            uploadZone.addEventListener('click', () => fileInput.click());
-
-            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-                uploadZone.addEventListener(eventName, e => { e.preventDefault(); e.stopPropagation(); }, false);
-            });
-
-            uploadZone.addEventListener('dragover', () => uploadZone.classList.add('dragover'));
-            uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('dragover'));
-            uploadZone.addEventListener('drop', (e) => {
-                uploadZone.classList.remove('dragover');
-                addFiles(e.dataTransfer.files);
-            });
-
-            fileInput.addEventListener('change', e => addFiles(e.target.files));
-        }
-
-        function addFiles(files) {
-            Array.from(files).forEach(file => {
-                if (file.type.startsWith('image/')) {
-                    selectedFiles.push(file);
-                }
-            });
-            updateUI();
-        }
-
-        function removeFile(index) {
-            selectedFiles.splice(index, 1);
-            updateUI();
-        }
-
-        function updateUI() {
-            // Sync the file input with our master list using DataTransfer
-            const dt = new DataTransfer();
-            selectedFiles.forEach(file => dt.items.add(file));
-            fileInput.files = dt.files;
-
-            // Re-render previews
-            previewContainer.innerHTML = '';
-            selectedFiles.forEach((file, index) => {
-                const reader = new FileReader();
-                reader.onload = e => {
-                    const item = document.createElement('div');
-                    item.className = 'attachment-preview-item';
-                    item.innerHTML = `<img src="${e.target.result}"><button type="button" class="remove-btn"><i class="fas fa-times"></i></button>`;
-                    item.querySelector('.remove-btn').onclick = () => removeFile(index);
-                    previewContainer.appendChild(item);
-                };
-                reader.readAsDataURL(file);
-            });
-        }
-    });
-    </script>
     <script>
     // Print data from PHP - fixes PHP-in-JS syntax issue
     window.blotterPrintData = {
@@ -1053,6 +1003,7 @@ try {
                 <!DOCTYPE html>
                 <html>
                 <head>
+<link rel="icon" type="image/png" href="uploads/favicon.png">
                     <title>Blotter Record - ${recordNo}</title>
                     <style>
                         @page { size: A4; margin: 1in; }
