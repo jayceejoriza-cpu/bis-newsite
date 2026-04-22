@@ -723,10 +723,12 @@ $age = calculateAge($resident['date_of_birth']);
                                           <option value="Cohabitation" <?php echo $resident['civil_status'] == 'Cohabitation' ? 'selected' : ''; ?>>Cohabitation</option>
                                     </select>
                                 </div>
-                                <div class="info-item adult-only" id="spouseNameGroup">
+                                <div class="info-item adult-only position-relative" id="spouseNameGroup" style="position: relative;">
                                     <label id="spouseNameLabel">Spouse Name</label>
                                     <p class="view-field"><?php echo htmlspecialchars($resident['spouse_name'] ?: 'N/A'); ?></p>
-                                    <input type="text" name="spouse_name" id="spouseNameInput" class="form-control edit-field" value="<?php echo htmlspecialchars($resident['spouse_name'] ?? ''); ?>" style="display:none;">
+                                    <input type="hidden" id="spouseNameInputId" name="spouseResidentId" value="<?php echo htmlspecialchars($resident['spouse_resident_id'] ?? ''); ?>">
+                                    <input type="text" name="spouse_name" id="spouseNameInput" class="form-control edit-field" value="<?php echo htmlspecialchars($resident['spouse_name'] ?? ''); ?>" style="display:none;" autocomplete="off">
+                                    <div id="spouseNameDropdown" class="autocomplete-dropdown" style="display: none;"></div>
                                 </div>
                                 <div class="info-item position-relative" style="position: relative;">
                                     <label>Father's Name</label>
@@ -1498,7 +1500,7 @@ $age = calculateAge($resident['date_of_birth']);
         /**
          * Setup Autocomplete functionality for resident search fields
          */
-        function setupAutocomplete(inputId, dropdownId, hiddenId) {
+        function setupAutocomplete(inputId, dropdownId, hiddenId, onlyAdult = false) {
             const input = document.getElementById(inputId);
             const dropdown = document.getElementById(dropdownId);
             const hidden = document.getElementById(hiddenId);
@@ -1517,7 +1519,11 @@ $age = calculateAge($resident['date_of_birth']);
                 }
 
                 timeout = setTimeout(() => {
-                    fetch(`model/search_residents.php?search=${encodeURIComponent(query)}`)
+                    let url = `model/search_residents.php?search=${encodeURIComponent(query)}`;
+                    if (onlyAdult) {
+                        url += '&filter=adult';
+                    }
+                    fetch(url)
                         .then(res => res.json())
                         .then(data => {
                             dropdown.innerHTML = '';
@@ -1562,6 +1568,7 @@ $age = calculateAge($resident['date_of_birth']);
             // Initialize dropdowns for family and household fields
             setupAutocomplete('fatherName', 'fatherNameDropdown', 'fatherNameId');
             setupAutocomplete('motherName', 'motherNameDropdown', 'motherNameId');
+            setupAutocomplete('spouseNameInput', 'spouseNameDropdown', 'spouseNameInputId', true);
             setupAutocomplete('landlordName', 'landlordNameDropdown', 'landlordNameId');
         });
     </script>

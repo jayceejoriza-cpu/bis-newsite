@@ -75,6 +75,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     setupAutocomplete('fatherName', 'fatherNameDropdown', 'Male', true);
     setupAutocomplete('motherName', 'motherNameDropdown', 'Female', true);
+    setupAutocomplete('spouseName', 'spouseNameDropdown', null, false, true);
     setupAutocomplete('landlordName', 'landlordNameDropdown');
     
     console.log('Create Resident page loaded successfully');
@@ -1298,7 +1299,7 @@ function applyPhoneNumberFormatting(input) {
 // ===================================
 // Autocomplete Setup
 // ===================================
-function setupAutocomplete(inputId, dropdownId, filterSex = null, requireOlder = false) {
+function setupAutocomplete(inputId, dropdownId, filterSex = null, requireOlder = false, onlyAdult = false) {
     const input = document.getElementById(inputId);
     const dropdown = document.getElementById(dropdownId);
     let timeout = null;
@@ -1330,6 +1331,9 @@ function setupAutocomplete(inputId, dropdownId, filterSex = null, requireOlder =
             let url = `${basePath}search_residents.php?search=${encodeURIComponent(query)}&include_deceased=true`;
             if (requireOlder && currentDob) {
                 url += `&dob_before=${encodeURIComponent(currentDob)}`;
+            }
+            if (onlyAdult) {
+                url += `&filter=adult`;
             }
             
             fetch(url)

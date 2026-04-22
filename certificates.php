@@ -117,6 +117,15 @@ foreach ($certificateTypes as $cert) {
     }
     $groupedCertificates[$category][] = $cert;
 }
+
+// Fetch Active Kagawads for selection in modals
+$kagawads = [];
+$kagStmt = $conn->query("SELECT fullname FROM barangay_officials WHERE position = 'Kagawad' AND status = 'Active' ORDER BY fullname ASC");
+if ($kagStmt) {
+    while ($kRow = $kagStmt->fetch_assoc()) {
+        $kagawads[] = $kRow['fullname'];
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -832,6 +841,17 @@ foreach ($certificateTypes as $cert) {
                             </div>
                             <div class="resident-dropdown" id="oathResidentDropdown" style="display:none;"></div>
                         </div>
+                    </div>
+                    <div class="cert-field-group">
+                        <label class="cert-field-label">WITNESS (KAGAWAD) <span class="required-star">*</span></label>
+                        <select id="oathWitness" class="cert-input" required>
+                            <option value="" disabled selected>Select Kagawad</option>
+                            <?php foreach ($kagawads as $kag): ?>
+                                <option value="<?php echo htmlspecialchars($kag); ?>">
+                                    HON. <?php echo htmlspecialchars(strtoupper($kag)); ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
                     </div>
                     <div class="cert-field-group">
                         <label class="cert-field-label">ISSUED DATE <span class="required-star">*</span></label>
