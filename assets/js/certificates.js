@@ -1193,6 +1193,7 @@ document.addEventListener('DOMContentLoaded', function () {
     var oathIdInput      = document.getElementById('oathResidentId');
     var oathDropdown     = document.getElementById('oathResidentDropdown');
     var oathResidentBtn  = document.getElementById('oathResidentBtn');
+    var oathWitnessInput = document.getElementById('oathWitness');
     var oathDateInput    = document.getElementById('oathDate');
     var oathPurposeInput = document.getElementById('oathPurpose');
     var oathPrintBtn     = document.getElementById('oathPrintBtn');
@@ -1204,6 +1205,7 @@ document.addEventListener('DOMContentLoaded', function () {
         oathModalEl.addEventListener('show.bs.modal', function () {
             if (oathNameInput)    oathNameInput.value    = '';
             if (oathIdInput)      oathIdInput.value      = '';
+            if (oathWitnessInput) oathWitnessInput.value = '';
             if (oathDropdown)     { oathDropdown.innerHTML = ''; oathDropdown.style.display = 'none'; }
             if (oathDateInput)    oathDateInput.value    = getTodayDate();
             if (oathPurposeInput) oathPurposeInput.value = 'Oath of Undertaking (RA 11261)';
@@ -1317,12 +1319,19 @@ document.addEventListener('DOMContentLoaded', function () {
             var residentId = oathIdInput      ? oathIdInput.value.trim()      : '';
             var date       = oathDateInput    ? oathDateInput.value.trim()    : '';
             var purpose    = oathPurposeInput ? oathPurposeInput.value.trim() : '';
+            var witness    = oathWitnessInput ? oathWitnessInput.value.trim() : '';
             
             if (!residentId) { alert('Please select a resident from the list.'); return; }
+            if (!witness) { alert('Please select a witness (Kagawad).'); return; }
             if (!date) { alert('Please select a date.'); return; }
             if (!purpose) { alert('Please enter the purpose type.'); return; }
 
-            var params = new URLSearchParams({ resident_id: residentId, date: date, purpose: purpose });
+            var params = new URLSearchParams({ 
+                resident_id: residentId, 
+                date: date, 
+                purpose: purpose,
+                witness: witness
+            });
             logCertificateRequest(residentId, 'oath', purpose, function() {
                 window.location.href = 'certifications/certificate-oathofundertaking.php?' + params.toString();
             });

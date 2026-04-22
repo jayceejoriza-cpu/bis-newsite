@@ -397,10 +397,12 @@ if (isset($conn)) {
                                         </select>
                                     </div>
                                 </div>
-                                <div class="col-md-3 adult-only" id="spouseNameGroup" style="display: none;">
-                                    <div class="form-group">
+                                <div class="col-md-3 adult-only position-relative" id="spouseNameGroup" style="display: none; position: relative;">
+                                    <div class="form-group position-relative">
                                         <label for="spouseName">Spouse Name</label>
-                                        <input type="text" id="spouseName" name="spouseName" class="form-control">
+                                        <input type="hidden" id="spouseNameId" name="spouseResidentId" value="">
+                                        <input type="text" id="spouseName" name="spouseName" class="form-control" autocomplete="off">
+                                        <div id="spouseNameDropdown" class="autocomplete-dropdown" style="display: none;"></div>
                                     </div>
                                 </div>
                                 <div class="col-md-3">

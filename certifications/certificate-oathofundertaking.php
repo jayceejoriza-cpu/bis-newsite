@@ -28,6 +28,7 @@ try {
 // ============================================
 $resident_id = isset($_GET['resident_id']) ? intval($_GET['resident_id']) : 0;
 $cert_date   = isset($_GET['date'])        ? $_GET['date']                : date('Y-m-d');
+$witness_name = isset($_GET['witness'])    ? trim($_GET['witness'])       : '';
 
 if ($resident_id <= 0) {
     die("Invalid resident ID.");
@@ -580,8 +581,11 @@ $birthdateFmt = !empty($resident['birthdate'])
                                         
                                         <div class="signature-space-small"></div>
                                         
-                                        <div class="sig-name">FOR HON. JUAN DELA CRUZ</div>
+                                        <?php if (!empty($witness_name)): ?>
+                                            <div class="sig-name">HON. <?= strtoupper(htmlspecialchars($witness_name)) ?></div>
                                         <div class="sig-title">Barangay Kagawad</div>
+                                        <?php endif; ?>
+                                        
                                     </div>
 
                                 </div>
