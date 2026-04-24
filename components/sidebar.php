@@ -107,12 +107,12 @@ $show_settings = $can_view_brgy_info || $can_view_activity_logs || $can_view_arc
             </li>
             <?php endif; ?>
 
-            <!-- ── Service Requests ── -->
+            <!-- ── Request History ── -->
             <?php if (hasPermission('perm_req_view')): ?>
             <li class="nav-item <?php echo $current_page === 'requests.php' ? 'active' : ''; ?>">
                 <a href="requests.php" class="nav-link">
                     <i class="fas fa-file-alt"></i>
-                    <span>Service Requests</span>
+                    <span>Request History</span>
                 </a>
             </li>
             <?php endif; ?>

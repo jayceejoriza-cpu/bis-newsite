@@ -12,7 +12,7 @@ document.addEventListener('DOMContentLoaded', function() {
         responsive: true,
         defaultFilter: (row) => {
             const urlParams = new URLSearchParams(window.location.search);
-            const hasFilters = urlParams.has('certificate') || urlParams.has('purpose') || urlParams.has('from_date') || urlParams.has('to_date');
+            const hasFilters = urlParams.has('certificate') || urlParams.has('purpose') || urlParams.has('filter_user') || urlParams.has('from_date') || urlParams.has('to_date');
             if (hasFilters) return true; // Show all returned records if specific URL filters are active
             
             const rowYear = parseInt(row.getAttribute('data-year'), 10);
@@ -54,12 +54,14 @@ function loadFiltersFromUrl() {
     
     setVal('filterCertificate', urlParams.get('certificate') || '');
     setVal('filterPurpose', urlParams.get('purpose') || '');
+    setVal('filterUser', urlParams.get('filter_user') || '');
     setVal('filterFromDate', urlParams.get('from_date') || '');
     setVal('filterToDate', urlParams.get('to_date') || '');
     
     let activeFiltersCount = 0;
     if (urlParams.get('certificate')) activeFiltersCount++;
     if (urlParams.get('purpose')) activeFiltersCount++;
+    if (urlParams.get('filter_user')) activeFiltersCount++;
     if (urlParams.get('from_date')) activeFiltersCount++;
     if (urlParams.get('to_date')) activeFiltersCount++;
     
@@ -206,12 +208,14 @@ function applyAdvancedFilters() {
     // Sync filters to URL params for server-side filtering (reloads page)
     const certificate = document.getElementById('filterCertificate')?.value || '';
     const purpose = document.getElementById('filterPurpose')?.value || '';
+    const user = document.getElementById('filterUser')?.value || '';
     const fromDate = document.getElementById('filterFromDate')?.value || '';
     const toDate = document.getElementById('filterToDate')?.value || '';
 
     let count = 0;
     if (certificate) count++;
     if (purpose) count++;
+    if (user) count++;
     if (fromDate) count++;
     if (toDate) count++;
 
@@ -224,6 +228,7 @@ function applyAdvancedFilters() {
     const params = new URLSearchParams();
     if (certificate) params.set('certificate', certificate);
     if (purpose) params.set('purpose', purpose);
+    if (user) params.set('filter_user', user);
     if (fromDate) params.set('from_date', fromDate);
     if (toDate) params.set('to_date', toDate);
 
@@ -237,6 +242,7 @@ function clearAdvancedFilters() {
     const setVal = (id, val) => { const el = document.getElementById(id); if (el) el.value = val; };
     setVal('filterCertificate', '');
     setVal('filterPurpose', '');
+    setVal('filterUser', '');
     setVal('filterFromDate', '');
     setVal('filterToDate', '');
 

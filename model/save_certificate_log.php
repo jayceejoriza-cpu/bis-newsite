@@ -70,17 +70,18 @@ $certificate_id = 1;
 // Generate Reference No
 $ref_no = 'REQ-' . date('Ymd') . '-' . rand(1000, 9999);
 $date_requested = date('Y-m-d H:i:s');
+$created_by = $_SESSION['username'] ?? 'System';
 
 try {
     // Insert Request into certificate_requests table
     // Using certificate_id = 1 as default and storing certificate_name for proper tracking
     $stmt = $conn->prepare("
         INSERT INTO certificate_requests 
-        (reference_no, resident_id, certificate_id, certificate_name, purpose, date_requested, created_at) 
-        VALUES (?, ?, ?, ?, ?, ?, NOW())
+        (reference_no, resident_id, certificate_id, certificate_name, purpose, created_by, date_requested, created_at) 
+        VALUES (?, ?, ?, ?, ?, ?, ?, NOW())
     ");
     
-    $stmt->bind_param("siisss", $ref_no, $resident_id, $certificate_id, $certificate_name, $purpose, $date_requested);
+    $stmt->bind_param("siissss", $ref_no, $resident_id, $certificate_id, $certificate_name, $purpose, $created_by, $date_requested);
     
     if ($stmt->execute()) {
         $resStmt = $conn->prepare("SELECT CONCAT(first_name, ' ', IFNULL(CONCAT(middle_name, ' '), ''), last_name, IFNULL(CONCAT(' ', suffix), '')) AS full_name FROM residents WHERE id = ?");

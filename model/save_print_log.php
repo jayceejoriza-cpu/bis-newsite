@@ -20,10 +20,11 @@ if ($resident_id <= 0 || empty($cert_title)) {
 
 // Generate Reference No
 $ref_no = 'REQ-' . date('Ymd') . '-' . rand(1000, 9999);
+$created_by = $_SESSION['username'] ?? 'System';
 
 // Insert Request - now using certificate_name directly
-$stmt = $conn->prepare("INSERT INTO certificate_requests (reference_no, resident_id, certificate_name, purpose, date_requested, created_at) VALUES (?, ?, ?, ?, ?, NOW())");
-$stmt->bind_param("sisss", $ref_no, $resident_id, $cert_title, $purpose, $date_requested);
+$stmt = $conn->prepare("INSERT INTO certificate_requests (reference_no, resident_id, certificate_name, purpose, created_by, date_requested, created_at) VALUES (?, ?, ?, ?, ?, ?, NOW())");
+$stmt->bind_param("sissss", $ref_no, $resident_id, $cert_title, $purpose, $created_by, $date_requested);
 
 if ($stmt->execute()) {
     $resStmt = $conn->prepare("SELECT CONCAT(first_name, ' ', IFNULL(CONCAT(middle_name, ' '), ''), last_name, IFNULL(CONCAT(' ', suffix), '')) AS full_name FROM residents WHERE id = ?");

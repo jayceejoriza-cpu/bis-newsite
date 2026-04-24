@@ -496,6 +496,12 @@ $age = calculateAge($resident['date_of_birth']);
                                 <i class="fas fa-circle"></i>
                                 <?php echo htmlspecialchars($resident['activity_status'] ?? ''); ?>
                             </span>
+                            <?php if (!empty($resident['updated_at'])): ?>
+                            <span class="badge">
+                                <i class="fas fa-history"></i>
+                                LAST UPDATE: <?php echo strtoupper(date('M d, Y', strtotime($resident['updated_at']))); ?>
+                            </span>
+                            <?php endif; ?>
                         </div>
                     </div>
                 </div>
@@ -770,10 +776,12 @@ $age = calculateAge($resident['date_of_birth']);
                             <div class="minor-only" style="grid-column: 1 / -1; width: 100%;">
                             <h3 class="subsection-title" style="margin-top: 20px;"><i class="fas fa-user-shield"></i> Guardian Information</h3>
                             <div class="info-grid">
-                                <div class="info-item">
+                                <div class="info-item position-relative" style="position: relative;">
                                     <label>Guardian Name</label>
                                     <p class="view-field"><?php echo htmlspecialchars($resident['guardian_name'] ?: 'N/A'); ?></p>
-                                    <input type="text" name="guardian_name" class="form-control edit-field" value="<?php echo htmlspecialchars($resident['guardian_name'] ?? ''); ?>" style="display:none;">
+                                    <input type="hidden" id="guardianNameId" name="guardianResidentId" value="<?php echo htmlspecialchars($resident['guardian_resident_id'] ?? ''); ?>">
+                                    <input type="text" name="guardian_name" id="guardianNameInput" class="form-control edit-field" value="<?php echo htmlspecialchars($resident['guardian_name'] ?? ''); ?>" style="display:none;" autocomplete="off">
+                                    <div id="guardianNameDropdown" class="autocomplete-dropdown" style="display: none;"></div>
                                 </div>
                                 <div class="info-item">
                                     <label>Relationship to Guardian</label>

@@ -31,6 +31,18 @@ try {
     $whereConditions = ['1=1'];
     $params = [];
     
+    // Get filter values from URL
+    $filter_user = isset($_GET['filter_user']) ? trim($_GET['filter_user']) : '';
+
+    // Fetch all users for the filter dropdown
+    $all_users = [];
+    $userStmt = $pdo->query("SELECT username FROM users ORDER BY username ASC");
+    if ($userStmt) {
+        while ($u = $userStmt->fetch()) {
+            $all_users[] = $u['username'];
+        }
+    }
+
     if (!empty($_GET['certificate'])) {
         $whereConditions[] = 'cr.certificate_name LIKE ?';
         $params[] = '%' . $_GET['certificate'] . '%';
@@ -38,6 +50,10 @@ try {
     if (!empty($_GET['purpose'])) {
         $whereConditions[] = 'cr.purpose LIKE ?';
         $params[] = '%' . $_GET['purpose'] . '%';
+    }
+    if (!empty($filter_user)) {
+        $whereConditions[] = 'cr.created_by = ?';
+        $params[] = $filter_user;
     }
     if (!empty($_GET['from_date'])) {
         $whereConditions[] = 'DATE(cr.date_requested) >= ?';
@@ -65,6 +81,7 @@ try {
             CONCAT(r.first_name, ' ', IFNULL(CONCAT(r.middle_name, ' '), ''), r.last_name) AS resident_name,
             cr.certificate_name,
             cr.purpose,
+            cr.created_by,
             cr.date_requested
         FROM certificate_requests cr
         LEFT JOIN residents r ON cr.resident_id = r.id
@@ -214,7 +231,17 @@ try {
                                 <option value="Certificate for Vessel Docking">Certificate for Vessel Docking</option>
                             </select>
                         </div>
-                        
+
+                         <div class="filter-item">
+                            <label for="filterUser" style="font-size: 13px; font-weight: 500; color: var(--text-secondary); margin: 0;">User</label>
+                                        <select name="filter_user" id="filterUser" class="form-control" style="font-size: 13px; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border-color); background-color: var(--bg-primary); color: var(--text-primary);">
+                                            <option value="">All Users</option>
+                                            <?php foreach($all_users as $u): ?>
+                                                <option value="<?php echo htmlspecialchars($u); ?>" <?php echo $filter_user === $u ? 'selected' : ''; ?>><?php echo htmlspecialchars($u); ?></option>
+                                            <?php endforeach; ?>
+                                        </select>
+                        </div>
+
                         <div class="filter-item">
                             <label for="filterPurpose">Purpose</label>
                             <input type="text" id="filterPurpose" class="filter-select" placeholder="Enter Purpose">
@@ -222,12 +249,12 @@ try {
                         
                         <div class="filter-item">
                             <label for="filterFromDate">From Request Date</label>
-                            <input type="date" id="filterFromDate" class="filter-select">
+                            <input type="date" id="filterFromDate" class="filter-select" max="<?php echo date('Y-m-d'); ?>">
                         </div>
                         
                         <div class="filter-item">
                             <label for="filterToDate">To Request Date</label>
-                            <input type="date" id="filterToDate" class="filter-select">
+                            <input type="date" id="filterToDate" class="filter-select" max="<?php echo date('Y-m-d'); ?>">
                         </div>
                     </div>
                 </div>
@@ -251,6 +278,7 @@ try {
                             <th>Certificate</th>
                             <th>Purpose</th>
                             <th>Date Request</th>
+                            <th>User</th>
                         </tr>
                     </thead>
                     <tbody id="requestsTableBody">
@@ -261,14 +289,14 @@ try {
                         
                         if ($requestsError) { ?>
                                 <tr>
-                                    <td colspan="5" style="text-align: center; padding: 40px; color: #ef4444;">
+                                    <td colspan="6" style="text-align: center; padding: 40px; color: #ef4444;">
                                         <i class="fas fa-exclamation-triangle" style="font-size: 48px; margin-bottom: 16px;"></i>
                                         <p style="margin: 0;">Error loading requests</p>
                                     </td>
                                 </tr>
                         <?php } elseif (empty($requestsData)) { ?>
                                 <tr>
-                                    <td colspan="5" style="text-align: center; padding: 40px;">
+                                    <td colspan="6" style="text-align: center; padding: 40px;">
                                         <i class="fas fa-file-alt" style="font-size: 48px; color: #d1d5db; margin-bottom: 16px;"></i>
                                         <p style="color: #6b7280; font-size: 16px; margin: 0;">No requests found</p>
                                     </td>
@@ -291,6 +319,7 @@ try {
                                     <td><?= htmlspecialchars($row['certificate_name'] ?? 'N/A') ?></td>
                                     <td><?= htmlspecialchars($row['purpose'] ?? 'N/A') ?></td>
                                     <td><?= ($row['date_requested'] ? date('M d, Y g:i A', strtotime($row['date_requested'])) : 'N/A') ?></td>
+                                    <td><?= htmlspecialchars($row['created_by'] ?? 'N/A') ?></td>
                                 </tr>
                         <?php 
                             }
@@ -413,13 +442,13 @@ try {
                 }
                 
                 rowsToPrint.forEach((row, index) => {
-                    if (row.cells.length < 5) return;
+                    if (row.cells.length < 6) return;
                     const no = index + 1;
                     const resId = row.cells[0]?.textContent.trim() || '';
                     const name = row.cells[1]?.textContent.trim() || '';
                     const cert = row.cells[2]?.textContent.trim() || '';
                     const purpose = row.cells[3]?.textContent.trim() || '';
-                    const dateReq = row.cells[4]?.textContent.trim() || '';
+                    const dateReq = row.cells[4]?.textContent.trim() || '';  
 
                     rowsHtml += `
                         <tr style="display: table-row;">

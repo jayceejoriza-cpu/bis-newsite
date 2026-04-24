@@ -16,7 +16,7 @@ if (isset($conn)) {
         $currentDate = date('Y-m-d');
 
         // Updated query to join with residents table to get the organizer name
-        $query = "SELECT e.id, e.title, e.event_date, e.start_time, e.end_time, e.location, e.description, e.event_type, e.status,
+        $query = "SELECT e.id, e.title, e.event_date, e.start_time, e.end_time, e.location, e.description, e.event_type, e.status, e.organizer, e.approved_by,
                          TRIM(CONCAT(r.first_name, ' ', IFNULL(CONCAT(r.middle_name, ' '), ''), r.last_name, ' ', IFNULL(r.suffix, ''))) AS resident_name
                   FROM events e
                   LEFT JOIN residents r ON e.resident_id = r.id
@@ -33,6 +33,16 @@ if (isset($conn)) {
         
         while ($row = $res->fetch_assoc()) {
             $events[] = $row;
+        }
+
+        // Fetch active barangay officials for the "Approved By" dropdown
+        $officials = [];
+        $officialsQuery = "SELECT id, fullname FROM barangay_officials WHERE status = 'Active' ORDER BY fullname ASC";
+        $officialsResult = $conn->query($officialsQuery);
+        if ($officialsResult) {
+            while ($officialRow = $officialsResult->fetch_assoc()) {
+                $officials[] = $officialRow;
+            }
         }
     } catch (Throwable $e) {
         $eventError = $e->getMessage();
@@ -150,7 +160,6 @@ if (isset($conn)) {
                 <!-- Filter Tabs -->
                 <div class="filter-tabs no-print" style="display: flex; gap: 10px; margin-bottom: 20px;">
                     <button class="tab-btn active" data-filter="all">All</button>
-                    <button class="tab-btn" data-filter="Active">Rescheduled</button>
                     <button class="tab-btn" data-filter="Postponed">Postponed</button>
                 </div>
 
@@ -257,9 +266,9 @@ if (isset($conn)) {
                                     <td>
                                         <?php 
                                         if ($event['event_type'] === 'Barangay') {
-                                            echo 'Barangay Officials';
+                                            echo htmlspecialchars($event['organizer'] ?: '---');
                                         } else {
-                                            echo htmlspecialchars($event['resident_name'] ?? 'Unknown Resident');
+                                            echo htmlspecialchars($event['resident_name'] ?: 'Unknown Resident');
                                         }
                                         ?>
                                     </td>
@@ -374,6 +383,17 @@ if (isset($conn)) {
                     </div>
                 </div>
 
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 25px;">
+                    <div>
+                        <label style="display: block; font-weight: 600; color: var(--text-secondary); margin-bottom: 8px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;">Organizer</label>
+                        <p id="eventDetailOrganizer" style="font-weight: 500; color: var(--text-primary); margin: 0;"></p>
+                    </div>
+                    <div>
+                        <label style="display: block; font-weight: 600; color: var(--text-secondary); margin-bottom: 8px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;">Approved By</label>
+                        <p id="eventDetailApprovedBy" style="font-weight: 500; color: var(--text-primary); margin: 0;"></p>
+                    </div>
+                </div>
+
                 <div>
                     <label style="display: block; font-weight: 600; color: var(--text-secondary); margin-bottom: 8px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;">Location</label>
                     <p id="eventDetailLocation" style="font-weight: 500; color: var(--text-primary); margin: 0;"></p>
@@ -453,7 +473,7 @@ if (isset($conn)) {
                         </div>
                     </div>
 
-                    <div class="form-group">
+                    <div class="form-group" id="recurrenceGroup">
                         <label style="display: block; font-weight: 600; margin-bottom: 8px;">Recurrence</label>
                         <div style="display: flex; gap: 20px; margin-bottom: 10px;">
                             <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
@@ -479,6 +499,22 @@ if (isset($conn)) {
                             <input type="date" id="eventEndDate" class="form-control" min="<?php echo date('Y-m-d'); ?>">
                         </div>
                     </div> 
+                    <div id="organizerGroup">
+                        <div class="form-group" style="margin-bottom: 10px;">
+                            <label>Organizer</label>
+                            <input type="text" id="eventOrganizer" name="organizer" class="form-control" placeholder="e.g. ABC Company, Barangay Council">
+                        </div>
+
+                        <div class="form-group" style="margin-bottom: 10px;">
+                            <label>Approved By</label>
+                            <select id="eventApprovedBy" name="approved_by" class="form-control">
+                                <option value="">Select Official</option>
+                                <?php foreach ($officials as $official): ?>
+                                    <option value="<?php echo htmlspecialchars($official['id']); ?>">HON. <?php echo htmlspecialchars($official['fullname']); ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                    </div>
                     <div class="form-group"  style="margin-bottom: 10px;">
                         <label>Location<span style="color: red;"> *</span></label>
                         <input type="text" id="eventLocation" name="location" class="form-control" placeholder="e.g. Barangay Hall, Covered Court" required>
@@ -529,6 +565,8 @@ if (isset($conn)) {
         events_edit:    <?php echo hasPermission('perm_events_edit')    ? 'true' : 'false'; ?>,
         events_archive: <?php echo hasPermission('perm_events_archive') ? 'true' : 'false'; ?>
     };
+    window.officials = <?php echo json_encode($officials); ?>; // Pass officials to JS
+
     </script>
 
     <script>
@@ -538,6 +576,7 @@ if (isset($conn)) {
         const eventTypeInput = document.getElementById('eventType');
         const residentGroup = document.getElementById('residentSelectionGroup');
         const residentInput = document.getElementById('eventResidentName');
+        const organizerGroup = document.getElementById('organizerGroup');
         const residentIdInput = document.getElementById('eventResidentId');
         const dropdown = document.getElementById('eventResidentDropdown');
         const openSearchBtn = document.getElementById('openResidentSearchBtn');
@@ -592,6 +631,13 @@ if (isset($conn)) {
             tabBarangay.classList.add('active');
             tabResident.classList.remove('active');
             eventTypeInput.value = 'Barangay';
+            
+            // Only show organizer group if we are NOT editing
+            const isEdit = document.querySelector('input[name="event_id"]');
+            if (organizerGroup) {
+                organizerGroup.style.display = isEdit ? 'none' : 'block';
+            }
+
             residentGroup.style.display = 'none';
             residentInput.required = false;
         });
@@ -600,6 +646,7 @@ if (isset($conn)) {
             tabResident.classList.add('active');
             tabBarangay.classList.remove('active');
             eventTypeInput.value = 'Resident';
+            organizerGroup.style.display = 'none';
             residentGroup.style.display = 'block';
             residentInput.required = true;
         });
@@ -689,6 +736,8 @@ if (isset($conn)) {
                 dateTimeContainer.style.display = 'block';
                 eventActionStatus.value = 'Active';
 
+                document.getElementById('recurrenceGroup').style.display = 'block';
+
                 if (btnReschedule) btnReschedule.checked = false;
                 if (btnPostpone) btnPostpone.checked = false;
 
@@ -710,6 +759,14 @@ if (isset($conn)) {
                 modal.style.display = 'flex';
             });
         }
+
+        // Detect Edit action to hide recurrence
+        document.addEventListener('click', function(e) {
+            if (e.target.closest('[data-action="edit"]')) {
+                const recurrenceGroup = document.getElementById('recurrenceGroup');
+                if (recurrenceGroup) recurrenceGroup.style.display = 'none';
+            }
+        });
 
         // Recurrence UI Toggle
         document.querySelectorAll('input[name="recurrence_type"]').forEach(radio => {

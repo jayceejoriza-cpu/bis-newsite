@@ -436,9 +436,11 @@ if (isset($conn)) {
                                 <hr style="margin: 0 0 20px 0;">
                                 <div class="row">
                                     <div class="col-md-4">
-                                        <div class="form-group">
+                                        <div class="form-group position-relative">
                                             <label for="guardianName">Guardian's Full Name <span class="required">*</span></label>
-                                            <input type="text" id="guardianName" name="guardianName" class="form-control">
+                                            <input type="hidden" id="guardianNameId" name="guardianResidentId" value="">
+                                            <input type="text" id="guardianName" name="guardianName" class="form-control" autocomplete="off">
+                                            <div id="guardianNameDropdown" class="autocomplete-dropdown" style="display: none;"></div>
                                             <small class="form-hint">Required for minors</small>
                                         </div>
                                     </div>

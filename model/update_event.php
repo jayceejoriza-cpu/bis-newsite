@@ -19,6 +19,8 @@ try {
     $description = trim($_POST['description'] ?? '');
     $event_type = $_POST['event_type'] ?? 'Barangay';
     $resident_id = !empty($_POST['resident_id']) ? intval($_POST['resident_id']) : null;
+    $organizer = trim($_POST['organizer'] ?? '');
+    $approved_by = !empty($_POST['approved_by']) ? intval($_POST['approved_by']) : null;
     $status = $_POST['status'] ?? 'Active';
 
     if (!$id || empty($title) || empty($date) || empty($start_time) || empty($location)) {
@@ -57,8 +59,8 @@ try {
     }
 
     $updated_by = $_SESSION['user_id'] ?? 0;
-    $stmt = $conn->prepare("UPDATE events SET title=?, event_date=?, start_time=?, end_time=?, location=?, description=?, event_type=?, resident_id=?, updated_by=?, status=?, updated_at=NOW() WHERE id=?");
-    $stmt->bind_param("sssssssiisi", $title, $date, $start_time, $end_time, $location, $description, $event_type, $resident_id, $updated_by, $status, $id);
+    $stmt = $conn->prepare("UPDATE events SET title=?, event_date=?, start_time=?, end_time=?, location=?, description=?, event_type=?, resident_id=?, organizer=?, approved_by=?, updated_by=?, status=?, updated_at=NOW() WHERE id=?");
+    $stmt->bind_param("sssssssisisi i", $title, $date, $start_time, $end_time, $location, $description, $event_type, $resident_id, $organizer, $approved_by, $updated_by, $status, $id);
 
     if ($stmt->execute()) {
         // Log Activity

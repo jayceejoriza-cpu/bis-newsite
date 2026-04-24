@@ -217,6 +217,7 @@ document.addEventListener('DOMContentLoaded', () => {
 setupAutocomplete('fatherName', 'fatherNameDropdown', 'Male', true);
 setupAutocomplete('motherName', 'motherNameDropdown', 'Female', true);
 setupAutocomplete('spouseNameInput', 'spouseNameDropdown', null, false, true);
+setupAutocomplete('guardianNameInput', 'guardianNameDropdown', null, false, true);
 });
 
 function updateProfileAgeVisibility() {
@@ -445,6 +446,7 @@ function saveProfile() {
     // Family
     formData.append('civilStatus', rawData.get('civil_status') || '');
     formData.append('spouseName', rawData.get('spouse_name') || '');
+    formData.append('spouseResidentId', rawData.get('spouseResidentId') || '');
     formData.append('fatherName', rawData.get('father_name') || rawData.get('fatherName') || '');
     formData.append('motherName', rawData.get('mother_name') || rawData.get('motherName') || '');
     formData.append('fatherResidentId', rawData.get('father_resident_id') || rawData.get('fatherResidentId') || '');
@@ -503,6 +505,7 @@ function saveProfile() {
     formData.append('pwdIdNumber', rawData.get('pwd_id_number') || rawData.get('pwdIdNumber') || '');
     formData.append('activityStatus', window.RESIDENT_DATA.activityStatus);
     formData.append('guardianName', rawData.get('guardian_name') || '');
+    formData.append('guardianResidentId', rawData.get('guardianResidentId') || '');
     formData.append('guardianRelationship', rawData.get('guardian_relationship') || '');
     formData.append('guardianContact', rawData.get('guardian_contact') || '');
     formData.append('existingPhoto', window.RESIDENT_DATA.existingPhoto);
@@ -806,7 +809,7 @@ function selectHouseholdProfile(index) {
         <div class="form-group mb-2" style="margin-top:12px;"><label style="font-size:12px;color:var(--text-secondary);font-weight:600;text-transform:uppercase;margin-bottom:4px;display:block;">Household Head</label><div style="font-weight:600;color:var(--text-primary);">${hh.head_name || 'N/A'}</div></div>
         <div class="form-group full-width" style="margin-top:12px;"><label style="font-size:12px;color:var(--text-secondary);font-weight:600;text-transform:uppercase;margin-bottom:4px;display:block;">Address</label><div style="font-size:13px;color:var(--text-primary);">${hh.address || 'N/A'}</div></div>
         <div class="form-group full-width" style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border-color);">
-            <label for="relationshipToHead" style="font-size:13px;font-weight:600;margin-bottom:8px;color:var(--text-primary);display:block;">Relationship to Household Head <span style="color:#ef4444;">*</span></label>
+            <label for="relationshipToHead" style="font-size:13px;font-weight:600;margin-bottom:8px;color:var(--text-primary);display:block;">Relationship of Members to Household Head <span style="color:#ef4444;">*</span></label>
             <input type="text" id="relationshipToHead" class="form-control" placeholder="e.g. Son, Daughter, Spouse, Sibling..." oninput="document.getElementById('householdRelationship').value=this.value;" style="max-width:400px;width:100%;">
         </div>
     `;

@@ -370,6 +370,8 @@ document.addEventListener('DOMContentLoaded', function() {
             formData.append('location', document.getElementById('eventLocation').value);
             formData.append('event_type', type);
             formData.append('resident_id', document.getElementById('eventResidentId').value);
+            formData.append('organizer', document.getElementById('eventOrganizer').value); // New field
+            formData.append('approved_by', document.getElementById('eventApprovedBy').value); // New field
             
             // Include the status (Active or Postponed)
             const statusInput = document.getElementById('eventActionStatus');
@@ -545,6 +547,9 @@ window.showEventDetails = function(id) {
         document.getElementById('eventDetailLocation').textContent = eventObj.extendedProps.location || 'Not specified';
         
         // Format Date
+        document.getElementById('eventDetailOrganizer').textContent = eventObj.extendedProps.organizer || 'Not specified'; // New field
+        const approverName = eventObj.extendedProps.approved_by_name;
+        document.getElementById('eventDetailApprovedBy').textContent = approverName ? 'HON. ' + approverName : 'Not specified';
         const start = eventObj.start;
         document.getElementById('eventDetailDate').textContent = start.toLocaleDateString('en-US', { 
             weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' 
@@ -603,6 +608,8 @@ window.editEvent = function(id) {
         
         document.getElementById('eventDesc').value = eventObj.extendedProps.description || '';
         document.getElementById('eventLocation').value = eventObj.extendedProps.location || '';
+        document.getElementById('eventOrganizer').value = eventObj.extendedProps.organizer || ''; // New field
+        document.getElementById('eventApprovedBy').value = eventObj.extendedProps.approved_by || ''; // New field
         
         if (eventObj.extendedProps.event_type === 'Resident') {
             document.getElementById('tabResident').click();
@@ -613,6 +620,9 @@ window.editEvent = function(id) {
             document.getElementById('eventResidentId').value = '';
             document.getElementById('eventResidentName').value = '';
         }
+
+        // Hide organizer and approved by fields when editing
+        if (document.getElementById('organizerGroup')) document.getElementById('organizerGroup').style.display = 'none';
         
         // Setup UI for Reschedule/Postpone logic in Edit mode
         const actionGroup = document.getElementById('editEventActionGroup');

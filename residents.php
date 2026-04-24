@@ -365,7 +365,7 @@ try {
                         
                         <div class="filter-item">
                             <label for="filterDateOfBirth">Date of Birth</label>
-                            <input type="date" id="filterDateOfBirth" class="filter-select">
+                            <input type="date" id="filterDateOfBirth" class="filter-select" max="<?php echo date('Y-m-d'); ?>">
                         </div>
                         
                         <div class="filter-item">

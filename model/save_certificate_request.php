@@ -72,6 +72,7 @@ try {
             certificate_name,
             purpose,
             field_values,
+            created_by,
             date_requested,
             created_at
         ) VALUES (
@@ -80,6 +81,7 @@ try {
             :certificate_name,
             :purpose,
             :field_values,
+            :created_by,
             NOW(),
             NOW()
         )
@@ -90,7 +92,8 @@ try {
         ':resident_id' => $resident_id,
         ':certificate_name' => $certificate_name,
         ':purpose' => $purpose,
-        ':field_values' => $field_values
+        ':field_values' => $field_values,
+        ':created_by' => $_SESSION['username'] ?? 'System'
     ]);
     
     $request_id = $pdo->lastInsertId();

@@ -124,6 +124,15 @@
     gap: 6px;
 }
 
+.badge.badge-alive .fa-circle {
+    color: #22c55e;
+}
+
+.badge.badge-deceased .fa-circle {
+    color: #ef4444;
+}
+
+
 .profile-badges .badge i {
     font-size: 12px;
 }

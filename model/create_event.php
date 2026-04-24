@@ -18,6 +18,8 @@ try {
     $description = trim($_POST['description'] ?? '');
     $event_type = $_POST['event_type'] ?? 'Barangay';
     $resident_id = !empty($_POST['resident_id']) ? intval($_POST['resident_id']) : null;
+    $organizer = trim($_POST['organizer'] ?? '');
+    $approved_by = !empty($_POST['approved_by']) ? intval($_POST['approved_by']) : null;
     $status = $_POST['status'] ?? 'Active';
 
     if (empty($title) || empty($date) || empty($start_time) || empty($location)) {
@@ -99,12 +101,12 @@ try {
     $success_count = 0;
 
     $target_date = $date; // Initialize to prevent reference warning
-    $stmt = $conn->prepare("INSERT INTO events (title, event_date, start_time, end_time, location, description, event_type, resident_id, created_by, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())");
+    $stmt = $conn->prepare("INSERT INTO events (title, event_date, start_time, end_time, location, description, event_type, resident_id, organizer, approved_by, created_by, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())");
     if (!$stmt) {
         throw new Exception("Insert prepare failed: " . $conn->error);
     }
 
-    $stmt->bind_param("sssssssiis", $title, $target_date, $start_time, $end_time, $location, $description, $event_type, $resident_id, $created_by, $status);
+    $stmt->bind_param("sssssssisisi", $title, $target_date, $start_time, $end_time, $location, $description, $event_type, $resident_id, $organizer, $approved_by, $created_by, $status);
 
     foreach ($dates_to_schedule as $target_date) {
         if ($stmt->execute()) $success_count++;

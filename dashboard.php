@@ -1,4 +1,14 @@
 <!-- Dashboard Content Component -->
+<?php 
+// Dynamically determine the start year based on existing certificate data, defaulting to 2026
+$earliestYear = 2026;
+try {
+    $minYear = $pdo->query("SELECT MIN(YEAR(date_requested)) FROM certificate_requests")->fetchColumn();
+    if ($minYear && $minYear > 0) {
+        $earliestYear = min($earliestYear, (int)$minYear);
+    }
+} catch (Exception $e) {}
+?>
 <div class="dashboard-content">
 
     <!-- Official Print Header -->
@@ -89,7 +99,7 @@
                 <i class="fas fa-home"></i> Households
             </button>
             <button class="report-tab-btn" data-tab="certificates">
-                <i class="fas fa-certificate"></i> Certificate Requests
+                <i class="fas fa-certificate"></i> Request History
             </button>
             <button class="report-tab-btn" data-tab="blotter">
                 <i class="fas fa-file-alt"></i> Blotter Records
@@ -115,9 +125,9 @@
                             <div class="report-chart-box-title" style="margin-bottom:0;">Total Population Trend</div>
                             <select id="populationYearSelect" class="year-select" style="font-size:13px;padding:5px 10px;border:1px solid var(--border-color);border-radius:4px;background:var(--bg-secondary);color:var(--text-primary);">
                                 <?php 
-                                $currentYear = date('Y');
-                                for($y = $currentYear; $y >= $currentYear - 3; $y--) {
-                                    echo "<option value=\"$y\">$y</option>";
+                               for($y = $currentYear; $y >= 2026; $y--) {
+                                    $selected = ($y == $currentYear) ? 'selected' : '';
+                                    echo "<option value=\"$y\" $selected>$y</option>";
                                 }
                                 ?>
                             </select>
@@ -579,8 +589,7 @@
                         <select id="certificateYearFilter" class="form-select form-select-sm ms-2 d-inline-block w-auto">
                             <option value="all" <?php echo (isset($_GET['cert_year']) && $_GET['cert_year'] === 'all') ? 'selected' : ''; ?>>All Time</option>
                             <?php 
-                            $currentYear = date('Y');
-                            for($y = $currentYear; $y >= $currentYear - 3; $y--) {
+                            for($y = $currentYear; $y >= $earliestYear; $y--) {
                                 $isDefault = !isset($_GET['cert_year']) && $y == $currentYear;
                                 $selected = ($isDefault || (isset($_GET['cert_year']) && $_GET['cert_year'] == $y)) ? 'selected' : '';
                                 echo "<option value=\"$y\" $selected>$y</option>";

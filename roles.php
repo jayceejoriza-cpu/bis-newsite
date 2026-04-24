@@ -187,7 +187,7 @@ if ($rolesResult) {
                             <!-- Office Management (Users) -->
                             <div class="perm-subgroup">
                                 <div class="perm-subgroup-header">
-                                    <span>Office Management</span>
+                                    <span>Users</span>
                                     <div class="perm-add-wrapper">
                                         <button class="perm-add-btn" type="button" title="Add permission"><i class="fas fa-plus"></i></button>
                                         <div class="perm-add-dropdown">

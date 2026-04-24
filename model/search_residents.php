@@ -11,7 +11,7 @@ $certificate_type = isset($_GET['certificate_type']) ? trim($_GET['certificate_t
 $filter = isset($_GET['filter']) ? trim($_GET['filter']) : '';
 
 try {
-    $query = "SELECT id, resident_id, first_name, middle_name, last_name, suffix, sex, date_of_birth, activity_status, current_address, mobile_number 
+    $query = "SELECT id, resident_id, first_name, middle_name, last_name, suffix, sex, date_of_birth, activity_status, current_address, mobile_number, fourps_member 
               FROM residents 
               WHERE 1=1";
     

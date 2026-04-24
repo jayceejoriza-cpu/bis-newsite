@@ -164,6 +164,8 @@ try {
     // Capture the hidden inputs we added to the JS FormData
     $fatherResidentId = !empty($_POST['fatherResidentId']) ? intval($_POST['fatherResidentId']) : null;
     $motherResidentId = !empty($_POST['motherResidentId']) ? intval($_POST['motherResidentId']) : null;
+    $spouseResidentId = !empty($_POST['spouseResidentId']) ? intval($_POST['spouseResidentId']) : null;
+    $guardianResidentId = !empty($_POST['guardianResidentId']) ? intval($_POST['guardianResidentId']) : null;
     // Guardian Information
     $guardianName = $conn->real_escape_string(trim($_POST['guardianName'] ?? ''));
     $guardianRelationship = $conn->real_escape_string(trim($_POST['guardianRelationship'] ?? ''));
@@ -338,12 +340,14 @@ try {
             current_address = '$currentAddress',
             civil_status = '$civilStatus',
             spouse_name = " . ($spouseName ? "'$spouseName'" : "NULL") . ",
+            spouse_resident_id = " . ($spouseResidentId ? $spouseResidentId : "NULL") . ",
             father_name = " . ($fatherName ? "'$fatherName'" : "NULL") . ",
             father_resident_id = " . ($fatherResidentId ? $fatherResidentId : "NULL") . ",
             mother_name = " . ($motherName ? "'$motherName'" : "NULL") . ",
             mother_resident_id = " . ($motherResidentId ? $motherResidentId : "NULL") . ",
             number_of_children = $numberOfChildren,
             guardian_name = " . ($guardianName ? "'$guardianName'" : "NULL") . ",
+            guardian_resident_id = " . ($guardianResidentId ? $guardianResidentId : "NULL") . ",
             guardian_relationship = " . ($guardianRelationship ? "'$guardianRelationship'" : "NULL") . ",
             guardian_contact = " . ($guardianContact ? "'$guardianContact'" : "NULL") . ",
             educational_attainment = " . ($educationalAttainment ? "'$educationalAttainment'" : "NULL") . ",
@@ -403,13 +407,13 @@ try {
                     // Fixed duplicate malformed query removed - use main CREATE logic or prepared statement if needed
                     $hhSql = "INSERT INTO households (
                         household_number, household_head_id, household_contact, address, water_source_type, toilet_facility_type,
-                        ownership_status, landlord_resident_id, landlord_name, created_at
+                        ownership_status, landlord_resident_id, landlord_name, created_at, updated_at
                     ) VALUES (
                         '$householdNumber', $residentId, " . ($householdContact ? "'$householdContact'" : "NULL") . ", 
                         " . ($householdAddress ? "'$householdAddress'" : "NULL") . ", " . ($waterSourceType ? "'$waterSourceType'" : "NULL") . ", 
                         " . ($toiletFacilityType ? "'$toiletFacilityType'" : "NULL") . ",
                         '$ownershipStatus', " . ($landlordResidentId ? $landlordResidentId : "NULL") . ", 
-                        " . ($landlordName ? "'$landlordName'" : "NULL") . ", NOW()
+                        " . ($landlordName ? "'$landlordName'" : "NULL") . ", NOW(), NOW()
                     )";
                     if (!$conn->query($hhSql)) {
                         throw new Exception('Failed to create household: ' . $conn->error);
@@ -428,6 +432,8 @@ try {
                         if (!$conn->query($memberSql)) {
                             throw new Exception('Failed to add resident to household: ' . $conn->error);
                         }
+                        
+                        $conn->query("UPDATE households SET updated_at = NOW() WHERE id = $selectedHouseholdId");
                         
                         if (isset($_SESSION['username'])) {
                             $resStmt = $conn->query("SELECT CONCAT(first_name, ' ', last_name) AS fname FROM residents WHERE id = $residentId");
@@ -556,9 +562,9 @@ try {
 $sql = "INSERT INTO residents (
         photo, first_name, middle_name, last_name, suffix, sex, date_of_birth, place_of_birth, age, religion, ethnicity,
         mobile_number, purok, street_name, current_address,
-        civil_status, spouse_name,  father_name, father_resident_id, 
+        civil_status, spouse_name, spouse_resident_id, father_name, father_resident_id, 
             mother_name, mother_resident_id, number_of_children,
-        guardian_name, guardian_relationship, guardian_contact,
+        guardian_name, guardian_resident_id, guardian_relationship, guardian_contact,
         educational_attainment, employment_status, occupation, pwd_status,
         pwd_type, pwd_id_number,
         fourps_member, fourps_id, voter_status, precinct_number,
@@ -571,9 +577,9 @@ $sql = "INSERT INTO residents (
         '$firstName', " . ($middleName ? "'$middleName'" : "NULL") . ", '$lastName', " . ($suffix ? "'$suffix'" : "NULL") . ",
         '$sex', '$dateOfBirth', " . ($placeOfBirth ? "'$placeOfBirth'" : "NULL") . ", " . ($age !== null ? $age : "NULL") . ", " . ($religion ? "'$religion'" : "NULL") . ", " . ($ethnicity ? "'$ethnicity'" : "NULL") . ",
         '$mobileNumber', " . ($purok ? "'$purok'" : "NULL") . ", " . ($streetName ? "'$streetName'" : "NULL") . ", '$currentAddress',
-        '$civilStatus', " . ($spouseName ? "'$spouseName'" : "NULL") . ", " . ($fatherName ? "'$fatherName'" : "NULL") . ", 
+        '$civilStatus', " . ($spouseName ? "'$spouseName'" : "NULL") . ", " . ($spouseResidentId ? $spouseResidentId : "NULL") . ", " . ($fatherName ? "'$fatherName'" : "NULL") . ", 
         " . ($fatherResidentId ? $fatherResidentId : "NULL") . ", " . ($motherName ? "'$motherName'" : "NULL") . ", " . ($motherResidentId ? $motherResidentId : "NULL") . ", $numberOfChildren,
-        " . ($guardianName ? "'$guardianName'" : "NULL") . ", " . ($guardianRelationship ? "'$guardianRelationship'" : "NULL") . ", " . ($guardianContact ? "'$guardianContact'" : "NULL") . ",
+        " . ($guardianName ? "'$guardianName'" : "NULL") . ", " . ($guardianResidentId ? $guardianResidentId : "NULL") . ", " . ($guardianRelationship ? "'$guardianRelationship'" : "NULL") . ", " . ($guardianContact ? "'$guardianContact'" : "NULL") . ",
         " . ($educationalAttainment ? "'$educationalAttainment'" : "NULL") . ", " . ($employmentStatus ? "'$employmentStatus'" : "NULL") . ",
         " . ($occupation ? "'$occupation'" : "NULL") . ", '$pwdStatus',
         " . ($pwdType ? "'$pwdType'" : "NULL") . ", " . ($pwdIdNumber ? "'$pwdIdNumber'" : "NULL") . ",
@@ -644,7 +650,8 @@ $sql = "INSERT INTO residents (
                     ownership_status,
                     landlord_resident_id,
                     landlord_name,
-                    created_at
+                    created_at,
+                    updated_at
                 ) VALUES (
                     '$householdNumber',
                     $residentId,
@@ -655,6 +662,7 @@ $sql = "INSERT INTO residents (
                     '$ownershipStatus',
                     " . ($landlordResidentId ? $landlordResidentId : "NULL") . ",
                     " . ($landlordName ? "'$landlordName'" : "NULL") . ",
+                    NOW(),
                     NOW()
                 )";
 
@@ -687,6 +695,8 @@ $sql = "INSERT INTO residents (
                 if (!$conn->query($memberSql)) {
                     throw new Exception('Failed to add resident to household: ' . $conn->error);
                 }
+                
+                $conn->query("UPDATE households SET updated_at = NOW() WHERE id = $selectedHouseholdId");
                 
                 if (isset($_SESSION['username'])) {
                     $hhStmt = $conn->query("SELECT household_number FROM households WHERE id = $selectedHouseholdId");

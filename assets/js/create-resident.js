@@ -76,6 +76,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setupAutocomplete('fatherName', 'fatherNameDropdown', 'Male', true);
     setupAutocomplete('motherName', 'motherNameDropdown', 'Female', true);
     setupAutocomplete('spouseName', 'spouseNameDropdown', null, false, true);
+    setupAutocomplete('guardianName', 'guardianNameDropdown', null, false, true);
     setupAutocomplete('landlordName', 'landlordNameDropdown');
     
     console.log('Create Resident page loaded successfully');
@@ -1708,7 +1709,7 @@ function selectHousehold(hh) {
             </div>
             <div class="form-group full-width" style="margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border-color, #e2e8f0);">
                 <label for="relationshipToHead" style="font-size: 13px; font-weight: 600; margin-bottom: 6px; display: block;">
-                    Relationship to Household Head <span style="color: #ef4444;">*</span>
+                    Relationship of Member to Household Head <span style="color: #ef4444;">*</span>
                 </label>
                 <input type="text" 
                        id="relationshipToHead" 
@@ -2328,6 +2329,7 @@ function populateReviewModal() {
         householdHTML += createField('Relationship to Head', getValue('householdRelationship'));
         householdHTML += createField('Water Source', selectedHouseholdData.water_source_type);
         householdHTML += createField('Toilet Facility', selectedHouseholdData.toilet_facility_type);
+        householdHTML += `<div style="display: none;">${createField('Updated At', selectedHouseholdData.updated_at)}</div>`;
     } else if (householdHeadValue === 'No') {
         householdHTML += '<div class="review-field"><div class="review-field-value" style="color: #f59e0b;"><i class="fas fa-exclamation-triangle"></i> No household selected</div></div>';
     }

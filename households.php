@@ -297,6 +297,10 @@ $pageTitle = 'Households';
                                     <span class="head-info-label">Sex</span>
                                     <span class="head-info-value" id="headSex">N/A</span>
                                 </div>
+                                <div class="head-info-item">
+                                    <span class="head-info-label">4Ps Status</span>
+                                    <span class="head-info-value" id="head4psStatus">N/A</span>
+                                </div>
                                
                             </div>
                         </div>
@@ -492,7 +496,7 @@ $pageTitle = 'Households';
                     </div>
                     
                     <div class="form-group">
-                        <label for="memberRelationship">Relationship to Head</label>
+                        <label for="memberRelationship">Relationship of Member to Head</label>
                         <input type="text" id="memberRelationship" name="memberRelationship" class="form-control" placeholder="e.g., Spouse, Child, Parent">
                     </div>
                     

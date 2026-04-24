@@ -7,9 +7,11 @@ header('Content-Type: application/json');
 
 try {
     $query = "SELECT e.*, 
-              IFNULL(TRIM(CONCAT(r.first_name, ' ', IFNULL(CONCAT(r.middle_name, ' '), ''), r.last_name, ' ', IFNULL(r.suffix, ''))), 'Barangay Officials') AS resident_name
+              TRIM(CONCAT(r.first_name, ' ', IFNULL(CONCAT(r.middle_name, ' '), ''), r.last_name, ' ', IFNULL(r.suffix, ''))) AS resident_name,
+              bo.fullname AS approver_name
               FROM events e
-              LEFT JOIN residents r ON e.resident_id = r.id";
+              LEFT JOIN residents r ON e.resident_id = r.id
+              LEFT JOIN barangay_officials bo ON e.approved_by = bo.id";
     
     $result = $conn->query($query);
     
@@ -34,7 +36,10 @@ try {
                 'event_type' => $row['event_type'],
                 'resident_id' => $row['resident_id'],
                 'resident_name' => $row['resident_name'],
-                'status' => $row['status']
+                'status' => $row['status'],
+                'organizer' => $row['organizer'],
+                'approved_by' => $row['approved_by'],
+                'approved_by_name' => $row['approver_name']
             ]
         ];
     }

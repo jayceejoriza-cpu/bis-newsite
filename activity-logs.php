@@ -369,11 +369,11 @@ if (isset($conn)) {
                                     </div>
                                     <div style="display: flex; flex-direction: column; gap: 5px;">
                                         <label for="filterFromDate" style="font-size: 13px; font-weight: 500; color: var(--text-secondary); margin: 0;">From Date</label>
-                                        <input type="date" name="filter_from_date" id="filterFromDate" class="form-control" style="font-size: 13px; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border-color); background-color: var(--bg-primary); color: var(--text-primary);" value="<?php echo htmlspecialchars($filter_from_date); ?>">
+                                        <input type="date" name="filter_from_date" id="filterFromDate" class="form-control" max="<?php echo date('Y-m-d'); ?>"  style="font-size: 13px; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border-color); background-color: var(--bg-primary); color: var(--text-primary);" value="<?php echo htmlspecialchars($filter_from_date); ?>">
                                     </div>
                                     <div style="display: flex; flex-direction: column; gap: 5px;">
                                         <label for="filterToDate" style="font-size: 13px; font-weight: 500; color: var(--text-secondary); margin: 0;">To Date</label>
-                                        <input type="date" name="filter_to_date" id="filterToDate" class="form-control" style="font-size: 13px; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border-color); background-color: var(--bg-primary); color: var(--text-primary);" value="<?php echo htmlspecialchars($filter_to_date); ?>">
+                                        <input type="date" name="filter_to_date" id="filterToDate" class="form-control" max="<?php echo date('Y-m-d'); ?>" style="font-size: 13px; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border-color); background-color: var(--bg-primary); color: var(--text-primary);" value="<?php echo htmlspecialchars($filter_to_date); ?>">
                                     </div>
                                 </div>
                             </div>

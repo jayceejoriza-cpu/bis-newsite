@@ -732,6 +732,7 @@ function closeCreateHouseholdModal() {
 }
 
 function resetHouseholdForm() {
+    const modal = document.getElementById('createHouseholdModal');
     const form = document.getElementById('createHouseholdForm');
     if (form) {
         form.reset();
@@ -741,6 +742,7 @@ function resetHouseholdForm() {
     document.getElementById('headFullName').textContent = 'N/A';
     document.getElementById('headDateOfBirth').textContent = 'N/A';
     document.getElementById('headSex').textContent = 'N/A';
+    document.getElementById('head4psStatus').textContent = 'N/A';
     document.getElementById('selectedResidentId').value = '';
     
     // Remove readonly attributes from inputs and reset styling
@@ -776,9 +778,13 @@ function resetHouseholdForm() {
         saveBtn.style.display = '';
         saveBtn.innerHTML = 'Save';
     }
+
+    const modalFooter = modal ? modal.querySelector('.household-modal-footer') : null;
+    if (modalFooter) {
+        const existingLastUpdate = modalFooter.querySelector('.last-update-footer');
+        if (existingLastUpdate) existingLastUpdate.remove();
+    }
     
-    // Reset modal title to Create
-    const modal = document.getElementById('createHouseholdModal');
     const modalTitle = modal.querySelector('.household-modal-header h3');
     if (modalTitle) {
         modalTitle.innerHTML = '<i class="fas fa-home"></i> Community Household';
@@ -1010,6 +1016,18 @@ function viewHousehold(householdId) {
                 
                 const modalTitle = modal.querySelector('.household-modal-header h3');
                 modalTitle.innerHTML = '<i class="fas fa-eye"></i> View Household Details';
+
+                const modalFooter = modal.querySelector('.household-modal-footer');
+                const existingLastUpdate = modalFooter.querySelector('.last-update-footer');
+                if (existingLastUpdate) existingLastUpdate.remove();
+
+                if (data.household.updated_at) {
+                    const updatedDate = new Date(data.household.updated_at);
+                    const months = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
+                    const formattedDate = `${months[updatedDate.getMonth()]} ${updatedDate.getDate()}, ${updatedDate.getFullYear()}`;
+                    const lastUpdateHtml = `<span class="last-update-footer" style="font-size: 0.7rem; color: var(--text-secondary); font-weight: 500; opacity: 0.8; margin-right: auto; align-self: center;">LAST UPDATE: ${formattedDate}</span>`;
+                    modalFooter.insertAdjacentHTML('afterbegin', lastUpdateHtml);
+                }
                 
                 document.getElementById('householdNumber').value = data.household.household_number;
                 document.getElementById('householdContact').value = data.household.household_contact || '';
@@ -1029,6 +1047,7 @@ function viewHousehold(householdId) {
                 }
                 document.getElementById('headDateOfBirth').textContent = data.household.head_dob ? formatDobAndAge(data.household.head_dob) : 'N/A';
                 document.getElementById('headSex').textContent = data.household.head_sex || 'N/A';
+                document.getElementById('head4psStatus').textContent = data.household.head_fourps || 'No';
                 document.getElementById('selectedResidentId').value = data.household.household_head_id;
               
                 
@@ -1118,6 +1137,18 @@ function editHousehold(householdId) {
                 const modalTitle = modal.querySelector('.household-modal-header h3');
                 modalTitle.innerHTML = '<i class="fas fa-edit"></i> Edit Household';
                 
+                const modalFooter = modal.querySelector('.household-modal-footer');
+                const existingLastUpdate = modalFooter.querySelector('.last-update-footer');
+                if (existingLastUpdate) existingLastUpdate.remove();
+
+                if (data.household.updated_at) {
+                    const updatedDate = new Date(data.household.updated_at);
+                    const months = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
+                    const formattedDate = `${months[updatedDate.getMonth()]} ${updatedDate.getDate()}, ${updatedDate.getFullYear()}`;
+                    const lastUpdateHtml = `<span class="last-update-footer" style="font-size: 0.7rem; color: var(--text-secondary); font-weight: 500; opacity: 0.8; margin-right: auto; align-self: center;">LAST UPDATE: ${formattedDate}</span>`;
+                    modalFooter.insertAdjacentHTML('afterbegin', lastUpdateHtml);
+                }
+
                 const actionTh = document.querySelector('.members-table th:last-child');
                 if (actionTh) actionTh.style.display = '';
                 
@@ -1145,6 +1176,7 @@ function editHousehold(householdId) {
                 }
                 document.getElementById('headDateOfBirth').textContent = data.household.head_dob ? formatDobAndAge(data.household.head_dob) : 'N/A';
                 document.getElementById('headSex').textContent = data.household.head_sex || 'N/A';
+                document.getElementById('head4psStatus').textContent = data.household.head_fourps || 'No';
                 document.getElementById('selectedResidentId').value = data.household.household_head_id;
              
                 // Ensure all fields are editable in edit mode
@@ -1576,7 +1608,8 @@ function selectResident(resident) {
             fullName: resident.full_name,
             dateOfBirth: resident.date_of_birth,
             sex: resident.sex,
-            mobileNumber: resident.mobile_number
+            mobileNumber: resident.mobile_number,
+            fourps_member: resident.fourps_member
         });
         searchModal.removeAttribute('data-search-for');
     } else {
@@ -1586,7 +1619,8 @@ function selectResident(resident) {
             fullName: resident.full_name,
             dateOfBirth: resident.date_of_birth,
             sex: resident.sex,
-            mobileNumber: resident.mobile_number
+            mobileNumber: resident.mobile_number,
+            fourps_member: resident.fourps_member
         });
     }
     
@@ -1597,6 +1631,7 @@ function setHouseholdHead(resident) {
     document.getElementById('headFullName').textContent = resident.fullName;
     document.getElementById('headDateOfBirth').textContent = resident.dateOfBirth ? formatDobAndAge(resident.dateOfBirth) : 'N/A';
     document.getElementById('headSex').textContent = resident.sex;
+    document.getElementById('head4psStatus').textContent = resident.fourps_member || 'No';
    
     document.getElementById('selectedResidentId').value = resident.id;
     
