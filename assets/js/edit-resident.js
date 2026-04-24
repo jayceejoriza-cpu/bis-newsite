@@ -218,6 +218,46 @@ setupAutocomplete('fatherName', 'fatherNameDropdown', 'Male', true);
 setupAutocomplete('motherName', 'motherNameDropdown', 'Female', true);
 setupAutocomplete('spouseNameInput', 'spouseNameDropdown', null, false, true);
 setupAutocomplete('guardianNameInput', 'guardianNameDropdown', null, false, true);
+
+    // Adoption / Legal Guardian toggle logic for Profile Edit
+    const btnShowLegalGuardian = document.getElementById('btnShowLegalGuardian');
+    const btnHideLegalGuardian = document.getElementById('btnHideLegalGuardian');
+    const legalGuardianContainer = document.getElementById('legalGuardianContainer');
+    const motherNameContainer = document.getElementById('motherNameContainer');
+    const motherNameInput = document.getElementById('motherName');
+    const legalGuardianInput = document.getElementById('legalGuardianName');
+
+    if (btnShowLegalGuardian) {
+        btnShowLegalGuardian.addEventListener('click', function() {
+            legalGuardianContainer.style.display = 'block';
+            motherNameContainer.style.display = 'none';
+            
+            // Disable Mother input and transfer required attribute to Guardian
+            motherNameInput.removeAttribute('required');
+            motherNameInput.setAttribute('disabled', 'disabled');
+            
+            legalGuardianInput.setAttribute('required', 'required');
+            legalGuardianInput.removeAttribute('disabled');
+            legalGuardianInput.focus();
+            formIsDirty = true;
+        });
+    }
+
+    if (btnHideLegalGuardian) {
+        btnHideLegalGuardian.addEventListener('click', function() {
+            legalGuardianContainer.style.display = 'none';
+            motherNameContainer.style.display = 'block';
+            
+            // Re-enable Mother input and revert required attribute
+            motherNameInput.removeAttribute('disabled');
+            motherNameInput.setAttribute('required', 'required');
+            
+            legalGuardianInput.removeAttribute('required');
+            legalGuardianInput.setAttribute('disabled', 'disabled');
+            legalGuardianInput.value = '';
+            formIsDirty = true;
+        });
+    }
 });
 
 function updateProfileAgeVisibility() {
@@ -451,6 +491,7 @@ function saveProfile() {
     formData.append('motherName', rawData.get('mother_name') || rawData.get('motherName') || '');
     formData.append('fatherResidentId', rawData.get('father_resident_id') || rawData.get('fatherResidentId') || '');
     formData.append('motherResidentId', rawData.get('mother_resident_id') || rawData.get('motherResidentId') || '');
+    formData.append('legalGuardianName', rawData.get('legal_guardian_name') || '');
     formData.append('numberOfChildren', rawData.get('number_of_children') || '0');
     
     // Education & Employment
@@ -698,13 +739,13 @@ function showNotification(message, type = 'info') {
     if (type === 'success') {
         icon = 'check-circle';
         bgColor = '#10b981';
-    } else if (type === 'error') {
+    } else if (type === 'error' || type === 'warning') {
         icon = 'exclamation-circle';
         bgColor = '#ef4444';
     }
     
     notification.innerHTML = `<i class="fas fa-${icon}"></i> <span>${message}</span>`;
-    notification.style.cssText = `position:fixed;top:20px;right:20px;background:${bgColor};color:white;padding:15px 20px;border-radius:8px;box-shadow:0 4px 6px rgba(0,0,0,0.1);display:flex;align-items:center;gap:10px;z-index:10000;animation:slideInRight 0.3s ease;`;
+    notification.style.cssText = `position:fixed;top:20px;right:20px;background:${bgColor};color:white;padding:15px 20px;border-radius:8px;box-shadow:0 4px 6px rgba(0,0,0,0.1);display:flex;align-items:center;gap:10px;z-index:10000000;animation:slideInRight 0.3s ease;`;
     
     document.body.appendChild(notification);
     

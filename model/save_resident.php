@@ -166,6 +166,7 @@ try {
     $motherResidentId = !empty($_POST['motherResidentId']) ? intval($_POST['motherResidentId']) : null;
     $spouseResidentId = !empty($_POST['spouseResidentId']) ? intval($_POST['spouseResidentId']) : null;
     $guardianResidentId = !empty($_POST['guardianResidentId']) ? intval($_POST['guardianResidentId']) : null;
+    $legalGuardianName = $conn->real_escape_string(trim($_POST['legalGuardianName'] ?? ''));
     // Guardian Information
     $guardianName = $conn->real_escape_string(trim($_POST['guardianName'] ?? ''));
     $guardianRelationship = $conn->real_escape_string(trim($_POST['guardianRelationship'] ?? ''));
@@ -221,10 +222,23 @@ try {
 
     // Validation
     $isMinor = ($age !== null && $age < 18);
-    if (empty($firstName) || empty($lastName) || empty($sex) || empty($dateOfBirth) ||
+    if (empty($firstName) || empty($lastName) || empty($sex) || empty($dateOfBirth) || empty($placeOfBirth) ||
         (!$isMinor && empty($mobileNumber)) || empty($currentAddress) || 
         (!$isMinor && empty($civilStatus)) || empty($pwdStatus)) {
         throw new Exception('Please fill in all required fields.');
+    }
+
+    if ($fourPs === 'Yes' && empty($fourpsId)) {
+        throw new Exception('4Ps ID Number is required for 4Ps members.');
+    }
+
+    if ($voterStatus === 'Yes') {
+        if (empty($precinctNumber)) {
+            throw new Exception('Precinct Number is required for registered voters.');
+        }
+        if (!preg_match('/^[a-zA-Z0-9]{1,5}$/', $precinctNumber)) {
+            throw new Exception('Precinct Number must be alphanumeric and up to 5 characters.');
+        }
     }
 
     if ($isMinor && (empty($guardianName) || empty($guardianRelationship) || empty($guardianContact))) {
@@ -345,6 +359,7 @@ try {
             father_resident_id = " . ($fatherResidentId ? $fatherResidentId : "NULL") . ",
             mother_name = " . ($motherName ? "'$motherName'" : "NULL") . ",
             mother_resident_id = " . ($motherResidentId ? $motherResidentId : "NULL") . ",
+            legal_guardian_name = " . ($legalGuardianName ? "'$legalGuardianName'" : "NULL") . ",
             number_of_children = $numberOfChildren,
             guardian_name = " . ($guardianName ? "'$guardianName'" : "NULL") . ",
             guardian_resident_id = " . ($guardianResidentId ? $guardianResidentId : "NULL") . ",
@@ -563,7 +578,7 @@ $sql = "INSERT INTO residents (
         photo, first_name, middle_name, last_name, suffix, sex, date_of_birth, place_of_birth, age, religion, ethnicity,
         mobile_number, purok, street_name, current_address,
         civil_status, spouse_name, spouse_resident_id, father_name, father_resident_id, 
-            mother_name, mother_resident_id, number_of_children,
+            mother_name, mother_resident_id, legal_guardian_name, number_of_children,
         guardian_name, guardian_resident_id, guardian_relationship, guardian_contact,
         educational_attainment, employment_status, occupation, pwd_status,
         pwd_type, pwd_id_number,
@@ -578,7 +593,7 @@ $sql = "INSERT INTO residents (
         '$sex', '$dateOfBirth', " . ($placeOfBirth ? "'$placeOfBirth'" : "NULL") . ", " . ($age !== null ? $age : "NULL") . ", " . ($religion ? "'$religion'" : "NULL") . ", " . ($ethnicity ? "'$ethnicity'" : "NULL") . ",
         '$mobileNumber', " . ($purok ? "'$purok'" : "NULL") . ", " . ($streetName ? "'$streetName'" : "NULL") . ", '$currentAddress',
         '$civilStatus', " . ($spouseName ? "'$spouseName'" : "NULL") . ", " . ($spouseResidentId ? $spouseResidentId : "NULL") . ", " . ($fatherName ? "'$fatherName'" : "NULL") . ", 
-        " . ($fatherResidentId ? $fatherResidentId : "NULL") . ", " . ($motherName ? "'$motherName'" : "NULL") . ", " . ($motherResidentId ? $motherResidentId : "NULL") . ", $numberOfChildren,
+        " . ($fatherResidentId ? $fatherResidentId : "NULL") . ", " . ($motherName ? "'$motherName'" : "NULL") . ", " . ($motherResidentId ? $motherResidentId : "NULL") . ", " . ($legalGuardianName ? "'$legalGuardianName'" : "NULL") . ", $numberOfChildren,
         " . ($guardianName ? "'$guardianName'" : "NULL") . ", " . ($guardianResidentId ? $guardianResidentId : "NULL") . ", " . ($guardianRelationship ? "'$guardianRelationship'" : "NULL") . ", " . ($guardianContact ? "'$guardianContact'" : "NULL") . ",
         " . ($educationalAttainment ? "'$educationalAttainment'" : "NULL") . ", " . ($employmentStatus ? "'$employmentStatus'" : "NULL") . ",
         " . ($occupation ? "'$occupation'" : "NULL") . ", '$pwdStatus',

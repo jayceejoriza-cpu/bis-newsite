@@ -55,24 +55,31 @@ try {
 
     // ── Check Position Limits for Active Officials ───────────
     if ($status === 'Active') {
-        $limitMap = [
+        $posLimitMap = [
             'Barangay Captain' => 1,
             'SK Chairman' => 1,
             'Barangay Secretary' => 1,
             'Barangay Treasurer' => 1,
             'Barangay Administator' => 1,
             'Bookkeeper' => 1,
-            'Kagawad' => 7
+            'Barangay Kagawad' => 7,
+            'Kagawad' => 7,
+            'SK Kagawad' => 7
         ];
 
-        if (isset($limitMap[$position])) {
-            $limit = $limitMap[$position];
-            $countStmt = $pdo->prepare("SELECT COUNT(*) FROM barangay_officials WHERE position = :position AND status = 'Active'");
-            $countStmt->execute([':position' => $position]);
-            $currentCount = $countStmt->fetchColumn();
+        $limit = $posLimitMap[$position] ?? 1; // Default limit 1 for "Other" positions
+        $countStmt = $pdo->prepare("SELECT COUNT(*) FROM barangay_officials WHERE position = :position AND status = 'Active'");
+        $countStmt->execute([':position' => $position]);
+        if ($countStmt->fetchColumn() >= $limit) {
+            throw new Exception("Cannot add another active $position. The limit of $limit has been reached.");
+        }
 
-            if ($currentCount >= $limit) {
-                throw new Exception("Cannot add another active $position. The limit of $limit has been reached.");
+        // Check Chairmanship Limits (All are limited to 1 active slot)
+        if (!empty($chairmanship)) {
+            $chairStmt = $pdo->prepare("SELECT COUNT(*) FROM barangay_officials WHERE committee = :committee AND status = 'Active'");
+            $chairStmt->execute([':committee' => $chairmanship]);
+            if ($chairStmt->fetchColumn() >= 1) {
+                throw new Exception("Cannot add another active official for $chairmanship chairmanship. The limit of 1 has been reached.");
             }
         }
     }
@@ -127,7 +134,7 @@ try {
     $hierarchyLevel = 2;
     if ($position === 'Barangay Captain') {
         $hierarchyLevel = 1;
-    } elseif (in_array($position, ['SK Chairman', 'Barangay Secretary', 'Barangay Treasurer', 'Barangay Administator'])) {
+    } elseif (in_array($position, ['SK Chairman','SK Kagawad',  'Barangay Secretary', 'Barangay Treasurer', 'Barangay Administator', 'Bookkeeper'])) {
         $hierarchyLevel = 3;
     }
 

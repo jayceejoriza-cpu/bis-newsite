@@ -238,7 +238,7 @@ if ($kagStmt) {
             <div class="search-actions-bar">
                 <div class="search-box">
                     <i class="fas fa-search"></i>
-                    <input type="text" placeholder="Search certificates..." id="searchInput">
+                    <input type="text" placeholder="Search certificates..." id="searchInput" value="<?php echo isset($_GET['search']) ? htmlspecialchars($_GET['search']) : ''; ?>">
                     <button class="btn-clear" id="clearSearch" style="display:none;">
                         <i class="fas fa-times"></i>
                     </button>

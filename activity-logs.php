@@ -316,7 +316,7 @@ if (isset($conn)) {
                 <form action="" method="GET" style="display: flex; gap: 10px; width: 100%; align-items: center;" id="activityLogForm">
                     <div class="search-box">
                         <i class="fas fa-search"></i>
-                        <input type="text" name="search" placeholder="Search description..." value="<?php echo htmlspecialchars($search); ?>" autocomplete="off">
+                        <input type="text" name="search" id="searchInput" placeholder="Search description..." value="<?php echo htmlspecialchars($search); ?>" autocomplete="off">
                         <?php if($search || $filter_user || $filter_action || $filter_from_date || $filter_to_date): ?>
                             <a href="activity-logs.php" class="btn-clear" style="display: flex; align-items: center; justify-content: center; text-decoration: none;" title="Clear">
                                 <i class="fas fa-times"></i>
@@ -475,6 +475,26 @@ if (isset($conn)) {
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const filterBtn = document.getElementById('filterBtn');
+            const searchInput = document.getElementById('searchInput');
+            
+            // Sync search input with URL params
+            if (searchInput) {
+                let searchTimeout;
+                searchInput.addEventListener('input', function(e) {
+                    const term = e.target.value.trim();
+                    clearTimeout(searchTimeout);
+                    searchTimeout = setTimeout(() => {
+                        const url = new URL(window.location);
+                        if (term) {
+                            url.searchParams.set('search', term);
+                        } else {
+                            url.searchParams.delete('search');
+                        }
+                        window.history.replaceState({}, '', url);
+                    }, 300);
+                });
+            }
+
             const filterPanel = document.getElementById('filterPanel');
             const clearFiltersBtn = document.getElementById('clearFiltersBtn');
             const applyFiltersBtn = document.getElementById('applyFiltersBtn');
@@ -720,6 +740,27 @@ if (isset($conn)) {
                                     <p style="margin: 5px 0 0 0; font-size: 12px;">Records on Page: ${rowsToPrint.length > 0 && rowsToPrint[0].cells.length > 1 ? rowsToPrint.length : 0} (Total: <?php echo $total_records; ?>)</p>
                                 </div>
                                 <table class="data-table">
+                                    ${tableHeaderHtml}
+                                    <tbody>${rowsHtml}</tbody>
+                                </table>
+                                ${printFooter ? printFooter.outerHTML : ''}
+                            </div>
+                        </body>
+                        </html>
+                    `);
+                    doc.close();
+
+                    setTimeout(() => {
+                        fetch('model/log_print_masterlist.php', { method: 'POST' }).catch(e => console.error(e));
+                        printFrame.contentWindow.focus();
+                        printFrame.contentWindow.print();
+                    }, 500);
+                });
+            }
+        });
+    </script>
+</body>
+</html>                         <table class="data-table">
                                     ${tableHeaderHtml}
                                     <tbody>${rowsHtml}</tbody>
                                 </table>

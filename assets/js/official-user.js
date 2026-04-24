@@ -37,12 +37,16 @@ document.addEventListener('DOMContentLoaded', function () {
     const passwordInput      = document.getElementById('password');
     const passwordRequired   = document.getElementById('passwordRequired');
     const passwordHint       = document.getElementById('passwordHint');
+    const confirmPasswordInput   = document.getElementById('confirmPassword');
+    const confirmPasswordRequired = document.getElementById('confirmPasswordRequired');
+    const toggleConfirmPasswordBtn = document.getElementById('toggleConfirmPassword');
 
     const toast              = document.getElementById('toast');
     const toastMessage       = document.getElementById('toastMessage');
     const totalCount         = document.getElementById('totalCount');
     const tableBody          = document.getElementById('usersTableBody');
 
+    let usernameCheckTimeout = null;
     let currentDeleteId = null;
     let isEditMode      = false;
     let toastTimer      = null;
@@ -164,8 +168,10 @@ document.addEventListener('DOMContentLoaded', function () {
             document.getElementById('status').value   = data.status   || 'Active';
             // Password optional in edit
             passwordRequired.style.display = 'none';
+            confirmPasswordRequired.style.display = 'none';
             passwordHint.style.display     = 'inline';
             passwordInput.required         = false;
+            confirmPasswordInput.required  = false;
             // Pre-check assigned roles
             if (data.roleIds && Array.isArray(data.roleIds)) {
                 data.roleIds.forEach(function (rid) {
@@ -178,8 +184,10 @@ document.addEventListener('DOMContentLoaded', function () {
             saveBtnText.textContent = 'Save';
             document.getElementById('userId').value = '';
             passwordRequired.style.display = 'inline';
+            confirmPasswordRequired.style.display = 'inline';
             passwordHint.style.display     = 'none';
             passwordInput.required         = true;
+            confirmPasswordInput.required  = true;
         }
 
         userModal.classList.add('active');
@@ -201,9 +209,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
     closeUserModal.addEventListener('click', closeModal);
     cancelUserModal.addEventListener('click', closeModal);
-    userModal.addEventListener('click', function (e) {
-        if (e.target === userModal) closeModal();
-    });
 
     // ============================================
     // Toggle Password Visibility
@@ -212,6 +217,39 @@ document.addEventListener('DOMContentLoaded', function () {
         const isText = passwordInput.type === 'text';
         passwordInput.type = isText ? 'password' : 'text';
         this.querySelector('i').className = isText ? 'fas fa-eye' : 'fas fa-eye-slash';
+    });
+
+    toggleConfirmPasswordBtn.addEventListener('click', function () {
+        const isText = confirmPasswordInput.type === 'text';
+        confirmPasswordInput.type = isText ? 'password' : 'text';
+        this.querySelector('i').className = isText ? 'fas fa-eye' : 'fas fa-eye-slash';
+    });
+
+    // ============================================
+    // Real-time Username Check
+    // ============================================
+    document.getElementById('username').addEventListener('input', function () {
+        const username = this.value.trim();
+        const userId = document.getElementById('userId').value;
+        
+        clearTimeout(usernameCheckTimeout);
+        if (username.length < 3) return;
+
+        usernameCheckTimeout = setTimeout(() => {
+            const fd = new FormData();
+            fd.append('action', 'check_username');
+            fd.append('username', username);
+            if (userId) fd.append('user_id', userId);
+
+            fetch('model/save-user.php', { method: 'POST', body: fd })
+            .then(r => r.json())
+            .then(data => {
+                if (!data.success) {
+                    showError('usernameError', data.message);
+                    document.getElementById('username').classList.add('error');
+                }
+            });
+        }, 500);
     });
 
     // ============================================
@@ -235,6 +273,8 @@ document.addEventListener('DOMContentLoaded', function () {
         const fullName = document.getElementById('fullName').value.trim();
         const username = document.getElementById('username').value.trim();
         const password = document.getElementById('password').value;
+        const confirmPassword = confirmPasswordInput.value;
+        const passwordRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>]).{8,16}$/;
 
         if (!fullName) {
             showError('fullNameError', 'Full name is required.');
@@ -254,9 +294,15 @@ document.addEventListener('DOMContentLoaded', function () {
             showError('passwordError', 'Password is required.');
             document.getElementById('password').classList.add('error');
             valid = false;
-        } else if (password && password.length < 6) {
-            showError('passwordError', 'Password must be at least 6 characters.');
+        } else if (password && !passwordRegex.test(password)) {
+            showError('passwordError', 'Password must be 8-16 characters with at least one uppercase, one number, and one special character.');
             document.getElementById('password').classList.add('error');
+            valid = false;
+        }
+
+        if ((!isEditMode || password) && password !== confirmPassword) {
+            showError('confirmPasswordError', 'Passwords do not match.');
+            confirmPasswordInput.classList.add('error');
             valid = false;
         }
 
@@ -497,7 +543,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function clearFormErrors() {
-        ['fullNameError','usernameError','passwordError','rolesError','statusError']
+        ['fullNameError','usernameError','passwordError','confirmPasswordError','rolesError','statusError']
             .forEach(id => {
                 const el = document.getElementById(id);
                 if (el) el.textContent = '';
@@ -519,7 +565,7 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     // Clear error on input
-    ['fullName','username','password','status'].forEach(id => {
+    ['fullName','username','password','confirmPassword','status'].forEach(id => {
         const el = document.getElementById(id);
         if (el) {
             el.addEventListener('input', function () {

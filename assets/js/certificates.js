@@ -65,13 +65,34 @@ document.addEventListener('DOMContentLoaded', function () {
     // Search Functionality
     // ============================================
     if (searchInput) {
+        let searchTimeout;
         searchInput.addEventListener('input', function () {
             const term = this.value.toLowerCase().trim();
-            filterCards(term);
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                filterCards(term);
+                const url = new URL(window.location);
+                if (term) {
+                    url.searchParams.set('search', term);
+                } else {
+                    url.searchParams.delete('search');
+                }
+                window.history.replaceState({}, '', url);
+            }, 300);
+
             if (clearSearchBtn) {
                 clearSearchBtn.style.display = term ? 'flex' : 'none';
             }
         });
+    }
+
+    // Load search from URL
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.has('search')) {
+        const term = urlParams.get('search');
+        if (searchInput) searchInput.value = term;
+        filterCards(term.toLowerCase().trim());
+        if (clearSearchBtn) clearSearchBtn.style.display = 'flex';
     }
 
     if (clearSearchBtn) {
@@ -79,6 +100,9 @@ document.addEventListener('DOMContentLoaded', function () {
             searchInput.value = '';
             this.style.display = 'none';
             filterCards('');
+            const url = new URL(window.location);
+            url.searchParams.delete('search');
+            window.history.replaceState({}, '', url);
             searchInput.focus();
         });
     }

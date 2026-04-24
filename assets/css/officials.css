@@ -915,10 +915,14 @@ body.dark-mode .picker-resident-item {
 }
 
 .badge-inactive {
-    background-color: #fee2e2;
+    background-color: #fef3c7;
     color: #991b1b;
 }
 
+.badge-deceased {
+    background-color: #fee2e2;
+    color: #f52e0b;
+}
 .badge-completed {
     background-color: #e0e7ff;
     color: #3730a3;
@@ -941,8 +945,8 @@ body.dark-mode .badge-active {
 }
 
 body.dark-mode .badge-inactive {
-    background-color: #7f1d1d;
-    color: #fca5a5;
+    background-color: #f59e0b;
+    color: #991b1b;
 }
 
 body.dark-mode .badge-completed {
@@ -1553,7 +1557,7 @@ body.dark-mode .form-select:focus {
 
 .hist-badge-inactive {
     background-color: #fee2e2;
-    color: #991b1b;
+    color: #f59e0b;
 }
 
 .hist-badge-completed {
@@ -1665,7 +1669,7 @@ body.dark-mode .hist-badge-active {
 }
 
 body.dark-mode .hist-badge-inactive {
-    background-color: #7f1d1d;
+    background-color: #f59e0b;
     color: #fca5a5;
 }
 

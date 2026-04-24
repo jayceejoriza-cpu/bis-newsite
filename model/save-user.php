@@ -20,11 +20,41 @@ $action = trim($_POST['action'] ?? '');
 switch ($action) {
     case 'create':        createUser();      break;
     case 'edit':          editUser();        break;
+    case 'check_username': checkUsername();  break;
     case 'toggle_status': toggleStatus();    break;
     case 'delete':        deleteUser();      break;
     default:
         echo json_encode(['success' => false, 'message' => 'Unknown action.']);
         exit;
+}
+
+// ============================================
+// Check Username Availability
+// ============================================
+function checkUsername() {
+    global $conn;
+    $username = trim($_POST['username'] ?? '');
+    $userId = intval($_POST['user_id'] ?? 0);
+
+    if (empty($username)) {
+        echo json_encode(['success' => true]);
+        return;
+    }
+
+    $sql = "SELECT id FROM users WHERE username = ? " . ($userId > 0 ? "AND id != ?" : "");
+    $stmt = $conn->prepare($sql);
+    if ($userId > 0) { $stmt->bind_param('si', $username, $userId); } 
+    else { $stmt->bind_param('s', $username); }
+    
+    $stmt->execute();
+    $stmt->store_result();
+    
+    if ($stmt->num_rows > 0) {
+        echo json_encode(['success' => false, 'message' => 'Username already taken.']);
+    } else {
+        echo json_encode(['success' => true]);
+    }
+    $stmt->close();
 }
 
 // ============================================
@@ -60,9 +90,11 @@ function createUser() {
     $fullName = trim($_POST['full_name'] ?? '');
     $username = trim($_POST['username']  ?? '');
     $password = $_POST['password']       ?? '';
+    $confirmPassword = $_POST['confirm_password'] ?? '';
     $status   = trim($_POST['status']    ?? 'Active');
     // roles[] is an array of role IDs from checkboxes
     $roleIds  = isset($_POST['roles']) && is_array($_POST['roles']) ? $_POST['roles'] : [];
+    $pwRegex  = '/^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>]).{8,16}$/';
 
     // Validate
     if (empty($fullName)) {
@@ -73,8 +105,12 @@ function createUser() {
         echo json_encode(['success' => false, 'message' => 'Username must be at least 3 characters.', 'field' => 'username']);
         return;
     }
-    if (empty($password) || strlen($password) < 6) {
-        echo json_encode(['success' => false, 'message' => 'Password must be at least 6 characters.', 'field' => 'password']);
+    if (empty($password) || !preg_match($pwRegex, $password)) {
+        echo json_encode(['success' => false, 'message' => 'Password must be 8-16 characters with uppercase, number, and special character.', 'field' => 'password']);
+        return;
+    }
+    if ($password !== $confirmPassword) {
+        echo json_encode(['success' => false, 'message' => 'Passwords do not match.', 'field' => 'confirmPassword']);
         return;
     }
     if (!in_array($status, ['Active', 'Inactive'])) {
@@ -138,8 +174,10 @@ function editUser() {
     $fullName = trim($_POST['full_name']   ?? '');
     $username = trim($_POST['username']    ?? '');
     $password = $_POST['password']         ?? '';
+    $confirmPassword = $_POST['confirm_password'] ?? '';
     $status   = trim($_POST['status']      ?? 'Active');
     $roleIds  = isset($_POST['roles']) && is_array($_POST['roles']) ? $_POST['roles'] : [];
+    $pwRegex  = '/^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>]).{8,16}$/';
 
     if ($userId <= 0) {
         echo json_encode(['success' => false, 'message' => 'Invalid user ID.']);
@@ -187,8 +225,12 @@ function editUser() {
 
     // Update with or without password
     if (!empty($password)) {
-        if (strlen($password) < 6) {
-            echo json_encode(['success' => false, 'message' => 'Password must be at least 6 characters.', 'field' => 'password']);
+        if (!preg_match($pwRegex, $password)) {
+            echo json_encode(['success' => false, 'message' => 'Password must be 8-16 characters with uppercase, number, and special character.', 'field' => 'password']);
+            return;
+        }
+        if ($password !== $confirmPassword) {
+            echo json_encode(['success' => false, 'message' => 'Passwords do not match.', 'field' => 'confirmPassword']);
             return;
         }
         $hashedPassword = password_hash($password, PASSWORD_BCRYPT);

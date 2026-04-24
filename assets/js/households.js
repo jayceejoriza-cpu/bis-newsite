@@ -396,6 +396,16 @@ function applyUrlFilters() {
     const urlParams = new URLSearchParams(window.location.search);
     let hasFilters = false;
     
+    if (urlParams.has('search')) {
+        const searchTerm = urlParams.get('search');
+        const searchInput = document.getElementById('searchInput');
+        const clearSearchBtn = document.getElementById('clearSearch');
+        if (searchInput) {
+            searchInput.value = searchTerm;
+            performSearch(searchTerm);
+            if (clearSearchBtn) clearSearchBtn.style.display = 'flex';
+        }
+    }
     if (urlParams.has('tab')) {
         const tab = urlParams.get('tab');
         const tabBtn = document.querySelector(`.tab-btn[data-filter="${tab}"]`);
@@ -456,8 +466,16 @@ function initializeSearch() {
         let searchTimeout;
         searchInput.addEventListener('input', (e) => {
             clearTimeout(searchTimeout);
+            const searchTerm = e.target.value;
             searchTimeout = setTimeout(() => {
-                performSearch(e.target.value);
+                performSearch(searchTerm);
+                const url = new URL(window.location);
+                if (searchTerm) {
+                    url.searchParams.set('search', searchTerm);
+                } else {
+                    url.searchParams.delete('search');
+                }
+                window.history.replaceState({}, '', url);
             }, 300);
         });
     }
@@ -466,6 +484,9 @@ function initializeSearch() {
         clearSearchBtn.addEventListener('click', () => {
             searchInput.value = '';
             performSearch('');
+            const url = new URL(window.location);
+            url.searchParams.delete('search');
+            window.history.replaceState({}, '', url);
             searchInput.focus();
         });
     }
@@ -779,13 +800,16 @@ function resetHouseholdForm() {
         saveBtn.innerHTML = 'Save';
     }
 
+    const printModalBtn = document.getElementById('printHouseholdModalBtn');
+    if (printModalBtn) printModalBtn.style.display = 'none';
+
     const modalFooter = modal ? modal.querySelector('.household-modal-footer') : null;
     if (modalFooter) {
         const existingLastUpdate = modalFooter.querySelector('.last-update-footer');
         if (existingLastUpdate) existingLastUpdate.remove();
     }
     
-    const modalTitle = modal.querySelector('.household-modal-header h3');
+    const modalTitle = modal.querySelector('.house  hold-modal-header h3');
     if (modalTitle) {
         modalTitle.innerHTML = '<i class="fas fa-home"></i> Community Household';
     }
@@ -893,13 +917,6 @@ function showActionMenu(row, button) {
         <div class="action-menu-item" data-action="edit">
             <i class="fas fa-edit"></i>
             <span>Edit Household</span>
-        </div>`;
-    }
-    if (perms.household_view) {
-        menuHtml += `
-        <div class="action-menu-item" data-action="print">
-            <i class="fas fa-print"></i>
-            <span>Print Household</span>
         </div>`;
     }
     if (perms.household_delete) {
@@ -1039,6 +1056,10 @@ function viewHousehold(householdId) {
                 document.getElementById('toiletFacility').value = data.household.toilet_facility_type || '';
                 document.getElementById('householdNotes').value = data.household.notes || '';
                 
+                if (window.BIS_PERMS && window.BIS_PERMS.household_view) {
+                    document.getElementById('printHouseholdModalBtn').style.display = 'inline-flex';
+                }
+
                 const headFullNameElement = document.getElementById('headFullName');
                 if (data.household.household_head_id) {
                     headFullNameElement.innerHTML = `<a href="resident_profile.php?id=${data.household.household_head_id}" style="color: var(--text-primary); text-decoration: none; transition: color 0.2s;" onmouseover="this.style.color='var(--primary-color)'" onmouseout="this.style.color='var(--text-primary)'">${data.household.head_name || 'N/A'}</a>`;
@@ -1168,6 +1189,7 @@ function editHousehold(householdId) {
                 document.getElementById('toiletFacility').value = data.household.toilet_facility_type || '';
                 document.getElementById('householdNotes').value = data.household.notes || '';
                 
+                document.getElementById('printHouseholdModalBtn').style.display = 'none';
                 const headFullNameElement = document.getElementById('headFullName');
                 if (data.household.household_head_id) {
                     headFullNameElement.innerHTML = `<a href="resident_profile.php?id=${data.household.household_head_id}" style="color: var(--text-primary); text-decoration: none; transition: color 0.2s;" onmouseover="this.style.color='var(--primary-color)'" onmouseout="this.style.color='var(--text-primary)'">${data.household.head_name || 'N/A'}</a>`;
@@ -1292,7 +1314,7 @@ function showNotification(message, type = 'info') {
         display: flex;
         align-items: center;
         gap: 10px;
-        z-index: 10005;
+        z-index: 10000000;
         animation: slideIn 0.3s ease;
     `;
     
@@ -1321,6 +1343,16 @@ function initializeModalEventListeners() {
     if (saveHouseholdBtn) {
         saveHouseholdBtn.addEventListener('click', () => {
             saveHousehold();
+        });
+    }
+
+    const printHouseholdModalBtn = document.getElementById('printHouseholdModalBtn');
+    if (printHouseholdModalBtn) {
+        printHouseholdModalBtn.addEventListener('click', () => {
+            const householdId = document.getElementById('createHouseholdForm').getAttribute('data-household-id');
+            if (householdId) {
+                printHousehold(householdId);
+            }
         });
     }
 
@@ -1864,14 +1896,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    const archiveModal = document.getElementById('archiveModal');
-    if (archiveModal) {
-        archiveModal.addEventListener('click', (e) => {
-            if (e.target === archiveModal) {
-                archiveModal.style.display = 'none';
-            }
-        });
-    }
 });
 
 function addMemberToTable(member) {
@@ -2360,12 +2384,16 @@ async function printHousehold(householdId) {
                             <div class="info-row"><span class="info-label">Household No:</span> ${household.household_number}</div>
                             <div class="info-row"><span class="info-label">Address:</span> ${household.address || 'N/A'}</div>
                             <div class="info-row"><span class="info-label">Contact:</span> ${household.household_contact || 'N/A'}</div>
+                            <div class="info-row"><span class="info-label">Ownership:</span> ${household.ownership_status || 'Owned'}</div>
+                            ${household.ownership_status === 'Rent' ? `<div class="info-row"><span class="info-label">Landlord:</span> ${household.landlord_name || 'N/A'}</div>` : ''}
                         </div>
                         <div class="info-box">
                             <h4>Household Head</h4>
                             <div class="info-row"><span class="info-label">Name:</span> ${household.head_name || 'N/A'}</div>
                             <div class="info-row"><span class="info-label">Date of Birth:</span> ${household.head_dob ? formatDobAndAge(household.head_dob) : 'N/A'}</div>
                             <div class="info-row"><span class="info-label">Sex:</span> ${household.head_sex || 'N/A'}</div>
+                            <div class="info-row"><span class="info-label">4Ps Status:</span> ${household.head_fourps || 'No'}</div>
+                            ${household.head_fourps === 'Yes' ? `<div class="info-row"><span class="info-label">4Ps ID:</span> ${household.head_fourps_id || 'N/A'}</div>` : ''}
                         </div>
                     </div>
                     

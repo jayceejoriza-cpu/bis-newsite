@@ -257,8 +257,16 @@ function initializeSearch() {
         let searchTimeout;
         searchInput.addEventListener('input', (e) => {
             clearTimeout(searchTimeout);
+            const searchTerm = e.target.value;
             searchTimeout = setTimeout(() => {
-                residentsTable.search(e.target.value);
+                residentsTable.search(searchTerm);
+                const url = new URL(window.location);
+                if (searchTerm) {
+                    url.searchParams.set('search', searchTerm);
+                } else {
+                    url.searchParams.delete('search');
+                }
+                window.history.replaceState({}, '', url);
             }, 300);
         });
     }
@@ -267,6 +275,9 @@ function initializeSearch() {
         clearSearchBtn.addEventListener('click', () => {
             searchInput.value = '';
             residentsTable.search('');
+            const url = new URL(window.location);
+            url.searchParams.delete('search');
+            window.history.replaceState({}, '', url);
             searchInput.focus();
         });
     }
@@ -279,6 +290,16 @@ function applyUrlFilters() {
     const urlParams = new URLSearchParams(window.location.search);
     let hasFilters = false;
     
+    if (urlParams.has('search')) {
+        const searchTerm = urlParams.get('search');
+        const searchInput = document.getElementById('searchInput');
+        const clearSearchBtn = document.getElementById('clearSearch');
+        if (searchInput) {
+            searchInput.value = searchTerm;
+            residentsTable.search(searchTerm);
+            if (clearSearchBtn) clearSearchBtn.style.display = 'flex';
+        }
+    }
     if (urlParams.has('tab')) {
         const tab = urlParams.get('tab');
         const tabBtn = document.querySelector(`.tab-btn[data-filter="${tab}"]`);
@@ -766,7 +787,7 @@ function showActionMenu(row, button) {
         </div>
         `;
     }
-    if (perms.resident_status) {
+    if (perms.resident_status && currentStatus !== 'Deceased') {
         menuHtml += `
         <div class="action-menu-item has-submenu" data-action="change-status">
             <i class="fas fa-toggle-on"></i>
@@ -855,8 +876,13 @@ function showActionMenu(row, button) {
             e.stopPropagation();
             const newStatus = item.getAttribute('data-status');
             const actionBtn = row.querySelector('.btn-action');
-            const dbResidentId = actionBtn ? actionBtn.getAttribute('data-resident-id') : null;
-            updateActivityStatus(dbResidentId, newStatus, row, currentStatus);
+            const dbResidentId = actionBtn ? (actionBtn.getAttribute('data-resident-id') || actionBtn.getAttribute('data-id')) : null;
+            
+            if (newStatus === 'Deceased' && typeof window.openDeceasedModal === 'function') {
+                window.openDeceasedModal(dbResidentId, row, currentStatus);
+            } else {
+                updateActivityStatus(dbResidentId, newStatus, row, currentStatus);
+            }
             menu.remove();
         });
     });
@@ -1000,9 +1026,17 @@ function handleAction(action, name, id, row) {
 // ===================================
 // Update Activity Status
 // ===================================
-function updateActivityStatus(residentId, newStatus, row, currentStatus) {
+function updateActivityStatus(residentId, newStatus, row, currentStatus, password = null, confirmBtn = null, passwordInput = null) {
+    const originalBtnText = confirmBtn ? confirmBtn.innerHTML : '';
+
+    if (confirmBtn) {
+        confirmBtn.disabled = true;
+        confirmBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Confirming...';
+    }
+
     if (!residentId) {
         showNotification('Error: Unable to identify resident', 'error');
+        if (confirmBtn) { confirmBtn.disabled = false; confirmBtn.innerHTML = originalBtnText; }
         return;
     }
 
@@ -1014,6 +1048,7 @@ function updateActivityStatus(residentId, newStatus, row, currentStatus) {
     const formData = new FormData();
     formData.append('id', residentId);
     formData.append('status', newStatus);
+    if (password) formData.append('password', password);
 
     fetch('model/update_activity_status.php', {
         method: 'POST',
@@ -1050,10 +1085,21 @@ function updateActivityStatus(residentId, newStatus, row, currentStatus) {
                 residentsTable.updateDisplay();
                 residentsTable.updatePagination();
             }
+            if (passwordInput) passwordInput.value = '';
+            
+            const deceasedModal = document.getElementById('deceasedModal');
+            if (deceasedModal) deceasedModal.style.display = 'none';
+
             showNotification(data.message, 'success');
         } else {
-            showNotification('Error: ' + data.message, 'error');
+            showNotification(data.message, 'error');
+            if (passwordInput) passwordInput.select();
         }
+    })
+    .finally(() => {
+        // Re-enable button and restore text regardless of success/failure
+        if (confirmBtn) { confirmBtn.disabled = false; confirmBtn.innerHTML = originalBtnText; }
+        if (passwordInput) { passwordInput.focus(); }
     })
     .catch(error => {
         console.error('Update status error:', error);
@@ -1252,8 +1298,12 @@ function showNotification(message, type = 'info') {
     
     const notification = document.createElement('div');
     notification.className = `notification notification-${type}`;
+    
+    const icon = type === 'success' ? 'check-circle' : (type === 'error' || type === 'warning' ? 'exclamation-circle' : 'info-circle');
+    const bgColor = type === 'success' ? '#10b981' : (type === 'error' || type === 'warning' ? '#ef4444' : '#3b82f6');
+
     notification.innerHTML = `
-        <i class="fas fa-${type === 'success' ? 'check-circle' : 'info-circle'}"></i>
+        <i class="fas fa-${icon}"></i>
         <span>${message}</span>
     `;
     
@@ -1261,7 +1311,7 @@ function showNotification(message, type = 'info') {
         position: fixed;
         top: 20px;
         right: 20px;
-        background: ${type === 'success' ? '#10b981' : '#3b82f6'};
+        background: ${bgColor};
         color: white;
         padding: 15px 20px;
         border-radius: 8px;
@@ -1269,7 +1319,7 @@ function showNotification(message, type = 'info') {
         display: flex;
         align-items: center;
         gap: 10px;
-        z-index: 10000;
+        z-index: 10000000;
         animation: slideIn 0.3s ease;
     `;
     

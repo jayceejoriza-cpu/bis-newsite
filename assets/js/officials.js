@@ -56,6 +56,18 @@ function initOfficials() {
     if (termStart) termStart.addEventListener('change', updateStatusBasedOnDates);
     if (termEnd)   termEnd.addEventListener('change',   updateStatusBasedOnDates);
 
+    // Toggle "Other" input fields
+    const chairmanshipSelect = document.getElementById('chairmanship');
+    const positionSelect = document.getElementById('position');
+    if (chairmanshipSelect) chairmanshipSelect.addEventListener('change', () => toggleOtherInput('chairmanship', 'otherChairmanshipGroup'));
+    if (positionSelect) positionSelect.addEventListener('change', () => toggleOtherInput('position', 'otherPositionGroup'));
+
+    // Re-apply limits when status is manually changed
+    const statusSelect = document.getElementById('status');
+    if (statusSelect) {
+        statusSelect.addEventListener('change', () => applySelectionLimits());
+    }
+
     // Initialize action menus for the table
     initializeActionMenus();
 
@@ -159,14 +171,78 @@ function initOfficials() {
             });
         });
     }
-    
-    if (archiveModal) {
-        window.addEventListener('click', function(e) {
-            if (e.target === archiveModal) {
-                archiveModal.style.display = 'none';
-            }
+
+    // Inactive Modal handlers
+    const inactiveModal = document.getElementById('inactiveModal');
+    const cancelInactive = document.getElementById('cancelInactive');
+    const inactiveForm = document.getElementById('inactiveForm');
+    const toggleInactivePassword = document.getElementById('toggleInactivePassword');
+    const inactivePassword = document.getElementById('inactivePassword');
+
+    if (cancelInactive) {
+        cancelInactive.addEventListener('click', () => {
+            inactiveModal.style.display = 'none';
         });
     }
+
+    if (toggleInactivePassword && inactivePassword) {
+        toggleInactivePassword.addEventListener('click', () => {
+            const type = inactivePassword.getAttribute('type') === 'password' ? 'text' : 'password';
+            inactivePassword.setAttribute('type', type);
+            toggleInactivePassword.innerHTML = type === 'password' ? '<i class="fas fa-eye"></i>' : '<i class="fas fa-eye-slash"></i>';
+        });
+    }
+
+    if (inactiveForm) {
+        inactiveForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const confirmBtn = document.getElementById('confirmInactiveBtn');
+            const originalText = confirmBtn.innerHTML;
+            
+            confirmBtn.disabled = true;
+            confirmBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+            
+            fetch('model/update_official_status.php', {
+                method: 'POST',
+                body: new FormData(this)
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    showNotification(data.message || 'Status updated to Inactive successfully', 'success');
+                    inactiveModal.style.display = 'none';
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    showNotification(data.message || 'Failed to update status', 'danger');
+                    confirmBtn.disabled = false;
+                    confirmBtn.innerHTML = originalText;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showNotification('An error occurred while updating the official status', 'danger');
+                confirmBtn.disabled = false;
+                confirmBtn.innerHTML = originalText;
+            });
+        });
+    }
+
+    // Define the global function called by the action menu
+    window.openInactiveModal = function(officialId, row, currentStatus, officialName) {
+        if (inactiveModal) {
+            document.getElementById('inactiveOfficialId').value = officialId;
+            document.getElementById('inactivePassword').value = '';
+            document.getElementById('inactiveReason').value = '';
+            
+            const modalTitle = document.getElementById('inactiveModalTitle');
+            if (modalTitle) {
+                modalTitle.innerHTML = `Set Official <u>${escapeHtml(officialName)}</u> to Inactive`;
+            }
+            
+            inactiveModal.style.display = 'block';
+            document.getElementById('inactiveReason').focus();
+        }
+    };
 
     checkUrlParams();
 }
@@ -175,6 +251,13 @@ function initOfficials() {
 function checkUrlParams() {
     const urlParams = new URLSearchParams(window.location.search);
     
+    if (urlParams.has('search')) {
+        const term = urlParams.get('search');
+        const input = document.getElementById('officialsSearch');
+        if (input) input.value = term;
+        searchOfficials(term);
+    }
+
     if (urlParams.has('status')) {
         filterByStatus(urlParams.get('status'), null);
     }
@@ -233,14 +316,27 @@ function filterByStatus(status, btn) {
 }
 
 // ── Search (client-side) ─────────────────────────────────────────────────────
+let searchTimeout;
 function searchOfficials(term) {
-    currentSearchTerm = term.toLowerCase().trim();
-    // Show/hide clear button
-    const clearBtn = document.getElementById('searchClearBtn');
-    if (clearBtn) {
-        clearBtn.style.display = term.length > 0 ? 'inline-flex' : 'none';
-    }
-    applyFilters();
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => {
+        currentSearchTerm = term.toLowerCase().trim();
+        
+        // Show/hide clear button
+        const clearBtn = document.getElementById('searchClearBtn');
+        if (clearBtn) {
+            clearBtn.style.display = term.length > 0 ? 'inline-flex' : 'none';
+        }
+        
+        const url = new URL(window.location);
+        if (term) {
+            url.searchParams.set('search', term);
+        } else {
+            url.searchParams.delete('search');
+        }
+        window.history.replaceState({}, '', url);
+        applyFilters();
+    }, 300);
 }
 
 function clearSearch() {
@@ -249,6 +345,9 @@ function clearSearch() {
     if (input) input.value = '';
     if (clearBtn) clearBtn.style.display = 'none';
     currentSearchTerm = '';
+    const url = new URL(window.location);
+    url.searchParams.delete('search');
+    window.history.replaceState({}, '', url);
     applyFilters();
 }
 
@@ -276,6 +375,92 @@ function refreshOfficials() {
     location.reload();
 }
 
+function toggleOtherInput(selectId, groupId) {
+    const select = document.getElementById(selectId);
+    const group = document.getElementById(groupId);
+    if (select && group) group.style.display = (select.value === 'Other') ? 'block' : 'none';
+}
+
+// ── Selection Limiting Logic ──────────────────────────────────────────────────
+function applySelectionLimits(officialId = null) {
+    const activeOfficials = window.ACTIVE_OFFICIALS || [];
+    
+    const isEdit = officialId !== null;
+    const statusSelect = document.getElementById(isEdit ? 'editStatus' : 'status');
+    const positionSelect = document.getElementById(isEdit ? 'editPosition' : 'position');
+    const chairmanshipSelect = document.getElementById(isEdit ? 'editChairmanship' : 'chairmanship');
+
+    if (!positionSelect && !chairmanshipSelect) return;
+
+    // If status is not Active, enable all options (as requested)
+    const currentStatus = statusSelect ? statusSelect.value : 'Active';
+    const isActuallyActive = currentStatus === 'Active';
+
+    // Calculate current counts (excluding the official being edited)
+    const posCounts = {};
+    const chairCounts = {};
+
+    activeOfficials.forEach(off => {
+        if (off.id == officialId) return; // Skip current record in edit mode
+        
+        if (off.position) {
+            posCounts[off.position] = (posCounts[off.position] || 0) + 1;
+        }
+        if (off.committee) {
+            chairCounts[off.committee] = (chairCounts[off.committee] || 0) + 1;
+        }
+    });
+
+    const posLimits = {
+        'Barangay Captain': 1,
+        'Barangay Kagawad': 7,
+        'Kagawad': 7,
+        'SK Chairman': 1,
+        'SK Kagawad': 7,
+        'Barangay Secretary': 1,
+        'Barangay Treasurer': 1,
+        'Barangay Administator': 1,
+        'Bookkeeper': 1
+    };
+
+    if (positionSelect) {
+        Array.from(positionSelect.options).forEach(opt => {
+            const val = opt.value;
+            if (!val || val === 'Other') {
+                opt.disabled = false;
+                return;
+            }
+
+            if (!isActuallyActive) {
+                opt.disabled = false;
+                return;
+            }
+
+            const limit = posLimits[val] || 1;
+            const count = posCounts[val] || 0;
+            opt.disabled = count >= limit;
+        });
+    }
+
+    if (chairmanshipSelect) {
+        Array.from(chairmanshipSelect.options).forEach(opt => {
+            const val = opt.value;
+            if (!val || val === 'Other') {
+                opt.disabled = false;
+                return;
+            }
+
+            if (!isActuallyActive) {
+                opt.disabled = false;
+                return;
+            }
+
+            const count = chairCounts[val] || 0;
+            opt.disabled = count >= 1;
+        });
+    }
+}
+
 // ── Create Official Modal ─────────────────────────────────────────────────────
 function openCreateOfficialModal() {
     if (window.BIS_PERMS && !window.BIS_PERMS.officials_create) {
@@ -284,6 +469,7 @@ function openCreateOfficialModal() {
     }
 
     resetCreateForm();
+    applySelectionLimits();
     const modal = new bootstrap.Modal(document.getElementById('createOfficialModal'));
     modal.show();
 }
@@ -320,7 +506,7 @@ function searchResidentsForPicker(term) {
                     ? `<img src="${escapeHtml(r.photo)}" alt="${escapeHtml(r.full_name)}">`
                     : `<span class="picker-initials">${escapeHtml(initials.toUpperCase())}</span>`;
 
-                const contact = r.mobile_number || 'No contact number';
+                const residentId = r.resident_id || 'N/A';
 
                 return `
                 <div class="picker-resident-item"
@@ -333,7 +519,7 @@ function searchResidentsForPicker(term) {
                     <div class="picker-resident-photo">${photoHtml}</div>
                     <div class="picker-resident-info">
                         <div class="picker-resident-name">${escapeHtml(r.full_name)}</div>
-                        <div class="picker-resident-contact">${escapeHtml(contact)}</div>
+                        <div class="picker-resident-contact">ID: ${escapeHtml(residentId)}</div>
                     </div>
                     <button type="button" class="picker-select-btn">Select</button>
                 </div>`;
@@ -412,6 +598,7 @@ function updateStatusBasedOnDates() {
     } else {
         statusSelect.value = 'Inactive';
     }
+    applySelectionLimits(document.getElementById('editOfficialId')?.value);
 }
 
 // ── Submit Create Official ────────────────────────────────────────────────────
@@ -424,6 +611,36 @@ async function submitCreateOfficial() {
     if (!residentId) {
         alert('Please select a resident first.');
         return;
+    }
+
+    const chairmanshipVal = document.getElementById('chairmanship').value;
+    const positionVal = document.getElementById('position').value;
+    const finalChairmanship = (chairmanshipVal === 'Other') ? document.getElementById('otherChairmanship').value.trim() : chairmanshipVal;
+    const finalPosition = (positionVal === 'Other') ? document.getElementById('otherPosition').value.trim() : positionVal;
+    const status = document.getElementById('status').value;
+
+    if (positionVal === 'Other' && !finalPosition) {
+        alert('Please enter a custom position name.');
+        return;
+    }
+
+    // Validation for "Other" limit (1)
+    if (status === 'Active') {
+        const activeOfficials = window.ACTIVE_OFFICIALS || [];
+        if (positionVal === 'Other') {
+            const isTaken = activeOfficials.some(off => off.position && off.position.toLowerCase() === finalPosition.toLowerCase());
+            if (isTaken) {
+                alert(`The custom position "${finalPosition}" is already taken by another active official.`);
+                return;
+            }
+        }
+        if (chairmanshipVal === 'Other' && finalChairmanship) {
+            const isTaken = activeOfficials.some(off => off.committee && off.committee.toLowerCase() === finalChairmanship.toLowerCase());
+            if (isTaken) {
+                alert(`The custom chairmanship "${finalChairmanship}" is already taken by another active official.`);
+                return;
+            }
+        }
     }
 
     if (!form.checkValidity()) {
@@ -440,8 +657,9 @@ async function submitCreateOfficial() {
         formData.append('fullname',             document.getElementById('selectedResidentFullname')?.value || '');
         formData.append('contact_number',       document.getElementById('selectedResidentContact')?.value  || '');
         formData.append('resident_photo_path',  document.getElementById('selectedResidentPhoto')?.value    || '');
-        formData.append('chairmanship',         document.getElementById('chairmanship')?.value             || '');
-        formData.append('position',             document.getElementById('position')?.value                 || '');
+        formData.append('chairmanship',         finalChairmanship);
+        formData.append('chairmanship',         finalChairmanship || '');
+        formData.append('position',             finalPosition);
         formData.append('term_start',           document.getElementById('termStart')?.value                || '');
         formData.append('term_end',             document.getElementById('termEnd')?.value                  || '');
         formData.append('status',               document.getElementById('status')?.value                   || '');
@@ -604,6 +822,8 @@ function editOfficial(officialId) {
     const modal = new bootstrap.Modal(modalEl);
     modal.show();
 
+    applySelectionLimits(officialId);
+
     // Show loading state on submit button
     const submitBtn = document.getElementById('editOfficialSubmitBtn');
     if (submitBtn) {
@@ -679,6 +899,12 @@ function populateEditModal(official) {
     const posEl = document.getElementById('editPosition');
     if (posEl) posEl.value = official.position || '';
 
+    // Check if current values are "Other" (not in predefined list)
+    // Note: If you want specific logic to detect "Other" on populate, 
+    // you'd compare against the dropdown options.
+    toggleOtherInput('editChairmanship', 'editOtherChairmanshipGroup');
+    toggleOtherInput('editPosition', 'editOtherPositionGroup');
+
     // Term dates
     const termStartEl = document.getElementById('editTermStart');
     const termEndEl   = document.getElementById('editTermEnd');
@@ -733,6 +959,21 @@ document.addEventListener('DOMContentLoaded', function () {
     const editTermEnd   = document.getElementById('editTermEnd');
     if (editTermStart) editTermStart.addEventListener('change', updateEditStatusBasedOnDates);
     if (editTermEnd)   editTermEnd.addEventListener('change',   updateEditStatusBasedOnDates);
+
+    // Toggle "Other" input fields for Edit
+    const editChairSelect = document.getElementById('editChairmanship');
+    const editPosSelect = document.getElementById('editPosition');
+    if (editChairSelect) editChairSelect.addEventListener('change', () => toggleOtherInput('editChairmanship', 'editOtherChairmanshipGroup'));
+    if (editPosSelect) editPosSelect.addEventListener('change', () => toggleOtherInput('editPosition', 'editOtherPositionGroup'));
+
+    // Re-apply limits when edit status is manually changed
+    const editStatusSelect = document.getElementById('editStatus');
+    if (editStatusSelect) {
+        editStatusSelect.addEventListener('change', () => {
+            const id = document.getElementById('editOfficialId').value;
+            applySelectionLimits(id);
+        });
+    }
 });
 
 function searchResidentsForEditPicker(term) {
@@ -755,7 +996,7 @@ function searchResidentsForEditPicker(term) {
                 const photoHtml = r.photo
                     ? `<img src="${escapeHtml(r.photo)}" alt="${escapeHtml(r.full_name)}">`
                     : `<span class="picker-initials">${escapeHtml(initials.toUpperCase())}</span>`;
-                const contact = r.mobile_number || 'No contact number';
+                const residentId = r.resident_id || 'N/A';
                 return `
                 <div class="picker-resident-item"
                      onclick="selectEditResident(
@@ -767,7 +1008,7 @@ function searchResidentsForEditPicker(term) {
                     <div class="picker-resident-photo">${photoHtml}</div>
                     <div class="picker-resident-info">
                         <div class="picker-resident-name">${escapeHtml(r.full_name)}</div>
-                        <div class="picker-resident-contact">${escapeHtml(contact)}</div>
+                        <div class="picker-resident-contact">ID: ${escapeHtml(residentId)}</div>
                     </div>
                     <button type="button" class="picker-select-btn">Select</button>
                 </div>`;
@@ -835,13 +1076,43 @@ function updateEditStatusBasedOnDates() {
     } else {
         statusSelect.value = 'Inactive';
     }
+    applySelectionLimits();
 }
 
 async function submitEditOfficial() {
     const form      = document.getElementById('editOfficialForm');
     const submitBtn = document.getElementById('editOfficialSubmitBtn');
 
+    const chairmanshipVal = document.getElementById('editChairmanship').value;
+    const positionVal = document.getElementById('editPosition').value;
+    const finalChairmanship = (chairmanshipVal === 'Other') ? document.getElementById('editOtherChairmanship').value.trim() : chairmanshipVal;
+    const finalPosition = (positionVal === 'Other') ? document.getElementById('editOtherPosition').value.trim() : positionVal;
     const officialId = document.getElementById('editOfficialId')?.value;
+
+    if (positionVal === 'Other' && !finalPosition) {
+        alert('Please enter a custom position name.');
+        return;
+    }
+
+    // Validation for "Other" limit (1)
+    if (document.getElementById('editStatus').value === 'Active') {
+        const activeOfficials = window.ACTIVE_OFFICIALS || [];
+        if (positionVal === 'Other') {
+            const isTaken = activeOfficials.some(off => off.id != officialId && off.position.toLowerCase() === finalPosition.toLowerCase());
+            if (isTaken) {
+                alert(`The position "${finalPosition}" is already taken by another active official.`);
+                return;
+            }
+        }
+        if (chairmanshipVal === 'Other' && finalChairmanship) {
+            const isTaken = activeOfficials.some(off => off.id != officialId && off.committee && off.committee.toLowerCase() === finalChairmanship.toLowerCase());
+            if (isTaken) {
+                alert(`The chairmanship "${finalChairmanship}" is already taken by another active official.`);
+                return;
+            }
+        }
+    }
+
     if (!officialId) {
         alert('Official ID is missing. Please close and try again.');
         return;
@@ -862,8 +1133,8 @@ async function submitEditOfficial() {
         formData.append('fullname',              document.getElementById('editSelectedResidentFullname')?.value || '');
         formData.append('contact_number',        document.getElementById('editSelectedResidentContact')?.value  || '');
         formData.append('resident_photo_path',   document.getElementById('editSelectedResidentPhoto')?.value    || '');
-        formData.append('chairmanship',          document.getElementById('editChairmanship')?.value             || '');
-        formData.append('position',              document.getElementById('editPosition')?.value                 || '');
+        formData.append('chairmanship',          finalChairmanship);
+        formData.append('position',              finalPosition);
         formData.append('term_start',            document.getElementById('editTermStart')?.value                || '');
         formData.append('term_end',              document.getElementById('editTermEnd')?.value                  || '');
         formData.append('status',                document.getElementById('editStatus')?.value                   || '');
@@ -1123,7 +1394,7 @@ function showActionMenu(row, button) {
             <span>Edit Official</span>
         </div>`;
     }
-    if (perms.officials_status) {
+    if (perms.officials_status && currentStatus !== 'Completed' && currentStatus !== 'Deceased') {
         menuHtml += `
         <div class="action-menu-item has-submenu" data-action="change-status">
             <i class="fas fa-toggle-on"></i>
@@ -1139,11 +1410,6 @@ function showActionMenu(row, button) {
                     <i class="fas fa-circle status-dot status-dot-inactive"></i>
                     <span>Inactive</span>
                     ${currentStatus === 'Inactive' ? '<i class="fas fa-check submenu-check"></i>' : ''}
-                </div>
-                <div class="action-menu-item submenu-item ${currentStatus === 'Completed' ? 'submenu-current' : ''}" data-status="Completed">
-                    <i class="fas fa-circle status-dot status-dot-completed"></i>
-                    <span>Completed</span>
-                    ${currentStatus === 'Completed' ? '<i class="fas fa-check submenu-check"></i>' : ''}
                 </div>
             </div>
         </div>`;
@@ -1208,7 +1474,13 @@ function showActionMenu(row, button) {
         item.addEventListener('click', (e) => {
             e.stopPropagation();
             const newStatus = item.getAttribute('data-status');
-            updateOfficialStatus(officialId, newStatus, row, currentStatus);
+            
+            if (newStatus === 'Inactive' && typeof window.openInactiveModal === 'function') {
+                const officialName = row.querySelector('.official-info-name')?.textContent || 'Official';
+                window.openInactiveModal(officialId, row, currentStatus, officialName);
+            } else {
+                updateOfficialStatus(officialId, newStatus, row, currentStatus);
+            }
             menu.remove();
         });
     });

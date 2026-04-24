@@ -40,6 +40,15 @@ document.addEventListener('DOMContentLoaded', function() {
         responsive: true
     });
     
+    // Load search from URL
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.has('search')) {
+        searchTerm = urlParams.get('search').toLowerCase();
+        if (searchInput) searchInput.value = urlParams.get('search');
+        filterTable();
+        if (clearSearchBtn) clearSearchBtn.style.display = 'flex';
+    }
+
     // ============================================
     // Initialize Bootstrap Modal
     // ============================================
@@ -54,6 +63,14 @@ document.addEventListener('DOMContentLoaded', function() {
             filterTable();
             window.reinitActionMenus();
             
+            const url = new URL(window.location);
+            if (searchTerm) {
+                url.searchParams.set('search', searchTerm);
+            } else {
+                url.searchParams.delete('search');
+            }
+            window.history.replaceState({}, '', url);
+
             // Show/hide clear button
             if (clearSearchBtn) {
                 clearSearchBtn.style.display = searchTerm ? 'flex' : 'none';
@@ -66,6 +83,9 @@ document.addEventListener('DOMContentLoaded', function() {
             searchInput.value = '';
             searchTerm = '';
             filterTable();
+            const url = new URL(window.location);
+            url.searchParams.delete('search');
+            window.history.replaceState({}, '', url);
             window.reinitActionMenus();
             clearSearchBtn.style.display = 'none';
         });
@@ -1479,10 +1499,10 @@ function handleAction(action, recordId) {
         })
         .then(data => {
             if (data.success) {
-                alert('Status updated successfully!');
+                showNotification('Status updated successfully!', 'success');
                 location.reload();
             } else {
-                alert('Error: ' + data.message);
+                showNotification(data.message, 'error');
             }
         })
         .catch(error => {
@@ -2162,14 +2182,6 @@ function handleAction(action, recordId) {
         });
     }
     
-    if (archiveModal) {
-        window.addEventListener('click', (e) => {
-            if (e.target === archiveModal) {
-                archiveModal.style.display = 'none';
-            }
-        });
-    }
-    
     if (toggleArchivePasswordBtn && archivePasswordInput) {
         toggleArchivePasswordBtn.addEventListener('click', () => {
             const type = archivePasswordInput.getAttribute('type') === 'password' ? 'text' : 'password';
@@ -2196,11 +2208,11 @@ function handleAction(action, recordId) {
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    alert(data.message || 'Record archived successfully!');
+                    showNotification(data.message || 'Record archived successfully!', 'success');
                     archiveModal.style.display = 'none';
                     setTimeout(() => location.reload(), 1500);
                 } else {
-                    alert(data.message || 'Error archiving record');
+                    showNotification(data.message, 'error');
                     confirmBtn.disabled = false;
                     confirmBtn.innerHTML = originalText;
                 }
@@ -2254,3 +2266,41 @@ function handleAction(action, recordId) {
 
     console.log('Blotter Records page initialized - Mobile validation active');
 });
+
+/**
+ * Standardized notification helper with high z-index and role-based coloring
+ */
+function showNotification(message, type = 'info') {
+    // Remove existing notifications
+    document.querySelectorAll('.notification').forEach(n => n.remove());
+    
+    const notification = document.createElement('div');
+    notification.className = `notification notification-${type}`;
+    
+    const icon = type === 'success' ? 'check-circle' : (type === 'error' || type === 'warning' ? 'exclamation-circle' : 'info-circle');
+    const bgColor = type === 'success' ? '#10b981' : (type === 'error' || type === 'warning' ? '#ef4444' : '#3b82f6');
+
+    notification.innerHTML = `<i class="fas fa-${icon}"></i><span>${message}</span>`;
+    
+    notification.style.cssText = `
+        position: fixed; top: 20px; right: 20px; background: ${bgColor};
+        color: white; padding: 15px 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        display: flex; align-items: center; gap: 10px; z-index: 10000000; animation: slideInRight 0.3s ease;
+    `;
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.style.opacity = '0';
+        notification.style.transition = 'opacity 0.3s ease';
+        setTimeout(() => notification.remove(), 300);
+    }, 3000);
+
+    // Inject animation if missing
+    if (!document.getElementById('blotter-notification-styles')) {
+        const style = document.createElement('style');
+        style.id = 'blotter-notification-styles';
+        style.textContent = `@keyframes slideInRight { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }`;
+        document.head.appendChild(style);
+    }
+}

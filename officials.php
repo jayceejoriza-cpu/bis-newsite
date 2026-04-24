@@ -111,7 +111,8 @@ try {
                 r.middle_name,
                 r.last_name,
                 r.suffix,
-                r.photo AS resident_photo
+                r.photo AS resident_photo,
+                r.activity_status AS resident_activity
             FROM barangay_officials bo
             LEFT JOIN residents r ON bo.resident_id = r.id
             WHERE bo.term_start <= :term_end
@@ -141,7 +142,8 @@ try {
                 r.middle_name,
                 r.last_name,
                 r.suffix,
-                r.photo AS resident_photo
+                r.photo AS resident_photo,
+                r.activity_status AS resident_activity
             FROM barangay_officials bo
             LEFT JOIN residents r ON bo.resident_id = r.id
             ORDER BY bo.hierarchy_level ASC, bo.position ASC
@@ -150,6 +152,13 @@ try {
     $officials = $stmt->fetchAll();
 
     // Group officials by hierarchy level
+    // Fetch truly active officials for UI limiting logic
+    $activeOfficials = [];
+    try {
+        $activeStmt = $pdo->query("SELECT id, position, committee FROM barangay_officials WHERE status = 'Active'");
+        $activeOfficials = $activeStmt->fetchAll();
+    } catch (PDOException $e) {}
+
     $officialsByLevel = [
         1 => [], // Top level (Captain)
         2 => [], // Middle level (Kagawads)
@@ -352,7 +361,7 @@ try {
                 <div class="officials-search-row">
                     <div class="officials-search-wrap">
                         <i class="fas fa-search"></i>
-                        <input type="text" id="officialsSearch" placeholder="Search officials name" oninput="searchOfficials(this.value)">
+                        <input type="text" id="officialsSearch" placeholder="Search officials name" oninput="searchOfficials(this.value)" value="<?php echo isset($_GET['search']) ? htmlspecialchars($_GET['search']) : ''; ?>">
                         <button class="search-clear-btn" id="searchClearBtn" onclick="clearSearch()" style="display:none;" title="Clear">
                             <i class="fas fa-times"></i>
                         </button>
@@ -434,13 +443,18 @@ try {
                                                 . date('M d, Y', strtotime($official['term_end']));
 
                                     // Badge classes
-                                    $statusBadge = 'badge-' . strtolower($official['status']);
+                                    $currentStatus = $official['status'];
+                                    if (($official['resident_activity'] ?? '') === 'Deceased') {
+                                        $currentStatus = 'Deceased';
+                                    }
+                                    
+                                    $statusBadge = 'badge-' . strtolower($currentStatus);
                                     $typeBadge   = 'badge-' . strtolower($official['appointment_type']);
 
                                     // Search data attribute
                                     $searchData = strtolower($fullName . ' ' . $official['position'] . ' ' . ($official['committee'] ?? ''));
                                 ?>
-                                <tr data-status="<?php echo htmlspecialchars($official['status']); ?>"
+                                <tr data-status="<?php echo htmlspecialchars($currentStatus); ?>"
                                     data-search="<?php echo htmlspecialchars($searchData); ?>">
                                     <td>
                                         <div class="official-name-cell">
@@ -462,7 +476,7 @@ try {
                                     <td><?php echo htmlspecialchars($termPeriod); ?></td>
                                     <td>
                                         <span class="badge <?php echo htmlspecialchars($statusBadge); ?>">
-                                            <?php echo htmlspecialchars($official['status']); ?>
+                                            <?php echo htmlspecialchars($currentStatus); ?>
                                         </span>
                                     </td>
                                     <td>
@@ -506,7 +520,7 @@ try {
     <!-- ============================================
          Create Official Modal
          ============================================ -->
-    <div class="modal fade" id="createOfficialModal" tabindex="-1" aria-labelledby="createOfficialModalLabel" aria-hidden="true">
+    <div class="modal fade" id="createOfficialModal" tabindex="-1" aria-labelledby="createOfficialModalLabel" aria-hidden="true" data-bs-backdrop="static">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
@@ -558,6 +572,7 @@ try {
                             <label for="chairmanship" class="form-label">Chairmanship</label>
                             <select class="form-select" id="chairmanship" name="chairmanship">
                                 <option value="">Select Official Chairmanship</option>
+                                <option value="Executive">Executive</option>
                                 <option value="Culture and Education">Culture and Education</option>
                                 <option value="Clean and Green">Clean and Green</option>
                                 <option value="Health & Sanitation">Health & Sanitation</option>
@@ -566,7 +581,12 @@ try {
                                 <option value="Infrastructure">Infrastructure</option>
                                 <option value="Anti-Red Tape">Anti-Red Tape</option>
                                 <option value="Educational and Sports">Educational and Sports</option>
+                                 <option value="Other">Add Another Chairmanship</option>
                             </select>
+                        </div>
+                        <div class="mb-3" id="otherChairmanshipGroup" style="display:none;">
+                            <label for="otherChairmanship" class="form-label">Custom Chairmanship Name</label>
+                            <input type="text" class="form-control" id="otherChairmanship" placeholder="Enter custom chairmanship">
                         </div>
 
                         <!-- Position -->
@@ -575,13 +595,19 @@ try {
                             <select class="form-select" id="position" name="position" required>
                                 <option value="">Select Official Position</option>
                                 <option value="Barangay Captain">Barangay Captain</option>
-                                <option value="Kagawad">Kagawad</option>
+                                <option value="Barangay Kagawad">Barangay Kagawad</option>
                                 <option value="SK Chairman">SK Chairman</option>
+                                <option value="SK Kagawad">SK Kagawad</option>
                                 <option value="Barangay Secretary">Barangay Secretary</option>
                                 <option value="Barangay Treasurer">Barangay Treasurer</option>
                                 <option value="Barangay Administator">Barangay Administator</option>
                                 <option value="Bookkeeper">Bookkeeper</option>
+                                <option value="Other">Add Another Position</option>
                             </select>
+                        </div>
+                        <div class="mb-3" id="otherPositionGroup" style="display:none;">
+                            <label for="otherPosition" class="form-label">Custom Position Name</label>
+                            <input type="text" class="form-control" id="otherPosition" placeholder="Enter custom position">
                         </div>
 
                         <!-- Term Start -->
@@ -598,12 +624,6 @@ try {
 
                         <!-- Status -->
                         <div class="mb-3">
-                            <label for="status" class="form-label">Status</label>
-                            <select class="form-select" id="status" name="status" required>
-                                <option value="Active">Active</option>
-                                <option value="Inactive">Inactive</option>
-                                <option value="Completed">Completed</option>
-                            </select>
                             <small class="text-muted">Status is automatically determined based on term dates</small>
                         </div>
 
@@ -625,7 +645,7 @@ try {
          Resident Picker Modal
          ============================================ -->
     <div class="modal fade" id="residentPickerModal" tabindex="-1" aria-labelledby="residentPickerModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered modal-md">
+        <div class="modal-dialog modal-dialog-centered modal-md ms-0 ms-lg-5">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="residentPickerModalLabel">
@@ -637,7 +657,7 @@ try {
                     <!-- Search -->
                     <div class="picker-search-wrap">
                         <i class="fas fa-search"></i>
-                        <input type="text" id="pickerSearchInput" placeholder="Search by name or contact..." oninput="searchResidentsForPicker(this.value)">
+                        <input type="text" id="pickerSearchInput" placeholder="Search name or Resident ID" oninput="searchResidentsForPicker(this.value)">
                     </div>
                     <!-- Results -->
                     <div class="picker-results" id="residentPickerResults">
@@ -765,6 +785,7 @@ try {
                             <label for="editChairmanship" class="form-label">Chairmanship</label>
                             <select class="form-select" id="editChairmanship" name="chairmanship">
                                 <option value="">Select Official Chairmanship</option>
+                                 <option value="Executive">Executive</option>
                                 <option value="Culture and Education">Culture and Education</option>
                                 <option value="Clean and Green">Clean and Green</option>
                                 <option value="Health & Sanitation">Health & Sanitation</option>
@@ -773,7 +794,12 @@ try {
                                 <option value="Infrastructure">Infrastructure</option>
                                 <option value="Anti-Red Tape">Anti-Red Tape</option>
                                 <option value="Educational and Sports">Educational and Sports</option>
+                                 <option value="Other">Add Another Chairmanship</option>
                             </select>
+                        </div>
+                        <div class="mb-3" id="editOtherChairmanshipGroup" style="display:none;">
+                            <label for="editOtherChairmanship" class="form-label">Custom Chairmanship Name</label>
+                            <input type="text" class="form-control" id="editOtherChairmanship" placeholder="Enter custom chairmanship">
                         </div>
 
                         <!-- Position -->
@@ -782,13 +808,19 @@ try {
                             <select class="form-select" id="editPosition" name="position" required>
                                  <option value="">Select Official Position</option>
                                 <option value="Barangay Captain">Barangay Captain</option>
-                                <option value="Kagawad">Kagawad</option>
+                                <option value="Barangay Kagawad">Barangay Kagawad</option>
                                 <option value="SK Chairman">SK Chairman</option>
+                                <option value="SK Kagawad">SK Kagawad</option>
                                 <option value="Barangay Secretary">Barangay Secretary</option>
                                 <option value="Barangay Treasurer">Barangay Treasurer</option>
                                 <option value="Barangay Administator">Barangay Administator</option>
                                 <option value="Bookkeeper">Bookkeeper</option>
+                                <option value="Other">Add Another Position</option>
                             </select>
+                        </div>
+                        <div class="mb-3" id="editOtherPositionGroup" style="display:none;">
+                            <label for="editOtherPosition" class="form-label">Custom Position Name</label>
+                            <input type="text" class="form-control" id="editOtherPosition" placeholder="Enter custom position">
                         </div>
 
                         <!-- Term Start -->
@@ -805,12 +837,6 @@ try {
 
                         <!-- Status -->
                         <div class="mb-3">
-                            <label for="editStatus" class="form-label">Status</label>
-                            <select class="form-select" id="editStatus" name="status" required>
-                                <option value="Active">Active</option>
-                                <option value="Inactive">Inactive</option>
-                                <option value="Completed">Completed</option>
-                            </select>
                             <small class="text-muted">Status is automatically determined based on term dates</small>
                         </div>
 
@@ -841,7 +867,7 @@ try {
                 <div class="modal-body p-0">
                     <div class="picker-search-wrap">
                         <i class="fas fa-search"></i>
-                        <input type="text" id="editPickerSearchInput" placeholder="Search by name or contact..." oninput="searchResidentsForEditPicker(this.value)">
+                        <input type="text" id="editPickerSearchInput" placeholder="Search name or ID (Adults 18+)..." oninput="searchResidentsForEditPicker(this.value)">
                     </div>
                     <div class="picker-results" id="editResidentPickerResults">
                         <div class="picker-loading">
@@ -909,6 +935,60 @@ try {
         </div>
     </div>
 
+    <!-- Inactive Confirmation Modal -->
+    <div id="inactiveModal" class="modal" style="display: none; position: fixed; z-index: 999999 !important; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.5);">
+        <div class="modal-content" style="background-color: var(--bg-secondary); padding: 2rem; border-radius: 12px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);  margin: 10% auto; max-width: 500px; position: relative;">
+            <div class="modal-header" style="display: flex; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 1.25rem; margin-bottom: 1.25rem;">
+                <div style="width: 54px; height: 54px; background-color: #fef3c7; color: #f59e0b; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; margin-right: 1.25rem; flex-shrink: 0;">
+                    <i class="fas fa-user-slash"></i>
+                </div>
+                <div style="flex: 1; min-width: 0;">
+                    <h3 id="inactiveModalTitle" style="margin: 0 0 0.25rem 0; color: var(--text-primary); font-size: 1.25rem; font-weight: 600; line-height: 1.4; word-wrap: break-word;">Set Official as Inactive</h3>
+                    <p style="margin: 0; color: var(--text-secondary); font-size: 0.9rem; line-height: 1.4;">Are you sure you want to mark this official as Inactive?</p>
+                </div>
+            </div>
+            
+            <div class="modal-body">
+                <div style="background-color: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem; color: #d97706; font-size: 0.875rem;">
+                    <i class="fas fa-info-circle" style="margin-right: 5px;"></i> This will update the status of the official and require a reason for the change.
+                </div>
+                
+                <form id="inactiveForm">
+                    <input type="hidden" id="inactiveOfficialId" name="official_id">
+                    <input type="hidden" id="inactiveNewStatus" name="status" value="Inactive">
+                    
+                    <div style="margin-bottom: 1.25rem;">
+                        <label for="inactiveReason" style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: var(--text-primary); font-size: 0.9rem;">
+                            <i class="fas fa-comment-alt" style="margin-right: 5px;"></i> Reason for Status Change <span style="color: #ef4444;">*</span>
+                        </label>
+                        <textarea id="inactiveReason" name="reason" rows="2" style="width: 100%; padding: 0.75rem 1rem; border: 1px solid var(--border-color); border-radius: 8px; background-color: var(--bg-primary); color: var(--text-primary); box-sizing: border-box; font-family: inherit;" placeholder="Please state the reason..." required></textarea>
+                    </div>
+
+                    <div style="margin-bottom: 1.5rem;">
+                        <label for="inactivePassword" style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: var(--text-primary); font-size: 0.9rem;">
+                            <i class="fas fa-key" style="margin-right: 5px;"></i> Your Password
+                        </label>
+                        <div style="position: relative;">
+                            <input type="password" id="inactivePassword" name="password" style="width: 100%; padding: 0.75rem 2.5rem 0.75rem 1rem; border: 1px solid var(--border-color); border-radius: 8px; background-color: var(--bg-primary); color: var(--text-primary); box-sizing: border-box;" placeholder="Enter your password" required>
+                            <button type="button" id="toggleInactivePassword" style="position: absolute; right: 0.75rem; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--text-secondary); cursor: pointer; padding: 0;">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div style="display: flex; gap: 0.75rem; justify-content: flex-end;">
+                        <button type="button" id="cancelInactive" style="padding: 0.6rem 1.5rem; border-radius: 8px; border: none; background-color: #6b7280; color: white; cursor: pointer; font-weight: 500; display: inline-flex; align-items: center; gap: 0.5rem;">
+                            <i class="fas fa-times"></i> Cancel
+                        </button>
+                        <button type="submit" id="confirmInactiveBtn" style="padding: 0.6rem 1.5rem; border-radius: 8px; border: none; background-color: #f59e0b; color: white; cursor: pointer; font-weight: 500; display: inline-flex; align-items: center; gap: 0.5rem;">
+                            <i class="fas fa-check"></i> Confirm
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <!-- Bootstrap JS -->
     <script src="assets/bootstrap/js/bootstrap.bundle.min.js"></script>
 
@@ -923,6 +1003,7 @@ try {
         officials_archive:<?php echo hasPermission('perm_officials_archive') ? 'true' : 'false'; ?>,
         officials_print:  <?php echo hasPermission('perm_officials_print')   ? 'true' : 'false'; ?>
     };
+    window.ACTIVE_OFFICIALS = <?php echo json_encode($activeOfficials); ?>;
     </script>
 
     <!-- Custom JS -->

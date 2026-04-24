@@ -283,12 +283,6 @@ function getUserAvatarColor($index) {
                                                 <i class="fas fa-<?php echo $user['status'] === 'Active' ? 'ban' : 'check-circle'; ?>"></i>
                                                 <?php echo $user['status'] === 'Active' ? 'Deactivate' : 'Activate'; ?>
                                             </button>
-                                            <div class="action-menu-divider"></div>
-                                            <button class="action-menu-item delete-user-btn danger"
-                                                data-id="<?php echo $user['id']; ?>"
-                                                data-name="<?php echo htmlspecialchars($user['full_name']); ?>">
-                                                <i class="fas fa-trash"></i> Delete
-                                            </button>
                                             <?php endif; ?>
                                         </div>
                                     </div>
@@ -346,6 +340,7 @@ function getUserAvatarColor($index) {
                         <label class="form-label" for="password">
                             Password <span class="required" id="passwordRequired">*</span>
                             <span class="form-hint" id="passwordHint" style="display:none;">(leave blank to keep current)</span>
+                            <span class="form-hint" style="display:block;margin-top:2px;font-size:11px;opacity:0.8;">(8-16 chars, 1 uppercase, alphanumeric & special char)</span>
                         </label>
                         <div class="password-wrapper">
                             <input type="password" class="form-input" id="password" name="password"
@@ -355,6 +350,21 @@ function getUserAvatarColor($index) {
                             </button>
                         </div>
                         <span class="form-error" id="passwordError"></span>
+                    </div>
+
+                    <!-- Confirm Password -->
+                    <div class="form-group">
+                        <label class="form-label" for="confirmPassword">
+                            Confirm Password <span class="required" id="confirmPasswordRequired">*</span>
+                        </label>
+                        <div class="password-wrapper">
+                            <input type="password" class="form-input" id="confirmPassword" name="confirm_password"
+                                   placeholder="Confirm password" autocomplete="new-password">
+                            <button type="button" class="toggle-password" id="toggleConfirmPassword" title="Show/Hide">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                        <span class="form-error" id="confirmPasswordError"></span>
                     </div>
 
                     <!-- Roles (checkboxes from DB) -->

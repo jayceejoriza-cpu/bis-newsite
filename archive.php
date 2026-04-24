@@ -558,8 +558,13 @@ if (isset($conn)) {
             
             // Search Input Event
             searchInput.addEventListener('input', function() {
-                clearSearchBtn.style.display = this.value.trim() ? 'flex' : 'none';
+                const val = this.value.trim();
+                clearSearchBtn.style.display = val ? 'flex' : 'none';
                 applyFilters();
+                const url = new URL(window.location);
+                if (val) url.searchParams.set('search', val);
+                else url.searchParams.delete('search');
+                window.history.replaceState({}, '', url);
             });
             
             // Clear Search Event
@@ -567,6 +572,9 @@ if (isset($conn)) {
                 searchInput.value = '';
                 clearSearchBtn.style.display = 'none';
                 applyFilters();
+                const url = new URL(window.location);
+                url.searchParams.delete('search');
+                window.history.replaceState({}, '', url);
             });
             
             // Filter Button Toggle
@@ -640,6 +648,15 @@ if (isset($conn)) {
                 applyFilters();
                 showNotification('Filters cleared', 'info');
             });
+
+            // Initialize search from URL
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.has('search')) {
+                const term = urlParams.get('search');
+                if (searchInput) searchInput.value = term;
+                if (clearSearchBtn) clearSearchBtn.style.display = 'flex';
+                applyFilters();
+            }
         });
 
         // Modal functionality

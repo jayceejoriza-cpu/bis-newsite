@@ -791,6 +791,51 @@ try {
         </div>
     </div>
     
+    <!-- Deceased Confirmation Modal -->
+    <div id="deceasedModal" class="modal" style="display: none; position: fixed; z-index: 999999 !important; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.5);">
+        <div class="modal-content" style="background-color: var(--bg-secondary); padding: 2rem; border-radius: 12px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);  margin: 10% auto; position: relative;">
+            <div class="modal-header" style="display: flex; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 1.25rem; margin-bottom: 1.25rem;">
+                <div style="width: 54px; height: 54px; background-color: #fee2e2; color: #ef4444; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; margin-right: 1.25rem; flex-shrink: 0;">
+                    <i class="fas fa-user-times"></i>
+                </div>
+                <div style="flex: 1; min-width: 0;">
+                    <h3 id="deceasedModalTitle" style="margin: 0 0 0.25rem 0; color: var(--text-primary); font-size: 1.25rem; font-weight: 600; line-height: 1.4; word-wrap: break-word;">Confirm Deceased Status</h3>
+                    <p style="margin: 0; color: var(--text-secondary); font-size: 0.9rem; line-height: 1.4;">Are you sure that this person is deceased? This selection will update the resident's status in the system.</p>
+                </div>
+            </div>
+            
+            <div class="modal-body">
+                <div style="background-color: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem; color: #d97706; font-size: 0.875rem;">
+                    <i class="fas fa-shield-alt" style="margin-right: 5px;"></i> For security purposes, please enter your password to confirm this action.
+                </div>
+                
+                <form id="deceasedForm">
+                    <input type="hidden" id="deceasedResidentId" name="id">
+                    <div style="margin-bottom: 1.5rem;">
+                        <label for="deceasedPassword" style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: var(--text-primary); font-size: 0.9rem;">
+                            <i class="fas fa-key" style="margin-right: 5px;"></i> Your Password
+                        </label>
+                        <div style="position: relative;">
+                            <input type="password" id="deceasedPassword" name="password" style="width: 100%; padding: 0.75rem 2.5rem 0.75rem 1rem; border: 1px solid var(--border-color); border-radius: 8px; background-color: var(--bg-primary); color: var(--text-primary); box-sizing: border-box;" placeholder="Enter your password" required>
+                            <button type="button" id="toggleDeceasedPassword" style="position: absolute; right: 0.75rem; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--text-secondary); cursor: pointer; padding: 0;">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div style="display: flex; gap: 0.75rem; justify-content: flex-end;">
+                        <button type="button" id="cancelDeceased" style="padding: 0.6rem 1.5rem; border-radius: 8px; border: none; background-color: #6b7280; color: white; cursor: pointer; font-weight: 500; display: inline-flex; align-items: center; gap: 0.5rem;">
+                            <i class="fas fa-times"></i> No, Cancel
+                        </button>
+                        <button type="submit" id="confirmDeceasedBtn" style="padding: 0.6rem 1.5rem; border-radius: 8px; border: none; background-color: #ef4444; color: white; cursor: pointer; font-weight: 500; display: inline-flex; align-items: center; gap: 0.5rem;">
+                            <i class="fas fa-check"></i> Yes, Confirm
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
     <!-- Bootstrap JS Bundle (includes Popper) -->
     <script src="assets/bootstrap/js/bootstrap.bundle.min.js"></script>
     
@@ -819,6 +864,13 @@ try {
         const cancelBtn = document.getElementById('cancelArchive');
         const togglePasswordBtn = document.getElementById('toggleArchivePassword');
         const passwordInput = document.getElementById('archivePassword');
+
+        // Deceased Modal Elements
+        const deceasedModal = document.getElementById('deceasedModal');
+        const deceasedForm = document.getElementById('deceasedForm');
+        const cancelDeceased = document.getElementById('cancelDeceased');
+        const toggleDeceasedPassword = document.getElementById('toggleDeceasedPassword');
+        const deceasedPasswordInput = document.getElementById('deceasedPassword');
         
         // Override function in case residents.js calls it directly
         window.deleteResident = window.archiveResident = function(residentId) {
@@ -933,10 +985,7 @@ try {
         
         // Modal close handlers
         cancelBtn.addEventListener('click', () => archiveModal.style.display = 'none');
-        
-        window.addEventListener('click', (e) => {
-            if (e.target === archiveModal) archiveModal.style.display = 'none';
-        });
+        cancelDeceased.addEventListener('click', () => deceasedModal.style.display = 'none');
         
         // Password toggle
         togglePasswordBtn.addEventListener('click', () => {
@@ -945,6 +994,43 @@ try {
             togglePasswordBtn.innerHTML = type === 'password' ? '<i class="fas fa-eye"></i>' : '<i class="fas fa-eye-slash"></i>';
         });
         
+        toggleDeceasedPassword.addEventListener('click', () => {
+            const type = deceasedPasswordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+            deceasedPasswordInput.setAttribute('type', type);
+            toggleDeceasedPassword.innerHTML = type === 'password' ? '<i class="fas fa-eye"></i>' : '<i class="fas fa-eye-slash"></i>';
+        });
+
+        // Deceased Modal Global Function
+        window.openDeceasedModal = function(residentId, row, currentStatus) {
+            document.getElementById('deceasedResidentId').value = residentId;
+            deceasedPasswordInput.value = '';
+            
+            const modalTitle = document.getElementById('deceasedModalTitle');
+            if (modalTitle) {
+                if (lastClickedResidentName && lastClickedResidentCode) {
+                    modalTitle.innerHTML = `Confirm Deceased Status for <u>${lastClickedResidentName} (${lastClickedResidentCode})</u>`;
+                } else {
+                    modalTitle.textContent = 'Confirm Deceased Status';
+                }
+            }
+            
+            deceasedModal.style.display = 'block';
+            deceasedPasswordInput.focus();
+        };
+
+        deceasedForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const password = deceasedPasswordInput.value;
+            const residentId = document.getElementById('deceasedResidentId').value;
+            const actionBtn = document.querySelector(`.btn-action[data-resident-id="${residentId}"]`);
+            const row = actionBtn ? actionBtn.closest('tr') : null;
+            const submitBtn = document.getElementById('confirmDeceasedBtn');
+            
+            if (typeof updateActivityStatus === 'function' && row) {
+                updateActivityStatus(residentId, 'Deceased', row, 'Alive', password, submitBtn, deceasedPasswordInput);
+            }
+        });
+
         // Form submit
         archiveForm.addEventListener('submit', function(e) {
             e.preventDefault();
@@ -985,11 +1071,12 @@ try {
             document.querySelectorAll('.notification').forEach(n => n.remove());
             const notification = document.createElement('div');
             notification.className = `notification notification-${type}`;
-            notification.innerHTML = `<i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i><span>${message}</span>`;
+            const icon = type === 'success' ? 'check-circle' : (type === 'error' || type === 'warning' ? 'exclamation-circle' : 'info-circle');
+            notification.innerHTML = `<i class="fas fa-${icon}"></i><span>${message}</span>`;
             notification.style.cssText = `
-                position: fixed; top: 20px; right: 20px; background: ${type === 'success' ? '#10b981' : '#ef4444'};
+                position: fixed; top: 20px; right: 20px; background: ${type === 'success' ? '#10b981' : (type === 'error' || type === 'warning' ? '#ef4444' : '#3b82f6')};
                 color: white; padding: 15px 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-                display: flex; align-items: center; gap: 10px; z-index: 10000; animation: slideInRight 0.3s ease;
+                display: flex; align-items: center; gap: 10px; z-index: 10000000; animation: slideInRight 0.3s ease;
             `;
             document.body.appendChild(notification);
             setTimeout(() => {

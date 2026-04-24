@@ -512,7 +512,7 @@ $age = calculateAge($resident['date_of_birth']);
                         Print Profile
                     </button>
                     <?php endif; ?>
-                    <?php if (hasPermission('perm_resident_edit')): ?>
+                    <?php if (hasPermission('perm_resident_edit') && ($resident['activity_status'] ?? '') !== 'Deceased'): ?>
                     <button class="btn btn-primary view-action" type="button" onclick="toggleEditMode(true)">
                         <i class="fas fa-edit"></i>
                         Edit Profile
@@ -635,9 +635,9 @@ $age = calculateAge($resident['date_of_birth']);
                                     <p><?php echo $age; ?> years old</p>
                                 </div>
                                 <div class="info-item">
-                                    <label>Place of Birth</label>
+                                    <label>Place of Birth <span class="required">*</span></label>
                                     <p class="view-field"><?php echo htmlspecialchars($resident['place_of_birth'] ?: 'N/A'); ?></p>
-                                    <input type="text" name="place_of_birth" class="form-control edit-field" value="<?php echo htmlspecialchars($resident['place_of_birth'] ?? ''); ?>" style="display:none;" >
+                                    <input type="text" name="place_of_birth" class="form-control edit-field" value="<?php echo htmlspecialchars($resident['place_of_birth'] ?? ''); ?>" style="display:none;" required>
                                 </div>
                                 <div class="info-item">
                                     <label>Religion</label>
@@ -704,7 +704,7 @@ $age = calculateAge($resident['date_of_birth']);
                                 <div class="info-item">
                                     <label>Mobile Number</label>
                                     <p class="view-field">+63 <?php echo htmlspecialchars($resident['mobile_number'] ?: 'N/A'); ?></p>
-                                    <input type="text" name="mobile_number" class="form-control edit-field"  placeholder="XXX XXX XXXX" pattern="[0-9 ]+" maxlength="12" oninput="let v=this.value.replace(/\D/g,'').substring(0,10);if(v.length>6)this.value=v.slice(0,3)+' '+v.slice(3,6)+' '+v.slice(6);else if(v.length>3)this.value=v.slice(0,3)+' '+v.slice(3);else this.value=v;" value="<?php echo htmlspecialchars($resident['mobile_number'] ?? ''); ?>" style="display:none;">
+                                    <input type="text" name="mobile_number" class="form-control edit-field"  placeholder="9XX XXX XXXX" pattern="[0-9 ]+" maxlength="12" oninput="let v=this.value.replace(/\D/g,'').substring(0,10);if(v.length>0&&v[0]!=='9')v='';if(v.length>6)this.value=v.slice(0,3)+' '+v.slice(3,6)+' '+v.slice(6);else if(v.length>3)this.value=v.slice(0,3)+' '+v.slice(3);else this.value=v;" value="<?php echo htmlspecialchars($resident['mobile_number'] ?? ''); ?>" style="display:none;">
                                 </div>
                             </div>
                         </div>
@@ -752,19 +752,37 @@ $age = calculateAge($resident['date_of_birth']);
                                     <div id="fatherNameDropdown" class="autocomplete-dropdown" style="display: none;"></div>
                                 </div>
                                 <div class="info-item position-relative" style="position: relative;">
-                                    <label>Mother's Name</label>
-                                    <p class="view-field">
-                                        <?php if (!empty($resident['mother_resident_id'])): ?>
-                                            <a href="resident_profile.php?id=<?php echo htmlspecialchars($resident['mother_resident_id']); ?>" style="color: var(--primary-color); text-decoration: none; font-weight: 500;">
+                                    <?php if (!empty($resident['legal_guardian_name'])): ?>
+                                        <label>Legal Guardian Name</label>
+                                        <p class="view-field"><?php echo htmlspecialchars($resident['legal_guardian_name']); ?></p>
+                                    <?php else: ?>
+                                        <label>Mother's Maiden Name</label>
+                                        <p class="view-field">
+                                            <?php if (!empty($resident['mother_resident_id'])): ?>
+                                                <a href="resident_profile.php?id=<?php echo htmlspecialchars($resident['mother_resident_id']); ?>" style="color: var(--primary-color); text-decoration: none; font-weight: 500;">
+                                                    <?php echo htmlspecialchars($resident['mother_name'] ?: 'N/A'); ?>
+                                                </a>
+                                            <?php else: ?>
                                                 <?php echo htmlspecialchars($resident['mother_name'] ?: 'N/A'); ?>
-                                            </a>
-                                        <?php else: ?>
-                                            <?php echo htmlspecialchars($resident['mother_name'] ?: 'N/A'); ?>
-                                        <?php endif; ?>
-                                    </p>
-                                    <input type="hidden" id="motherNameId" name="mother_resident_id" value="<?php echo htmlspecialchars($resident['mother_resident_id'] ?? ''); ?>">
-                                    <input type="text" id="motherName" name="mother_name" class="form-control edit-field" value="<?php echo htmlspecialchars($resident['mother_name'] ?? ''); ?>" style="display:none;" autocomplete="off">
-                                    <div id="motherNameDropdown" class="autocomplete-dropdown" style="display: none;"></div>
+                                            <?php endif; ?>
+                                        </p>
+                                    <?php endif; ?>
+
+                                    <div class="edit-field" style="display:none;">
+                                        <div id="motherNameContainer" <?php echo !empty($resident['legal_guardian_name']) ? 'style="display:none;"' : ''; ?>>
+                                            <label for="motherName">Mother's Maiden Name <span class="required" id="motherRequired">*</span></label>
+                                            <input type="hidden" id="motherNameId" name="mother_resident_id" value="<?php echo htmlspecialchars($resident['mother_resident_id'] ?? ''); ?>">
+                                            <input type="text" id="motherName" name="mother_name" class="form-control" value="<?php echo htmlspecialchars($resident['mother_name'] ?? ''); ?>" autocomplete="off" <?php echo !empty($resident['legal_guardian_name']) ? 'disabled' : 'required'; ?>>
+                                            <div id="motherNameDropdown" class="autocomplete-dropdown" style="display: none;"></div>
+                                            <button type="button" id="btnShowLegalGuardian" class="btn btn-link btn-sm p-0 mt-1" style="font-size: 11px; text-decoration: none;">+ if adopted (Add Legal Guardian)</button>
+                                        </div>
+
+                                        <div id="legalGuardianContainer" <?php echo !empty($resident['legal_guardian_name']) ? 'style="display:block;"' : 'style="display:none;"'; ?>>
+                                            <label for="legalGuardianName">Legal Guardian Name <span class="required">*</span></label>
+                                            <input type="text" id="legalGuardianName" name="legal_guardian_name" class="form-control" value="<?php echo htmlspecialchars($resident['legal_guardian_name'] ?? ''); ?>" autocomplete="off" <?php echo !empty($resident['legal_guardian_name']) ? 'required' : 'disabled'; ?>>
+                                            <button type="button" id="btnHideLegalGuardian" class="btn btn-link btn-sm p-0 mt-1 text-danger" style="font-size: 11px; text-decoration: none;">- remove legal guardian</button>
+                                        </div>
+                                    </div>
                                 </div>
                                 <div class="info-item adult-only">
                                     <label>Number of Children</label>
@@ -798,7 +816,7 @@ $age = calculateAge($resident['date_of_birth']);
                                 <div class="info-item">
                                     <label>Guardian Contact Number</label>
                                     <p class="view-field"><?php echo htmlspecialchars($resident['guardian_contact'] ?: 'N/A'); ?></p>
-                                    <input type="text" name="guardian_contact" class="form-control edit-field" placeholder="XXX XXX XXXX" maxlength="12" value="<?php echo htmlspecialchars($resident['guardian_contact'] ?? ''); ?>" style="display:none;" oninput="let v=this.value.replace(/\D/g,'').substring(0,10);if(v.length>6)this.value=v.slice(0,3)+' '+v.slice(3,6)+' '+v.slice(6);else if(v.length>3)this.value=v.slice(0,3)+' '+v.slice(3);else this.value=v;">
+                                    <input type="text" name="guardian_contact" class="form-control edit-field" placeholder="9XX XXX XXXX" maxlength="12" value="<?php echo htmlspecialchars($resident['guardian_contact'] ?? ''); ?>" style="display:none;" oninput="let v=this.value.replace(/\D/g,'').substring(0,10);if(v.length>0&&v[0]!=='9')v='';if(v.length>6)this.value=v.slice(0,3)+' '+v.slice(3,6)+' '+v.slice(6);else if(v.length>3)this.value=v.slice(0,3)+' '+v.slice(3);else this.value=v;">
                                 </div>
                             </div>
                             </div>
@@ -870,9 +888,9 @@ $age = calculateAge($resident['date_of_birth']);
                                     </select>
                                 </div>
                                 <div class="info-item adult-only <?php echo ($resident['fourps_member'] !== 'Yes') ? 'no-print' : ''; ?>">
-                                    <label>4Ps ID Number</label>
+                                    <label>4Ps ID Number <span class="required">*</span></label>
                                     <p class="view-field"><?php echo htmlspecialchars($resident['fourps_id'] ?: 'N/A'); ?></p>
-                                    <input type="text" name="fourps_id" class="form-control edit-field" placeholder="XX-YYYY-ZZZZ" maxlength="12" oninput="let v=this.value.replace(/[^a-zA-Z0-9]/g,'').toUpperCase().substring(0,10);if(v.length > 6) this.value = v.slice(0,2) + '-' + v.slice(2,6) + '-' + v.slice(6);else if(v.length > 2) this.value = v.slice(0,2) + '-' + v.slice(2);else this.value = v;" value="<?php echo htmlspecialchars($resident['fourps_id'] ?? ''); ?>" style="display:none;">
+                                    <input type="text" name="fourps_id" class="form-control edit-field" placeholder="XX-YYYY-ZZZZ" maxlength="12" oninput="let v=this.value.replace(/[^a-zA-Z0-9]/g,'').toUpperCase().substring(0,10);if(v.length > 6) this.value = v.slice(0,2) + '-' + v.slice(2,6) + '-' + v.slice(6);else if(v.length > 2) this.value = v.slice(0,2) + '-' + v.slice(2);else this.value = v;" value="<?php echo htmlspecialchars($resident['fourps_id'] ?? ''); ?>" style="display:none;" required>
                                 </div>
                                 <div class="info-item voter-only">
                                     <label>Voter Status</label>
@@ -883,9 +901,9 @@ $age = calculateAge($resident['date_of_birth']);
                                     </select>
                                 </div>
                                 <div class="info-item voter-only <?php echo ($resident['voter_status'] !== 'Yes') ? 'no-print' : ''; ?>">
-                                    <label>Precinct Number</label>
+                                    <label>Precinct Number <span class="required">*</span></label>
                                     <p class="view-field"><?php echo htmlspecialchars($resident['precinct_number'] ?: 'N/A'); ?></p>
-                                    <input type="text" name="precinct_number" class="form-control edit-field" value="<?php echo htmlspecialchars($resident['precinct_number'] ?? ''); ?>" style="display:none;">
+                                    <input type="text" name="precinct_number" class="form-control edit-field" value="<?php echo htmlspecialchars($resident['precinct_number'] ?? ''); ?>" style="display:none;" maxlength="5" pattern="[a-zA-Z0-9]+" oninput="this.value = this.value.replace(/[^a-zA-Z0-9]/g, '').substring(0, 5);" required>
                                 </div>
                             </div>
                             
@@ -975,7 +993,7 @@ $age = calculateAge($resident['date_of_birth']);
                                     <div class="info-item" id="caretakerContactGroup" style="display: <?php echo ($resident['is_house_occupied'] ?? '') == 'No' ? 'block' : 'none'; ?>;">
                                         <label>Caretaker Contact Number</label>
                                         <p class="view-field"><?php echo htmlspecialchars($resident['caretaker_contact'] ?: 'N/A'); ?></p>
-                                        <input type="text" name="caretaker_contact" id="caretakerContactInput" class="form-control edit-field" value="<?php echo htmlspecialchars($resident['caretaker_contact'] ?? ''); ?>" style="display:none;" oninput="let v=this.value.replace(/\\D/g,'').substring(0,10);if(v.length>6)this.value=v.slice(0,3)+' '+v.slice(3,6)+' '+v.slice(6);else if(v.length>3)this.value=v.slice(0,3)+' '+v.slice(3);else this.value=v;">
+                                        <input type="text" name="caretaker_contact" id="caretakerContactInput" class="form-control edit-field" value="<?php echo htmlspecialchars($resident['caretaker_contact'] ?? ''); ?>" style="display:none;" oninput="let v=this.value.replace(/\\D/g,'').substring(0,10);if(v.length>0&&v[0]!=='9')v='';if(v.length>6)this.value=v.slice(0,3)+' '+v.slice(3,6)+' '+v.slice(6);else if(v.length>3)this.value=v.slice(0,3)+' '+v.slice(3);else this.value=v;">
                                     </div>
                                 </div>
                             </div>

@@ -66,24 +66,31 @@ try {
 
     // ── Check Position Limits for Active Officials ───────────
     if ($status === 'Active') {
-        $limitMap = [
+        $posLimitMap = [
             'Barangay Captain' => 1,
             'SK Chairman' => 1,
             'Barangay Secretary' => 1,
             'Barangay Treasurer' => 1,
             'Barangay Administator' => 1,
             'Bookkeeper' => 1,
-            'Kagawad' => 7
+            'Barangay Kagawad' => 7,
+            'Kagawad' => 7,
+            'SK Kagawad' => 7
         ];
 
-        if (isset($limitMap[$position])) {
-            $limit = $limitMap[$position];
-            $countStmt = $pdo->prepare("SELECT COUNT(*) FROM barangay_officials WHERE position = :position AND status = 'Active' AND id != :id");
-            $countStmt->execute([':position' => $position, ':id' => $id]);
-            $currentCount = $countStmt->fetchColumn();
+        $limit = $posLimitMap[$position] ?? 1; // Default limit 1 for "Other"
+        $countStmt = $pdo->prepare("SELECT COUNT(*) FROM barangay_officials WHERE position = :position AND status = 'Active' AND id != :id");
+        $countStmt->execute([':position' => $position, ':id' => $id]);
+        if ($countStmt->fetchColumn() >= $limit) {
+            throw new Exception("Cannot set this official as active $position. The limit of $limit has been reached.");
+        }
 
-            if ($currentCount >= $limit) {
-                throw new Exception("Cannot set this official as active $position. The limit of $limit has been reached.");
+        // Check Chairmanship Limits
+        if (!empty($chairmanship)) {
+            $chairStmt = $pdo->prepare("SELECT COUNT(*) FROM barangay_officials WHERE committee = :committee AND status = 'Active' AND id != :id");
+            $chairStmt->execute([':committee' => $chairmanship, ':id' => $id]);
+            if ($chairStmt->fetchColumn() >= 1) {
+                throw new Exception("The chairmanship \"$chairmanship\" is already assigned to another active official.");
             }
         }
     }

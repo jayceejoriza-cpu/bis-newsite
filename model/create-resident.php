@@ -275,7 +275,15 @@ if (isset($conn)) {
                                 <div class="col-md-2">
                                     <div class="form-group">
                                         <label for="suffix">Suffix (Optional)</label>
-                                        <input type="text" id="suffix" name="suffix" class="form-control" placeholder="Jr., Sr., III, etc." autocomplete="honorific-suffix">
+                                        <select id="suffix" name="suffix" class="form-control" >
+                                            <option value="">Select</option>
+                                            <option value="Jr.">Jr.</option>
+                                            <option value="Sr.">Sr.</option>
+                                            <option value="I">I</option>
+                                            <option value="II">II</option>
+                                            <option value="III">III</option>
+                                            <option value="IV">IV</option>
+                                        </select>
                                     </div>
                                 </div>
                                 <div class="col-md-2">
@@ -297,8 +305,8 @@ if (isset($conn)) {
                                 </div>
                                 <div class="col-md-3">
                                     <div class="form-group">
-                                        <label for="placeOfBirth">Place of Birth <span class="required"></span></label>
-                                        <input type="text" id="placeOfBirth" name="placeOfBirth" class="form-control" placeholder="Enter Place of Birth" >
+                                        <label for="placeOfBirth">Place of Birth <span class="required">*</span></label>
+                                        <input type="text" id="placeOfBirth" name="placeOfBirth" class="form-control" placeholder="Enter Place of Birth" required>
                                     </div>
                                 </div>
                                 <div class="col-md-3">
@@ -355,7 +363,7 @@ if (isset($conn)) {
                                                 <img src="../assets/image/contactph.png" alt="PH" class="flag-icon">
                                                 +63
                                             </span>
-                                            <input type="tel" id="mobileNumber" name="mobileNumber" class="form-control phone-input" placeholder="XXX XXX XXXX" pattern="[0-9 ]+" maxlength="12" oninput="let v=this.value.replace(/\D/g,'').substring(0,10);if(v.length>6)this.value=v.slice(0,3)+' '+v.slice(3,6)+' '+v.slice(6);else if(v.length>3)this.value=v.slice(0,3)+' '+v.slice(3);else this.value=v;" autocomplete="tel" required>
+                                            <input type="tel" id="mobileNumber" name="mobileNumber" class="form-control phone-input" placeholder="9XX XXX XXXX" pattern="[0-9 ]+" maxlength="12" oninput="let v=this.value.replace(/\D/g,'').substring(0,10);if(v.length>0&&v[0]!=='9')v='';if(v.length>6)this.value=v.slice(0,3)+' '+v.slice(3,6)+' '+v.slice(6);else if(v.length>3)this.value=v.slice(0,3)+' '+v.slice(3);else this.value=v;" autocomplete="tel" required>
                                         </div>
                                     </div>
                                 </div>
@@ -415,11 +423,18 @@ if (isset($conn)) {
                                     </div>
                                 </div>
                                 <div class="col-md-3">
-                                    <div class="form-group position-relative">
-                                        <label for="motherName">Mother's Maiden Name <span class="required">*</span></label>
+                                    <div class="form-group position-relative" id="motherNameContainer">
+                                        <label for="motherName">Mother's Maiden Name <span class="required" id="motherRequired">*</span></label>
                                         <input type="hidden" id="motherNameId" name="motherResidentId" value="">
                                         <input type="text" id="motherName" name="motherName" class="form-control" required autocomplete="off">
                                         <div id="motherNameDropdown" class="autocomplete-dropdown" style="display: none;"></div>
+                                        <button type="button" id="btnShowLegalGuardian" class="btn btn-link btn-sm p-0 mt-1" style="font-size: 11px; text-decoration: none;">+ if adopted (Add Legal Guardian)</button>
+                                    </div>
+
+                                    <div class="form-group position-relative mt-2" id="legalGuardianContainer" style="display: none;">
+                                        <label for="legalGuardianName">Legal Guardian Name <span class="required">*</span></label>
+                                        <input type="text" id="legalGuardianName" name="legalGuardianName" class="form-control" autocomplete="off">
+                                        <button type="button" id="btnHideLegalGuardian" class="btn btn-link btn-sm p-0 mt-1 text-danger" style="font-size: 11px; text-decoration: none;">- remove legal guardian</button>
                                     </div>
                                 </div>
                                 <div class="col-md-2  adult-only">
@@ -466,7 +481,7 @@ if (isset($conn)) {
                                                     <img src="../assets/image/contactph.png" alt="PH" class="flag-icon">
                                                     +63
                                                 </span>
-                                                <input type="tel" id="guardianContact" name="guardianContact" class="form-control phone-input" placeholder="XXX XXX XXXX" maxlength="12">
+                                                <input type="tel" id="guardianContact" name="guardianContact" class="form-control phone-input" placeholder="9XX XXX XXXX" maxlength="12" oninput="let v=this.value.replace(/\D/g,'').substring(0,10);if(v.length>0&&v[0]!=='9')v='';if(v.length>6)this.value=v.slice(0,3)+' '+v.slice(3,6)+' '+v.slice(6);else if(v.length>3)this.value=v.slice(0,3)+' '+v.slice(3);else this.value=v;">
                                             </div>
                                             <small class="form-hint">Required for minors</small>
                                         </div>
@@ -695,8 +710,8 @@ if (isset($conn)) {
                                 </div>
                                 <div class="col-md-2 adult-only" id="fourpsIdGroup" style="display: none;">
                                     <div class="form-group">
-                                        <label for="fourpsId">4Ps ID Number</label>
-                                        <input type="text" id="fourpsId" name="fourpsId" class="form-control" placeholder="XX-YYYY-ZZZZ" maxlength="12">
+                                        <label for="fourpsId">4Ps ID Number <span class="required">*</span></label>
+                                        <input type="text" id="fourpsId" name="fourpsId" class="form-control" placeholder="XX-YYYY-ZZZZ" maxlength="12" oninput="let v=this.value.replace(/[^a-zA-Z0-9]/g,'').toUpperCase().substring(0,10);if(v.length > 6) this.value = v.slice(0,2) + '-' + v.slice(2,6) + '-' + v.slice(6);else if(v.length > 2) this.value = v.slice(0,2) + '-' + v.slice(2);else this.value = v;" required>
                                     </div>
                                 </div>
                                 <div id="voterStatusContainer" class="col-md-2">
@@ -711,8 +726,8 @@ if (isset($conn)) {
                                 </div>
                                 <div class="col-md-2 adult-only" id="precinctNumberGroup" style="display: none;">
                                     <div class="form-group">
-                                        <label for="precinctNumber">Precinct Number</label>
-                                        <input type="text" id="precinctNumber" name="precinctNumber" class="form-control" placeholder="Enter Precinct Number">
+                                        <label for="precinctNumber">Precinct Number <span class="required">*</span></label>
+                                        <input type="text" id="precinctNumber" name="precinctNumber" class="form-control" placeholder="Enter Precinct Number" maxlength="5" pattern="[a-zA-Z0-9]+" oninput="this.value = this.value.replace(/[^a-zA-Z0-9]/g, '').substring(0, 5);" required>
                                     </div>
                                 </div>
                             </div>
@@ -873,7 +888,7 @@ if (isset($conn)) {
                                                     <img src="../assets/image/contactph.png" alt="PH" class="flag-icon">
                                                     +63
                                                 </span>
-                                                <input type="tel" id="caretakerContact" name="caretakerContact" class="form-control phone-input" placeholder="9XX XXX XXXX" maxlength="12">
+                                                <input type="tel" id="caretakerContact" name="caretakerContact" class="form-control phone-input" placeholder="9XX XXX XXXX" maxlength="12" oninput="let v=this.value.replace(/\D/g,'').substring(0,10);if(v.length>0&&v[0]!=='9')v='';if(v.length>6)this.value=v.slice(0,3)+' '+v.slice(3,6)+' '+v.slice(6);else if(v.length>3)this.value=v.slice(0,3)+' '+v.slice(3);else this.value=v;">
                                             </div>
                                         </div>
                                     </div>
@@ -965,7 +980,11 @@ if (isset($conn)) {
 
         // Override phone number formatting to use spaces instead of hyphens
         function formatPhoneNumber(value) {
-            const numbers = value.replace(/\D/g, '');
+            let numbers = value.replace(/\D/g, '');
+            // Enforce first digit is 9
+            if (numbers.length > 0 && numbers[0] !== '9') {
+                numbers = '';
+            }
             const limited = numbers.substring(0, 10);
             if (limited.length <= 3) return limited;
             if (limited.length <= 6) return limited.substring(0, 3) + ' ' + limited.substring(3);

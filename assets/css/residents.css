@@ -50,7 +50,7 @@
 .filter-tabs {
     display: flex;
     gap: 10px;
-    margin-bottom: 20px;
+    margin-bottom: 10px;
 }
 
 .tab-btn {
@@ -227,7 +227,7 @@
 }
 
 .residents-table td {
-    padding: 14px 20px;
+    padding: 8px 20px;
     transition: background-color 0.2s ease;
     border-bottom: 1px solid var(--border-color);
     overflow: hidden;

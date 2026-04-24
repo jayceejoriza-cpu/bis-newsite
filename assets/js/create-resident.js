@@ -224,6 +224,47 @@ function initializeForm() {
         });
     }
 
+    // Adoption / Legal Guardian toggle logic
+    const btnShowLegalGuardian = document.getElementById('btnShowLegalGuardian');
+    const btnHideLegalGuardian = document.getElementById('btnHideLegalGuardian');
+    const legalGuardianContainer = document.getElementById('legalGuardianContainer');
+    const motherNameInput = document.getElementById('motherName');
+    const motherRequired = document.getElementById('motherRequired');
+    const legalGuardianInput = document.getElementById('legalGuardianName');
+
+    if (btnShowLegalGuardian) {
+        btnShowLegalGuardian.addEventListener('click', function() {
+            legalGuardianContainer.style.display = 'block';
+            this.style.display = 'none';
+            
+            // Disable Mother input and transfer required attribute to Guardian
+            motherNameInput.removeAttribute('required');
+            motherNameInput.setAttribute('disabled', 'disabled');
+            motherNameInput.classList.remove('error');
+            if (motherRequired) motherRequired.style.display = 'none';
+            
+            legalGuardianInput.setAttribute('required', 'required');
+            legalGuardianInput.focus();
+            saveFormData();
+        });
+    }
+
+    if (btnHideLegalGuardian) {
+        btnHideLegalGuardian.addEventListener('click', function() {
+            legalGuardianContainer.style.display = 'none';
+            btnShowLegalGuardian.style.display = 'block';
+            
+            // Re-enable Mother input and revert required attribute
+            motherNameInput.removeAttribute('disabled');
+            motherNameInput.setAttribute('required', 'required');
+            if (motherRequired) motherRequired.style.display = '';
+            
+            legalGuardianInput.removeAttribute('required');
+            legalGuardianInput.value = '';
+            saveFormData();
+        });
+    }
+
     // Civil status change handler
     const civilStatusSelect = document.getElementById('civilStatus');
     if (civilStatusSelect) {
@@ -1200,8 +1241,8 @@ function showNotification(message, type = 'info') {
         icon = 'exclamation-circle';
         bgColor = '#ef4444';
     } else if (type === 'warning') {
-        icon = 'exclamation-triangle';
-        bgColor = '#f59e0b';
+        icon = 'exclamation-circle';
+        bgColor = '#ef4444';
     }
     
     notification.innerHTML = `
@@ -1221,7 +1262,7 @@ function showNotification(message, type = 'info') {
         display: flex;
         align-items: center;
         gap: 10px;
-        z-index: 10000;
+        z-index: 10000000;
         animation: slideIn 0.3s ease;
         max-width: 400px;
     `;
@@ -1239,18 +1280,23 @@ function showNotification(message, type = 'info') {
 // ===================================
 function formatPhoneNumber(value) {
     // Remove all non-digit characters
-    const numbers = value.replace(/\D/g, '');
+    let numbers = value.replace(/\D/g, '');
     
-    // Limit to 11 digits (Philippine mobile number format)
-    const limited = numbers.substring(0, 11);
+    // Enforce first digit is 9
+    if (numbers.length > 0 && numbers[0] !== '9') {
+        numbers = '';
+    }
     
-    // Format as 0912-345-6789
-    if (limited.length <= 4) {
+    // Limit to 10 digits (9XX XXX XXXX format for +63)
+    const limited = numbers.substring(0, 10);
+    
+    // Format as 912 345 6789
+    if (limited.length <= 3) {
         return limited;
-    } else if (limited.length <= 7) {
-        return limited.substring(0, 4) + '-' + limited.substring(4);
+    } else if (limited.length <= 6) {
+        return limited.substring(0, 3) + ' ' + limited.substring(3);
     } else {
-        return limited.substring(0, 4) + '-' + limited.substring(4, 7) + '-' + limited.substring(7);
+        return limited.substring(0, 3) + ' ' + limited.substring(3, 6) + ' ' + limited.substring(6);
     }
 }
 
@@ -2277,6 +2323,11 @@ function populateReviewModal() {
     }
     familyInfoHTML += createField("Father's Name", getValue('fatherName'));
     familyInfoHTML += createField("Mother's Name", getValue('motherName'));
+    
+    if (getValue('legalGuardianName')) {
+        familyInfoHTML += createField('Legal Guardian', getValue('legalGuardianName'));
+    }
+
     familyInfoHTML += createField('Number of Children', getValue('numberOfChildren'));
     familyInfoHTML += '</div>';
 

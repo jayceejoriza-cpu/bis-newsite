@@ -28,6 +28,7 @@ header('Content-Type: application/json');
 // Get and validate inputs
 $residentId = isset($_POST['id']) ? intval($_POST['id']) : 0;
 $newStatus  = isset($_POST['status']) ? trim($_POST['status']) : '';
+$password   = isset($_POST['password']) ? trim($_POST['password']) : '';
 
 // Validate resident ID
 if ($residentId <= 0) {
@@ -74,6 +75,23 @@ try {
             'message'  => "Resident is already marked as {$newStatus}"
         ]);
         exit;
+    }
+
+    // If marking as deceased, verify the password of the person performing the action
+    if ($newStatus === 'Deceased') {
+        if (empty($password)) {
+            echo json_encode(['success' => false, 'message' => 'Password is required to confirm deceased status.']);
+            exit;
+        }
+
+        $userStmt = $pdo->prepare("SELECT password FROM users WHERE id = ? LIMIT 1");
+        $userStmt->execute([$_SESSION['user_id']]);
+        $user = $userStmt->fetch();
+
+        if (!$user || !password_verify($password, $user['password'])) {
+            echo json_encode(['success' => false, 'message' => 'Invalid password']);
+            exit;
+        }
     }
 
     // Update activity status

@@ -29,6 +29,16 @@ document.addEventListener('DOMContentLoaded', function() {
             return residentId.includes(term) || residentName.includes(term);
         }
     });
+
+    // Initial Search from URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const initialSearch = urlParams.get('search');
+    if (initialSearch) {
+        const searchInput = document.getElementById('searchInput');
+        if (searchInput) searchInput.value = initialSearch;
+        requestsTable.search(initialSearch);
+    }
+
     initializeSearch();
     initializeButtons();
     initializeFilterPanelOutsideClick();
@@ -135,8 +145,16 @@ function initializeSearch() {
         let searchTimeout;
         searchInput.addEventListener('input', (e) => {
             clearTimeout(searchTimeout);
+            const searchTerm = e.target.value;
             searchTimeout = setTimeout(() => {
-                if (requestsTable) requestsTable.search(e.target.value);
+                if (requestsTable) requestsTable.search(searchTerm);
+                const url = new URL(window.location);
+                if (searchTerm) {
+                    url.searchParams.set('search', searchTerm);
+                } else {
+                    url.searchParams.delete('search');
+                }
+                window.history.replaceState({}, '', url);
             }, 300);
         });
     }
@@ -146,6 +164,9 @@ function initializeSearch() {
             const searchInput = document.getElementById('searchInput');
             if (searchInput) searchInput.value = '';
             if (requestsTable) requestsTable.search('');
+            const url = new URL(window.location);
+            url.searchParams.delete('search');
+            window.history.replaceState({}, '', url);
             if (searchInput) searchInput.focus();
         });
     }

@@ -269,7 +269,7 @@ $pageTitle = 'Households';
     </main>
     
     <!-- Create Household Modal -->
-    <div id="createHouseholdModal" class="household-modal">
+    <div id="createHouseholdModal" class="household-modal" >
         <div class="household-modal-content">
             <div class="household-modal-header">
                 <h3><i class="fas fa-home"></i> Community Household</h3>
@@ -358,7 +358,7 @@ $pageTitle = 'Households';
                                         <img src="assets\image\contactph.png" alt="PH" class="flag-icon">
                                         +63
                                     </span>
-                                    <input type="tel" id="householdContact" name="householdContact" class="form-control phone-input" placeholder="XXX XXX XXXX">
+                                    <input type="tel" id="householdContact" name="householdContact" class="form-control phone-input" placeholder="9XX XXX XXXX" oninput="let v=this.value.replace(/\D/g,'').substring(0,10);if(v.length>0&&v[0]!=='9')v='';if(v.length>6)this.value=v.slice(0,3)+' '+v.slice(3,6)+' '+v.slice(6);else if(v.length>3)this.value=v.slice(0,3)+' '+v.slice(3);else this.value=v;">
                                 </div>
                             </div>
                         </div>
@@ -423,6 +423,10 @@ $pageTitle = 'Households';
                 </form>
             </div>
             <div class="household-modal-footer">
+                <button type="button" class="btn btn-primary" id="printHouseholdModalBtn" style="display: none;">
+                    <i class="fas fa-print"></i>
+                    Print Household
+                </button>
                 <button type="button" class="btn btn-secondary" onclick="closeCreateHouseholdModal()">
                     Cancel
                 </button>
@@ -507,7 +511,7 @@ $pageTitle = 'Households';
                                <img src="assets\image\contactph.png" alt="PH" class="flag-icon">
                                 +63
                             </span>
-                            <input type="tel" id="memberMobile" name="memberMobile" class="form-control phone-input" placeholder="XXX XXX XXXX">
+                            <input type="tel" id="memberMobile" name="memberMobile" class="form-control phone-input" placeholder="9XX XXX XXXX" oninput="let v=this.value.replace(/\D/g,'').substring(0,10);if(v.length>0&&v[0]!=='9')v='';if(v.length>6)this.value=v.slice(0,3)+' '+v.slice(3,6)+' '+v.slice(6);else if(v.length>3)this.value=v.slice(0,3)+' '+v.slice(3);else this.value=v;">
                         </div>
                     </div>
                     
@@ -651,5 +655,16 @@ $pageTitle = 'Households';
     <script src="assets/js/script.js"></script>
     <script src="assets/js/table.js"></script>
     <script src="assets/js/households.js?v=<?php echo filemtime('assets/js/households.js'); ?>"></script>
+    <script>
+        // Prevent Create Household Modal from closing when clicking outside on the backdrop
+        document.addEventListener('DOMContentLoaded', function() {
+            window.addEventListener('click', function(e) {
+                const modal = document.getElementById('createHouseholdModal');
+                if (e.target === modal) {
+                    e.stopImmediatePropagation();
+                }
+            }, true); // Use capture phase to intercept the event before other listeners
+        });
+    </script>
 </body>
 </html>

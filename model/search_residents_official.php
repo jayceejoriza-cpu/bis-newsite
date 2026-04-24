@@ -25,6 +25,7 @@ try {
     $sql = "
         SELECT
             r.id,
+            r.resident_id,
             r.first_name,
             r.middle_name,
             r.last_name,
@@ -39,6 +40,7 @@ try {
             )) AS full_name
         FROM residents r
         WHERE r.activity_status = 'Alive'
+          AND TIMESTAMPDIFF(YEAR, r.date_of_birth, CURDATE()) >= 18
     ";
 
     $params = [];
@@ -62,7 +64,7 @@ try {
             $wordConditions = [];
             foreach ($words as $index => $word) {
                 $paramName = ":search" . $index;
-                $wordConditions[] = "CONCAT(r.first_name, ' ', IFNULL(r.middle_name, ''), ' ', r.last_name, ' ', IFNULL(r.mobile_number, '')) LIKE " . $paramName;
+                $wordConditions[] = "CONCAT(r.first_name, ' ', IFNULL(r.middle_name, ''), ' ', r.last_name, ' ', IFNULL(r.resident_id, '')) LIKE " . $paramName;
                 $params[$paramName] = '%' . $word . '%';
             }
             $sql .= " AND (" . implode(" AND ", $wordConditions) . ")";
