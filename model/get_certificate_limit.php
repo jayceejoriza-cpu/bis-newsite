@@ -43,7 +43,8 @@ $oneTimeCertificates = [
     'certificate-ft-jobseeker-assistance.php',
     'certificate-oathofundertaking.php',
     'First Time Jobseeker',
-    'Oath of Undertaking'
+    'Oath of Undertaking',
+    'Barangay ID Card'
 ];
 
 // Determine if this is a 1-time only certificate
@@ -69,6 +70,7 @@ try {
                 certificate_name LIKE ? 
                 OR certificate_name LIKE ?
                 OR certificate_name LIKE ?
+                OR certificate_name = 'Barangay ID Card'
             )
         ");
         $searchTerm1 = '%First Time Jobseeker%';
@@ -93,7 +95,12 @@ try {
     $row = $result->fetch_assoc();
     
     $usedCount = $isOneTime ? ($row['total_count'] ?? 0) : ($row['daily_count'] ?? 0);
+    
+    // Default limit logic
     $maxLimit = $isOneTime ? 1 : $dailyLimit;
+    // Specific override for ID Card
+    if ($db_certificate_name === 'Barangay ID Card') $maxLimit = 2;
+    
     $remaining = max(0, $maxLimit - $usedCount);
     
     echo json_encode([

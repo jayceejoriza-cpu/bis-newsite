@@ -529,6 +529,15 @@ document.addEventListener('DOMContentLoaded', function() {
             currentOpenMenu = null;
         }
     });
+
+    // Add print button listener
+    const printApprovalBtn = document.getElementById('printEventApprovalBtn');
+    if (printApprovalBtn) {
+        printApprovalBtn.addEventListener('click', function() {
+            const eventId = this.getAttribute('data-event-id');
+            if (eventId) printEventApproval(eventId);
+        });
+    }
 });
 
 /**
@@ -547,7 +556,9 @@ window.showEventDetails = function(id) {
         document.getElementById('eventDetailLocation').textContent = eventObj.extendedProps.location || 'Not specified';
         
         // Format Date
-        document.getElementById('eventDetailOrganizer').textContent = eventObj.extendedProps.organizer || 'Not specified'; // New field
+        const isResidentEvent = eventObj.extendedProps.event_type === 'Resident';
+        const organizerText = isResidentEvent ? eventObj.extendedProps.resident_name : (eventObj.extendedProps.organizer || 'Not specified');
+        document.getElementById('eventDetailOrganizer').textContent = organizerText;
         const approverName = eventObj.extendedProps.approved_by_name;
         document.getElementById('eventDetailApprovedBy').textContent = approverName ? 'HON. ' + approverName : 'Not specified';
         const start = eventObj.start;
@@ -566,6 +577,10 @@ window.showEventDetails = function(id) {
             }
         }
         document.getElementById('eventDetailTime').textContent = timeText;
+
+        // Store ID for printing
+        const printBtn = document.getElementById('printEventApprovalBtn');
+        if (printBtn) printBtn.setAttribute('data-event-id', id);
 
         detailModal.style.display = "flex";
     } else {
@@ -623,6 +638,7 @@ window.editEvent = function(id) {
 
         // Hide organizer and approved by fields when editing
         if (document.getElementById('organizerGroup')) document.getElementById('organizerGroup').style.display = 'none';
+        if (document.getElementById('approvalGroup')) document.getElementById('approvalGroup').style.display = 'none';
         
         // Setup UI for Reschedule/Postpone logic in Edit mode
         const actionGroup = document.getElementById('editEventActionGroup');
@@ -684,3 +700,103 @@ window.deleteEvent = window.archiveEvent = function(id) {
         }
     }
 };
+
+/**
+ * Prints the event approval document
+ */
+async function printEventApproval(id) {
+    const eventObj = calendar.getEventById(id);
+    if (!eventObj) return;
+
+    // Fetch Barangay Info for header
+    let brgyInfo = { province_name: 'Province', town_name: 'Municipality', barangay_name: 'Barangay', barangay_logo: '', official_emblem: '' };
+    try {
+        const response = await fetch('model/get_barangay_info.php');
+        if (response.ok) {
+            const data = await response.json();
+            if (data.success && data.data) brgyInfo = data.data;
+        }
+    } catch (e) { console.error('Error fetching barangay info:', e); }
+
+    const brgyLogoHtml = brgyInfo.barangay_logo ? `<img src="${brgyInfo.barangay_logo}" style="width: 80px; height: 80px; object-fit: contain;">` : `<div style="width: 80px; height: 80px;"></div>`;
+    const skLogoHtml = brgyInfo.sk_logo ? `<img src="${brgyInfo.sk_logo}" style="width: 80px; height: 80px; object-fit: contain;">` : `<div style="width: 80px; height: 80px;"></div>`;
+
+    const isResidentEvent = eventObj.extendedProps.event_type === 'Resident';
+    const organizerText = isResidentEvent ? eventObj.extendedProps.resident_name : (eventObj.extendedProps.organizer || 'Not specified');
+    const approverName = eventObj.extendedProps.approved_by_name || 'Authorized Official';
+    const dateText = eventObj.start.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+    
+    let timeText = eventObj.allDay ? 'All Day' : eventObj.start.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+    if (!eventObj.allDay && eventObj.end) timeText += ' - ' + eventObj.end.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+
+    let printFrame = document.getElementById('eventApprovalPrintFrame');
+    if (!printFrame) {
+        printFrame = document.createElement('iframe');
+        printFrame.id = 'eventApprovalPrintFrame';
+        printFrame.style.position = 'fixed'; printFrame.style.bottom = '0'; printFrame.style.right = '0'; printFrame.style.width = '0'; printFrame.style.height = '0'; printFrame.style.border = 'none';
+        document.body.appendChild(printFrame);
+    }
+
+    const doc = printFrame.contentWindow.document;
+    doc.open();
+    doc.write(`
+        <html>
+        <head>
+            <link rel="icon" type="image/png" href="uploads/favicon.png">
+            <title>Event Approval - ${eventObj.title}</title>
+            <style>
+                @page { size: A4; margin: 20mm; }
+                body { font-family: 'Inter', Arial, sans-serif; margin: 0; padding: 0; color: #1f2937; line-height: 1.5; }
+                .cert-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; border-bottom: 3px double #7a51c9; padding-bottom: 10px; }
+                .header-center { flex: 1; text-align: center; }
+                .header-center p { margin: 2px 0; font-size: 14px; }
+                .brgy-name { font-weight: bold; font-size: 18px; text-transform: uppercase; margin-top: 5px; color: #1e1b4b; }
+                .content { padding: 20px 0; }
+                .title { text-align: center; font-size: 22px; font-weight: 800; margin-bottom: 40px; text-transform: uppercase; color: #1e1b4b; text-decoration: underline; }
+                .salutation { font-weight: 600; margin-bottom: 20px; }
+                .body-text { text-indent: 50px; text-align: justify; margin-bottom: 30px; }
+                .detail-table { width: 100%; margin-bottom: 40px; border-collapse: collapse; }
+                .detail-table td { padding: 8px 10px; vertical-align: top; }
+                .label { font-weight: bold; width: 150px; color: #4b5563; text-transform: uppercase; font-size: 13px; }
+                .value { border-bottom: 1px solid #e5e7eb; font-weight: 500; }
+                .approval-section { margin-top: 60px; float: right; width: 250px; text-align: center; }
+                .signature-line { border-top: 2px solid #000; margin-top: 40px; padding-top: 5px; }
+                .approver-name { font-weight: bold; text-transform: uppercase; font-size: 15px; }
+                .approver-title { font-size: 13px; color: #6b7280; }
+            </style>
+        </head>
+        <body>
+            <div class="cert-header">
+                ${brgyLogoHtml}
+                <div class="header-center">
+                    <p>Republic of the Philippines</p>
+                    <p>Province of ${brgyInfo.province_name}</p>
+                    <p>Municipality of ${brgyInfo.town_name}</p>
+                    <p class="brgy-name">${brgyInfo.barangay_name}</p>
+                </div>
+                ${skLogoHtml}
+            </div>
+            <div class="content">
+                <div class="title">Notice of Event Approval</div>
+                <p class="salutation">TO WHOM IT MAY CONCERN:</p>
+                <p class="body-text">This is to officially notify that the request to conduct the community event detailed below has been formally reviewed and <strong>APPROVED</strong> by the Barangay Council. This approval is subject to the strict adherence to community guidelines and safety protocols.</p>
+                <table class="detail-table">
+                    <tr><td class="label">Event Title:</td><td class="value">${eventObj.title}</td></tr>
+                    <tr><td class="label">Date:</td><td class="value">${dateText}</td></tr>
+                    <tr><td class="label">Time:</td><td class="value">${timeText}</td></tr>
+                    <tr><td class="label">Location:</td><td class="value">${eventObj.extendedProps.location || 'N/A'}</td></tr>
+                    <tr><td class="label">Organizer:</td><td class="value">${organizerText}</td></tr>
+                    <tr><td class="label">Description:</td><td class="value">${eventObj.extendedProps.description || 'No additional details.'}</td></tr>
+                </table>
+                <p class="body-text">Issued this ${new Date().toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' })} at ${brgyInfo.barangay_name}, ${brgyInfo.town_name}, ${brgyInfo.province_name}.</p>
+                <div class="approval-section">
+                    <div class="signature-line">
+                        <div class="approver-name">HON. ${approverName}</div>
+                        <div class="approver-title">Approving Official</div>
+                    </div>
+                </div>
+            </div>
+        </body></html>`);
+    doc.close();
+    setTimeout(() => { printFrame.contentWindow.focus(); printFrame.contentWindow.print(); }, 500);
+}

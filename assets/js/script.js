@@ -379,10 +379,30 @@ if (blotterChartEl) {
                     pointRadius: 0
                 },
                 {
+                    label: 'Scheduled for Mediation',
+                    data: [],
+                    backgroundColor: 'rgba(59, 130, 246, 0.6)',
+                    borderColor: 'rgba(59, 130, 246, 1)',
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.4,
+                    pointRadius: 0
+                },
+                {
                     label: 'Under Investigation',
                     data: [],
                     backgroundColor: 'rgba(255, 165, 0, 0.6)',
                     borderColor: 'rgba(255, 165, 0, 1)',
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.4,
+                    pointRadius: 0
+                },
+                {
+                    label: 'Settled',
+                    data: [],
+                    backgroundColor: 'rgba(144, 238, 144, 0.6)',
+                    borderColor: 'rgba(144, 238, 144, 1)',
                     borderWidth: 2,
                     fill: true,
                     tension: 0.4,
@@ -399,10 +419,10 @@ if (blotterChartEl) {
                     pointRadius: 0
                 },
                 {
-                    label: 'Resolved',
+                    label: 'Endorsed to Police',
                     data: [],
-                    backgroundColor: 'rgba(144, 238, 144, 0.6)',
-                    borderColor: 'rgba(144, 238, 144, 1)',
+                    backgroundColor: 'rgba(163, 73, 164, 0.6)',
+                    borderColor: 'rgba(163, 73, 164, 1)',
                     borderWidth: 2,
                     fill: true,
                     tension: 0.4,
@@ -463,7 +483,7 @@ if (blotterChartEl) {
     });
     
     // Fetch real data from API
-    fetchBlotterData();
+    fetchBlotterData(new Date().getFullYear());
 }
 
 // ===================================
@@ -780,9 +800,11 @@ function fetchBlotterData(year = 'all') {
                 if (blotterChart && data.months) {
                     blotterChart.data.labels = data.months;
                     blotterChart.data.datasets[0].data = data.pending;
-                    blotterChart.data.datasets[1].data = data.underInvestigation;
-                    blotterChart.data.datasets[2].data = data.dismissed;
-                    blotterChart.data.datasets[3].data = data.resolved;
+                    blotterChart.data.datasets[1].data = data.mediation;
+                    blotterChart.data.datasets[2].data = data.underInvestigation;
+                    blotterChart.data.datasets[3].data = data.settled;
+                    blotterChart.data.datasets[4].data = data.dismissed;
+                    blotterChart.data.datasets[5].data = data.endorsed;
                     blotterChart.update();
                 }
             } else {
@@ -858,6 +880,7 @@ function fetchDemographicsData() {
         });
 }
 
+
 // ===================================
 // Console Welcome Message
 // ===================================
@@ -870,6 +893,11 @@ console.log('%cBuilt with ❤️ for community management', 'color: #10b981; fon
 // ===================================
 document.addEventListener('DOMContentLoaded', () => {
     setTimeout(() => {
-        fetch('model/run_auto_backup.php').catch(e => console.log('Auto backup check error:', e));
+        // Detect if the current page is in a subdirectory to fix relative path resolution
+        const isSubdirectory = window.location.pathname.includes('/model/') || 
+                               window.location.pathname.includes('/certifications/');
+        const backupUrl = isSubdirectory ? '../model/run_auto_backup.php' : 'model/run_auto_backup.php';
+
+        fetch(backupUrl).catch(e => console.log('Auto backup check error:', e));
     }, 5000); // Trigger check 5 seconds after page loads
 });

@@ -163,14 +163,26 @@ try {
             <div class="report-two-col">
                 <!-- Blotter Records Chart -->
                 <div class="report-chart-box">
-                    <div class="report-chart-box-title">Blotter Records (Monthly Status)</div>
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+                        <div class="report-chart-box-title" style="margin-bottom:0;">Blotter Records (Monthly Status)</div>
+                        <select id="blotterYearFilter" class="year-select" style="font-size:13px;padding:5px 10px;border:1px solid var(--border-color);border-radius:4px;background:var(--bg-secondary);color:var(--text-primary);">
+                            <?php 
+                            for($y = $currentYear; $y >= 2026; $y--) {
+                                $selected = ($y == $currentYear) ? 'selected' : '';
+                                echo "<option value=\"$y\" $selected>$y</option>";
+                            }
+                            ?>
+                        </select>
+                    </div>
                     <div class="report-chart-canvas-wrap">
                         <canvas id="blotterChart"
                             data-labels="<?php echo jsonAttr($popGrowthLabels); ?>"
                             data-pending="<?php echo jsonAttr($blotterStackedData['Pending']); ?>"
+                            data-mediation="<?php echo jsonAttr($blotterStackedData['Scheduled for Mediation']); ?>"
                             data-investigation="<?php echo jsonAttr($blotterStackedData['Under Investigation']); ?>"
+                            data-settled="<?php echo jsonAttr($blotterStackedData['Settled']); ?>"
                             data-dismissed="<?php echo jsonAttr($blotterStackedData['Dismissed']); ?>"
-                            data-settled="<?php echo jsonAttr($blotterStackedData['Settled']); ?>">
+                            data-endorsed="<?php echo jsonAttr($blotterStackedData['Endorsed to Police']); ?>">
                         </canvas>
                     </div>
                 </div>

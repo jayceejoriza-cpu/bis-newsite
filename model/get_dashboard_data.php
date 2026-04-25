@@ -197,9 +197,11 @@ function getBlotterData($conn) {
     $data = [
         'months' => [],
         'pending' => [],
+        'mediation' => [],
         'underInvestigation' => [],
+        'settled' => [],
         'dismissed' => [],
-        'resolved' => []
+        'endorsed' => []
     ];
     
     // Get year filter from request (default to 'all' for rolling 12 months)
@@ -216,47 +218,54 @@ function getBlotterData($conn) {
             $monthLabels[$date] = $label;
             $monthData[$date] = [
                 'pending' => 0,
+                'mediation' => 0,
                 'underInvestigation' => 0,
+                'settled' => 0,
                 'dismissed' => 0,
-                'resolved' => 0
+                'endorsed' => 0
             ];
         }
         
         // Query for last 12 months
         $query = "
             SELECT 
-                DATE_FORMAT(incident_date, '%Y-%m') as ym,
+                DATE_FORMAT(date_reported, '%Y-%m') as ym,
                 status,
                 COUNT(*) as count
             FROM blotter_records
-            WHERE incident_date >= DATE_SUB(CURDATE(), INTERVAL 12 MONTH)
+            WHERE date_reported >= DATE_SUB(CURDATE(), INTERVAL 12 MONTH)
             GROUP BY ym, status
             ORDER BY ym ASC
         ";
     } else {
         // Specific year view (all 12 months of that year)
         $year = (int)$yearFilter;
+        $currentYear = (int)date('Y');
+        $currentMonth = (int)date('m');
+        $limitMonth = ($year == $currentYear) ? $currentMonth : 12;
         
-        for ($month = 1; $month <= 12; $month++) {
+        for ($month = 1; $month <= $limitMonth; $month++) {
             $date = sprintf('%04d-%02d', $year, $month);
-            $label = date('M Y', strtotime($date . '-01'));
+            $label = date('M', mktime(0, 0, 0, $month, 1));
             $monthLabels[$date] = $label;
             $monthData[$date] = [
                 'pending' => 0,
+                'mediation' => 0,
                 'underInvestigation' => 0,
+                'settled' => 0,
                 'dismissed' => 0,
-                'resolved' => 0
+                'endorsed' => 0
             ];
         }
         
         // Query for specific year
         $query = "
             SELECT 
-                DATE_FORMAT(incident_date, '%Y-%m') as ym,
+                DATE_FORMAT(date_reported, '%Y-%m') as ym,
                 status,
                 COUNT(*) as count
             FROM blotter_records
-            WHERE YEAR(incident_date) = $year
+            WHERE YEAR(date_reported) = $year
             GROUP BY ym, status
             ORDER BY ym ASC
         ";
@@ -274,14 +283,20 @@ function getBlotterData($conn) {
                     case 'Pending':
                         $monthData[$yearMonth]['pending'] = $count;
                         break;
+                        case 'Scheduled for Mediation':
+                        $monthData[$yearMonth]['mediation'] = $count;
+                        break;
                     case 'Under Investigation':
                         $monthData[$yearMonth]['underInvestigation'] = $count;
+                        break;
+                    case 'Settled':
+                        $monthData[$yearMonth]['settled'] = $count;
                         break;
                     case 'Dismissed':
                         $monthData[$yearMonth]['dismissed'] = $count;
                         break;
-                    case 'Resolved':
-                        $monthData[$yearMonth]['resolved'] = $count;
+                     case 'Endorsed to Police':
+                        $monthData[$yearMonth]['endorsed'] = $count;
                         break;
                 }
             }
@@ -292,9 +307,11 @@ function getBlotterData($conn) {
     foreach ($monthLabels as $yearMonth => $label) {
         $data['months'][] = $label;
         $data['pending'][] = $monthData[$yearMonth]['pending'];
+        $data['mediation'][] = $monthData[$yearMonth]['mediation'];
         $data['underInvestigation'][] = $monthData[$yearMonth]['underInvestigation'];
+        $data['settled'][] = $monthData[$yearMonth]['settled'];
         $data['dismissed'][] = $monthData[$yearMonth]['dismissed'];
-        $data['resolved'][] = $monthData[$yearMonth]['resolved'];
+        $data['endorsed'][] = $monthData[$yearMonth]['endorsed'];
     }
     
     return $data;

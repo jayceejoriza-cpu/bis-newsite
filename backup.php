@@ -564,7 +564,12 @@ if (file_exists($settingsFile)) {
                         </div>
                         <div class="form-group">
                             <label for="target_folder" class="form-label">Target Folder Path</label>
-                            <input type="text" id="target_folder" name="target_folder" class="form-input" value="<?php echo htmlspecialchars($autoSettings['target_folder']); ?>" required>
+                            <div class="password-input-wrapper">
+                                <input type="password" id="target_folder" name="target_folder" class="form-input" value="<?php echo htmlspecialchars($autoSettings['target_folder']); ?>" required>
+                                <button type="button" class="toggle-password" id="toggleTargetFolder">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
                             <small class="form-hint" style="color: var(--text-secondary); font-size: 0.8rem;">Absolute path to save files (e.g. C:/xampp/htdocs/bis-newsite/backups)</small>
                         </div>
                         <div class="form-group">
@@ -715,6 +720,20 @@ if (file_exists($settingsFile)) {
                     btn.innerHTML = origText;
                     alert('An error occurred while saving.');
                 });
+            });
+        }
+        
+        // Target folder path toggle
+        const toggleTargetFolderBtn = document.getElementById('toggleTargetFolder');
+        if (toggleTargetFolderBtn) {
+            toggleTargetFolderBtn.addEventListener('click', function() {
+                const input = document.getElementById('target_folder');
+                const type = input.getAttribute('type') === 'password' ? 'text' : 'password';
+                input.setAttribute('type', type);
+                
+                const icon = this.querySelector('i');
+                icon.classList.toggle('fa-eye');
+                icon.classList.toggle('fa-eye-slash');
             });
         }
         

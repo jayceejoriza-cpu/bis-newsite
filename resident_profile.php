@@ -307,17 +307,28 @@ $age = calculateAge($resident['date_of_birth']);
             
             /* Section Layouts */
             .profile-content-grid { display: inline !important; gap: 0 !important; }
-            .profile-main-content { padding: 0 !important; background: none !important; box-shadow: none !important; line-height: 2 !important; text-align: justify !important; display: inline !important; }
-            form#inlineEditForm, .minor-only, .gov-programs-section { display: block !important; }
+            .profile-main-content { padding: 0 !important; background: none !important; box-shadow: none !important; line-height: 1.4 !important; text-align: left !important; display: inline !important; }
+            form#inlineEditForm, .minor-only, .gov-programs-section { display: inline !important; }
             .profile-section { 
-                margin-bottom: 20px !important; 
-                padding: 0 !important; 
+                margin-bottom: 1px !important; 
+                padding: !important; 
                 border: none !important; 
                 background: none !important; 
                 box-shadow: none !important;
-                display: block !important;
+                display: inline !important;
             }
-            .section-header { display: block !important; border-bottom: 2px solid #000; margin-bottom: 10px; padding: 0 !important; }
+
+            /* Boxed sections following the paragraph */
+            #household-details, #service-requests, #blotter-records {
+                display: block !important;
+                margin-top: 0 !important; 
+            }
+
+            .section-header { display: none !important; }
+            #personal-details .section-header { display: inline !important; border: none !important; }
+            #personal-details .section-header h2 { display: inline !important; font-size: 11pt !important; margin: 0 !important; text-decoration: underline; font-weight: bold; }
+            #personal-details .section-header h2::after { content: ": "; }
+            .section-content { margin: 0 !important; padding: 0 !important; display: inline !important; }
 
             /* Merge sections into Personal Details for print */
             #contact-info .section-header, 
@@ -326,15 +337,18 @@ $age = calculateAge($resident['date_of_birth']);
             #additional-info .section-header,
             #service-requests .section-header { display: none !important; }
             
-            #personal-details, #contact-info, #family-info, #education-employment, #additional-info, #household-details { margin-bottom: 0 !important; }
+            #personal-details, #contact-info, #family-info, #education-employment, #additional-info { margin-bottom: 0 !important; }
 
-            .section-header h2 { margin: 10px 0 -5px 0 !important; padding: 0 !important; }
+            /* Restore header for non-merged sections */
+            #household-details .section-header, #service-requests .section-header, #blotter-records .section-header { display: block !important; border-bottom: 1px solid #000 !important; margin-bottom: 10px !important; }
+            #household-details .section-header h2, #service-requests .section-header h2, #blotter-records .section-header h2 { display: block !important; text-decoration: none !important; font-size: 12pt !important; }
+            #household-details .section-header h2::after, #service-requests .section-header h2::after, #blotter-records .section-header h2::after { content: "" !important; }
+
             .section-header p { display: none !important; }
-            .section-content { margin: 0 !important; padding: 0 !important; display: block !important; }
             
             /* Paragraph Form Layout */
             .info-grid, .info-item, .info-item label, .info-item p, .info-item a { display: inline !important; }
-            .info-item { margin-right: 15px !important; }
+            .info-item { margin-right: 8px !important; }
             .info-item label, .info-item p, .info-item a { margin: 0 !important; font-size: 10pt !important; }
             .info-item label { color: #333 !important; font-weight: normal !important; text-transform: capitalize; }
             .info-item label::after { content: ": "; }
@@ -352,26 +366,84 @@ $age = calculateAge($resident['date_of_birth']);
             body.resident-is-minor .voter-only,
             body.resident-is-minor .gov-programs-section { display: none !important; }
             body.resident-is-adult .minor-only { display: none !important; }
+            
+            /* Clean up spaces caused by hidden elements */
+            .no-print { display: none !important; }
+
             body:not(.resident-is-10-plus) .age-10-plus { display: none !important; }
             
-            /* Household Table */
-            #household-details .section-content { display: flex !important; flex-wrap: wrap !important; gap: 20px !important; align-items: flex-start !important; }
-            .household-info-card, .household-head-card { flex: 1 !important; padding: 0 !important; border: none !important; background: none !important; box-shadow: none !important; margin-top: 15px !important; display: block !important; page-break-inside: avoid !important; }
-            .household-members-card { flex: 1 1 100% !important; padding: 0 !important; border: none !important; background: none !important; box-shadow: none !important; margin-top: 15px !important; display: block !important; page-break-inside: avoid !important; }
-            #household-details .subsection-title,
-            #service-requests .subsection-title { display: block !important; font-size: 11pt !important; margin-bottom: 5px !important; border-bottom: 1px solid #000 !important; font-weight: bold !important; }
-            #household-details .info-grid { display: table !important; width: 100% !important; border-collapse: collapse !important; border: 1px solid #000 !important; margin-bottom: 15px !important; table-layout: fixed !important; }
-            #household-details .info-item { display: table-row !important; }
-            #household-details .info-item label, #household-details .info-item p { display: table-cell !important; border: 1px solid #000 !important; padding: 6px !important; font-size: 9pt !important; vertical-align: middle !important; word-wrap: break-word !important; }
-            #household-details .info-item label { width: 45% !important; background-color: #f9f9f9 !important; -webkit-print-color-adjust: exact; }
-            #household-details .info-item label::after { content: "" !important; }
-            
-            .members-display-table { width: 100% !important; border-collapse: collapse !important; margin-top: 0 !important; }
-            .members-display-table th, .members-display-table td { border: 1px solid #000 !important; padding: 3px !important; font-size: 8pt !important; color: #000 !important; }
-            .members-display-table th { background-color: #f0f0f0 !important; -webkit-print-color-adjust: exact; }
+            #household-details .section-content { 
+                display: flex !important; 
+                justify-content: space-between !important; 
+                margin-bottom: 20px !important; 
+                font-size: 13px !important; 
+                flex-wrap: wrap !important;
+                gap: 0 !important;
+                align-items: flex-start !important;
+            }
+            .household-info-card, .household-head-card { 
+                width: 48% !important; 
+                border: 1px solid #000 !important; 
+                padding: 10px !important; 
+                background: none !important;
+                box-shadow: none !important;
+                margin-top: 0 !important;
+                flex: none !important;
+                page-break-inside: avoid !important;
+                display: block !important;
+            }
+            .household-info-card .subsection-title, 
+            .household-head-card .subsection-title { 
+                display: block !important;
+                margin-top: 0 !important; 
+                margin-bottom: 8px !important; 
+                border-bottom: 1px solid #000 !important; 
+                padding-bottom: 4px !important; 
+                font-size: 14px !important; 
+                text-transform: uppercase !important;
+                font-weight: bold !important;
+                color: #000 !important;
+            }
+            #household-details .info-grid { display: block !important; width: auto !important; border: none !important; margin: 0 !important; }
+            #household-details .info-item { display: block !important; margin-bottom: 4px !important; margin-right: 0 !important; border: none !important; }
+            #household-details .info-item label { 
+                font-weight: bold !important; 
+                display: inline-block !important; 
+                width: 110px !important; 
+                font-size: 7pt !important;
+                background: none !important;
+                color: #000 !important;
+                text-transform: none !important;
+            }
+            #household-details .info-item label::after { content: ":" !important; }
+            #household-details .info-item p { display: inline !important; font-size: 7pt !important; font-weight: normal !important; border: none !important; padding: 0 !important; }
 
+            .household-members-card { 
+                width: 99% !important; 
+                margin-top: 20px !important;
+                padding: 0 !important;
+                border: none !important;
+                background: none !important;
+                box-shadow: none !important;
+                flex: none !important;
+                display: block !important;
+            }
+            .household-members-card .subsection-title {
+                display: block !important;
+                font-size: 14px !important;
+                text-transform: uppercase !important;
+                border: none !important;
+                font-weight: bold !important;
+
+            }
+            
+            .members-display-table { width: 100% !important; border-collapse: collapse !important; font-size: 12px !important; margin-top: 10px !important; }
+            .members-display-table th, .members-display-table td { border: 1px solid #000 !important; padding: 8px !important; text-align: left !important; color: #000 !important; }
+            .members-display-table th { background-color: #f3f4f6 !important; -webkit-print-color-adjust: exact; font-weight: bold !important; }
+            
+            #service-requests .subsection-title { display: block !important; font-size: 11pt !important; margin-bottom: 5px !important; font-weight: bold !important; }
             /* Service Request Table */
-            .cert-requests-table { width: 100% !important; border-collapse: collapse !important; }
+            .cert-requests-table { width: 99% !important; border-collapse: collapse !important; }
             .cert-requests-table th, .cert-requests-table td { border: 1px solid #000 !important; padding: 4px !important; font-size: 9pt !important; }
             .cert-requests-table tbody tr:nth-child(n+6) { display: none !important; }
         }

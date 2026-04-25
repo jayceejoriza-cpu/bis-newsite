@@ -925,7 +925,25 @@ function handleAction(action, name, id, row) {
             break;
             
         case 'print':
-            alert(`Print ID\n\nResident: ${name}\nID: ${id}\n\nThis will generate and print a resident ID card.`);
+             if (residentId) {
+                // Check if the resident has already reached the print limit (2)
+                fetch(`model/get_certificate_limit.php?resident_id=${residentId}&certificate_type=Barangay ID Card`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success && data.used >= 2) {
+                            // Limit reached: show notification instead of redirecting
+                            showNotification('Print limit reached. Residents are only allowed to print 2 ID cards within the validity period.', 'error');
+                        } else {
+                            // Within limit: redirect to generate-id page
+                            window.location.href = `certifications/generate-id.php?resident_id=${residentId}`;
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error checking ID limit:', error);
+                        // Fallback: Proceed to generation if check fails
+                        window.location.href = `certifications/generate-id.php?resident_id=${residentId}`;
+                    });
+            }
             break;
             
         case 'delete':

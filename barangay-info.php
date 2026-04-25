@@ -38,6 +38,7 @@ if (!$barangay_info) {
         'municipal_logo' => null,
         'barangay_logo' => null,
         'official_emblem' => null,
+        'sk_logo' => null,
         'dashboard_image' => null
     ];
 }
@@ -438,7 +439,7 @@ if (!$barangay_info) {
                             </div>
                             
                             <div class="form-group">
-                                <label for="town_name" class="form-label required">Town Name</label>
+                                <label for="town_name" class="form-label required">Municipal Name</label>
                                 <input 
                                     type="text" 
                                     id="town_name" 
@@ -553,6 +554,33 @@ if (!$barangay_info) {
                                         <span>Choose File</span>
                                     </label>
                                     <span class="file-name" id="official_emblemName">No file chosen</span>
+                                </div>
+                            </div>
+
+                            <!-- SK Logo -->
+                            <div class="logo-upload-box">
+                                <label class="form-label">SK Logo</label>
+                                <div class="logo-preview-container" id="skLogoPreview">
+                                    <?php if (!empty($barangay_info['sk_logo']) && file_exists($barangay_info['sk_logo'])): ?>
+                                        <img src="<?php echo htmlspecialchars($barangay_info['sk_logo']); ?>?v=<?php echo time(); ?>" alt="SK Logo" class="logo-preview">
+                                    <?php else: ?>
+                                        <i class="fas fa-users logo-placeholder"></i>
+                                    <?php endif; ?>
+                                </div>
+                                <div class="file-input-wrapper">
+                                    <input 
+                                        type="file" 
+                                        id="sk_logo" 
+                                        name="sk_logo" 
+                                        class="file-input" 
+                                        accept="image/*"
+                                        onchange="previewImage(this, 'skLogoPreview')"
+                                    >
+                                    <label for="sk_logo" class="file-input-label">
+                                        <i class="fas fa-upload"></i>
+                                        <span>Choose File</span>
+                                    </label>
+                                    <span class="file-name" id="sk_logoName">No file chosen</span>
                                 </div>
                             </div>
                         </div>

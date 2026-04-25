@@ -44,7 +44,7 @@ try {
     }
     
     // Get current barangay info for existing file paths
-    $stmt = $conn->prepare("SELECT municipal_logo, barangay_logo, official_emblem, dashboard_image FROM barangay_info WHERE id = 1");
+    $stmt = $conn->prepare("SELECT municipal_logo, barangay_logo, sk_logo, official_emblem, dashboard_image FROM barangay_info WHERE id = 1");
     $stmt->execute();
     $result = $stmt->get_result();
     $current_info = $result->fetch_assoc();
@@ -52,6 +52,7 @@ try {
     
     $municipal_logo_path = $current_info['municipal_logo'] ?? null;
     $barangay_logo_path = $current_info['barangay_logo'] ?? null;
+    $sk_logo_path = $current_info['sk_logo'] ?? null;
     $official_emblem_path = $current_info['official_emblem'] ?? null;
     $dashboard_image_path = $current_info['dashboard_image'] ?? null;
     
@@ -113,6 +114,37 @@ try {
         
         if (!move_uploaded_file($file['tmp_name'], $logos_dir . '/' . $filename)) {
             echo json_encode(['success' => false, 'message' => 'Failed to upload barangay logo']);
+            exit();
+        }
+    }
+    
+    // Handle SK Logo Upload
+    if (isset($_FILES['sk_logo']) && $_FILES['sk_logo']['error'] === UPLOAD_ERR_OK) {
+        $file = $_FILES['sk_logo'];
+        $allowed_types = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+        
+        if (!in_array($file['type'], $allowed_types)) {
+            echo json_encode(['success' => false, 'message' => 'SK logo must be an image file (JPEG, PNG, GIF, or WebP)']);
+            exit();
+        }
+        
+        if ($file['size'] > 5 * 1024 * 1024) { // 5MB limit
+            echo json_encode(['success' => false, 'message' => 'SK logo file size must not exceed 5MB']);
+            exit();
+        }
+        
+        // Delete old file if exists
+        if ($sk_logo_path && file_exists($sk_logo_path)) {
+            unlink($sk_logo_path);
+        }
+        
+        // Generate unique filename
+        $extension = pathinfo($file['name'], PATHINFO_EXTENSION);
+        $filename = 'sk_logo_' . time() . '.' . $extension;
+        $sk_logo_path = 'assets/uploads/barangay/logos/' . $filename; // DB path
+        
+        if (!move_uploaded_file($file['tmp_name'], $logos_dir . '/' . $filename)) {
+            echo json_encode(['success' => false, 'message' => 'Failed to upload SK logo']);
             exit();
         }
     }
@@ -183,14 +215,15 @@ try {
     $stmt = $conn->prepare("
         INSERT INTO barangay_info 
         (id, province_name, town_name, barangay_name, 
-         municipal_logo, barangay_logo, official_emblem, dashboard_image, updated_by) 
-        VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?)
+         municipal_logo, barangay_logo, sk_logo, official_emblem, dashboard_image, updated_by) 
+        VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ON DUPLICATE KEY UPDATE 
         province_name = VALUES(province_name),
         town_name = VALUES(town_name),
         barangay_name = VALUES(barangay_name),
         municipal_logo = VALUES(municipal_logo),
         barangay_logo = VALUES(barangay_logo),
+        sk_logo = VALUES(sk_logo),
         official_emblem = VALUES(official_emblem),
         dashboard_image = VALUES(dashboard_image),
         updated_by = VALUES(updated_by),
@@ -205,6 +238,7 @@ try {
         $barangay_name,
         $municipal_logo_path,
         $barangay_logo_path,
+        $sk_logo_path,
         $official_emblem_path,
         $dashboard_image_path,
         $user_id

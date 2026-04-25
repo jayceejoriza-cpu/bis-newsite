@@ -399,8 +399,9 @@ if (isset($conn)) {
                     <p id="eventDetailLocation" style="font-weight: 500; color: var(--text-primary); margin: 0;"></p>
                 </div>
             </div>
-            <div class="modal-footer" style="padding: 15px; border-top: 1px solid var(--border-color); display: flex; justify-content: flex-end;">
+            <div class="modal-footer" style="padding: 15px; border-top: 1px solid var(--border-color); display: flex; justify-content: flex-end; gap: 10px;">
                 <button class="btn btn-secondary" onclick="document.getElementById('eventDetailModal').style.display='none'">Close</button>
+                <button class="btn btn-primary" id="printEventApprovalBtn"><i class="fas fa-print"></i> Print Approval</button>
             </div>
         </div>
     </div>
@@ -504,7 +505,8 @@ if (isset($conn)) {
                             <label>Organizer</label>
                             <input type="text" id="eventOrganizer" name="organizer" class="form-control" placeholder="e.g. ABC Company, Barangay Council">
                         </div>
-
+                    </div>
+                    <div id="approvalGroup">
                         <div class="form-group" style="margin-bottom: 10px;">
                             <label>Approved By</label>
                             <select id="eventApprovedBy" name="approved_by" class="form-control">
@@ -577,6 +579,7 @@ if (isset($conn)) {
         const residentGroup = document.getElementById('residentSelectionGroup');
         const residentInput = document.getElementById('eventResidentName');
         const organizerGroup = document.getElementById('organizerGroup');
+        const approvalGroup = document.getElementById('approvalGroup');
         const residentIdInput = document.getElementById('eventResidentId');
         const dropdown = document.getElementById('eventResidentDropdown');
         const openSearchBtn = document.getElementById('openResidentSearchBtn');
@@ -612,6 +615,9 @@ if (isset($conn)) {
                             div.onclick = () => {
                                 residentInput.value = r.full_name;
                                 residentIdInput.value = r.id;
+                                if (document.getElementById('eventOrganizer')) {
+                                    document.getElementById('eventOrganizer').value = r.full_name;
+                                }
                                 closeSearchResidentModal();
                             };
                             container.appendChild(div);
@@ -637,6 +643,9 @@ if (isset($conn)) {
             if (organizerGroup) {
                 organizerGroup.style.display = isEdit ? 'none' : 'block';
             }
+            if (approvalGroup) {
+                approvalGroup.style.display = isEdit ? 'none' : 'block';
+            }
 
             residentGroup.style.display = 'none';
             residentInput.required = false;
@@ -646,7 +655,11 @@ if (isset($conn)) {
             tabResident.classList.add('active');
             tabBarangay.classList.remove('active');
             eventTypeInput.value = 'Resident';
-            organizerGroup.style.display = 'none';
+            if (organizerGroup) organizerGroup.style.display = 'none';
+            if (approvalGroup) {
+                const isEdit = document.querySelector('input[name="event_id"]');
+                approvalGroup.style.display = isEdit ? 'none' : 'block';
+            }
             residentGroup.style.display = 'block';
             residentInput.required = true;
         });
@@ -680,6 +693,9 @@ if (isset($conn)) {
                                 item.addEventListener('click', () => {
                                     residentInput.value = resident.full_name;
                                     residentIdInput.value = resident.id;
+                                    if (document.getElementById('eventOrganizer')) {
+                                        document.getElementById('eventOrganizer').value = resident.full_name;
+                                    }
                                     dropdown.style.display = 'none';
                                 });
                                 dropdown.appendChild(item);
@@ -737,6 +753,8 @@ if (isset($conn)) {
                 eventActionStatus.value = 'Active';
 
                 document.getElementById('recurrenceGroup').style.display = 'block';
+                if (organizerGroup) organizerGroup.style.display = 'block';
+                if (approvalGroup) approvalGroup.style.display = 'block';
 
                 if (btnReschedule) btnReschedule.checked = false;
                 if (btnPostpone) btnPostpone.checked = false;

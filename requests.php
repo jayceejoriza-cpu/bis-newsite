@@ -100,8 +100,8 @@ try {
 ?>
 <!DOCTYPE html>
 <html lang="en">
-<head>
-<link rel="icon" type="image/png" href="uploads/favicon.png">
+<head> 
+<link rel="icon" type="image/png" href="uploads/favicon.png"> 
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo $pageTitle; ?> - <?php echo SITE_NAME; ?></title>
@@ -278,7 +278,9 @@ try {
                             <th>Certificate</th>
                             <th>Purpose</th>
                             <th>Date Request</th>
+                             <?php if (isAdmin()): ?>
                             <th>User</th>
+                            <?php endif; ?>
                         </tr>
                     </thead>
                     <tbody id="requestsTableBody">
