@@ -1009,6 +1009,18 @@ function handleAction(action, recordId) {
                 viewBlotterDetails(recordId);
                 break;
                 
+            case 'print-summons':
+                window.open(`generate_document.php?id=${recordId}&type=summons`, '_blank');
+                break;
+            case 'print-notice':
+                window.open(`generate_document.php?id=${recordId}&type=notice`, '_blank');
+                break;
+            case 'print-subpoena':
+                if (typeof window.issueSubpoena === 'function') {
+                    window.issueSubpoena(recordId);
+                }
+                break;
+
             case 'edit':
                 if (window.BIS_PERMS && window.BIS_PERMS.blotter_edit === false) {
                     alert('Permission denied to edit blotter records.');
@@ -1267,6 +1279,15 @@ function handleAction(action, recordId) {
         console.log('Fetching history for ID:', blotterId);
         timelineContainer.innerHTML = '<div class="text-xs text-gray-400 italic">Loading history...</div>';
 
+        const formatValue = (val, type) => {
+            if (!val || val === '0000-00-00' || val === '0000-00-00 00:00:00' || val.includes('-0001')) {
+                return type === 'Party Added' ? 'New Entry' : 'N/A';
+            }
+            // Specific check for mediation strings that might contain invalid dates
+            if (val.includes('Sched: N/A') || val.includes('Sched: -0001')) return val.split('|')[0] + '| No Schedule';
+            return val;
+        };
+
         fetch(`model/get_blotter_history.php?id=${blotterId}`)
             .then(res => res.json())
             .then(data => {
@@ -1274,15 +1295,13 @@ function handleAction(action, recordId) {
 
                 // Clear existing text/loading state
                 timelineContainer.innerHTML = '';
+                timelineContainer.classList.add('timeline-container');
 
                 // Handle empty history or failure gracefully
                 if (!data.success || !data.data || data.data.length === 0) {
                     timelineContainer.innerHTML = '<div class="text-xs text-gray-400 italic">No history recorded for this case.</div>';
                     return;
                 }
-
-                // Draw vertical line
-                timelineContainer.insertAdjacentHTML('afterbegin', '<div class="absolute left-2.5 top-0 bottom-0 w-0.5 bg-gray-200"></div>');
 
                 // Logic: Hide the static "No actions recorded" box if we have dynamic history
                 const actionsBox = document.getElementById('viewActionsContainer');
@@ -1291,22 +1310,107 @@ function handleAction(action, recordId) {
                 }
 
                 data.data.forEach(item => {
-                    const formattedDate = formatDateTime(item.created_at);
+                    // Format main timestamp: April 26, 2026 • 06:12 PM (Requirement)
+                    const dateObj = new Date(item.created_at);
+                    const formattedDate = dateObj.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) + 
+                                          ' • ' + 
+                                          dateObj.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
                     
+                    // Determine Dot Color (Priority: Red for Endorsement, else Blue)
+                    let dotColor = 'bg-blue-500';
+                    if (item.changes.some(c => c.new_value && c.new_value.includes('Endorsed to Police'))) {
+                        dotColor = 'bg-red-600';
+                    }
+
+                    let changesHtml = '';
+                    item.changes.forEach((change, idx) => {
+                        // Action Icon Mapping (Strict Requirement)
+                        let badgeClass = 'bg-secondary';
+                        let actionIcon = '<i class="fas fa-info-circle me-1"></i>';
+
+                        if (change.action_type === 'Rescheduled') {
+                            badgeClass = 'bg-warning text-dark';
+                            actionIcon = '<i class="fas fa-clock-rotate-left me-1"></i>';
+                        } else if (change.action_type === 'Status Updated' || change.action_type === 'Status & Schedule Updated') {
+                            badgeClass = 'bg-blue-600';
+                            actionIcon = '<i class="fas fa-scale-balanced me-1"></i>'; // ⚖️ Status
+                        } else if (change.action_type === 'Narrative Modified') {
+                            badgeClass = 'bg-cyan-600';
+                            actionIcon = '<i class="fas fa-file-lines me-1"></i>'; // 📝 Narrative
+                        } else if (change.action_type === 'Location Updated') {
+                            badgeClass = 'bg-slate-500';
+                            actionIcon = '<i class="fas fa-location-dot me-1"></i>'; // 📍 Location
+                        } else if (change.action_type === 'Schedule Adjusted') {
+                            badgeClass = 'bg-teal-500';
+                            actionIcon = '<i class="fas fa-calendar-days me-1"></i>';
+                        } else if (change.action_type === 'Party Added') {
+                            badgeClass = 'bg-success';
+                            actionIcon = '<i class="fas fa-user-plus me-1"></i>';
+                        }
+
+                        // Red Badge for Endorsed (Requirement)
+                        if (change.new_value && change.new_value.toLowerCase().includes('endorsed to police')) {
+                            actionIcon = '<i class="fas fa-shield-halved me-1"></i>';
+                            badgeClass = 'bg-danger';
+                        }
+
+                        // Hide schedule metadata for non-mediation statuses
+                        let displayNewValue = change.new_value;
+                        if (displayNewValue && !displayNewValue.includes('Scheduled for Mediation')) {
+                            displayNewValue = displayNewValue.split(' | Sched:')[0];
+                        }
+
+                        const oldVal = formatValue(change.old_value, change.action_type);
+                        const newVal = formatValue(displayNewValue, change.action_type);
+
+                        // Add subtle horizontal divider between multiple changes (Requirement)
+                        if (idx > 0) {
+                            changesHtml += `<hr class="my-4 border-gray-200 opacity-50">`;
+                        }
+
+                        changesHtml += `
+                            <div class="change-item">
+                                <div class="mb-3">
+                                    <span class="badge ${badgeClass} text-[10px] uppercase font-bold py-1 px-2 rounded-md">${actionIcon} ${change.action_type}</span>
+                                </div>
+                                
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-2">
+                                    <div class="audit-val-box bg-red-50 border-l-4 border-red-400">
+                                        <strong class="text-red-700 block text-[9px] uppercase font-bold tracking-wider mb-1">From</strong>
+                                        <span class="text-gray-700">${oldVal}</span>
+                                    </div>
+                                    <div class="audit-val-box bg-green-50 border-l-4 border-green-400">
+                                        <strong class="text-green-700 block text-[9px] uppercase font-bold tracking-wider mb-1">To</strong>
+                                        <span class="text-gray-700 font-medium">${newVal}</span>
+                                    </div>
+                                </div>
+
+                                ${change.remarks ? `
+                                <div class="remarks-ribbon mb-2">
+                                    <i class="fas fa-quote-left mr-2 opacity-30"></i> ${change.remarks}
+                                </div>` : ''}
+                            </div>`;
+                    });
+
                     const timelineItem = `
                         <div class="relative flex flex-col group mb-4 last:mb-0">
-                            <div class="absolute -left-[22px] top-1.5 w-3.5 h-3.5 rounded-full border-2 border-white bg-blue-500 shadow-sm z-10"></div>
-                            <div class="flex flex-col">
-                                <span class="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">${formattedDate}</span>
-                                <h6 class="text-sm font-bold text-gray-800 leading-tight">${item.action_type}</h6>
-                                <div class="text-xs text-gray-500 mt-1">
-                                    <span class="font-medium text-blue-600">New Value:</span> ${item.new_value}
+                            <div class="absolute -left-[24px] top-3 w-4 h-4 rounded-full border-4 border-white ${dotColor} shadow-sm z-10"></div>
+                            <div class="timeline-card">
+                                <!-- Card Header (Shows once per group) -->
+                                <div class="flex justify-between items-center p-3 bg-gray-50/50 border-b border-gray-100 rounded-t-lg">
+                                    <span class="text-[11px] font-bold text-gray-500 flex items-center gap-1 uppercase tracking-tight">
+                                        <i class="far fa-clock"></i> ${formattedDate}
+                                    </span>
+                                    <div class="flex items-center gap-1.5 text-[10px] text-gray-400 font-medium">
+                                        <i class="fas fa-user-tie"></i> 
+                                        PROCESSED BY: <span class="text-gray-600 font-bold">${(item.officer_name || 'System').toUpperCase()}</span>
+                                    </div>
                                 </div>
-                                ${item.remarks ? `
-                                <div class="mt-1 p-2 bg-gray-50 rounded border-l-4 border-gray-300 italic text-[11px] text-gray-600">
-                                    "${item.remarks}"
-                                </div>` : ''}
-                                <span class="text-[9px] text-gray-400 mt-1 italic">By: ${item.officer_name || 'System'}</span>
+                                
+                                <!-- Card Body (Lists all actions in the group) -->
+                                <div class="p-4">
+                                    ${changesHtml}
+                                </div>
                             </div>
                         </div>`;
                     
@@ -1515,12 +1619,15 @@ function handleAction(action, recordId) {
      * Locking Logic for Edit Modal
      * Disables form elements if the status is terminal (Settled/Endorsed)
      */
-    window.applyBlotterLockingLogic = function(status, modalId = 'editRecordModal') {
+    window.applyBlotterLockingLogic = function(status, modalId = 'editRecordModal', mediationCount = 0) {
         const modal = document.getElementById(modalId);
         if (!modal) return;
 
+        const isStrikeLimitReached = (parseInt(mediationCount) >= 3);
         const isLocked = (status === 'Settled' || status === 'Resolved' || status === 'Endorsed to Police');
         const inputs = modal.querySelectorAll('input, textarea, select');
+        const strikeMsg = modal.querySelector('#edit_strike_msg');
+        const mediationInput = modal.querySelector('input[name="mediation_schedule"]');
         const saveBtn = modal.querySelector('#updateRecordBtn') || modal.querySelector('[data-action="save"]');
         
         // Print CFA Button Visibility Logic for Edit Modal
@@ -1568,9 +1675,53 @@ function handleAction(action, recordId) {
                 }
             }
         } else {
-            inputs.forEach(input => input.removeAttribute('disabled'));
+            inputs.forEach(input => {
+                input.removeAttribute('disabled');
+                input.classList.remove('bg-gray-50', 'cursor-not-allowed', 'bg-light');
+            });
             if (saveBtn) saveBtn.style.display = 'inline-block';
             if (alertBox) alertBox.remove();
+
+            // Remove hidden status input if it exists and we are no longer limited
+            const hiddenStatus = modal.querySelector('input[type="hidden"][name="status"]');
+            if (hiddenStatus) hiddenStatus.remove();
+
+            // Hide strike message
+            if (strikeMsg) strikeMsg.style.display = 'none';
+        }
+
+        // Strictly disable mediation inputs when limit is reached (Requirement)
+        if (isStrikeLimitReached) {
+            if (statusSelect) {
+                // Re-enable dropdown but disable specific mediation option
+                statusSelect.removeAttribute('disabled');
+                const mediationOption = statusSelect.querySelector('option[value="Scheduled for Mediation"]');
+                if (mediationOption) mediationOption.disabled = true;
+                
+                // Ensure if current status IS mediation, we provide the hidden input
+                if (status === 'Scheduled for Mediation') {
+                    let hiddenStatus = modal.querySelector('input[type="hidden"][name="status"]');
+                    if (!hiddenStatus) {
+                        hiddenStatus = document.createElement('input');
+                        hiddenStatus.type = 'hidden';
+                        hiddenStatus.name = 'status';
+                        statusSelect.parentNode.appendChild(hiddenStatus);
+                    }
+                    hiddenStatus.value = status;
+                }
+            }
+
+            // Show strike message (Requirement)
+            if (strikeMsg) {
+                strikeMsg.textContent = 'STRICT LIMIT REACHED: 3/3 attempts used. Escalation required.';
+                strikeMsg.style.display = 'block';
+            }
+
+            if (mediationInput) {
+                mediationInput.setAttribute('disabled', 'disabled');
+                mediationInput.setAttribute('readonly', 'readonly');
+                mediationInput.classList.add('bg-light');
+            }
         }
     };
 

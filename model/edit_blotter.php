@@ -83,6 +83,16 @@ try {
         $stmt->execute([$recordId]);
         $witnesses = $stmt->fetchAll();
         
+        // Fetch mediation count for strike logic
+        $stmt = $pdo->prepare("
+            SELECT COUNT(*) FROM blotter_history 
+            WHERE blotter_id = ? 
+            AND action_type IN ('Rescheduled', 'Status & Schedule Updated') 
+            AND new_value LIKE '%Scheduled for Mediation%'
+        ");
+        $stmt->execute([$recordId]);
+        $mediationCount = (int)$stmt->fetchColumn();
+
         // Parse actions from remarks (if stored as JSON)
         $actions = [];
         if (!empty($record['remarks'])) {
@@ -100,7 +110,8 @@ try {
             'victims' => $victims,
             'respondents' => $respondents,
             'witnesses' => $witnesses,
-            'actions' => $actions
+            'actions' => $actions,
+            'mediation_count' => $mediationCount
         ];
         
         echo json_encode($response);
@@ -110,6 +121,23 @@ try {
     // Check if this is an update request
     if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['record_id'])) {
         $recordId = $_POST['record_id'];
+        $status = trim($_POST['status'] ?? '');
+
+        // 0. Security Block: Verify mediation limit (The Guardrail)
+        if ($status === 'Scheduled for Mediation') {
+            $strikeStmt = $pdo->prepare("
+                SELECT COUNT(*) FROM blotter_history 
+                WHERE blotter_id = ? 
+                AND action_type IN ('Rescheduled', 'Status & Schedule Updated') 
+                AND new_value LIKE '%Scheduled for Mediation%'
+            ");
+            $strikeStmt->execute([$recordId]);
+            $strikeCount = (int)$strikeStmt->fetchColumn();
+
+            if ($strikeCount >= 3) {
+                throw new Exception('Security Block: Mediation limit exceeded. This case must be endorsed.');
+            }
+        }
         
         // Validate required fields
         $requiredFields = ['status', 'incident_date', 'incident_type', 'incident_location', 'incident_description'];
@@ -138,7 +166,7 @@ try {
         $pdo->beginTransaction();
         
         // 1. Audit Trail: Capture OLD values for comparison BEFORE update
-        $old_stmt = $pdo->prepare("SELECT status, mediation_schedule FROM blotter_records WHERE id = ?");
+        $old_stmt = $pdo->prepare("SELECT status, mediation_schedule, incident_location, incident_description, incident_date FROM blotter_records WHERE id = ?");
         $old_stmt->execute([$recordId]);
         $old_data = $old_stmt->fetch();
         
@@ -146,28 +174,84 @@ try {
             throw new Exception("Record not found for history logging.");
         }
 
-        // Smart Date Comparison: Convert to Unix timestamps (ignoring seconds)
+        $user_id = $_SESSION['user_id'] ?? 0;
+
+        // ── A. Granular Audit Logging (Requirement) ──
+        $granular_map = [
+            'incident_location' => [
+                'action' => 'Location Updated',
+                'remarks' => 'Incident location was modified'
+            ],
+            'incident_description' => [
+                'action' => 'Narrative Modified',
+                'remarks' => 'Detailed narrative was updated'
+            ],
+            'incident_date' => [
+                'action' => 'Schedule Adjusted',
+                'remarks' => 'Incident date/time was adjusted'
+            ]
+        ];
+
+        foreach ($granular_map as $col => $cfg) {
+            $old_val = trim($old_data[$col] ?? '');
+            $new_val = trim($_POST[$col] ?? '');
+            
+            // Use specialized comparison for dates to ignore micro-second mismatches
+            $is_changed = ($col === 'incident_date') ? (strtotime($old_val) !== strtotime($new_val)) : ($old_val !== $new_val);
+
+            if ($is_changed) {
+                error_log("Audit Log: Detected change in $col. Logging action: {$cfg['action']}");
+                $hist_stmt = $pdo->prepare("INSERT INTO blotter_history (blotter_id, action_type, old_value, new_value, remarks, changed_by, created_at) VALUES (?, ?, ?, ?, ?, ?, NOW())");
+                $hist_stmt->execute([$recordId, $cfg['action'], $old_val, $new_val, $cfg['remarks'], $user_id]);
+            }
+        }
+
+        // ── B. Status & Mediation Comparison ──
         $old_sched_ts = $old_data['mediation_schedule'] ? strtotime(date('Y-m-d H:i', strtotime($old_data['mediation_schedule']))) : 0;
         $new_sched_ts = !empty($_POST['mediation_schedule']) ? strtotime($_POST['mediation_schedule']) : 0;
-
-        $status_changed = ($old_data['status'] !== $_POST['status']);
+        $status = trim($_POST['status'] ?? '');
+        $status_changed = ($old_data['status'] !== $status);
         $schedule_changed = ($old_sched_ts !== $new_sched_ts);
 
-        // Determine History Action Type
-        $action_type = '';
-        if ($status_changed && $schedule_changed) {
-            $action_type = "Status & Schedule Updated";
-        } elseif ($status_changed) {
+        if ($status_changed || $schedule_changed) {
             $action_type = "Status Updated";
-        } elseif ($schedule_changed) {
-            $action_type = "Rescheduled";
+            if ($status_changed && $schedule_changed && !in_array($status, ['Endorsed to Police', 'Settled', 'Dismissed'])) {
+                $action_type = "Status & Schedule Updated";
+            } elseif ($schedule_changed && !$status_changed) {
+                $action_type = "Rescheduled";
+            }
+
+            $old_val_str = "Status: " . $old_data['status'] . ($old_data['mediation_schedule'] ? " | Sched: " . date('F j, Y h:i A', strtotime($old_data['mediation_schedule'])) : "");
+            $sched_part = ($status === 'Scheduled for Mediation' && !empty($_POST['mediation_schedule'])) ? " | Sched: " . date('F j, Y h:i A', $new_sched_ts) : "";
+            $new_val_str = "Status: " . $status . $sched_part;
+            
+            $hist_remarks = !empty($_POST['resolution']) ? $_POST['resolution'] : 'Updated via Edit Modal';
+            $history_stmt = $pdo->prepare("INSERT INTO blotter_history (blotter_id, action_type, old_value, new_value, remarks, changed_by, created_at) VALUES (?, ?, ?, ?, ?, ?, NOW())");
+            $history_stmt->execute([$recordId, $action_type, $old_val_str, $new_val_str, $hist_remarks, $user_id]);
+        }
+
+        // ── C. Detecting New Parties (Requirement) ──
+        $p_stmt = $pdo->prepare("SELECT name FROM blotter_complainants WHERE blotter_id = ? UNION SELECT name FROM blotter_respondents WHERE blotter_id = ?");
+        $p_stmt->execute([$recordId, $recordId]);
+        $existing_party_names = $p_stmt->fetchAll(PDO::FETCH_COLUMN);
+
+        $incoming_party_names = [];
+        $party_keys = ['complainant_name', 'victim_name', 'respondent_name', 'witness_name'];
+        foreach ($party_keys as $k) {
+            if (isset($_POST[$k]) && is_array($_POST[$k])) {
+                foreach ($_POST[$k] as $name) {
+                    if (!empty(trim($name))) $incoming_party_names[] = trim($name);
+                }
+            }
+        }
+
+        $added_parties = array_diff(array_unique($incoming_party_names), $existing_party_names);
+        foreach ($added_parties as $new_party_name) {
+            $p_hist = $pdo->prepare("INSERT INTO blotter_history (blotter_id, action_type, old_value, new_value, remarks, changed_by, created_at) VALUES (?, 'Party Added', '', ?, 'New person involved in the case', ?, NOW())");
+            $p_hist->execute([$recordId, $new_party_name, $user_id]);
         }
 
         // Prepare blotter record data
-        $status = trim($_POST['status'] ?? '');
-        if (empty($status)) {
-            throw new Exception('Case status is required');
-        }
         $incidentDate = $_POST['incident_date'];
         $incidentType = $_POST['incident_type'];
         $incidentLocation = $_POST['incident_location'];
@@ -205,24 +289,6 @@ $reportedBy = $_POST['reported_by'] ?? null;
             $mediationSchedule,
             $recordId
         ]);
-
-        // 2. Insert to History if changes were detected
-        if ($action_type !== '') {
-            // Format readable strings for audit readability
-            $old_val_str = "Status: " . $old_data['status'] . ($old_data['mediation_schedule'] ? " | Sched: " . date('F j, Y h:i A', strtotime($old_data['mediation_schedule'])) : "");
-            $new_val_str = "Status: " . $status . ($mediationSchedule ? " | Sched: " . date('F j, Y h:i A', strtotime($mediationSchedule)) : "");
-            
-            // Use 'Resolution / Actions Taken' field as remarks for the history log
-            $hist_remarks = !empty($resolution) ? $resolution : 'Updated via Edit Modal';
-            $user_id = $_SESSION['user_id'] ?? 0;
-            
-            $history_stmt = $pdo->prepare("INSERT INTO blotter_history (blotter_id, action_type, old_value, new_value, remarks, changed_by, created_at) VALUES (?, ?, ?, ?, ?, ?, NOW())");
-            
-            if (!$history_stmt->execute([$recordId, $action_type, $old_val_str, $new_val_str, $hist_remarks, $user_id])) {
-                throw new Exception("History Log Failed.");
-            }
-            $history_stmt->closeCursor();
-        }
         
         // ============================================
         // Handle File Uploads (Update)
@@ -553,6 +619,7 @@ This forms the OFFICIAL record." required></textarea>
                                             <option value="Dismissed">Dismissed</option>
                                             <option value="Endorsed to Police">Endorsed to Police</option>
                                         </select>
+                                        <span id="edit_strike_msg" class="text-danger" style="display:none; font-size: 11px; margin-top: 5px; font-weight: 600;">STRICT LIMIT REACHED: 3/3 attempts used. Escalation required.</span>
                                     </div>
                                     
                                     <div id="edit_mediation_field" class="min-h-[85px]" style="display:none;">

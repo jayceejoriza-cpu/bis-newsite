@@ -83,7 +83,11 @@ try {
             GROUP_CONCAT(DISTINCT CASE WHEN bc.statement = 'COMPLAINANT' OR bc.statement IS NULL OR bc.statement = '' THEN bc.name END ORDER BY bc.id SEPARATOR '|||') AS complainant_names,
             GROUP_CONCAT(DISTINCT brd.name ORDER BY brd.id SEPARATOR '|||') AS respondent_names,
             GROUP_CONCAT(DISTINCT CASE WHEN bc.statement = 'VICTIM' THEN bc.name END ORDER BY bc.id SEPARATOR '|||') AS victim_names,
-            GROUP_CONCAT(DISTINCT CASE WHEN bc.statement = 'WITNESS' THEN bc.name END ORDER BY bc.id SEPARATOR '|||') AS witness_names
+            GROUP_CONCAT(DISTINCT CASE WHEN bc.statement = 'WITNESS' THEN bc.name END ORDER BY bc.id SEPARATOR '|||') AS witness_names,
+            (SELECT COUNT(*) FROM blotter_history 
+             WHERE blotter_id = br.id 
+             AND action_type IN ('Rescheduled', 'Status & Schedule Updated') 
+             AND new_value LIKE '%Scheduled for Mediation%') AS mediation_count
         FROM blotter_records br
         LEFT JOIN blotter_complainants bc ON br.id = bc.blotter_id
         LEFT JOIN blotter_respondents brd ON br.id = brd.blotter_id
@@ -274,7 +278,74 @@ try {
         .action-menu-item.show-submenu .action-submenu { display: block; }
         .submenu-arrow { margin-left: auto; font-size: 10px; transition: transform 0.2s; }
         .action-menu-item.show-submenu .submenu-arrow { transform: rotate(90deg); }
-        
+
+        /* Modern Timeline Styles */
+        #case-history-timeline {
+            max-height: 500px;
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+
+        #case-history-timeline::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        #case-history-timeline::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        #case-history-timeline::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+
+        #case-history-timeline::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        .timeline-container {
+            position: relative;
+            padding-left: 30px;
+        }
+
+        .timeline-container::before {
+            content: '';
+            position: absolute;
+            left: 13px;
+            top: 5px;
+            bottom: 5px;
+            width: 2px;
+            background: #e9ecef;
+        }
+
+        .timeline-card {
+            background: #fff;
+            border: 1px solid #f1f5f9;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            transition: transform 0.2s;
+        }
+
+        .timeline-card:hover {
+            transform: translateX(5px);
+        }
+
+        .audit-val-box {
+            font-size: 11px;
+            padding: 8px 12px;
+            border-radius: 6px;
+            line-height: 1.4;
+        }
+
+        .remarks-ribbon {
+            border-left: 4px solid #3b82f6;
+            background: #f8fafc;
+            padding: 10px 15px;
+            font-style: italic;
+            font-size: 12px;
+            color: #475569;
+        }
+
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(-10px); }
             to { opacity: 1; transform: translateY(0); }
@@ -507,6 +578,33 @@ try {
                                             <i class="fas fa-ellipsis-h"></i>
                                         </button>
                                         <div class="action-menu" data-record-id="<?php echo $record['id']; ?>">
+                                            <?php if ($record['status'] === 'Scheduled for Mediation'): ?>
+                                            <?php if ($record['mediation_count'] <= 3): ?>
+                                            <a href="generate_document.php?id=<?php echo $record['id']; ?>&type=summons" target="_blank" class="action-menu-item">
+                                                <i class="fas fa-file-alt text-primary"></i>
+                                                <span>Print Summons</span>
+                                            </a>
+                                            <a href="generate_document.php?id=<?php echo $record['id']; ?>&type=notice" target="_blank" class="action-menu-item">
+                                                <i class="fas fa-bullhorn text-success"></i>
+                                                <span>Print Notice</span>
+                                            </a>
+                                            <button type="button" class="action-menu-item" onclick="issueSubpoena(<?php echo $record['id']; ?>)">
+                                                <i class="fas fa-user-tie text-warning"></i>
+                                                <span>Print Subpoena</span>
+                                            </button>
+                                            <?php endif; ?>
+
+                                            <?php if ($record['mediation_count'] >= 3): ?>
+                                            <!-- Strike Limit Reached UI -->
+                                            <button type="button" class="action-menu-item text-danger fw-bold" data-action="status-endorsed">
+                                                <i class="fas fa-exclamation-triangle"></i>
+                                                <span>Endorse Case (3-Strike Limit)</span>
+                                            </button>
+                                            <?php endif; ?>
+
+                                            <div class="action-menu-divider" style="height: 1px; background-color: #e5e7eb; margin: 8px 0;"></div>
+                                            <?php endif; ?>
+
                                             <?php if (hasPermission('perm_blotter_view')): ?>
                                             <button class="action-menu-item" data-action="view">
                                                 <i class="fas fa-eye"></i>
@@ -736,6 +834,7 @@ try {
                 <div class="modal-body p-8">
                     <form id="viewRecordForm" class="space-y-6">
                         <input type="hidden" id="view_record_id">
+                        <input type="hidden" id="view_resolution">
                         
                         <!-- Two-Column Layout (60/40) -->
                         <div class="grid grid-cols-1 lg:grid-cols-10 gap-10">
@@ -953,6 +1052,15 @@ try {
     </script>
 
     <script src="assets/bootstrap/js/bootstrap.bundle.min.js"></script>
+    <script>
+    /**
+     * Triggers a prompt for Witness Name and opens the Subpoena generator
+     */
+    function issueSubpoena(caseId) {
+        const url = `generate_document.php?id=${caseId}&type=subpoena`;
+        window.open(url, '_blank');
+    }
+    </script>
     <script src="assets/js/script.js"></script>
     <script src="assets/js/table.js"></script>
     <script src="assets/js/blotter.js"></script>
@@ -1002,7 +1110,7 @@ try {
              * instead of the static resolution field in the main record.
              */
             const historyTrail = document.getElementById('case-history-timeline');
-            const latestHistoryRemark = historyTrail?.querySelector('.bg-gray-50');
+            const latestHistoryRemark = historyTrail?.querySelector('.remarks-ribbon');
             
             const resolution = latestHistoryRemark 
                 ? latestHistoryRemark.textContent.trim().replace(/^"|"$/g, '') 
