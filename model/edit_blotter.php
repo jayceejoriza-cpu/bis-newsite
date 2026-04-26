@@ -4,8 +4,12 @@
  * Modal for editing existing blotter records
  */
 
-// Include configuration
+// Include configuration first
 require_once __DIR__ . '/../config.php';
+
+// Error Suppression for clean JSON output
+error_reporting(0);
+ini_set('display_errors', 0);
 
 // Set JSON header for AJAX responses
 if (isset($_GET['ajax']) && $_GET['ajax'] === 'true') {
@@ -166,7 +170,7 @@ try {
         $pdo->beginTransaction();
         
         // 1. Audit Trail: Capture OLD values for comparison BEFORE update
-        $old_stmt = $pdo->prepare("SELECT status, mediation_schedule, incident_location, incident_description, incident_date FROM blotter_records WHERE id = ?");
+        $old_stmt = $pdo->prepare("SELECT status, mediation_schedule, incident_location, incident_description, incident_date, resolution FROM blotter_records WHERE id = ?");
         $old_stmt->execute([$recordId]);
         $old_data = $old_stmt->fetch();
         
@@ -175,6 +179,7 @@ try {
         }
 
         $user_id = $_SESSION['user_id'] ?? 0;
+        $current_timestamp = date('Y-m-d H:i:s');
 
         // ── A. Granular Audit Logging (Requirement) ──
         $granular_map = [
@@ -201,8 +206,8 @@ try {
 
             if ($is_changed) {
                 error_log("Audit Log: Detected change in $col. Logging action: {$cfg['action']}");
-                $hist_stmt = $pdo->prepare("INSERT INTO blotter_history (blotter_id, action_type, old_value, new_value, remarks, changed_by, created_at) VALUES (?, ?, ?, ?, ?, ?, NOW())");
-                $hist_stmt->execute([$recordId, $cfg['action'], $old_val, $new_val, $cfg['remarks'], $user_id]);
+                $hist_stmt = $pdo->prepare("INSERT INTO blotter_history (blotter_id, action_type, old_value, new_value, remarks, changed_by, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)");
+                $hist_stmt->execute([$recordId, $cfg['action'], $old_val, $new_val, $cfg['remarks'], $user_id, $current_timestamp]);
             }
         }
 
@@ -226,29 +231,29 @@ try {
             $new_val_str = "Status: " . $status . $sched_part;
             
             $hist_remarks = !empty($_POST['resolution']) ? $_POST['resolution'] : 'Updated via Edit Modal';
-            $history_stmt = $pdo->prepare("INSERT INTO blotter_history (blotter_id, action_type, old_value, new_value, remarks, changed_by, created_at) VALUES (?, ?, ?, ?, ?, ?, NOW())");
-            $history_stmt->execute([$recordId, $action_type, $old_val_str, $new_val_str, $hist_remarks, $user_id]);
+            $history_stmt = $pdo->prepare("INSERT INTO blotter_history (blotter_id, action_type, old_value, new_value, remarks, changed_by, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)");
+            $history_stmt->execute([$recordId, $action_type, $old_val_str, $new_val_str, $hist_remarks, $user_id, $current_timestamp]);
         }
 
-        // ── C. Detecting New Parties (Requirement) ──
-        $p_stmt = $pdo->prepare("SELECT name FROM blotter_complainants WHERE blotter_id = ? UNION SELECT name FROM blotter_respondents WHERE blotter_id = ?");
-        $p_stmt->execute([$recordId, $recordId]);
-        $existing_party_names = $p_stmt->fetchAll(PDO::FETCH_COLUMN);
-
-        $incoming_party_names = [];
-        $party_keys = ['complainant_name', 'victim_name', 'respondent_name', 'witness_name'];
-        foreach ($party_keys as $k) {
-            if (isset($_POST[$k]) && is_array($_POST[$k])) {
-                foreach ($_POST[$k] as $name) {
-                    if (!empty(trim($name))) $incoming_party_names[] = trim($name);
-                }
-            }
+        // ── C. Detecting New Parties (Pre-fetch for Loop Triggers) ──
+        $existing_parties_map = [];
+        $check_p_stmt = $pdo->prepare("
+            SELECT name, 'Complainant' as role FROM blotter_complainants WHERE blotter_id = ? AND (statement IS NULL OR statement = '' OR statement = 'COMPLAINANT')
+            UNION SELECT name, 'Victim' as role FROM blotter_complainants WHERE blotter_id = ? AND statement = 'VICTIM'
+            UNION SELECT name, 'Witness' as role FROM blotter_complainants WHERE blotter_id = ? AND statement = 'WITNESS'
+            UNION SELECT name, 'Respondent' as role FROM blotter_respondents WHERE blotter_id = ?
+        ");
+        $check_p_stmt->execute([$recordId, $recordId, $recordId, $recordId]);
+        while($row = $check_p_stmt->fetch()) {
+            $existing_parties_map[$row['name'] . '|' . $row['role']] = true;
         }
 
-        $added_parties = array_diff(array_unique($incoming_party_names), $existing_party_names);
-        foreach ($added_parties as $new_party_name) {
-            $p_hist = $pdo->prepare("INSERT INTO blotter_history (blotter_id, action_type, old_value, new_value, remarks, changed_by, created_at) VALUES (?, 'Party Added', '', ?, 'New person involved in the case', ?, NOW())");
-            $p_hist->execute([$recordId, $new_party_name, $user_id]);
+        // ── D. Resolution Comparison ──
+        $old_resolution = trim($old_data['resolution'] ?? '');
+        $new_resolution = trim($_POST['resolution'] ?? '');
+        if ($old_resolution !== $new_resolution) {
+            $res_hist = $pdo->prepare("INSERT INTO blotter_history (blotter_id, action_type, old_value, new_value, remarks, changed_by, created_at) VALUES (?, 'Resolution Updated', ?, ?, 'Case resolution text was modified', ?, ?)");
+            $res_hist->execute([$recordId, $old_resolution, $new_resolution, $user_id, $current_timestamp]);
         }
 
         // Prepare blotter record data
@@ -257,7 +262,7 @@ try {
         $incidentLocation = $_POST['incident_location'];
         $incidentDescription = $_POST['incident_description'];
         $resolution = $_POST['resolution'] ?? null;
-$reportedBy = $_POST['reported_by'] ?? null;
+        $reportedBy = $_POST['reported_by'] ?? null;
         $caseOutcome = $_POST['case_outcome'] ?? null;
         $mediationSchedule = $_POST['mediation_schedule'] ?? null;
         
@@ -347,6 +352,9 @@ $reportedBy = $_POST['reported_by'] ?? null;
         // Delete existing respondents
         $stmt = $pdo->prepare("DELETE FROM blotter_respondents WHERE blotter_id = ?");
         $stmt->execute([$recordId]);
+
+        // Prepare statement for party-related history logging
+        $p_hist_stmt = $pdo->prepare("INSERT INTO blotter_history (blotter_id, remarks, changed_by, created_at, action_type) VALUES (?, ?, ?, ?, 'Party Added')");
         
         // Insert complainants
         if (!empty($_POST['complainant_name']) && is_array($_POST['complainant_name'])) {
@@ -361,12 +369,18 @@ $reportedBy = $_POST['reported_by'] ?? null;
             ");
             
             foreach ($complainantNames as $index => $name) {
-                if (!empty(trim($name))) {
+                $name = trim($name);
+                if (!empty($name)) {
+                    // Audit Log: Complainant Added
+                    if (!isset($existing_parties_map[$name . '|Complainant'])) {
+                        $p_hist_stmt->execute([$recordId, "$name added as Complainant", $user_id, $current_timestamp]);
+                    }
+
                     $residentId = !empty($complainantResidentIds[$index]) ? $complainantResidentIds[$index] : null;
                     $address = $complainantAddresses[$index] ?? null;
                     $contact = !empty($complainantContacts[$index]) ? '+63' . $complainantContacts[$index] : null;
                     
-                    $stmt->execute([$recordId, $residentId, trim($name), $address, $contact]);
+                    $stmt->execute([$recordId, $residentId, $name, $address, $contact]);
                 }
             }
         }
@@ -384,12 +398,18 @@ $reportedBy = $_POST['reported_by'] ?? null;
             ");
             
             foreach ($victimNames as $index => $name) {
-                if (!empty(trim($name))) {
+                $name = trim($name);
+                if (!empty($name)) {
+                    // Audit Log: Victim Added
+                    if (!isset($existing_parties_map[$name . '|Victim'])) {
+                        $p_hist_stmt->execute([$recordId, "$name added as Victim", $user_id, $current_timestamp]);
+                    }
+
                     $residentId = !empty($victimResidentIds[$index]) ? $victimResidentIds[$index] : null;
                     $address = $victimAddresses[$index] ?? null;
                     $contact = !empty($victimContacts[$index]) ? '+63' . $victimContacts[$index] : null;
                     
-                    $stmt->execute([$recordId, $residentId, trim($name), $address, $contact]);
+                    $stmt->execute([$recordId, $residentId, $name, $address, $contact]);
                 }
             }
         }
@@ -407,12 +427,18 @@ $reportedBy = $_POST['reported_by'] ?? null;
             ");
             
             foreach ($respondentNames as $index => $name) {
-                if (!empty(trim($name))) {
+                $name = trim($name);
+                if (!empty($name)) {
+                    // Audit Log: Respondent Added
+                    if (!isset($existing_parties_map[$name . '|Respondent'])) {
+                        $p_hist_stmt->execute([$recordId, "$name added as Respondent", $user_id, $current_timestamp]);
+                    }
+
                     $residentId = !empty($respondentResidentIds[$index]) ? $respondentResidentIds[$index] : null;
                     $address = $respondentAddresses[$index] ?? null;
                     $contact = !empty($respondentContacts[$index]) ? '+63' . $respondentContacts[$index] : null;
                     
-                    $stmt->execute([$recordId, $residentId, trim($name), $address, $contact]);
+                    $stmt->execute([$recordId, $residentId, $name, $address, $contact]);
                 }
             }
         }
@@ -430,12 +456,18 @@ $reportedBy = $_POST['reported_by'] ?? null;
             ");
             
             foreach ($witnessNames as $index => $name) {
-                if (!empty(trim($name))) {
+                $name = trim($name);
+                if (!empty($name)) {
+                    // Audit Log: Witness Added
+                    if (!isset($existing_parties_map[$name . '|Witness'])) {
+                        $p_hist_stmt->execute([$recordId, "$name added as Witness", $user_id, $current_timestamp]);
+                    }
+
                     $residentId = !empty($witnessResidentIds[$index]) ? $witnessResidentIds[$index] : null;
                     $address = $witnessAddresses[$index] ?? null;
                     $contact = !empty($witnessContacts[$index]) ? '+63' . $witnessContacts[$index] : null;
                     
-                    $stmt->execute([$recordId, $residentId, trim($name), $address, $contact]);
+                    $stmt->execute([$recordId, $residentId, $name, $address, $contact]);
                 }
             }
         }

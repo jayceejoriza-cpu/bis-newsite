@@ -43,54 +43,81 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['restore'])) {
 
                 if (password_verify($password, $user['password'])) {
                     // Password correct — read and execute SQL file
-                    $sqlContent = file_get_contents($file['tmp_name']);
-
-                    if ($sqlContent === false || empty(trim($sqlContent))) {
-                        $error = "The uploaded SQL file is empty or could not be read.";
+                    if (filesize($file['tmp_name']) == 0) {
+                        $error = "The uploaded SQL file is empty.";
                     } else {
                         try {
                             $conn->set_charset("utf8");
 
+                            $executedCount = 0;
+                            $failedStatements = [];
+                            $query = '';
+
                             // Disable foreign key checks during restore
                             $conn->query("SET FOREIGN_KEY_CHECKS=0");
 
-                            // Split SQL into individual statements
-                            $statements = array_filter(
-                                array_map('trim', explode(";\n", $sqlContent)),
-                                fn($s) => !empty($s) && !preg_match('/^--/', $s)
-                            );
-
-                            $executedCount = 0;
-                            $failedStatements = [];
-
-                            foreach ($statements as $statement) {
-                                $statement = trim($statement);
-                                if (empty($statement)) continue;
-
-                                if (!$conn->query($statement)) {
-                                    $failedStatements[] = $conn->error;
-                                } else {
-                                    $executedCount++;
+                            // The 'Wipe Out' Strategy: Fetch all Table and View names and DROP ALL of them.
+                            // This prevents "Table already exists" or "View already exists" errors.
+                            $tablesResult = $conn->query("SHOW FULL TABLES");
+                            if ($tablesResult) {
+                                while ($row = $tablesResult->fetch_array()) {
+                                    $name = $row[0];
+                                    $type = $row[1]; // 'BASE TABLE' or 'VIEW'
+                                    
+                                    if ($type === 'VIEW') {
+                                        $conn->query("DROP VIEW IF EXISTS `$name`");
+                                    } else {
+                                        $conn->query("DROP TABLE IF EXISTS `$name`");
+                                    }
                                 }
+                            }
+
+                            // Read the file line by line to handle multi-line statements and ignore comments
+                            $handle = fopen($file['tmp_name'], "r");
+                            if ($handle) {
+                                while (($line = fgets($handle)) !== false) {
+                                    $trimmedLine = trim($line);
+                                    
+                                    // Skip empty lines and SQL comments
+                                    // Handles --, #, and single-line /* */ comments
+                                    if ($trimmedLine === '' || strpos($trimmedLine, '--') === 0 || strpos($trimmedLine, '#') === 0 || preg_match('/^\/\*.*\*\/$/', $trimmedLine)) {
+                                        continue;
+                                    }
+
+                                    $query .= $line;
+
+                                    // If the line ends with a semicolon, it's a complete statement
+                                    if (substr($trimmedLine, -1) === ';') {
+                                        if (!$conn->query($query)) {
+                                            // Error Handling: Log specific SQL line that caused the error
+                                            $errorSnippet = htmlspecialchars(substr(trim($query), 0, 250));
+                                            $failedStatements[] = "<strong>MySQL Error:</strong> " . $conn->error . "<br><strong>Problematic SQL:</strong> <code>" . $errorSnippet . "...</code>";
+                                        } else {
+                                            $executedCount++;
+                                        }
+                                        $query = '';
+                                    }
+                                }
+                                fclose($handle);
                             }
 
                             // Re-enable foreign key checks
                             $conn->query("SET FOREIGN_KEY_CHECKS=1");
 
+                            if (!empty($failedStatements)) {
+                                $error = "Restore completed with " . count($failedStatements) . " error(s). " . $executedCount . " statement(s) were successful. <br><br><strong>Detailed Error:</strong> " . end($failedStatements);
+                            } else {
+                                $success = "Database restored successfully! $executedCount SQL statement(s) executed from <strong>" . htmlspecialchars($file['name']) . "</strong>.";
+                            }
+
                             // Log the restore activity
                             $log_user = $_SESSION['username'];
                             $log_action = 'Restore Database';
-                            $log_desc = "Restored database from file: " . htmlspecialchars($file['name']) . ". Executed $executedCount statements.";
+                            $log_desc = "Restored database from file: " . htmlspecialchars($file['name']) . ". Executed $executedCount statements. Errors: " . count($failedStatements);
                             $log_stmt = $conn->prepare("INSERT INTO activity_logs (user, action, description) VALUES (?, ?, ?)");
                             $log_stmt->bind_param("sss", $log_user, $log_action, $log_desc);
                             $log_stmt->execute();
                             $log_stmt->close();
-
-                            if (!empty($failedStatements)) {
-                                $error = "Restore completed with " . count($failedStatements) . " error(s). " . $executedCount . " statement(s) executed successfully. First error: " . htmlspecialchars($failedStatements[0]);
-                            } else {
-                                $success = "Database restored successfully! $executedCount SQL statement(s) executed from <strong>" . htmlspecialchars($file['name']) . "</strong>.";
-                            }
 
                         } catch (Exception $e) {
                             $conn->query("SET FOREIGN_KEY_CHECKS=1");

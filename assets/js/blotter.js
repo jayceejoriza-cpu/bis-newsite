@@ -1230,12 +1230,23 @@ function handleAction(action, recordId) {
         const descEl = document.getElementById('view_incident_description');
         if (descEl) descEl.value = record.incident_description;
         
+        // Populate hidden resolution field for printing (Main Record Data)
+        const recordResEl = document.getElementById('view_resolution');
+        if (recordResEl) recordResEl.value = record.resolution || '';
+
         // Modern Narrative Box
         const narrativeBox = document.getElementById('view_incident_description_text');
         if (narrativeBox) narrativeBox.textContent = record.incident_description || 'No details provided.';
 
-        const resTextEl = document.getElementById('view_resolution');
-        if (resTextEl) resTextEl.value = record.resolution || '';
+        // Case Resolution / Actions Taken logic
+        const resText = document.getElementById('view_resolution_text');
+        if (resText) {
+            if (!record.resolution || record.resolution.trim() === '') {
+                resText.innerHTML = '<span class="text-orange-500 font-bold tracking-wide">PENDING</span>';
+            } else {
+                resText.innerHTML = `<span class="font-bold uppercase text-gray-800">${record.resolution}</span>`;
+            }
+        }
 
         // Handle Print CFA Button visibility in View Modal
         const btnPrintCFA = document.getElementById('btnPrintCFA');
@@ -1354,6 +1365,9 @@ function handleAction(action, recordId) {
                         } else if (change.action_type === 'Status Updated' || change.action_type === 'Status & Schedule Updated') {
                             badgeClass = 'bg-blue-600';
                             actionIcon = '<i class="fas fa-scale-balanced me-1"></i>'; // ⚖️ Status
+                        } else if (change.action_type === 'Resolution Updated') {
+                            badgeClass = 'bg-emerald-600';
+                            actionIcon = '<i class="fas fa-circle-check me-1"></i>'; // ✅ Resolution
                         } else if (change.action_type === 'Narrative Modified') {
                             badgeClass = 'bg-cyan-600';
                             actionIcon = '<i class="fas fa-file-lines me-1"></i>'; // 📝 Narrative

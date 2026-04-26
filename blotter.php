@@ -1105,16 +1105,9 @@ try {
             const location = document.getElementById('view_incident_location')?.value || 'N/A';
             const description = document.getElementById('view_incident_description')?.value || 'N/A';
 
-            /**
-             * NEW: Fetch Resolution/Remarks from the history trail (blotter_history)
-             * instead of the static resolution field in the main record.
-             */
-            const historyTrail = document.getElementById('case-history-timeline');
-            const latestHistoryRemark = historyTrail?.querySelector('.remarks-ribbon');
-            
-            const resolution = latestHistoryRemark 
-                ? latestHistoryRemark.textContent.trim().replace(/^"|"$/g, '') 
-                : (document.getElementById('view_resolution')?.value || 'Case Pending');
+            // Pull resolution directly from the main record field (not history)
+            const resolutionVal = document.getElementById('view_resolution')?.value || '';
+            const resolution = resolutionVal.trim() !== '' ? resolutionVal.toUpperCase() : 'PENDING';
             
             const getNamesFromContainer = (containerId) => {
                 return Array.from(document.querySelectorAll(`#${containerId} .blotter-party-name`))
