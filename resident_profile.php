@@ -167,7 +167,14 @@ function calculateAge($dateOfBirth) {
     if (empty($dateOfBirth)) return 0;
     $dob = new DateTime($dateOfBirth);
     $now = new DateTime();
-    return $now->diff($dob)->y;
+    $diff = $now->diff($dob);
+
+    if ($diff->y > 0) return $diff->y . ' year' . ($diff->y > 1 ? 's' : '') . ' old';
+
+    if ($diff->m > 0) {
+        return $diff->m . ' month' . ($diff->m > 1 ? 's' : '') . ' old';
+    }
+    return $diff->d . ' day' . ($diff->d > 1 ? 's' : '') . ' old';
 }
 
 // Fetch Barangay Info for Print Header
@@ -196,6 +203,12 @@ $fullName = formatFullName(
 );
 
 $age = calculateAge($resident['date_of_birth']);
+$ageNumeric = 0;
+if (!empty($resident['date_of_birth'])) {
+    $dob = new DateTime($resident['date_of_birth']);
+    $now = new DateTime();
+    $ageNumeric = $now->diff($dob)->y;
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -481,7 +494,7 @@ $age = calculateAge($resident['date_of_birth']);
 }
     </style>
 </head>
-<body class="<?php echo ($age < 18) ? 'resident-is-minor' : 'resident-is-adult'; ?> <?php echo ($age >= 10) ? 'resident-is-10-plus' : ''; ?> <?php echo ($age >= 15) ? 'resident-is-15-plus' : ''; ?>">
+<body class="<?php echo ($ageNumeric < 18) ? 'resident-is-minor' : 'resident-is-adult'; ?> <?php echo ($ageNumeric >= 10) ? 'resident-is-10-plus' : ''; ?> <?php echo ($ageNumeric >= 15) ? 'resident-is-15-plus' : ''; ?>">
     <!-- Sidebar -->
     <?php include 'components/sidebar.php'; ?>
     
@@ -578,7 +591,7 @@ $age = calculateAge($resident['date_of_birth']);
                     </div>
                 </div>
                 <div class="profile-header-actions">
-                    <?php if (hasPermission('perm_resident_print_profile')): ?>
+                    <?php if (hasPermission('perm_resident_print')): ?>
                     <button class="btn btn-secondary view-action" onclick="window.print()">
                         <i class="fas fa-print"></i>
                         Print Profile
@@ -631,7 +644,7 @@ $age = calculateAge($resident['date_of_birth']);
                         </a> 
                         <a href="#service-requests" class="profile-nav-item">
                             <i class="fas fa-clipboard-list"></i>
-                            <span>Service Requests</span>
+                            <span>Issuance History</span>
                         </a>
                         <a href="#blotter-records" class="profile-nav-item">
                             <i class="fas fa-file-alt"></i>
@@ -700,14 +713,14 @@ $age = calculateAge($resident['date_of_birth']);
                                 <div class="info-item">
                                     <label>Date of Birth</label>
                                     <p class="view-field"><?php echo htmlspecialchars($resident['date_of_birth'] ? date('F d, Y', strtotime($resident['date_of_birth'])) : 'N/A'); ?></p>
-                                    <input type="date" name="date_of_birth" class="form-control edit-field" value="<?php echo htmlspecialchars($resident['date_of_birth'] ?? ''); ?>" style="display:none;" required>
+                                    <input type="date" name="date_of_birth" id="profileDob" class="form-control edit-field" value="<?php echo htmlspecialchars($resident['date_of_birth'] ?? ''); ?>" style="display:none;" onchange="updateProfileAgeClassification()" required>
                                 </div>
                                 <div class="info-item">
                                     <label>Age</label>
-                                    <p><?php echo $age; ?> years old</p>
+                                    <p><span id="displayProfileAge"><?php echo $age; ?></span><span id="ageSuffix"><?php echo is_numeric($age) ? ' years old' : ''; ?></span></p>
                                 </div>
                                 <div class="info-item">
-                                    <label>Place of Birth <span class="required">*</span></label>
+                                    <label>Place of Birth</label>
                                     <p class="view-field"><?php echo htmlspecialchars($resident['place_of_birth'] ?: 'N/A'); ?></p>
                                     <input type="text" name="place_of_birth" class="form-control edit-field" value="<?php echo htmlspecialchars($resident['place_of_birth'] ?? ''); ?>" style="display:none;" required>
                                 </div>
@@ -775,7 +788,7 @@ $age = calculateAge($resident['date_of_birth']);
                                 </div>
                                 <div class="info-item">
                                     <label>Mobile Number</label>
-                                    <p class="view-field">+63 <?php echo htmlspecialchars($resident['mobile_number'] ?: 'N/A'); ?></p>
+                                    <p class="view-field"><?php echo htmlspecialchars($resident['mobile_number'] ?: 'N/A'); ?></p>
                                     <input type="text" name="mobile_number" class="form-control edit-field"  placeholder="9XX XXX XXXX" pattern="[0-9 ]+" maxlength="12" oninput="let v=this.value.replace(/\D/g,'').substring(0,10);if(v.length>0&&v[0]!=='9')v='';if(v.length>6)this.value=v.slice(0,3)+' '+v.slice(3,6)+' '+v.slice(6);else if(v.length>3)this.value=v.slice(0,3)+' '+v.slice(3);else this.value=v;" value="<?php echo htmlspecialchars($resident['mobile_number'] ?? ''); ?>" style="display:none;">
                                 </div>
                             </div>
@@ -798,11 +811,12 @@ $age = calculateAge($resident['date_of_birth']);
                                         <option value="Married" <?php echo $resident['civil_status'] == 'Married' ? 'selected' : ''; ?>>Married</option>
                                         <option value="Widow/er" <?php echo $resident['civil_status'] == 'Widow/er' ? 'selected' : ''; ?>>Widow/er</option>
                                         <option value="Separated" <?php echo $resident['civil_status'] == 'Separated' ? 'selected' : ''; ?>>Separated</option>
+                                        <option value="Live-In" <?php echo $resident['civil_status'] == 'Live-In' ? 'selected' : ''; ?>>Live-In</option>
                                           <option value="Cohabitation" <?php echo $resident['civil_status'] == 'Cohabitation' ? 'selected' : ''; ?>>Cohabitation</option>
                                     </select>
                                 </div>
-                                <div class="info-item adult-only position-relative" id="spouseNameGroup" style="position: relative;">
-                                    <label id="spouseNameLabel">Spouse Name</label>
+                                <div class="info-item adult-only position-relative" id="spouseNameGroup" style="position: relative; <?php echo ($resident['civil_status'] !== 'Married' && $resident['civil_status'] !== 'Live-In') ? 'display: none;' : ''; ?>">
+                                    <label id="spouseNameLabel"><?php echo ($resident['civil_status'] === 'Live-In') ? 'Live-In Partner Name' : 'Spouse Name'; ?></label>
                                     <p class="view-field"><?php echo htmlspecialchars($resident['spouse_name'] ?: 'N/A'); ?></p>
                                     <input type="hidden" id="spouseNameInputId" name="spouseResidentId" value="<?php echo htmlspecialchars($resident['spouse_resident_id'] ?? ''); ?>">
                                     <input type="text" name="spouse_name" id="spouseNameInput" class="form-control edit-field" value="<?php echo htmlspecialchars($resident['spouse_name'] ?? ''); ?>" style="display:none;" autocomplete="off">
@@ -868,7 +882,15 @@ $age = calculateAge($resident['date_of_birth']);
                             <div class="info-grid">
                                 <div class="info-item position-relative" style="position: relative;">
                                     <label>Guardian Name</label>
-                                    <p class="view-field"><?php echo htmlspecialchars($resident['guardian_name'] ?: 'N/A'); ?></p>
+                                   <p class="view-field">
+                                        <?php if (!empty($resident['guardian_resident_id'])): ?>
+                                            <a href="resident_profile.php?id=<?php echo htmlspecialchars($resident['guardian_resident_id']); ?>" style="color: var(--primary-color); text-decoration: none; font-weight: 500;">
+                                                <?php echo htmlspecialchars($resident['guardian_name'] ?: 'N/A'); ?>
+                                            </a>
+                                        <?php else: ?>
+                                            <?php echo htmlspecialchars($resident['guardian_name'] ?: 'N/A'); ?>
+                                        <?php endif; ?>
+                                    </p>
                                     <input type="hidden" id="guardianNameId" name="guardianResidentId" value="<?php echo htmlspecialchars($resident['guardian_resident_id'] ?? ''); ?>">
                                     <input type="text" name="guardian_name" id="guardianNameInput" class="form-control edit-field" value="<?php echo htmlspecialchars($resident['guardian_name'] ?? ''); ?>" style="display:none;" autocomplete="off">
                                     <div id="guardianNameDropdown" class="autocomplete-dropdown" style="display: none;"></div>
@@ -909,16 +931,22 @@ $age = calculateAge($resident['date_of_birth']);
                                     <p class="view-field"><?php echo htmlspecialchars($resident['educational_attainment'] ?: 'N/A'); ?></p>
                                     <select name="educational_attainment" class="form-control edit-field" style="display:none;">
                                         <option value="" <?php echo empty($resident['educational_attainment']) ? 'selected' : ''; ?>>Select</option>
-                                        <option value="No Formal Education" <?php echo $resident['educational_attainment'] == 'No Formal Education' ? 'selected' : ''; ?>>No Formal Education</option>
-                                        <option value="Elementary Level" <?php echo $resident['educational_attainment'] == 'Elementary Level' ? 'selected' : ''; ?>>Elementary Level</option>
-                                        <option value="Elementary Graduate" <?php echo $resident['educational_attainment'] == 'Elementary Graduate' ? 'selected' : ''; ?>>Elementary Graduate</option>
-                                        <option value="High School Level" <?php echo $resident['educational_attainment'] == 'High School Level' ? 'selected' : ''; ?>>High School Level</option>
-                                        <option value="High School Graduate" <?php echo $resident['educational_attainment'] == 'High School Graduate' ? 'selected' : ''; ?>>High School Graduate</option>
-                                        <option value="College Level" <?php echo $resident['educational_attainment'] == 'College Level' ? 'selected' : ''; ?>>College Level</option>
-                                        <option value="College Graduate" <?php echo $resident['educational_attainment'] == 'College Graduate' ? 'selected' : ''; ?>>College Graduate</option>
-                                        <option value="Vocational" <?php echo $resident['educational_attainment'] == 'Vocational' ? 'selected' : ''; ?>>Vocational</option>
-                                        <option value="Post Graduate" <?php echo $resident['educational_attainment'] == 'Post Graduate' ? 'selected' : ''; ?>>Post Graduate</option>
-                                    </select>
+                                        <option value="No Formal Education" <?php echo ($resident['educational_attainment'] == 'No Formal Education') ? 'selected' : ''; ?>>No Formal Education</option>
+                                        <option value="Pre-School" <?php echo ($resident['educational_attainment'] == 'Pre-School') ? 'selected' : ''; ?>>Pre-School</option>
+                                        <option value="Elementary Level" <?php echo ($resident['educational_attainment'] == 'Elementary Level') ? 'selected' : ''; ?>>Elementary Level</option>
+                                        <option value="Elementary Graduate" <?php echo ($resident['educational_attainment'] == 'Elementary Graduate') ? 'selected' : ''; ?>>Elementary Graduate</option>
+                                        <option value="Elementary Undergraduate" <?php echo ($resident['educational_attainment'] == 'Elementary Undergraduate') ? 'selected' : ''; ?>>Elementary Undergraduate</option>
+                                        <option value="High School Level" <?php echo ($resident['educational_attainment'] == 'High School Level') ? 'selected' : ''; ?>>High School Level</option>
+                                        <option value="High School Graduate" <?php echo ($resident['educational_attainment'] == 'High School Graduate') ? 'selected' : ''; ?>>High School Graduate</option>
+                                        <option value="High School Undergraduate" <?php echo ($resident['educational_attainment'] == 'High School Undergraduate') ? 'selected' : ''; ?>>High School Undergraduate</option>
+                                        <option value="Senior High School" <?php echo ($resident['educational_attainment'] == 'Senior High School') ? 'selected' : ''; ?>>Senior High School</option>
+                                        <option value="Adv Learning System" <?php echo ($resident['educational_attainment'] == 'Adv Learning System') ? 'selected' : ''; ?>>Adv Learning System</option>
+                                        <option value="Vocational Course" <?php echo ($resident['educational_attainment'] == 'Vocational Course') ? 'selected' : ''; ?>>Vocational Course</option>
+                                        <option value="College Level" <?php echo ($resident['educational_attainment'] == 'College Level') ? 'selected' : ''; ?>>College Level</option>
+                                        <option value="College Undergraduate" <?php echo ($resident['educational_attainment'] == 'College Undergraduate') ? 'selected' : ''; ?>>College Undergraduate</option>
+                                        <option value="College Graduate" <?php echo ($resident['educational_attainment'] == 'College Graduate') ? 'selected' : ''; ?>>College Graduate</option>
+                                        <option value="Post Graduate/ Material/ Doctorate" <?php echo ($resident['educational_attainment'] == 'Post Graduate/ Material/ Doctorate') ? 'selected' : ''; ?>>Post Graduate/ Material/ Doctorate</option>
+                                         <select>
                                 </div>
                                 <div class="info-item adult-only">
                                     <label>Employment Status</label>
@@ -954,28 +982,28 @@ $age = calculateAge($resident['date_of_birth']);
                                 <div class="info-item adult-only">
                                     <label>4Ps Member</label>
                                     <p class="view-field"><?php echo htmlspecialchars($resident['fourps_member'] ?: 'No'); ?></p>
-                                    <select name="fourps_member" class="form-control edit-field" style="display:none;">
+                                    <select name="fourps_member" id="profileFourPsSelect" class="form-control edit-field" style="display:none;" onchange="handleProfileFourPsChange()">
                                         <option value="Yes" <?php echo $resident['fourps_member'] == 'Yes' ? 'selected' : ''; ?>>Yes</option>
                                         <option value="No" <?php echo $resident['fourps_member'] == 'No' ? 'selected' : ''; ?>>No</option>
                                     </select>
                                 </div>
-                                <div class="info-item adult-only <?php echo ($resident['fourps_member'] !== 'Yes') ? 'no-print' : ''; ?>">
-                                    <label>4Ps ID Number <span class="required">*</span></label>
+                                <div class="info-item adult-only <?php echo ($resident['fourps_member'] !== 'Yes') ? 'no-print' : ''; ?>" id="profileFourPsIdGroup" style="display: <?php echo ($resident['fourps_member'] == 'Yes') ? 'block' : 'none'; ?>;">
+                                    <label>4Ps ID Number</label>
                                     <p class="view-field"><?php echo htmlspecialchars($resident['fourps_id'] ?: 'N/A'); ?></p>
-                                    <input type="text" name="fourps_id" class="form-control edit-field" placeholder="XX-YYYY-ZZZZ" maxlength="12" oninput="let v=this.value.replace(/[^a-zA-Z0-9]/g,'').toUpperCase().substring(0,10);if(v.length > 6) this.value = v.slice(0,2) + '-' + v.slice(2,6) + '-' + v.slice(6);else if(v.length > 2) this.value = v.slice(0,2) + '-' + v.slice(2);else this.value = v;" value="<?php echo htmlspecialchars($resident['fourps_id'] ?? ''); ?>" style="display:none;" required>
+                                    <input type="text" name="fourps_id" class="form-control edit-field" placeholder="Enter 4Ps ID No." maxlength="15" oninput="this.value = this.value.replace(/[^a-zA-Z0-9]/g,'').toUpperCase();" value="<?php echo htmlspecialchars($resident['fourps_id'] ?? ''); ?>" style="display:none;" >
                                 </div>
                                 <div class="info-item voter-only">
                                     <label>Voter Status</label>
                                     <p class="view-field"><?php echo htmlspecialchars($resident['voter_status'] ?: 'No'); ?></p>
-                                    <select name="voter_status" class="form-control edit-field" style="display:none;">
+                                    <select name="voter_status" id="profileVoterStatusSelect" class="form-control edit-field" style="display:none;" onchange="handleProfileVoterStatusChange()">
                                         <option value="Yes" <?php echo $resident['voter_status'] == 'Yes' ? 'selected' : ''; ?>>Yes</option>
                                         <option value="No" <?php echo $resident['voter_status'] == 'No' ? 'selected' : ''; ?>>No</option>
                                     </select>
                                 </div>
-                                <div class="info-item voter-only <?php echo ($resident['voter_status'] !== 'Yes') ? 'no-print' : ''; ?>">
-                                    <label>Precinct Number <span class="required">*</span></label>
+                                <div class="info-item voter-only <?php echo ($resident['voter_status'] !== 'Yes') ? 'no-print' : ''; ?>" id="profilePrecinctNumberGroup" style="display: <?php echo ($resident['voter_status'] == 'Yes') ? 'block' : 'none'; ?>;">
+                                    <label>Precinct Number </label>
                                     <p class="view-field"><?php echo htmlspecialchars($resident['precinct_number'] ?: 'N/A'); ?></p>
-                                    <input type="text" name="precinct_number" class="form-control edit-field" value="<?php echo htmlspecialchars($resident['precinct_number'] ?? ''); ?>" style="display:none;" maxlength="5" pattern="[a-zA-Z0-9]+" oninput="this.value = this.value.replace(/[^a-zA-Z0-9]/g, '').substring(0, 5);" required>
+                                    <input type="text" name="precinct_number" class="form-control edit-field" value="<?php echo htmlspecialchars($resident['precinct_number'] ?? ''); ?>" style="display:none;" maxlength="5" pattern="[a-zA-Z0-9]+" oninput="this.value = this.value.replace(/[^a-zA-Z0-9]/g, '').substring(0, 5);" >
                                 </div>
                             </div>
                             
@@ -984,7 +1012,7 @@ $age = calculateAge($resident['date_of_birth']);
                                 <div class="info-item adult-only">
                                     <label>Philhealth ID</label>
                                     <p class="view-field"><?php echo htmlspecialchars($resident['philhealth_id'] ?: 'N/A'); ?></p>
-                                    <input type="text" name="philhealth_id" class="form-control edit-field" placeholder="1234-5678-9012" maxlength="14" oninput="let v=this.value.replace(/[^a-zA-Z0-9]/g,'').toUpperCase().substring(0,12);if(v.length > 8) this.value = v.slice(0,4) + '-' + v.slice(4,8) + '-' + v.slice(8);else if(v.length > 4) this.value = v.slice(0,4) + '-' + v.slice(4);else this.value = v;" value="<?php echo htmlspecialchars($resident['philhealth_id'] ?? ''); ?>" style="display:none;">
+                                    <input type="text" name="philhealth_id" class="form-control edit-field" placeholder="Enter Philhealth ID No." maxlength="15" oninput="this.value = this.value.replace(/\D/g,'');" value="<?php echo htmlspecialchars($resident['philhealth_id'] ?? ''); ?>" style="display:none;">
                                 </div>
                                 <div class="info-item adult-only">
                                     <label>Membership Type</label>
@@ -1010,8 +1038,8 @@ $age = calculateAge($resident['date_of_birth']);
                                 <div class="info-item">
                                     <label>Age/Health Group</label>
                                     <p class="view-field"><?php echo htmlspecialchars($resident['age_health_group'] ?: 'N/A'); ?></p>
-                                    <select name="age_health_group" class="form-control edit-field" style="display:none;">
-                                        <option value="" <?php echo empty($resident['age_health_group']) ? 'selected' : ''; ?>>Select</option>
+                                    <select name="age_health_group" id="profileAgeHealthGroup" class="form-control edit-field" style="display:none; pointer-events: none; background-color: var(--bg-primary);">
+                                        <option value="">Select</option>
                                         <option value="Newborn (0-28 days)" <?php echo $resident['age_health_group'] == 'Newborn (0-28 days)' ? 'selected' : ''; ?>>Newborn (0-28 days)</option>
                                         <option value="Infant (29 days - 1 year)" <?php echo $resident['age_health_group'] == 'Infant (29 days - 1 year)' ? 'selected' : ''; ?>>Infant (29 days - 1 year)</option>
                                         <option value="Child (1-9 years)" <?php echo $resident['age_health_group'] == 'Child (1-9 years)' ? 'selected' : ''; ?>>Child (1-9 years)</option>
@@ -1023,7 +1051,7 @@ $age = calculateAge($resident['date_of_birth']);
                                  <div class="info-item">
                                     <label>PWD Status</label>
                                     <p class="view-field"><?php echo htmlspecialchars($resident['pwd_status'] ?: 'N/A'); ?></p>
-                                 <select name="pwd_status" id="profilePwdStatus" class="form-control edit-field" style="display:none;">
+                                 <select name="pwd_status" id="profilePwdStatus" class="form-control edit-field" style="display:none;" onchange="handleProfilePwdChange()">
                                     <option value="No" <?php echo $resident['pwd_status'] == 'No' ? 'selected' : ''; ?>>No</option>
                                       <option value="Yes" <?php echo $resident['pwd_status'] == 'Yes' ? 'selected' : ''; ?>>Yes</option>
                                     </select>
@@ -1040,8 +1068,8 @@ $age = calculateAge($resident['date_of_birth']);
                                 </div>
                                 <div class="info-item full-width">
                                     <label>Medical History</label>
-                                    <p class="view-field"><?php echo htmlspecialchars($resident['medical_history'] ?: 'N/A'); ?></p>
-                                   
+                                    <p class="view-field"><?php echo nl2br(htmlspecialchars($resident['medical_history'] ?: 'N/A')); ?></p>
+                                    <textarea name="medical_history" class="form-control edit-field" style="display:none;" rows="3" placeholder="Enter medical history..."><?php echo htmlspecialchars($resident['medical_history'] ?? ''); ?></textarea>
                                 </div>
                             </div>
                             
@@ -1070,7 +1098,8 @@ $age = calculateAge($resident['date_of_birth']);
                                 </div>
                             </div>
                             
-                            <?php if ($resident['sex'] === 'Female'): ?>
+                            <!-- Women's Reproductive Health Section (Conditional) -->
+                            <div id="wraSection" style="<?php echo ($resident['sex'] === 'Female' && $ageNumeric >= 15 && $ageNumeric <= 49) ? '' : 'display: none;'; ?>">
                                 <h3 class="subsection-title"><i class="fas fa-female"></i> Women's Reproductive Health</h3>
                                 <div class="info-grid">
                                         <div class="info-item">
@@ -1114,7 +1143,7 @@ $age = calculateAge($resident['date_of_birth']);
                                             </select>
                                         </div>
                                 </div>
-                            <?php endif; ?>
+                            </div>
                             
                             <h3 class="subsection-title"><i class="fas fa-sticky-note"></i> Additional Notes</h3>
                             <div class="info-grid">
@@ -1196,7 +1225,7 @@ $age = calculateAge($resident['date_of_birth']);
                                             <p><?php echo htmlspecialchars(($householdInfo['ownership_status'] ?? '') ?: 'N/A'); ?></p>
                                         </div>
                                         <div class="info-item position-relative" style="position: relative;">
-                                            <label>Landlord Name</label>
+                                            <label>Landlord's Name</label>
                                             <p class="view-field">
                                                 <?php if (!empty($householdInfo['landlord_resident_id'])): ?>
                                                     <a href="resident_profile.php?id=<?php echo htmlspecialchars($householdInfo['landlord_resident_id']); ?>" style="color: var(--primary-color); text-decoration: none; font-weight: 500;">
@@ -1304,8 +1333,8 @@ $age = calculateAge($resident['date_of_birth']);
 
                      <section id="service-requests" class="profile-section">
                         <div class="section-header">
-                            <h2><i class="fas fa-clipboard-list"></i> Service Requests</h2>
-                            <p>Document and certificate requests</p>
+                            <h2><i class="fas fa-clipboard-list"></i> Issuance History</h2>
+                            <p>Document and certificate requests history</p>
                         </div>
                         
                         <div class="section-content">
@@ -1331,14 +1360,14 @@ $age = calculateAge($resident['date_of_birth']);
                             }
                             ?>
                             
-                            <h3 class="subsection-title"><i class="fas fa-clipboard-list"></i> Service Request</h3>
+                            <h3 class="subsection-title"><i class="fas fa-clipboard-list"></i>Issuance History</h3>
                             
                             <div class="print-only" style="margin-bottom: 10px; font-style: italic; font-size: 9pt;">
                                 Total requests found: <?php echo count($certRequests); ?> (Showing latest 5)
                             </div>
 
                             <?php if (empty($certRequests)): ?>
-                                <p class="no-data">No service requests found</p>
+                                <p class="no-data">No Issuance History found</p>
                             <?php else: ?>
                                 <div class="cert-requests-table-wrapper">
                                     <table class="data-table cert-requests-table">
@@ -1595,80 +1624,106 @@ $age = calculateAge($resident['date_of_birth']);
         };
     </script>
     <script>
-        /**
-         * Setup Autocomplete functionality for resident search fields
-         */
-        function setupAutocomplete(inputId, dropdownId, hiddenId, onlyAdult = false) {
-            const input = document.getElementById(inputId);
-            const dropdown = document.getElementById(dropdownId);
-            const hidden = document.getElementById(hiddenId);
-            
-            if (!input || !dropdown || !hidden) return;
+        document.addEventListener('DOMContentLoaded', () => {
+            // Initialize dropdown for landlord field (others are in edit-resident.js)
+            if (typeof setupAutocomplete === 'function') {
+                setupAutocomplete('landlordName', 'landlordNameDropdown');
+            }
+        });
 
-            let timeout = null;
-
-            input.addEventListener('input', function() {
-                clearTimeout(timeout);
-                const query = this.value.trim();
-
-                if (query.length < 2) {
-                    dropdown.style.display = 'none';
-                    return;
-                }
-
-                timeout = setTimeout(() => {
-                    let url = `model/search_residents.php?search=${encodeURIComponent(query)}`;
-                    if (onlyAdult) {
-                        url += '&filter=adult';
-                    }
-                    fetch(url)
-                        .then(res => res.json())
-                        .then(data => {
-                            dropdown.innerHTML = '';
-                            if (data.success && data.data.length > 0) {
-                                data.data.forEach(resident => {
-                                    // Don't show current resident in their own relative suggestions
-                                    if (resident.id == <?php echo $residentId; ?>) return;
-
-                                    const item = document.createElement('div');
-                                    item.className = 'autocomplete-item';
-                                    
-                                    const regex = new RegExp(`(${query})`, 'gi');
-                                    let displayHtml = resident.full_name.replace(regex, '<strong>$1</strong>');
-                                    displayHtml += `<br><small style="color: #667085;">ID: ${resident.resident_id || 'N/A'}</small>`;
-                                    
-                                    item.innerHTML = displayHtml;
-                                    item.addEventListener('click', () => {
-                                        input.value = resident.full_name;
-                                        hidden.value = resident.id;
-                                        dropdown.style.display = 'none';
-                                    });
-                                    dropdown.appendChild(item);
-                                });
-                                dropdown.style.display = 'block';
-                            } else {
-                                dropdown.style.display = 'none';
-                            }
-                        })
-                        .catch(err => console.error('Error fetching residents:', err));
-                }, 300);
-            });
-
-            // Close dropdown when clicking outside
-            document.addEventListener('click', function(e) {
-                if (e.target !== input && !dropdown.contains(e.target)) {
-                    dropdown.style.display = 'none';
-                }
-            });
+        function handleProfileFourPsChange() {
+            const val = document.getElementById('profileFourPsSelect').value;
+            const group = document.getElementById('profileFourPsIdGroup');
+            if (group) {
+                group.style.display = (val === 'Yes') ? 'block' : 'none';
+                const input = group.querySelector('input');
+                if (input) input.required = (val === 'Yes');
+            }
         }
 
-        document.addEventListener('DOMContentLoaded', () => {
-            // Initialize dropdowns for family and household fields
-            setupAutocomplete('fatherName', 'fatherNameDropdown', 'fatherNameId');
-            setupAutocomplete('motherName', 'motherNameDropdown', 'motherNameId');
-            setupAutocomplete('spouseNameInput', 'spouseNameDropdown', 'spouseNameInputId', true);
-            setupAutocomplete('landlordName', 'landlordNameDropdown', 'landlordNameId');
-        });
+        function handleProfileVoterStatusChange() {
+            const val = document.getElementById('profileVoterStatusSelect').value;
+            const group = document.getElementById('profilePrecinctNumberGroup');
+            if (group) {
+                group.style.display = (val === 'Yes') ? 'block' : 'none';
+                const input = group.querySelector('input');
+                if (input) input.required = (val === 'Yes');
+            }
+        }
+
+        function handleProfilePwdChange() {
+            const val = document.getElementById('profilePwdStatus').value;
+            const typeGroup = document.getElementById('profilePwdTypeGroup');
+            const idGroup = document.getElementById('profilePwdIdGroup');
+            const isPwd = (val === 'Yes');
+            
+            if (typeGroup) {
+                typeGroup.style.display = isPwd ? 'block' : 'none';
+                const input = typeGroup.querySelector('input');
+                if (input) input.required = isPwd;
+            }
+            if (idGroup) idGroup.style.display = isPwd ? 'block' : 'none';
+        }
+
+        /**
+         * Automatically determine and update Age and Health Group classification
+         */
+        function updateProfileAgeClassification() {
+            const dobInput = document.getElementById('profileDob');
+            const ageDisplay = document.getElementById('displayProfileAge');
+            const ageSuffix = document.getElementById('ageSuffix');
+            const healthGroupSelect = document.getElementById('profileAgeHealthGroup');
+
+            if (!dobInput || !dobInput.value) return;
+
+            const dob = new Date(dobInput.value);
+            const today = new Date();
+            
+            let years = today.getFullYear() - dob.getFullYear();
+            let months = today.getMonth() - dob.getMonth();
+            let days = today.getDate() - dob.getDate();
+
+            if (days < 0) {
+                months--;
+                const lastMonth = new Date(today.getFullYear(), today.getMonth(), 0);
+                days += lastMonth.getDate();
+            }
+            if (months < 0) {
+                years--;
+                months += 12;
+            }
+
+            if (ageDisplay) {
+                if (years > 0) {
+                    ageDisplay.textContent = years;
+                    if (ageSuffix) ageSuffix.textContent = ' years old';
+                } else if (months > 0) {
+                    ageDisplay.textContent = `${months} month${months > 1 ? 's' : ''} old`;
+                    if (ageSuffix) ageSuffix.textContent = '';
+                } else {
+                    ageDisplay.textContent = `${days} day${days > 1 ? 's' : ''} old`;
+                    if (ageSuffix) ageSuffix.textContent = '';
+                }
+            }
+
+            let age = years;
+
+            const diffDays = Math.floor(Math.abs(today - dob) / (1000 * 60 * 60 * 24));
+            let healthGroup = '';
+            if (diffDays <= 28) healthGroup = 'Newborn (0-28 days)';
+            else if (age < 1) healthGroup = 'Infant (29 days - 1 year)';
+            else if (age >= 1 && age <= 9) healthGroup = 'Child (1-9 years)';
+            else if (age >= 10 && age <= 19) healthGroup = 'Adolescent (10-19 years)';
+            else if (age >= 20 && age <= 59) healthGroup = 'Adult (20-59 years)';
+            else if (age >= 60) healthGroup = 'Senior Citizen (60+ years)';
+
+            if (healthGroupSelect) healthGroupSelect.value = healthGroup;
+
+            // Sync visibility logic (hiding/showing sections for adults/minors/WRA)
+            if (typeof updateProfileAgeVisibility === 'function') {
+                updateProfileAgeVisibility();
+            }
+        }
     </script>
     <script src="assets/js/edit-resident.js"></script>
 </body>

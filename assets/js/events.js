@@ -53,6 +53,26 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
 
+        // Bind Export/Print listeners using direct DOM access
+        document.addEventListener('click', function(e) {
+            if (e.target.closest('#exportCsvBtn')) {
+                if (eventsTable) {
+                    eventsTable.exportToCSV('Barangay_Events_Masterlist_' + new Date().toISOString().slice(0, 10) + '.csv');
+                    
+                    const logData = new FormData();
+                    logData.append('action', 'Export Masterlist');
+                    logData.append('description', 'Exported the events masterlist to CSV');
+                    fetch('model/log_print_masterlist.php', { method: 'POST', body: logData }).catch(e => console.error(e));
+                } else {
+                    showNotification('Table data is not ready for export', 'error');
+                }
+            }
+            
+            if (e.target.closest('#printMasterlistBtn')) {
+                handlePrintEventsMasterlist();
+            }
+        });
+
         const filterBtn = document.getElementById('eventFilterBtn');
         const filterPanel = document.getElementById('eventFilterPanel');
         
@@ -101,7 +121,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (row.querySelector('td[colspan]')) return false;
 
                 const rowStatus = row.getAttribute('data-status');
-                if (statusFilter !== 'all' && rowStatus !== statusFilter) return false;
+                if (statusFilter === 'all') {
+                    if (rowStatus === 'Postponed') return false;
+                } else if (rowStatus !== statusFilter) {
+                    return false;
+                }
 
                 const rowType = row.getAttribute('data-type');
                 if (typeFilter && rowType !== typeFilter) return false;
@@ -194,7 +218,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }, 500);
         });
 
-        updateCountDisplay(eventsTable.getTotalRows());
+        applyEventFilters();
     }
 
     // ============================================
@@ -354,65 +378,75 @@ document.addEventListener('DOMContentLoaded', function() {
         const startTime = document.getElementById('eventStartTime').value;
         const endTime = document.getElementById('eventEndTime').value;
         const type = document.getElementById('eventType').value;
+        const statusInput = document.getElementById('eventActionStatus');
+        const currentStatus = statusInput ? statusInput.value : 'Active';
 
-            if (!title || !date || !startTime) {
-                alert('Title, Date, and Start Time are required.');
+        // Allow saving without a date/time only if the event is being Postponed
+        if (!title || (currentStatus !== 'Postponed' && (!date || !startTime))) {
+            alert('Title, Date, and Start Time are required.');
+            return;
+        }
+
+        // Prepare data
+        const formData = new FormData();
+        formData.append('title', title);
+        formData.append('event_date', date);
+        formData.append('start_time', startTime);
+        formData.append('end_time', endTime);
+        formData.append('description', document.getElementById('eventDesc').value);
+        formData.append('location', document.getElementById('eventLocation').value);
+        formData.append('event_type', type);
+        formData.append('resident_id', document.getElementById('eventResidentId').value);
+        formData.append('organizer', document.getElementById('eventOrganizer').value);
+        formData.append('approved_by', document.getElementById('eventApprovedBy').value);
+        
+        // Recurrence Data
+        const recurrenceType = form.querySelector('input[name="recurrence_type"]:checked').value;
+        formData.append('recurrence_type', recurrenceType);
+
+        // Include the status (Active or Postponed)
+        formData.append('status', statusInput ? statusInput.value : 'Active');
+        
+        if (recurrenceType === 'custom') {
+            const selectedDays = [];
+            document.querySelectorAll('.day-btn.active').forEach(btn => {
+                selectedDays.push(btn.getAttribute('data-day'));
+            });
+            
+            if (selectedDays.length === 0) {
+                alert('Please select at least one day (S, M, T, W...) for the recurring schedule.');
                 return;
             }
-
-            // Prepare data
-            const formData = new FormData();
-            formData.append('title', title);
-            formData.append('event_date', date);
-            formData.append('start_time', startTime);
-            formData.append('end_time', endTime);
-            formData.append('description', document.getElementById('eventDesc').value);
-            formData.append('location', document.getElementById('eventLocation').value);
-            formData.append('event_type', type);
-            formData.append('resident_id', document.getElementById('eventResidentId').value);
-            formData.append('organizer', document.getElementById('eventOrganizer').value); // New field
-            formData.append('approved_by', document.getElementById('eventApprovedBy').value); // New field
             
-            // Include the status (Active or Postponed)
-            const statusInput = document.getElementById('eventActionStatus');
-            if (statusInput) formData.append('status', statusInput.value);
-
-            // Recurrence Data
-            const recurrenceType = form.querySelector('input[name="recurrence_type"]:checked').value;
-            formData.append('recurrence_type', recurrenceType);
-            
-            if (recurrenceType === 'custom') {
-                const selectedDays = [];
-                document.querySelectorAll('.day-btn.active').forEach(btn => {
-                    selectedDays.push(btn.getAttribute('data-day'));
-                });
-                
-                if (selectedDays.length === 0) {
-                    alert('Please select at least one day (S, M, T, W...) for the recurring schedule.');
-                    return;
-                }
-                
-                if (!document.getElementById('eventEndDate').value) {
-                    alert('Please select an "Until Date" for the recurrence.');
-                    return;
-                }
-                
-                formData.append('recurrence_days', JSON.stringify(selectedDays));
-                formData.append('recurrence_end_date', document.getElementById('eventEndDate').value);
+            if (!document.getElementById('eventEndDate').value) {
+                alert('Please select an "Until Date" for the recurrence.');
+                return;
             }
             
-            const eventId = form.querySelector('input[name="event_id"]')?.value;
-            const url = eventId ? 'model/update_event.php' : 'model/create_event.php';
-            if (eventId) formData.append('id', eventId);
+            formData.append('recurrence_days', JSON.stringify(selectedDays));
+            formData.append('recurrence_end_date', document.getElementById('eventEndDate').value);
+        }
+        
+        const eventId = form.querySelector('input[name="event_id"]')?.value;
+        const url = eventId ? 'model/update_event.php' : 'model/create_event.php';
+        if (eventId) formData.append('id', eventId);
 
-            saveEventBtn.disabled = true;
-            saveEventBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+        saveEventBtn.disabled = true;
+        saveEventBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
 
-            fetch(url, {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => response.json())
+        fetch(url, {
+            method: 'POST',
+            body: formData
+        })
+        .then(async response => {
+            const text = await response.text();
+            try {
+                return JSON.parse(text);
+            } catch (e) {
+                console.error('Server returned an invalid JSON response:', text);
+                throw new Error('Server returned an invalid response format.');
+            }
+        })
             .then(data => {
                 if (data.success) {
                     showNotification(data.message || 'Event saved successfully!', 'success');
@@ -586,7 +620,15 @@ window.showEventDetails = function(id) {
     } else {
         // Fallback: Fetch from database if not in current calendar view
         fetch(`model/get_event_details.php?id=${id}`)
-            .then(res => res.json())
+            .then(async res => {
+                const text = await res.text();
+                try {
+                    return JSON.parse(text);
+                } catch (e) {
+                    console.error('Server response is not valid JSON:', text);
+                    return { success: false, message: 'Invalid server response' };
+                }
+            })
             .then(data => {
                 if (data.success) {
                     // Populate and show (similar to above)
@@ -600,6 +642,12 @@ window.showEventDetails = function(id) {
  */
 window.editEvent = function(id) {
     const eventObj = calendar.getEventById(id);
+    // Prevent editing if the event is already Postponed
+    if (eventObj && eventObj.extendedProps.status === 'Postponed') {
+        showNotification('Postponed events cannot be edited.', 'warning');
+        return;
+    }
+
     if (eventObj) {
         const modal = document.getElementById('eventModal');
         const title = document.getElementById('eventModalTitle');
@@ -713,8 +761,13 @@ async function printEventApproval(id) {
     try {
         const response = await fetch('model/get_barangay_info.php');
         if (response.ok) {
-            const data = await response.json();
-            if (data.success && data.data) brgyInfo = data.data;
+            const text = await response.text();
+            try {
+                const data = JSON.parse(text);
+                if (data.success && data.data) brgyInfo = data.data;
+            } catch (e) {
+                console.error('Barangay info response is not valid JSON:', text);
+            }
         }
     } catch (e) { console.error('Error fetching barangay info:', e); }
 
@@ -724,7 +777,59 @@ async function printEventApproval(id) {
     const isResidentEvent = eventObj.extendedProps.event_type === 'Resident';
     const organizerText = isResidentEvent ? eventObj.extendedProps.resident_name : (eventObj.extendedProps.organizer || 'Not specified');
     const approverName = eventObj.extendedProps.approved_by_name || 'Authorized Official';
-    const dateText = eventObj.start.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+    
+    // Fetch the actual date range for the entire series from the database
+    // This ensures we get the correct range even if some events are in months not currently loaded in the calendar view
+    let dateText = '';
+    try {
+        const rangeResponse = await fetch(`model/get_event_series_range.php?title=${encodeURIComponent(eventObj.title)}&location=${encodeURIComponent(eventObj.extendedProps.location || '')}&type=${encodeURIComponent(eventObj.extendedProps.event_type)}`);
+        const rangeText = await rangeResponse.text();
+        let rangeResult = { success: false };
+        try {
+            rangeResult = JSON.parse(rangeText);
+        } catch (e) {
+            console.error('Event series range response is not valid JSON:', rangeText);
+        }
+        
+        if (rangeResult.success && rangeResult.data.count > 1) {
+            const startDate = new Date(rangeResult.data.first_date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+            const endDate = new Date(rangeResult.data.last_date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+            
+            // Format the recurring days into a readable note (e.g., "Every Monday, Tuesday and Friday")
+            let recurrenceNote = "";
+            if (rangeResult.data.days) {
+                const dayMap = {
+                    'Monday': 'MON',
+                    'Tuesday': 'TUE',
+                    'Wednesday': 'WED',
+                    'Thursday': 'THUR',
+                    'Friday': 'FRI',
+                    'Saturday': 'SAT',
+                    'Sunday': 'SUN'
+                };
+                
+                const daysArray = rangeResult.data.days.split(',').map(d => dayMap[d] || d);
+                if (daysArray.length > 0 && daysArray.length < 7) {
+                    let daysStr = "";
+                    if (daysArray.length === 1) {
+                        daysStr = daysArray[0];
+                    } else {
+                        const lastDay = daysArray.pop();
+                        daysStr = daysArray.join(', ') + ' and ' + lastDay;
+                    }
+                    recurrenceNote = ` (Every ${daysStr})`;
+                } else if (daysArray.length === 7) {
+                    recurrenceNote = " (Every day)";
+                }
+            }
+            dateText = `${startDate} until ${endDate}${recurrenceNote}`;
+        } else {
+            dateText = eventObj.start.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+        }
+    } catch (e) {
+        console.error('Error detecting event range:', e);
+        dateText = eventObj.start.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+    }
     
     let timeText = eventObj.allDay ? 'All Day' : eventObj.start.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
     if (!eventObj.allDay && eventObj.end) timeText += ' - ' + eventObj.end.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
@@ -791,12 +896,160 @@ async function printEventApproval(id) {
                 <p class="body-text">Issued this ${new Date().toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' })} at ${brgyInfo.barangay_name}, ${brgyInfo.town_name}, ${brgyInfo.province_name}.</p>
                 <div class="approval-section">
                     <div class="signature-line">
-                        <div class="approver-name">HON. ${approverName}</div>
+                        <div class="approver-name">HON.${approverName}</div>
                         <div class="approver-title">Approving Official</div>
                     </div>
                 </div>
             </div>
         </body></html>`);
     doc.close();
+
+    // Add activity log
+    const logData = new FormData();
+    logData.append('action', 'Print Event Approval');
+    logData.append('description', 'Printed the event approval for: ' + eventObj.title);
+    fetch('model/log_print_masterlist.php', { method: 'POST', body: logData }).catch(e => console.error(e));
+
+    setTimeout(() => { printFrame.contentWindow.focus(); printFrame.contentWindow.print(); }, 500);
+}
+
+/**
+ * Prints the filtered events masterlist
+ */
+async function handlePrintEventsMasterlist() {
+    if (!eventsTable || !eventsTable.filteredRows) {
+        showNotification('Unable to print: table data not ready', 'error');
+        return;
+    }
+
+    // Fetch Barangay Info for header
+    let brgyInfo = {
+        province_name: 'Province',
+        town_name: 'Municipality',
+        barangay_name: 'Barangay',
+        barangay_logo: '',
+        official_emblem: ''
+    };
+    
+    try {
+        const response = await fetch('model/get_barangay_info.php');
+        if (response.ok) {
+            const text = await response.text();
+            try {
+                const data = JSON.parse(text);
+                if (data.success && data.data) {
+                    brgyInfo = data.data;
+                }
+            } catch (e) {
+                console.error('Barangay info response for masterlist is not valid JSON:', text);
+            }
+        }
+    } catch (error) {
+        console.error('Error fetching barangay info:', error);
+    }
+    
+    // Prepare Print Iframe
+    let printFrame = document.getElementById('eventsMasterlistPrintFrame');
+    if (!printFrame) {
+        printFrame = document.createElement('iframe');
+        printFrame.id = 'eventsMasterlistPrintFrame';
+        printFrame.style.position = 'fixed';
+        printFrame.style.bottom = '0';
+        printFrame.style.right = '0';
+        printFrame.style.width = '0';
+        printFrame.style.height = '0';
+        printFrame.style.border = 'none';
+        document.body.appendChild(printFrame);
+    }
+
+    const doc = printFrame.contentWindow.document;
+    doc.open();
+
+    let rowsHtml = '';
+    eventsTable.filteredRows.forEach((row, index) => {
+        if (row.cells.length < 6) return;
+        
+        const no = index + 1;
+        const date = row.cells[0]?.textContent.trim() || '';
+        const time = row.cells[1]?.textContent.trim() || '';
+        const title = row.cells[2]?.textContent.trim() || '';
+        const location = row.cells[3]?.textContent.trim() || '';
+        const organizer = row.cells[4]?.textContent.trim() || '';
+
+        rowsHtml += `
+            <tr>
+                <td style="text-align: center;">${no}</td>
+                <td>${date}</td>
+                <td>${time}</td>
+                <td><strong>${title}</strong></td>
+                <td>${location}</td>
+                <td>${organizer}</td>
+            </tr>`;
+    });
+
+    const brgyLogoHtml = brgyInfo.barangay_logo 
+        ? `<img src="${brgyInfo.barangay_logo}" style="width: 80px; height: 80px; object-fit: contain;">`
+        : `<div style="width: 80px; height: 80px; border: 1px solid #ddd;"></div>`;
+        
+    const govLogoHtml = brgyInfo.official_emblem
+        ? `<img src="${brgyInfo.official_emblem}" style="width: 80px; height: 80px; object-fit: contain;">`
+        : `<div style="width: 80px; height: 80px; border: 1px solid #ddd;"></div>`;
+
+    // Get active filter labels for the title
+    let filterInfo = "";
+    const activeTab = document.querySelector('.tab-btn.active');
+    if (activeTab && activeTab.getAttribute('data-filter') !== 'all') {
+        filterInfo = ` - Status: ${activeTab.textContent.trim()}`;
+    }
+    const searchTerm = document.getElementById('eventSearchInput')?.value.trim();
+    if (searchTerm) {
+        filterInfo += ` (Search: "${searchTerm}")`;
+    }
+
+    doc.write(`
+        <html>
+        <head>
+            <title>Events Masterlist - ${new Date().toLocaleDateString()}</title>
+            <style>
+                @page { size: A4 landscape; margin: 15mm; }
+                body { font-family: "Times New Roman", Times, serif; margin: 0; padding: 0; line-height: 1.4; color: #000; }
+                .cert-header { 
+                    display: flex; 
+                    justify-content: space-between; 
+                    align-items: center; 
+                    margin-bottom: 20px; 
+                    border-bottom: 3px double #7a51c9; 
+                    padding-bottom: 10px; 
+                    text-align: center;
+                }
+                .header-center { flex: 1; text-align: center; }
+                .header-center p { margin: 2px 0; font-size: 14px; }
+                .brgy-name { font-weight: bold; font-size: 16px; text-transform: uppercase; }
+                .report-title { text-align: center; font-size: 18px; font-weight: bold; margin: 20px 0; text-transform: uppercase; text-decoration: underline; }
+                .data-table { width: 100%; border-collapse: collapse; font-size: 11px; }
+                .data-table th, .data-table td { border: 1px solid #000; padding: 8px; text-align: left; }
+                .data-table th { background-color: #f3f4f6 !important; -webkit-print-color-adjust: exact; }
+                .print-footer { margin-top: 40px; display: flex; justify-content: space-between; }
+                .sig-box { width: 250px; text-align: center; }
+                .sig-line { border-top: 1px solid #000; margin-top: 40px; font-weight: bold; }
+            </style>
+        </head>
+        <body>
+            <div class="cert-header">${brgyLogoHtml}<div class="header-center"><p>Republic of the Philippines</p><p>Province of ${brgyInfo.province_name}</p><p>Municipality of ${brgyInfo.town_name}</p><p class="brgy-name">${brgyInfo.barangay_name}</p></div>${govLogoHtml}</div>
+            <div class="report-title">Barangay Events Masterlist${filterInfo}</div>
+            <table class="data-table"><thead><tr><th>#</th><th>Date</th><th>Time</th><th>Title</th><th>Location</th><th>Organizer</th></tr></thead><tbody>${rowsHtml}</tbody></table>
+            <div class="print-footer">
+                <div class="sig-box"><div class="sig-line">Prepared By</div><div style="font-size:11px;">Barangay Secretary</div></div>
+                <div class="sig-box"><div class="sig-line">Certified Correct</div><div style="font-size:11px;">Punong Barangay</div></div>
+            </div>
+        </body></html>`);
+    doc.close();
+
+    // Add activity log
+    const logData = new FormData();
+    logData.append('action', 'Print Masterlist');
+    logData.append('description', 'Printed the events masterlist');
+    fetch('model/log_print_masterlist.php', { method: 'POST', body: logData }).catch(e => console.error(e));
+
     setTimeout(() => { printFrame.contentWindow.focus(); printFrame.contentWindow.print(); }, 500);
 }

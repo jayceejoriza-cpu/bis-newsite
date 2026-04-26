@@ -107,12 +107,12 @@ $show_settings = $can_view_brgy_info || $can_view_activity_logs || $can_view_arc
             </li>
             <?php endif; ?>
 
-            <!-- ── Request History ── -->
+            <!-- ── Issuance History ── -->
             <?php if (hasPermission('perm_req_view')): ?>
             <li class="nav-item <?php echo $current_page === 'requests.php' ? 'active' : ''; ?>">
                 <a href="requests.php" class="nav-link">
                     <i class="fas fa-file-alt"></i>
-                    <span>Request History</span>
+                    <span>Issuance History</span>
                 </a>
             </li>
             <?php endif; ?>
@@ -247,7 +247,6 @@ $show_settings = $can_view_brgy_info || $can_view_activity_logs || $can_view_arc
     </nav>
 
     <div class="sidebar-footer">
-        <p class="version">v<?php echo SITE_VERSION; ?></p>
-        <p class="copyright">© <?php echo SITE_YEAR; ?> Barangay System</p>
+        <p class="copyright">© <?php echo SITE_YEAR; ?> Barangay Management System</p>
     </div>
 </aside>

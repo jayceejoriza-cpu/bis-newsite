@@ -44,23 +44,74 @@ function initOfficials() {
         printOfficialsBtn.addEventListener('click', handlePrintOfficials);
     }
 
+    // Export CSV Button
+    const exportCsvBtn = document.getElementById('exportCsvBtn');
+    if (exportCsvBtn) {
+        exportCsvBtn.addEventListener('click', function() {
+            // Copy the same method as Print Masterlist to fetch only filtered data from the table
+            let rowsToExport = (officialsTable && officialsTable.filteredRows) 
+                ? officialsTable.filteredRows 
+                : Array.from(document.querySelectorAll('#officialsTableBody tr:not([style*="display: none"])'));
+
+            const csvHeaders = ["Official Name", "Position", "Committee", "Term Period", "Status", "Type", "Contact"];
+            let csvContent = csvHeaders.join(",") + "\n";
+
+            rowsToExport.forEach(row => {
+                if (row.id === 'officialsEmptyRow' || row.cells.length < 7) return;
+                
+                // Manually extract name and position from nested spans just like print function
+                const name = row.querySelector('.official-info-name')?.textContent.trim() || '';
+                const position = row.querySelector('.official-info-position')?.textContent.trim() || '';
+                const committee = row.cells[1]?.textContent.trim() || 'N/A';
+                const term = row.cells[2]?.textContent.trim() || '';
+                const status = row.cells[3]?.querySelector('.badge')?.textContent.trim() || '';
+                const type = row.cells[4]?.querySelector('.badge')?.textContent.trim() || '';
+                const contact = row.cells[5]?.textContent.trim() || '';
+
+                const rowData = [name, position, committee, term, status, type, contact].map(val => 
+                    `"${val.replace(/"/g, '""')}"`
+                );
+                csvContent += rowData.join(",") + "\n";
+            });
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `Barangay_Officials_Masterlist_${new Date().toISOString().slice(0, 10)}.csv`;
+            link.click();
+
+            const logData = new FormData();
+            logData.append('action', 'Export Masterlist');
+            logData.append('description', 'Exported the barangay officials masterlist to CSV');
+            fetch('model/log_print_masterlist.php', { method: 'POST', body: logData }).catch(e => console.error(e));
+        });
+    }
+
     // Create Official Submit
     const submitBtn = document.getElementById('createOfficialSubmitBtn');
     if (submitBtn) {
         submitBtn.addEventListener('click', submitCreateOfficial);
     }
 
-    // Term date auto-status
-    const termStart = document.getElementById('termStart');
-    const termEnd   = document.getElementById('termEnd');
-    if (termStart) termStart.addEventListener('change', updateStatusBasedOnDates);
-    if (termEnd)   termEnd.addEventListener('change',   updateStatusBasedOnDates);
 
     // Toggle "Other" input fields
     const chairmanshipSelect = document.getElementById('chairmanship');
     const positionSelect = document.getElementById('position');
     if (chairmanshipSelect) chairmanshipSelect.addEventListener('change', () => toggleOtherInput('chairmanship', 'otherChairmanshipGroup'));
     if (positionSelect) positionSelect.addEventListener('change', () => toggleOtherInput('position', 'otherPositionGroup'));
+
+    // Auto-calculate Term End for Create Official (3 years jump)
+    const termStartInput = document.getElementById('termStart');
+    if (termStartInput) {
+        termStartInput.addEventListener('change', function() {
+            if (this.value) {
+                const startDate = new Date(this.value);
+                startDate.setFullYear(startDate.getFullYear() + 3);
+                const termEndInput = document.getElementById('termEnd');
+                if (termEndInput) termEndInput.value = startDate.toISOString().split('T')[0];
+            }
+        });
+    }
 
     // Re-apply limits when status is manually changed
     const statusSelect = document.getElementById('status');
@@ -312,6 +363,16 @@ function filterByStatus(status, btn) {
     currentStatusFilter = status;
     document.querySelectorAll('.officials-tab').forEach(t => t.classList.remove('active'));
     if (btn) btn.classList.add('active');
+
+    // Update URL parameter so the Export CSV script can detect the active tab
+    const url = new URL(window.location);
+    if (status !== 'all') {
+        url.searchParams.set('tab', status);
+    } else {
+        url.searchParams.delete('tab');
+    }
+    window.history.replaceState({}, '', url);
+
     applyFilters();
 }
 
@@ -419,7 +480,7 @@ function applySelectionLimits(officialId = null) {
         'SK Kagawad': 7,
         'Barangay Secretary': 1,
         'Barangay Treasurer': 1,
-        'Barangay Administator': 1,
+        'Barangay Administrator': 1,
         'Bookkeeper': 1
     };
 
@@ -501,9 +562,12 @@ function searchResidentsForPicker(term) {
             }
 
             resultsEl.innerHTML = data.residents.map(r => {
+                const mInitial = r.middle_name ? r.middle_name.trim().charAt(0).toUpperCase() + '.' : '';
+                const fullNameWithInitial = [r.first_name, mInitial, r.last_name, r.suffix].filter(Boolean).join(' ');
+
                 const initials = ((r.first_name || '')[0] || '') + ((r.last_name || '')[0] || '');
                 const photoHtml = r.photo
-                    ? `<img src="${escapeHtml(r.photo)}" alt="${escapeHtml(r.full_name)}">`
+                    ? `<img src="${escapeHtml(r.photo)}" alt="${escapeHtml(fullNameWithInitial)}">`
                     : `<span class="picker-initials">${escapeHtml(initials.toUpperCase())}</span>`;
 
                 const residentId = r.resident_id || 'N/A';
@@ -512,13 +576,13 @@ function searchResidentsForPicker(term) {
                 <div class="picker-resident-item"
                      onclick="selectResident(
                          ${parseInt(r.id)},
-                         '${escapeJs(r.full_name)}',
+                         '${escapeJs(fullNameWithInitial)}',
                          '${escapeJs(r.photo || '')}',
                          '${escapeJs(r.mobile_number || '')}'
                      )">
                     <div class="picker-resident-photo">${photoHtml}</div>
                     <div class="picker-resident-info">
-                        <div class="picker-resident-name">${escapeHtml(r.full_name)}</div>
+                        <div class="picker-resident-name">${escapeHtml(fullNameWithInitial)}</div>
                         <div class="picker-resident-contact">ID: ${escapeHtml(residentId)}</div>
                     </div>
                     <button type="button" class="picker-select-btn">Select</button>
@@ -580,27 +644,6 @@ function clearSelectedResident() {
     document.getElementById('residentSelected').style.display    = 'none';
 }
 
-// ── Auto-calculate status from term dates ─────────────────────────────────────
-function updateStatusBasedOnDates() {
-    const termStart   = document.getElementById('termStart')?.value;
-    const termEnd     = document.getElementById('termEnd')?.value;
-    const statusSelect = document.getElementById('status');
-    if (!termStart || !termEnd || !statusSelect) return;
-
-    const today = new Date();
-    const start = new Date(termStart);
-    const end   = new Date(termEnd);
-
-    if (today >= start && today <= end) {
-        statusSelect.value = 'Active';
-    } else if (today > end) {
-        statusSelect.value = 'Completed';
-    } else {
-        statusSelect.value = 'Inactive';
-    }
-    applySelectionLimits(document.getElementById('editOfficialId')?.value);
-}
-
 // ── Submit Create Official ────────────────────────────────────────────────────
 async function submitCreateOfficial() {
     const form      = document.getElementById('createOfficialForm');
@@ -613,11 +656,11 @@ async function submitCreateOfficial() {
         return;
     }
 
-    const chairmanshipVal = document.getElementById('chairmanship').value;
-    const positionVal = document.getElementById('position').value;
-    const finalChairmanship = (chairmanshipVal === 'Other') ? document.getElementById('otherChairmanship').value.trim() : chairmanshipVal;
-    const finalPosition = (positionVal === 'Other') ? document.getElementById('otherPosition').value.trim() : positionVal;
-    const status = document.getElementById('status').value;
+    const chairmanshipVal = document.getElementById('chairmanship')?.value || '';
+    const positionVal = document.getElementById('position')?.value || '';
+    const finalChairmanship = (chairmanshipVal === 'Other') ? (document.getElementById('otherChairmanship')?.value?.trim() || '') : chairmanshipVal;
+    const finalPosition = (positionVal === 'Other') ? (document.getElementById('otherPosition')?.value?.trim() || '') : positionVal;
+    const status = 'Active';
 
     if (positionVal === 'Other' && !finalPosition) {
         alert('Please enter a custom position name.');
@@ -657,12 +700,11 @@ async function submitCreateOfficial() {
         formData.append('fullname',             document.getElementById('selectedResidentFullname')?.value || '');
         formData.append('contact_number',       document.getElementById('selectedResidentContact')?.value  || '');
         formData.append('resident_photo_path',  document.getElementById('selectedResidentPhoto')?.value    || '');
-        formData.append('chairmanship',         finalChairmanship);
         formData.append('chairmanship',         finalChairmanship || '');
         formData.append('position',             finalPosition);
         formData.append('term_start',           document.getElementById('termStart')?.value                || '');
         formData.append('term_end',             document.getElementById('termEnd')?.value                  || '');
-        formData.append('status',               document.getElementById('status')?.value                   || '');
+        formData.append('status',               status);
 
         const response = await fetch('model/save_official.php', { method: 'POST', body: formData });
         const result   = await response.json();
@@ -957,7 +999,16 @@ document.addEventListener('DOMContentLoaded', function () {
     // Auto-status on edit term date change
     const editTermStart = document.getElementById('editTermStart');
     const editTermEnd   = document.getElementById('editTermEnd');
-    if (editTermStart) editTermStart.addEventListener('change', updateEditStatusBasedOnDates);
+    if (editTermStart) {
+        editTermStart.addEventListener('change', function() {
+            if (this.value) {
+                const startDate = new Date(this.value);
+                startDate.setFullYear(startDate.getFullYear() + 3);
+                if (editTermEnd) editTermEnd.value = startDate.toISOString().split('T')[0];
+            }
+            updateEditStatusBasedOnDates();
+        });
+    }
     if (editTermEnd)   editTermEnd.addEventListener('change',   updateEditStatusBasedOnDates);
 
     // Toggle "Other" input fields for Edit
@@ -970,7 +1021,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const editStatusSelect = document.getElementById('editStatus');
     if (editStatusSelect) {
         editStatusSelect.addEventListener('change', () => {
-            const id = document.getElementById('editOfficialId').value;
+            const id = document.getElementById('editOfficialId')?.value;
             applySelectionLimits(id);
         });
     }
@@ -992,22 +1043,25 @@ function searchResidentsForEditPicker(term) {
                 return;
             }
             resultsEl.innerHTML = data.residents.map(r => {
+                const mInitial = r.middle_name ? r.middle_name.trim().charAt(0).toUpperCase() + '.' : '';
+                const fullNameWithInitial = [r.first_name, mInitial, r.last_name, r.suffix].filter(Boolean).join(' ');
+
                 const initials  = ((r.first_name || '')[0] || '') + ((r.last_name || '')[0] || '');
                 const photoHtml = r.photo
-                    ? `<img src="${escapeHtml(r.photo)}" alt="${escapeHtml(r.full_name)}">`
+                    ? `<img src="${escapeHtml(r.photo)}" alt="${escapeHtml(fullNameWithInitial)}">`
                     : `<span class="picker-initials">${escapeHtml(initials.toUpperCase())}</span>`;
                 const residentId = r.resident_id || 'N/A';
                 return `
                 <div class="picker-resident-item"
                      onclick="selectEditResident(
                          ${parseInt(r.id)},
-                         '${escapeJs(r.full_name)}',
+                         '${escapeJs(fullNameWithInitial)}',
                          '${escapeJs(r.photo || '')}',
                          '${escapeJs(r.mobile_number || '')}'
                      )">
                     <div class="picker-resident-photo">${photoHtml}</div>
                     <div class="picker-resident-info">
-                        <div class="picker-resident-name">${escapeHtml(r.full_name)}</div>
+                        <div class="picker-resident-name">${escapeHtml(fullNameWithInitial)}</div>
                         <div class="picker-resident-contact">ID: ${escapeHtml(residentId)}</div>
                     </div>
                     <button type="button" class="picker-select-btn">Select</button>
@@ -1083,10 +1137,10 @@ async function submitEditOfficial() {
     const form      = document.getElementById('editOfficialForm');
     const submitBtn = document.getElementById('editOfficialSubmitBtn');
 
-    const chairmanshipVal = document.getElementById('editChairmanship').value;
-    const positionVal = document.getElementById('editPosition').value;
-    const finalChairmanship = (chairmanshipVal === 'Other') ? document.getElementById('editOtherChairmanship').value.trim() : chairmanshipVal;
-    const finalPosition = (positionVal === 'Other') ? document.getElementById('editOtherPosition').value.trim() : positionVal;
+    const chairmanshipVal = document.getElementById('editChairmanship')?.value || '';
+    const positionVal = document.getElementById('editPosition')?.value || '';
+    const finalChairmanship = (chairmanshipVal === 'Other') ? (document.getElementById('editOtherChairmanship')?.value?.trim() || '') : chairmanshipVal;
+    const finalPosition = (positionVal === 'Other') ? (document.getElementById('editOtherPosition')?.value?.trim() || '') : positionVal;
     const officialId = document.getElementById('editOfficialId')?.value;
 
     if (positionVal === 'Other' && !finalPosition) {
@@ -1095,7 +1149,7 @@ async function submitEditOfficial() {
     }
 
     // Validation for "Other" limit (1)
-    if (document.getElementById('editStatus').value === 'Active') {
+    if (document.getElementById('editStatus')?.value === 'Active') {
         const activeOfficials = window.ACTIVE_OFFICIALS || [];
         if (positionVal === 'Other') {
             const isTaken = activeOfficials.some(off => off.id != officialId && off.position.toLowerCase() === finalPosition.toLowerCase());
@@ -1280,6 +1334,12 @@ async function handlePrintOfficials() {
             <table class="data-table"><thead><tr><th>#</th><th>Official Name</th><th>Chairmanship</th><th>Position</th><th>Term Period</th><th>Contact Number</th></tr></thead><tbody>${rowsHtml}</tbody></table>
         </body></html>`);
     doc.close();
+
+    // Add activity log
+    const logData = new FormData();
+    logData.append('description', 'Printed the barangay officials masterlist');
+    fetch('model/log_print_masterlist.php', { method: 'POST', body: logData }).catch(e => console.error(e));
+
     setTimeout(() => { printFrame.contentWindow.focus(); printFrame.contentWindow.print(); }, 500);
 }
 

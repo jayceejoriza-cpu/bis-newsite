@@ -49,8 +49,8 @@ if ($resident_id > 0) {
 }
 
 // Define variables to match the new ID design layout
-$residentIdNo = $resident['resident_id'] ?? 'WW-00001';
-$precinctNo   = $resident['precinct_no'] ?? 'WW-00001';
+$residentIdNo = $resident['resident_id'] ?? ('W-' . date('y') . '0001');
+$precinctNo   = $resident['precinct_no'] ?? 'N/A';
 
 // Format Name: Last Name, First Name, MI.
 $lastName     = $resident['last_name'] ?? 'CONSTANTINO';

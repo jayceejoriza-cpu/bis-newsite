@@ -12,8 +12,8 @@ header('Content-Type: application/json');
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_SESSION['username'])) {
         $log_user = $_SESSION['username'];
-        $log_action = 'Print Masterlist';
-        $log_desc = "Printed the residents masterlist";
+        $log_action = isset($_POST['action']) ? trim($_POST['action']) : 'Print Masterlist';
+        $log_desc = isset($_POST['description']) ? trim($_POST['description']) : "Printed the residents masterlist";
         
         try {
             $stmt = $conn->prepare("INSERT INTO activity_logs (user, action, description) VALUES (?, ?, ?)");

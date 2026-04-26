@@ -84,10 +84,10 @@ if ($request_type === 'guardian' && $minor_id > 0) {
         $stmtMinor->execute([$minor_id]);
         $rowMinor = $stmtMinor->fetch();
         if ($rowMinor) {
-            // Build full minor name immediately
+           $rowMi = !empty($rowMinor['middlename']) ? strtoupper(substr(trim($rowMinor['middlename']), 0, 1)) . '.' : '';
             $minorFullName = ucwords(trim(
                 $rowMinor['first_name'] . ' ' .
-                ($rowMinor['middle_name'] ? $rowMinor['middle_name'] . ' ' : '') .
+                ($rowMi ? $rowMi . ' ' : '') .
                 $rowMinor['last_name'] .
                 ($rowMinor['suffix'] ? ' ' . $rowMinor['suffix'] : '')
             ));
@@ -167,9 +167,10 @@ try {
 }
 
 // Build full primary resident name
+$mi = !empty($resident['middlename']) ? strtoupper(substr(trim($resident['middlename']), 0, 1)) . '.' : '';
 $residentFullName = ucwords(trim(
     $resident['firstname'] . ' ' .
-    ($resident['middlename'] ? $resident['middlename'] . ' ' : '') .
+     ($mi ? $mi . ' ' : '') .
     $resident['lastname'] .
     ($resident['suffix'] ? ' ' . $resident['suffix'] : '')
 ));
@@ -545,7 +546,7 @@ $residentFullName = ucwords(trim(
                                         This BARANGAY CERTIFICATION for INDIGENCE is hereby issued as
                                         Verification upon request for
                                         <b><u><?= !empty($assistance) ? strtoupper(htmlspecialchars($assistance)) : '________' ?></u>
-                                        ASSISTANCE</b><?php if ($request_type === 'guardian' && !empty($minorFullName)): ?> for his/her family member/ward, <strong><u><?= htmlspecialchars($minorFullName) ?></u></strong>.<?php else: ?>.<?php endif; ?>
+                                        ASSISTANCE</b><?php if ($request_type === 'guardian' && !empty($minorFullName)): ?> for his/her family member/ward, <strong><u><?= strtoupper($minorFullName) ?></u></strong>.<?php else: ?>.<?php endif; ?>
                                     </p>
 
                                     <p class="text-indent">
@@ -563,7 +564,7 @@ $residentFullName = ucwords(trim(
                                         <div class="sig-right">
                                             <div class="sig-approved-label">APPROVED BY:</div>
                                             <?php if (!empty($captain)): ?>
-                                            <div class="sig-captain-name">HON. <?= strtoupper($captain['name']) ?></div>
+                                            <div class="sig-captain-name"><?= strtoupper($captain['name']) ?></div>
                                             <div class="sig-captain-title">Punong Barangay</div>
                                             <?php endif; ?>
                                         </div>

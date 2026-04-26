@@ -73,8 +73,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialize navigation guard
     initializeNavigationGuard();
 
-    setupAutocomplete('fatherName', 'fatherNameDropdown', 'Male', true);
-    setupAutocomplete('motherName', 'motherNameDropdown', 'Female', true);
+    setupAutocomplete('fatherName', 'fatherNameDropdown', 'Male', true, true);
+    setupAutocomplete('motherName', 'motherNameDropdown', 'Female', true, true);
     setupAutocomplete('spouseName', 'spouseNameDropdown', null, false, true);
     setupAutocomplete('guardianName', 'guardianNameDropdown', null, false, true);
     setupAutocomplete('landlordName', 'landlordNameDropdown');
@@ -642,9 +642,14 @@ function updateMinorStatus() {
         if (minorAlert) minorAlert.style.display = 'none';
         if (ageHealthGroupSelect) ageHealthGroupSelect.value = '';
         
+        // Restore Mobile Number field
+        const mobileNumberCol = mobileNumberInput ? mobileNumberInput.closest('.col-md-3') : null;
+        if (mobileNumberCol) mobileNumberCol.style.display = '';
+        if (mobileNumberInput) mobileNumberInput.setAttribute('required', 'required');
+
         // Restore Step 5
-        const step5Indicator = document.querySelector('.step[data-step="5"]');
         const stepLines = document.querySelectorAll('.step-line');
+        const step5Indicator = document.querySelector('.step[data-step="5"]');
         const step5Line = stepLines.length > 3 ? stepLines[3] : null;
         if (step5Indicator) step5Indicator.style.display = '';
         if (step5Line) step5Line.style.display = '';
@@ -680,6 +685,7 @@ function updateMinorStatus() {
         if (membershipTypeSelect) membershipTypeSelect.removeAttribute('disabled');
         if (philhealthCategorySelect) philhealthCategorySelect.removeAttribute('disabled');
         handleEmploymentStatusChange();
+        handleSexChange();
 
         // Allow adult to be household head by default
         const yesRadio = document.getElementById('householdHeadYes');
@@ -727,6 +733,19 @@ function updateMinorStatus() {
 
     console.log(`Calculated age: ${age} years`);
     currentAge = age;
+
+    // Hide Mobile Number field in Step 2 if age <= 10
+    const mobileNumberCol = mobileNumberInput ? mobileNumberInput.closest('.col-md-3') || mobileNumberInput.closest('.form-group') : null;
+    if (age <= 10) {
+        if (mobileNumberCol) mobileNumberCol.style.display = 'none';
+        if (mobileNumberInput) {
+            mobileNumberInput.removeAttribute('required');
+            mobileNumberInput.value = '';
+        }
+    } else {
+        if (mobileNumberCol) mobileNumberCol.style.display = '';
+        if (mobileNumberInput) mobileNumberInput.setAttribute('required', 'required');
+    }
 
     // ==============================================
     // Hide/Show Step 5 (Education & Employment) entirely if age < 10
@@ -818,7 +837,7 @@ function updateMinorStatus() {
         if (guardianContactInput) guardianContactInput.setAttribute('required', 'required');
 
         // Update Mobile Number label for resident (not required for minors)
-        if (mobileNumberLabel) mobileNumberLabel.innerHTML = 'Mobile Number';
+        if (mobileNumberLabel && age > 10) mobileNumberLabel.innerHTML = 'Mobile Number';
         if (mobileNumberInput) mobileNumberInput.removeAttribute('required');
 
         // Show minor-related UI elements
@@ -966,6 +985,7 @@ function updateMinorStatus() {
         }
     }
     
+    handleSexChange();
     saveFormData();
 }
 
@@ -1009,10 +1029,14 @@ function handleCivilStatusChange() {
     const spouseInput = document.getElementById('spouseName');
 
     if (spouseGroup && spouseInput) {
-        if (civilStatus === 'Married') {
+        if (civilStatus === 'Married' || civilStatus === 'Live-In') {
             spouseGroup.style.display = 'block';
             spouseInput.required = true;
-            spouseGroup.querySelector('label').innerHTML = 'Spouse Name <span class="required">*</span>';
+            if (civilStatus === 'Married') {
+                spouseGroup.querySelector('label').innerHTML = 'Spouse Name <span class="required">*</span>';
+            } else {
+                spouseGroup.querySelector('label').innerHTML = 'Live-In Partner Name <span class="required">*</span>';
+            }
         } else {
             spouseGroup.style.display = 'none';
             spouseInput.required = false;
@@ -1066,7 +1090,10 @@ function handleSexChange() {
     const wraSection = document.getElementById('wraSection');
     
     if (wraSection) {
-        if (sex === 'Female') {
+        // Show only if Female AND age is between 15 and 49 (Women of Reproductive Age)
+        const isWRA = (sex === 'Female' && currentAge !== null && currentAge >= 15 && currentAge <= 49);
+        
+        if (isWRA) {
             wraSection.style.display = 'block';
         } else {
             wraSection.style.display = 'none';
@@ -1346,7 +1373,7 @@ function applyPhoneNumberFormatting(input) {
 // ===================================
 // Autocomplete Setup
 // ===================================
-function setupAutocomplete(inputId, dropdownId, filterSex = null, requireOlder = false, onlyAdult = false) {
+function setupAutocomplete(inputId, dropdownId, filterSex = null, requireOlder = false, onlyAdult = false, onlyMinor = false) {
     const input = document.getElementById(inputId);
     const dropdown = document.getElementById(dropdownId);
     let timeout = null;
@@ -1382,6 +1409,9 @@ function setupAutocomplete(inputId, dropdownId, filterSex = null, requireOlder =
             if (onlyAdult) {
                 url += `&filter=adult`;
             }
+            if (onlyMinor) {
+                url += `&filter=minor`;
+            }
             
             fetch(url)
                 .then(res => res.json())
@@ -1397,6 +1427,18 @@ function setupAutocomplete(inputId, dropdownId, filterSex = null, requireOlder =
                                 if (new Date(resident.date_of_birth) >= new Date(currentDob)) return;
                             }
                             
+                            // Age check for minor/adult filtering
+                            if ((onlyMinor || onlyAdult) && resident.date_of_birth) {
+                                const dob = new Date(resident.date_of_birth);
+                                const today = new Date();
+                                let age = today.getFullYear() - dob.getFullYear();
+                                const m = today.getMonth() - dob.getMonth();
+                                if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) age--;
+                                
+                                if (onlyMinor && age >= 18) return;
+                                if (onlyAdult && age < 18) return;
+                            }
+
                             count++;
                             const item = document.createElement('div');
                             item.className = 'autocomplete-item';
@@ -1417,6 +1459,24 @@ function setupAutocomplete(inputId, dropdownId, filterSex = null, requireOlder =
                                 const hiddenId = document.getElementById(inputId + 'Id');
                                 if (hiddenId) hiddenId.value = resident.id;
                                 
+                                // Auto-fill guardian mobile number if selecting a guardian
+                                if (inputId === 'guardianName' && resident.mobile_number) {
+                                    const contactInput = document.getElementById('guardianContact');
+                                    if (contactInput) {
+                                        contactInput.value = resident.mobile_number;
+                                        contactInput.dispatchEvent(new Event('input'));
+                                    }
+                                }
+
+                                // Auto-fill number of children if selecting a spouse/live-in partner
+                                if (inputId === 'spouseName' && resident.number_of_children !== undefined) {
+                                    const childrenInput = document.getElementById('numberOfChildren');
+                                    if (childrenInput) {
+                                        childrenInput.value = resident.number_of_children;
+                                        childrenInput.dispatchEvent(new Event('input'));
+                                    }
+                                }
+
                                 input.dispatchEvent(new Event('input'));
                             });
                             dropdown.appendChild(item);
@@ -1463,37 +1523,11 @@ function initializePhoneNumberFormatting() {
 // ID Formatting (4Ps & Philhealth)
 // ===================================
 function formatFourPsId(input) {
-    // Remove non-alphanumeric characters and convert to uppercase
-    let value = input.value.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
-    
-    // Limit to 10 characters (excluding dashes)
-    if (value.length > 10) value = value.substring(0, 10);
-    
-    // Format: XX-YYYY-ZZZZ
-    if (value.length > 6) {
-        value = value.substring(0, 2) + '-' + value.substring(2, 6) + '-' + value.substring(6);
-    } else if (value.length > 2) {
-        value = value.substring(0, 2) + '-' + value.substring(2);
-    }
-    
-    input.value = value;
+    input.value = input.value.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
 }
 
 function formatPhilhealthId(input) {
-    // Remove non-numeric characters
-    let value = input.value.replace(/\D/g, '');
-    
-    // Limit to 12 digits (excluding dashes)
-    if (value.length > 12) value = value.substring(0, 12);
-    
-    // Format: 1234-5678-9012
-    if (value.length > 8) {
-        value = value.substring(0, 4) + '-' + value.substring(4, 8) + '-' + value.substring(8);
-    } else if (value.length > 4) {
-        value = value.substring(0, 4) + '-' + value.substring(4);
-    }
-    
-    input.value = value;
+    input.value = input.value.replace(/\D/g, '');
 }
 
 function initializeIdFormatting() {
@@ -2314,12 +2348,20 @@ function populateReviewModal() {
     contactInfoHTML += '</div>';
     
     document.getElementById('reviewContactInfo').innerHTML = contactInfoHTML;
+    const reviewContactInfo = document.getElementById('reviewContactInfo');
+    if (currentAge !== null && currentAge <= 10) {
+        reviewContactInfo.closest('.review-section').style.display = 'none';
+    } else {
+        reviewContactInfo.closest('.review-section').style.display = 'block';
+        reviewContactInfo.innerHTML = contactInfoHTML;
+    }
     
     // 3. Family Information
     let familyInfoHTML = '<div class="review-fields-grid">';
     if (!isMinor) {
         familyInfoHTML += createField('Civil Status', getValue('civilStatus'));
-        familyInfoHTML += createField('Spouse Name', getValue('spouseName'));
+        const nameLabel = getValue('civilStatus') === 'Live-In' ? 'Live-In Partner Name' : 'Spouse Name';
+        familyInfoHTML += createField(nameLabel, getValue('spouseName'));
     }
     familyInfoHTML += createField("Father's Name", getValue('fatherName'));
     familyInfoHTML += createField("Mother's Name", getValue('motherName'));
@@ -2328,22 +2370,23 @@ function populateReviewModal() {
         familyInfoHTML += createField('Legal Guardian', getValue('legalGuardianName'));
     }
 
-    familyInfoHTML += createField('Number of Children', getValue('numberOfChildren'));
+    if (!isMinor) {
+        familyInfoHTML += createField('Number of Children', getValue('numberOfChildren'));
+    }
     familyInfoHTML += '</div>';
 
     // Add Guardian Information if minor
-    // Use the global isMinor flag set by calculateAge
     if (isMinor) {
         familyInfoHTML += '<h5 style="margin: 20px 0 15px 0; color: var(--primary-color);"><i class="fas fa-user-shield"></i> Guardian Information</h5>';
         familyInfoHTML += '<div class="review-fields-grid">';
         familyInfoHTML += createField('Guardian\'s Full Name', getValue('guardianName'));
         familyInfoHTML += createField('Relationship to Guardian', getValue('guardianRelationship'));
         familyInfoHTML += createField('Guardian\'s Mobile Number', getValue('guardianContact'));
+        familyInfoHTML += '</div>';
     }
-    familyInfoHTML += '</div>';
 
-    // Add OFW Information if applicable
-    if (getValue('employmentStatus') === 'OFW') {
+    // Add OFW Information if applicable (Adults only)
+    if (!isMinor && getValue('employmentStatus') === 'OFW') {
         familyInfoHTML += '<h5 style="margin: 20px 0 15px 0; color: var(--primary-color);"><i class="fas fa-plane-departure"></i> OFW Additional Information</h5>';
         familyInfoHTML += '<div class="review-fields-grid">';
         familyInfoHTML += createField('House Occupied?', getValue('isHouseOccupied'));
@@ -2409,9 +2452,13 @@ function populateReviewModal() {
         additionalHTML += '<h5 style="margin: 0 0 15px 0; color: var(--primary-color);"><i class="fas fa-landmark"></i> Government Programs</h5>';
         additionalHTML += '<div class="review-fields-grid">';
         additionalHTML += createField('4Ps Member', getValue('fourPs'));
-        additionalHTML += createField('4Ps ID Number', getValue('fourpsId'));
+        if (getValue('fourPs') === 'Yes') {
+            additionalHTML += createField('4Ps ID Number', getValue('fourpsId'));
+        }
         additionalHTML += createField('Registered Voter', getValue('voterStatus'));
-        additionalHTML += createField('Precinct Number', getValue('precinctNumber'));
+        if (getValue('voterStatus') === 'Yes') {
+            additionalHTML += createField('Precinct Number', getValue('precinctNumber'));
+        }
         additionalHTML += '</div>';
     }
     
@@ -2432,9 +2479,10 @@ function populateReviewModal() {
     additionalHTML += createField('Medical History', getValue('medicalHistory'));
     additionalHTML += '</div>';
     
-    // Women's Reproductive Health (if applicable)
+    // Women's Reproductive Health (if applicable - Female aged 15-49)
     const sex = getValue('sex');
-    if (sex === 'Female') {
+    const isWRAage = currentAge !== null && currentAge >= 15 && currentAge <= 49;
+    if (sex === 'Female' && isWRAage) {
         additionalHTML += '<h5 style="margin: 20px 0 15px 0; color: var(--primary-color);"><i class="fas fa-female"></i> Women\'s Reproductive Health</h5>';
         additionalHTML += '<div class="review-fields-grid">';
         additionalHTML += createField('Last Menstrual Period', getValue('lmpDate'));

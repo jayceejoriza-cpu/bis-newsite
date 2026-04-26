@@ -331,10 +331,30 @@ document.addEventListener('DOMContentLoaded', function() {
             doc.close();
 
             setTimeout(() => {
-                fetch('model/log_print_masterlist.php', { method: 'POST' }).catch(e => console.error(e));
+                const logData = new FormData();
+                logData.append('description', 'Printed the blotter records masterlist');
+                fetch('model/log_print_masterlist.php', { method: 'POST', body: logData }).catch(e => console.error(e));
                 printFrame.contentWindow.focus();
                 printFrame.contentWindow.print();
             }, 500);
+        });
+    }
+
+    // ============================================
+    // Export CSV Button
+    // ============================================
+    const exportCsvBtn = document.getElementById('exportCsvBtn');
+    if (exportCsvBtn) {
+        exportCsvBtn.addEventListener('click', function() {
+            if (blotterTable) {
+                const timestamp = new Date().toISOString().split('T')[0];
+                blotterTable.exportToCSV(`blotter-records-${timestamp}.csv`);
+
+                const logData = new FormData();
+                logData.append('action', 'Export Masterlist');
+                logData.append('description', 'Exported the blotter records masterlist to CSV');
+                fetch('model/log_print_masterlist.php', { method: 'POST', body: logData }).catch(e => console.error(e));
+            }
         });
     }
 

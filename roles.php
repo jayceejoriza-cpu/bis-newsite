@@ -120,7 +120,7 @@ if ($rolesResult) {
                                         <button class="role-action-menu-item delete-role-btn danger"
                                                 data-id="<?php echo $role['id']; ?>"
                                                 data-name="<?php echo htmlspecialchars($role['name']); ?>">
-                                            <i class="fas fa-trash"></i> Delete
+                                            <i class="fas fa-trash"></i> Archive
                                         </button>
                                         <?php endif; ?>
                                     </div>
@@ -191,18 +191,14 @@ if ($rolesResult) {
                                     <div class="perm-add-wrapper">
                                         <button class="perm-add-btn" type="button" title="Add permission"><i class="fas fa-plus"></i></button>
                                         <div class="perm-add-dropdown">
-                                            <div class="perm-add-option" data-perm="perm_office_create">Create</div>
                                             <div class="perm-add-option" data-perm="perm_office_view">View</div>
                                             <div class="perm-add-option" data-perm="perm_office_edit">Edit</div>
-                                            <div class="perm-add-option" data-perm="perm_office_delete">Delete</div>
+                                            <div class="perm-add-option" data-perm="perm_office_create">Create</div>
                                         </div>
                                     </div>
                                 </div>
                                 <div class="perm-badges-row">
-                                    <span class="perm-badge-item" data-perm="perm_office_create">
-                                        <input type="checkbox" name="perm_office_create" class="perm-cb" checked hidden>
-                                        Create <button class="perm-badge-remove" type="button" title="Remove">×</button>
-                                    </span>
+                                    
                                     <span class="perm-badge-item" data-perm="perm_office_view">
                                         <input type="checkbox" name="perm_office_view" class="perm-cb" checked hidden>
                                         View <button class="perm-badge-remove" type="button" title="Remove">×</button>
@@ -211,9 +207,9 @@ if ($rolesResult) {
                                         <input type="checkbox" name="perm_office_edit" class="perm-cb" checked hidden>
                                         Edit <button class="perm-badge-remove" type="button" title="Remove">×</button>
                                     </span>
-                                    <span class="perm-badge-item" data-perm="perm_office_delete">
-                                        <input type="checkbox" name="perm_office_delete" class="perm-cb" checked hidden>
-                                        Delete <button class="perm-badge-remove" type="button" title="Remove">×</button>
+                                    <span class="perm-badge-item" data-perm="perm_office_create">
+                                        <input type="checkbox" name="perm_office_create" class="perm-cb" checked hidden>
+                                        Create <button class="perm-badge-remove" type="button" title="Remove">×</button>
                                     </span>
                                 </div>
                             </div>
@@ -225,18 +221,15 @@ if ($rolesResult) {
                                     <div class="perm-add-wrapper">
                                         <button class="perm-add-btn" type="button" title="Add permission"><i class="fas fa-plus"></i></button>
                                         <div class="perm-add-dropdown">
-                                            <div class="perm-add-option" data-perm="perm_roles_create">Create</div>
+                                   
                                             <div class="perm-add-option" data-perm="perm_roles_view">View</div>
-                                            <div class="perm-add-option" data-perm="perm_roles_edit">Edit</div>
-                                            <div class="perm-add-option" data-perm="perm_roles_delete">Delete</div>
+                                            <div class="perm-add-option" data-perm="perm_roles_edit">Edit</div>         
+                                            <div class="perm-add-option" data-perm="perm_roles_create">Create</div>
+                                            <div class="perm-add-option" data-perm="perm_roles_delete">Archive</div>
                                         </div>
                                     </div>
                                 </div>
                                 <div class="perm-badges-row">
-                                    <span class="perm-badge-item" data-perm="perm_roles_create">
-                                        <input type="checkbox" name="perm_roles_create" class="perm-cb" checked hidden>
-                                        Create <button class="perm-badge-remove" type="button" title="Remove">×</button>
-                                    </span>
                                     <span class="perm-badge-item" data-perm="perm_roles_view">
                                         <input type="checkbox" name="perm_roles_view" class="perm-cb" checked hidden>
                                         View <button class="perm-badge-remove" type="button" title="Remove">×</button>
@@ -244,6 +237,10 @@ if ($rolesResult) {
                                     <span class="perm-badge-item" data-perm="perm_roles_edit">
                                         <input type="checkbox" name="perm_roles_edit" class="perm-cb" checked hidden>
                                         Edit <button class="perm-badge-remove" type="button" title="Remove">×</button>
+                                    </span> 
+                                    <span class="perm-badge-item" data-perm="perm_roles_create">
+                                        <input type="checkbox" name="perm_roles_create" class="perm-cb" checked hidden>
+                                        Create <button class="perm-badge-remove" type="button" title="Remove">×</button>
                                     </span>
                                     <span class="perm-badge-item" data-perm="perm_roles_delete">
                                         <input type="checkbox" name="perm_roles_delete" class="perm-cb" checked hidden>
@@ -259,31 +256,17 @@ if ($rolesResult) {
                                 <span>Resident Records</span>
                                 <div class="perm-add-wrapper">
                                     <button class="perm-add-btn" type="button" title="Add permission"><i class="fas fa-plus"></i></button>
-                                    <div class="perm-add-dropdown">
-                                        <div class="perm-add-option" data-perm="perm_resident_create">Create Resident</div>
-                                        <div class="perm-add-option" data-perm="perm_resident_print_list">Print Masterlist</div>
-                                        <div class="perm-add-option" data-perm="perm_resident_status">Change Status</div>
+                                    <div class="perm-add-dropdown"> 
                                         <div class="perm-add-option" data-perm="perm_resident_view">View</div>
                                         <div class="perm-add-option" data-perm="perm_resident_edit">Edit</div>
-                                        <div class="perm-add-option" data-perm="perm_resident_print_id">Print ID</div>
-                                        <div class="perm-add-option" data-perm="perm_resident_print_profile">Print Profile</div>
+                                        <div class="perm-add-option" data-perm="perm_resident_create">Create Resident</div>
+                                        <div class="perm-add-option" data-perm="perm_resident_status">Change Status</div>
+                                        <div class="perm-add-option" data-perm="perm_resident_print">Print</div>
                                         <div class="perm-add-option" data-perm="perm_resident_archive">Archive</div>
                                     </div>
                                 </div>
                             </div>
-                            <div class="perm-badges-row perm-badges-row--indented">
-                                <span class="perm-badge-item" data-perm="perm_resident_create">
-                                    <input type="checkbox" name="perm_resident_create" class="perm-cb" checked hidden>
-                                    Create Resident <button class="perm-badge-remove" type="button" title="Remove">×</button>
-                                </span>
-                                <span class="perm-badge-item" data-perm="perm_resident_print_list">
-                                    <input type="checkbox" name="perm_resident_print_list" class="perm-cb" checked hidden>
-                                    Print Masterlist <button class="perm-badge-remove" type="button" title="Remove">×</button>
-                                </span>
-                                <span class="perm-badge-item" data-perm="perm_resident_status">
-                                    <input type="checkbox" name="perm_resident_status" class="perm-cb" checked hidden>
-                                    Change Status <button class="perm-badge-remove" type="button" title="Remove">×</button>
-                                </span>
+                            <div class="perm-badges-row perm-badges-row--indented">  
                                 <span class="perm-badge-item" data-perm="perm_resident_view">
                                     <input type="checkbox" name="perm_resident_view" class="perm-cb" checked hidden>
                                     View <button class="perm-badge-remove" type="button" title="Remove">×</button>
@@ -292,13 +275,17 @@ if ($rolesResult) {
                                     <input type="checkbox" name="perm_resident_edit" class="perm-cb" checked hidden>
                                     Edit <button class="perm-badge-remove" type="button" title="Remove">×</button>
                                 </span>
-                                <span class="perm-badge-item" data-perm="perm_resident_print_id">
-                                    <input type="checkbox" name="perm_resident_print_id" class="perm-cb" checked hidden>
-                                    Print ID <button class="perm-badge-remove" type="button" title="Remove">×</button>
+                                <span class="perm-badge-item" data-perm="perm_resident_create">
+                                    <input type="checkbox" name="perm_resident_create" class="perm-cb" checked hidden>
+                                    Create Resident <button class="perm-badge-remove" type="button" title="Remove">×</button>
                                 </span>
-                                <span class="perm-badge-item" data-perm="perm_resident_print_profile">
-                                    <input type="checkbox" name="perm_resident_print_profile" class="perm-cb" checked hidden>
-                                    Print Profile <button class="perm-badge-remove" type="button" title="Remove">×</button>
+                                <span class="perm-badge-item" data-perm="perm_resident_status">
+                                    <input type="checkbox" name="perm_resident_status" class="perm-cb" checked hidden>
+                                    Change Status <button class="perm-badge-remove" type="button" title="Remove">×</button>
+                                </span>
+                                <span class="perm-badge-item" data-perm="perm_resident_print">
+                                    <input type="checkbox" name="perm_resident_print" class="perm-cb" checked hidden>
+                                    Print <button class="perm-badge-remove" type="button" title="Remove">×</button>
                                 </span>
                                 <span class="perm-badge-item" data-perm="perm_resident_archive">
                                     <input type="checkbox" name="perm_resident_archive" class="perm-cb" checked hidden>
@@ -316,7 +303,8 @@ if ($rolesResult) {
                                     <div class="perm-add-dropdown">
                                         <div class="perm-add-option" data-perm="perm_household_view">View</div>
                                         <div class="perm-add-option" data-perm="perm_household_edit">Edit</div>
-                                        <div class="perm-add-option" data-perm="perm_household_delete">Delete</div>
+                                        <div class="perm-add-option" data-perm="perm_household_print">Print</div>
+                                        <div class="perm-add-option" data-perm="perm_household_delete">Archive</div>
                                     </div>
                                 </div>
                             </div>
@@ -329,9 +317,13 @@ if ($rolesResult) {
                                     <input type="checkbox" name="perm_household_edit" class="perm-cb" checked hidden>
                                     Edit <button class="perm-badge-remove" type="button" title="Remove">×</button>
                                 </span>
+                                <span class="perm-badge-item" data-perm="perm_household_print">
+                                    <input type="checkbox" name="perm_household_print" class="perm-cb" checked hidden>
+                                    Print <button class="perm-badge-remove" type="button" title="Remove">×</button>
+                                </span>
                                 <span class="perm-badge-item" data-perm="perm_household_delete">
                                     <input type="checkbox" name="perm_household_delete" class="perm-cb" checked hidden>
-                                    Delete <button class="perm-badge-remove" type="button" title="Remove">×</button>
+                                    Archive <button class="perm-badge-remove" type="button" title="Remove">×</button>
                                 </span>
                             </div>
                         </div>
@@ -365,10 +357,10 @@ if ($rolesResult) {
                             </div>
                         </div>
 
-                        <!-- ── Service Request ── -->
+                        <!-- ── Issuance History  ── -->
                         <div class="perm-group">
                             <div class="perm-group-header">
-                                <span>Service Request</span>
+                                <span>Issuance History</span>
                                 <div class="perm-add-wrapper">
                                     <button class="perm-add-btn" type="button" title="Add permission"><i class="fas fa-plus"></i></button>
                                     <div class="perm-add-dropdown">
@@ -388,6 +380,45 @@ if ($rolesResult) {
                                 </span>
                             </div>
                         </div>
+                                
+                        <!-- ── Barangay Events ── -->
+                        <div class="perm-group">
+                            <div class="perm-group-header">
+                                <span>Barangay Events</span>
+                                <div class="perm-add-wrapper">
+                                    <button class="perm-add-btn" type="button" title="Add permission"><i class="fas fa-plus"></i></button>
+                                    <div class="perm-add-dropdown">
+                                        <div class="perm-add-option" data-perm="perm_events_view">View</div>
+                                        <div class="perm-add-option" data-perm="perm_events_edit">Edit</div>
+                                        <div class="perm-add-option" data-perm="perm_events_create">Create</div>
+                                        <div class="perm-add-option" data-perm="perm_events_print">Print</div>
+                                        <div class="perm-add-option" data-perm="perm_events_archive">Archive</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="perm-badges-row perm-badges-row--indented">
+                                <span class="perm-badge-item" data-perm="perm_events_view">
+                                    <input type="checkbox" name="perm_events_view" class="perm-cb" checked hidden>
+                                    View <button class="perm-badge-remove" type="button" title="Remove">×</button>
+                                </span>
+                                <span class="perm-badge-item" data-perm="perm_events_edit">
+                                    <input type="checkbox" name="perm_events_edit" class="perm-cb" checked hidden>
+                                    Edit <button class="perm-badge-remove" type="button" title="Remove">×</button>
+                                </span> 
+                                <span class="perm-badge-item" data-perm="perm_events_create">
+                                    <input type="checkbox" name="perm_events_create" class="perm-cb" checked hidden>
+                                    Create <button class="perm-badge-remove" type="button" title="Remove">×</button>
+                                </span>
+                                <span class="perm-badge-item" data-perm="perm_events_print">
+                                    <input type="checkbox" name="perm_events_print" class="perm-cb" checked hidden>
+                                    Print  <button class="perm-badge-remove" type="button" title="Remove">×</button>
+                                    </span>
+                                <span class="perm-badge-item" data-perm="perm_events_archive">
+                                    <input type="checkbox" name="perm_events_archive" class="perm-cb" checked hidden>
+                                    Archive <button class="perm-badge-remove" type="button" title="Remove">×</button>
+                                </span>
+                            </div>
+                        </div>
 
                         <!-- ── Blotter Record ── -->
                         <div class="perm-group">
@@ -396,24 +427,20 @@ if ($rolesResult) {
                                 <div class="perm-add-wrapper">
                                     <button class="perm-add-btn" type="button" title="Add permission"><i class="fas fa-plus"></i></button>
                                     <div class="perm-add-dropdown">
-                                        <div class="perm-add-option" data-perm="perm_blotter_create">Create Record</div>
-                                        <div class="perm-add-option" data-perm="perm_blotter_print">Print Report</div>
+                                        
+                                        
                                         <div class="perm-add-option" data-perm="perm_blotter_view">View</div>
                                         <div class="perm-add-option" data-perm="perm_blotter_edit">Edit</div>
+                                        <div class="perm-add-option" data-perm="perm_blotter_create">Create </div>
                                         <div class="perm-add-option" data-perm="perm_blotter_status">Status</div>
+                                        <div class="perm-add-option" data-perm="perm_blotter_print">Print</div>
                                         <div class="perm-add-option" data-perm="perm_blotter_archive">Archive</div>
                                     </div>
                                 </div>
                             </div>
                             <div class="perm-badges-row perm-badges-row--indented">
-                                <span class="perm-badge-item" data-perm="perm_blotter_create">
-                                    <input type="checkbox" name="perm_blotter_create" class="perm-cb" checked hidden>
-                                    Create Record <button class="perm-badge-remove" type="button" title="Remove">×</button>
-                                </span>
-                                <span class="perm-badge-item" data-perm="perm_blotter_print">
-                                    <input type="checkbox" name="perm_blotter_print" class="perm-cb" checked hidden>
-                                    Print Report <button class="perm-badge-remove" type="button" title="Remove">×</button>
-                                </span>
+                                
+                                
                                 <span class="perm-badge-item" data-perm="perm_blotter_view">
                                     <input type="checkbox" name="perm_blotter_view" class="perm-cb" checked hidden>
                                     View <button class="perm-badge-remove" type="button" title="Remove">×</button>
@@ -421,10 +448,18 @@ if ($rolesResult) {
                                 <span class="perm-badge-item" data-perm="perm_blotter_edit">
                                     <input type="checkbox" name="perm_blotter_edit" class="perm-cb" checked hidden>
                                     Edit <button class="perm-badge-remove" type="button" title="Remove">×</button>
+                                </span> 
+                                <span class="perm-badge-item" data-perm="perm_blotter_create">
+                                    <input type="checkbox" name="perm_blotter_create" class="perm-cb" checked hidden>
+                                    Create  <button class="perm-badge-remove" type="button" title="Remove">×</button>
                                 </span>
                                 <span class="perm-badge-item" data-perm="perm_blotter_status">
                                     <input type="checkbox" name="perm_blotter_status" class="perm-cb" checked hidden>
                                     Status <button class="perm-badge-remove" type="button" title="Remove">×</button>
+                                </span>
+                                <span class="perm-badge-item" data-perm="perm_blotter_print">
+                                    <input type="checkbox" name="perm_blotter_print" class="perm-cb" checked hidden>
+                                    Print <button class="perm-badge-remove" type="button" title="Remove">×</button>
                                 </span>
                                 <span class="perm-badge-item" data-perm="perm_blotter_archive">
                                     <input type="checkbox" name="perm_blotter_archive" class="perm-cb" checked hidden>
@@ -440,9 +475,10 @@ if ($rolesResult) {
                                 <div class="perm-add-wrapper">
                                     <button class="perm-add-btn" type="button" title="Add permission"><i class="fas fa-plus"></i></button>
                                     <div class="perm-add-dropdown">
-                                        <div class="perm-add-option" data-perm="perm_officials_create">Create Brgy Officials</div>
+                                       
                                         <div class="perm-add-option" data-perm="perm_officials_view">View</div>
-                                        <div class="perm-add-option" data-perm="perm_officials_edit">Edit</div>
+                                        <div class="perm-add-option" data-perm="perm_officials_edit">Edit</div> 
+                                        <div class="perm-add-option" data-perm="perm_officials_create">Create</div>
                                         <div class="perm-add-option" data-perm="perm_officials_status">Change Status</div>
                                         <div class="perm-add-option" data-perm="perm_officials_print">Print</div>
                                         <div class="perm-add-option" data-perm="perm_officials_archive">Archive</div>
@@ -450,10 +486,7 @@ if ($rolesResult) {
                                 </div>
                             </div>
                             <div class="perm-badges-row perm-badges-row--indented">
-                                <span class="perm-badge-item" data-perm="perm_officials_create">
-                                    <input type="checkbox" name="perm_officials_create" class="perm-cb" checked hidden>
-                                    Create Brgy Officials <button class="perm-badge-remove" type="button" title="Remove">×</button>
-                                </span>
+                                
                                 <span class="perm-badge-item" data-perm="perm_officials_view">
                                     <input type="checkbox" name="perm_officials_view" class="perm-cb" checked hidden>
                                     View <button class="perm-badge-remove" type="button" title="Remove">×</button>
@@ -461,6 +494,10 @@ if ($rolesResult) {
                                 <span class="perm-badge-item" data-perm="perm_officials_edit">
                                     <input type="checkbox" name="perm_officials_edit" class="perm-cb" checked hidden>
                                     Edit <button class="perm-badge-remove" type="button" title="Remove">×</button>
+                                </span>
+                                <span class="perm-badge-item" data-perm="perm_officials_create">
+                                    <input type="checkbox" name="perm_officials_create" class="perm-cb" checked hidden>
+                                    Create <button class="perm-badge-remove" type="button" title="Remove">×</button>
                                 </span>
                                 <span class="perm-badge-item" data-perm="perm_officials_status">
                                     <input type="checkbox" name="perm_officials_status" class="perm-cb" checked hidden>
@@ -477,40 +514,6 @@ if ($rolesResult) {
                             </div>
                         </div>
 
-                        <!-- ── Barangay Events ── -->
-                        <div class="perm-group">
-                            <div class="perm-group-header">
-                                <span>Barangay Events</span>
-                                <div class="perm-add-wrapper">
-                                    <button class="perm-add-btn" type="button" title="Add permission"><i class="fas fa-plus"></i></button>
-                                    <div class="perm-add-dropdown">
-                                        <div class="perm-add-option" data-perm="perm_events_view">View</div>
-                                        <div class="perm-add-option" data-perm="perm_events_create">Create</div>
-                                        <div class="perm-add-option" data-perm="perm_events_edit">Edit</div>
-                                        <div class="perm-add-option" data-perm="perm_events_archive">Archive</div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="perm-badges-row perm-badges-row--indented">
-                                <span class="perm-badge-item" data-perm="perm_events_view">
-                                    <input type="checkbox" name="perm_events_view" class="perm-cb" checked hidden>
-                                    View <button class="perm-badge-remove" type="button" title="Remove">×</button>
-                                </span>
-                                <span class="perm-badge-item" data-perm="perm_events_create">
-                                    <input type="checkbox" name="perm_events_create" class="perm-cb" checked hidden>
-                                    Create <button class="perm-badge-remove" type="button" title="Remove">×</button>
-                                </span>
-                                <span class="perm-badge-item" data-perm="perm_events_edit">
-                                    <input type="checkbox" name="perm_events_edit" class="perm-cb" checked hidden>
-                                    Edit <button class="perm-badge-remove" type="button" title="Remove">×</button>
-                                </span>
-                                <span class="perm-badge-item" data-perm="perm_events_archive">
-                                    <input type="checkbox" name="perm_events_archive" class="perm-cb" checked hidden>
-                                    Archive <button class="perm-badge-remove" type="button" title="Remove">×</button>
-                                </span>
-                            </div>
-                        </div>
-
                         <!-- ── Statistical Reports ── -->
                         <div class="perm-group">
                             <div class="perm-group-header">
@@ -519,7 +522,7 @@ if ($rolesResult) {
                                     <button class="perm-add-btn" type="button" title="Add permission"><i class="fas fa-plus"></i></button>
                                     <div class="perm-add-dropdown">
                                         <div class="perm-add-option" data-perm="perm_reports_view">View</div>
-                                        <div class="perm-add-option" data-perm="perm_reports_print">Print Report</div>
+                                        <div class="perm-add-option" data-perm="perm_reports_print">Print</div>
                                     </div>
                                 </div>
                             </div>
@@ -530,7 +533,7 @@ if ($rolesResult) {
                                 </span>
                                 <span class="perm-badge-item" data-perm="perm_reports_print">
                                     <input type="checkbox" name="perm_reports_print" class="perm-cb" checked hidden>
-                                    Print Report <button class="perm-badge-remove" type="button" title="Remove">×</button>
+                                    Print  <button class="perm-badge-remove" type="button" title="Remove">×</button>
                                 </span>
                             </div>
                         </div>

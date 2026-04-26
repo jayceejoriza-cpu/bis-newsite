@@ -249,12 +249,18 @@ try {
     // DUPLICATE PREVENTION CHECKS
     // ============================================
     
-    // Check 1: Exact Name Match (First Name + Last Name + Suffix)
+    // Check 1: Exact Name Match (First Name + Middle Name + Last Name + Suffix)
     $duplicateCheckSql = "SELECT id, resident_id, CONCAT(first_name, ' ', IFNULL(middle_name, ''), ' ', last_name, IFNULL(CONCAT(' ', suffix), '')) as full_name, date_of_birth
                           FROM residents 
                           WHERE LOWER(first_name) = LOWER(?) 
                           AND LOWER(last_name) = LOWER(?)";
                           
+    if (!empty($middleName)) {
+        $duplicateCheckSql .= " AND LOWER(middle_name) = LOWER(?)";
+    } else {
+        $duplicateCheckSql .= " AND (middle_name IS NULL OR middle_name = '')";
+    }
+
     if (!empty($suffix)) {
         $duplicateCheckSql .= " AND LOWER(suffix) = LOWER(?)";
     } else {
@@ -269,19 +275,25 @@ try {
     
     $stmt = $conn->prepare($duplicateCheckSql);
     
-    if ($mode === 'update' && $residentId) {
-        if (!empty($suffix)) {
-            $stmt->bind_param("sssi", $firstName, $lastName, $suffix, $residentId);
-        } else {
-            $stmt->bind_param("ssi", $firstName, $lastName, $residentId);
-        }
-    } else {
-        if (!empty($suffix)) {
-            $stmt->bind_param("sss", $firstName, $lastName, $suffix);
-        } else {
-            $stmt->bind_param("ss", $firstName, $lastName);
-        }
+    $params = [$firstName, $lastName];
+    $types = "ss";
+
+    if (!empty($middleName)) {
+        $params[] = $middleName;
+        $types .= "s";
     }
+
+    if (!empty($suffix)) {
+        $params[] = $suffix;
+        $types .= "s";
+    }
+
+    if ($mode === 'update' && $residentId) {
+        $params[] = $residentId;
+        $types .= "i";
+    }
+
+    $stmt->bind_param($types, ...$params);
     
     $stmt->execute();
     $result = $stmt->get_result();
@@ -619,9 +631,10 @@ $sql = "INSERT INTO residents (
     // Generate and Update Resident ID
     // ============================================
     
-    // Generate resident ID in format W-XXXXX
-    $fiveDigitNumber = str_pad($residentId % 100000, 5, '0', STR_PAD_LEFT);
-    $generatedResidentId = "W-{$fiveDigitNumber}";
+    // Format: W-YY0001 (Example: W-260001)
+    $year = date('y');
+    $sequence = str_pad($residentId % 10000, 4, '0', STR_PAD_LEFT);
+    $generatedResidentId = "W-{$year}{$sequence}";
     
     // Update the resident record with the generated resident_id
     $updateSql = "UPDATE residents SET resident_id = '$generatedResidentId' WHERE id = $residentId";

@@ -98,11 +98,18 @@ $pageTitle = 'Households';
                     <p class="page-subtitle">View all household profiles, including heads and members. <i class="fas fa-info-circle info-icon"></i></p>
                 </div>
                 <div class="page-header-actions">
-                    <?php if (hasPermission('perm_household_view')): ?>
-                    <button class="btn-print" id="printMasterlistBtn" title="Print Masterlist">
-                        <i class="fas fa-print"></i>
-                        Print Masterlist
-                    </button>
+                    <?php if (hasPermission('perm_household_print')): ?>
+                    <div class="dropdown d-inline-block">
+                        <button class="btn-print dropdown-toggle" type="button" id="exportPrintDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-file-export"></i>
+                            Export / Print Masterlist
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0" aria-labelledby="exportPrintDropdown" style="font-size: 14px;">
+                            <li><button class="dropdown-item py-2" type="button" id="exportCsvBtn"><i class="fas fa-file-csv me-2 text-success"></i> Export Csv</button></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><button class="dropdown-item py-2" type="button" id="printMasterlistBtn"><i class="fas fa-print me-2 text-primary"></i> Print Masterlist</button></li>
+                        </ul>
+                    </div>
                     <?php endif; ?>
     
                 </div>
@@ -423,10 +430,12 @@ $pageTitle = 'Households';
                 </form>
             </div>
             <div class="household-modal-footer">
+                <?php if (hasPermission('perm_household_print')): ?>
                 <button type="button" class="btn btn-primary" id="printHouseholdModalBtn" style="display: none;">
                     <i class="fas fa-print"></i>
                     Print Household
                 </button>
+                <?php endif; ?>
                 <button type="button" class="btn btn-secondary" onclick="closeCreateHouseholdModal()">
                     Cancel
                 </button>

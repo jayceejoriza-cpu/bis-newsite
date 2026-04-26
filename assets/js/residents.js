@@ -313,10 +313,8 @@ function applyUrlFilters() {
     // Maps URL param keys to DOM element IDs
     const filterMappings = [
         'filterSex', 'filterPurok', 'filterAgeHealthGroup', 'filterPwdStatus',
-        'filterReligion', 'filterCivilStatus', 'filterDateOfBirth', 'filterEthnicity',
         'filterEducation', 'filterOccupation', 'filterEmploymentStatus', 'filter4ps',
         'filterVoterStatus', 'filterMembershipType', 'filterPhilhealthCategory',
-        'filterMedicalHistory', 'filterUsingFpMethod', 'filterFpMethodsUsed', 'filterFpStatus'
     ];
 
     if (urlParams.has('filterAgeGroup')) {
@@ -378,7 +376,9 @@ function initializeButtons() {
     if (printBtn) {
         printBtn.addEventListener('click', async () => {
             if (!residentsTable || !residentsTable.filteredRows) {
-                fetch('model/log_print_masterlist.php', { method: 'POST' }).catch(e => console.error(e));
+                const logData = new FormData();
+                logData.append('description', 'Printed the residents masterlist');
+                fetch('model/log_print_masterlist.php', { method: 'POST', body: logData }).catch(e => console.error(e));
                 window.print();
                 return;
             }
@@ -435,7 +435,7 @@ function initializeButtons() {
                     <tr>
                         <th style="width: 10px; text-align: center;">No.</th>
                         <th>Resident Name</th>
-                        <th>Address</th>
+                        <th>Purok</th>
                     </tr>
                 </thead>
             `;
@@ -446,15 +446,14 @@ function initializeButtons() {
                 const no = index + 1;
                 const nameEl = row.querySelector('.resident-name span:last-child');
                 const name = nameEl ? nameEl.textContent.trim() : (row.cells[1] ? row.cells[1].textContent.trim() : '');
-                
-                const purok = row.getAttribute('data-purok');
-                const address = purok ? 'Purok ' + purok : (row.cells[4] ? row.cells[4].textContent.trim() : '');
+
+                const purok = row.cells[2]?.textContent.trim() || '';
                 
                 rowsHtml += `
                     <tr style="display: table-row;">
                         <td style="text-align: center;">${no}</td>
                         <td>${name}</td>
-                        <td>${address}</td>
+                        <td>${purok}</td>
                     </tr>
                 `;
             });
@@ -540,11 +539,11 @@ function initializeButtons() {
                         .main-content, .dashboard-content { margin: 0 !important; padding: 0 !important; width: 100% !important; }
                         .print-only { display: flex !important; }
                         .residents-table { width: 100% !important; border-collapse: collapse !important; margin-top: 20px; }
-                        .residents-table th, .residents-table td { border: 1px solid #333 !important; padding: 10px !important; font-size: 11px !important; text-align: left; }
+                        .residents-table th, .residents-table td { border: 1px solid #333 !important; padding: 8px 10px !important; font-size: 11px !important; text-align: left; }
                         .residents-table th { background-color: #f3f4f6 !important; -webkit-print-color-adjust: exact; }
                         .avatar { display: none !important; }
                         .resident-name { gap: 5px !important; }
-                        .cert-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; text-align: center;   border-bottom: 3px double #7a51c9; }
+                        .cert-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; text-align: center; border-bottom: 3px double #7a51c9; padding-bottom: 10px; }
                         .header-center { flex: 1; }
                         .header-center p { margin: 2px 0; font-size: 14px; }
                         .header-center .brgy-name { font-weight: bold; font-size: 16px; margin-top: 5px; }
@@ -586,7 +585,9 @@ function initializeButtons() {
 
             // Trigger print after a short delay to ensure styles/content are loaded
             setTimeout(() => {
-                fetch('model/log_print_masterlist.php', { method: 'POST' }).catch(e => console.error(e));
+                const logData = new FormData();
+                logData.append('description', 'Printed the residents masterlist');
+                fetch('model/log_print_masterlist.php', { method: 'POST', body: logData }).catch(e => console.error(e));
                 printFrame.contentWindow.focus();
                 printFrame.contentWindow.print();
             }, 500);
@@ -594,11 +595,16 @@ function initializeButtons() {
     }
     
     // Export button (if exists)
-    const exportBtn = document.getElementById('exportBtn');
+    const exportBtn = document.getElementById('exportCsvBtn');
     if (exportBtn) {
         exportBtn.addEventListener('click', () => {
             const timestamp = new Date().toISOString().split('T')[0];
             residentsTable.exportToCSV(`residents-${timestamp}.csv`);
+
+            const logData = new FormData();
+            logData.append('action', 'Export Masterlist');
+            logData.append('description', 'Exported the residents masterlist to CSV');
+            fetch('model/log_print_masterlist.php', { method: 'POST', body: logData }).catch(e => console.error(e));
         });
     }
     
@@ -660,7 +666,7 @@ function refreshData() {
         const url = new URL(window.location);
         const filterMappings = [
             'filterSex', 'filterPurok', 'filterAgeHealthGroup', 'filterPwdStatus',
-            'filterReligion', 'filterCivilStatus', 'filterDateOfBirth', 'filterEthnicity',
+            'filterReligion', 'filterCivilStatus', 'filterBirthMonth', 'filterBirthDay', 'filterEthnicity',
             'filterEducation', 'filterOccupation', 'filterEmploymentStatus', 'filter4ps',
             'filterVoterStatus', 'filterMembershipType', 'filterPhilhealthCategory',
             'filterMedicalHistory', 'filterUsingFpMethod', 'filterFpMethodsUsed', 'filterFpStatus'
@@ -1143,7 +1149,8 @@ function applyAdvancedFilters() {
         pwdStatus: getFilterValue('filterPwdStatus'),
         religion: getFilterValue('filterReligion'),
         civilStatus: getFilterValue('filterCivilStatus'),
-        dateOfBirth: getFilterValue('filterDateOfBirth'),
+        birthMonth: getFilterValue('filterBirthMonth'),
+        birthDay: getFilterValue('filterBirthDay'),
         ethnicity: getFilterValue('filterEthnicity'),
         education: getFilterValue('filterEducation'),
         occupation: getFilterValue('filterOccupation'),
@@ -1169,7 +1176,8 @@ function applyAdvancedFilters() {
         'filterPwdStatus': filters.pwdStatus,
         'filterReligion': filters.religion,
         'filterCivilStatus': filters.civilStatus,
-        'filterDateOfBirth': filters.dateOfBirth,
+        'filterBirthMonth': filters.birthMonth,
+        'filterBirthDay': filters.birthDay,
         'filterEthnicity': filters.ethnicity,
         'filterEducation': filters.education,
         'filterOccupation': filters.occupation,
@@ -1208,6 +1216,7 @@ function applyAdvancedFilters() {
             pwdStatus: row.getAttribute('data-pwd-status') || '',
             sex: row.getAttribute('data-sex') || '',
             purok: row.getAttribute('data-purok') || '',
+            dateOfBirth: row.getAttribute('data-date-of-birth') || '',
             voterStatus: row.getAttribute('data-voter-status') || '',
             occupation: row.getAttribute('data-occupation') || '',
             membershipType: row.getAttribute('data-membership-type') || '',
@@ -1218,12 +1227,13 @@ function applyAdvancedFilters() {
             fpStatus: row.getAttribute('data-fp-status') || ''
         };
         
-        // Date of Birth filter (exact match)
-        if (filters.dateOfBirth) {
-            const [year, month, day] = filters.dateOfBirth.split('-');
-            const formattedFilterDate = `${month}/${day}/${year}`;
-            const dobInCell = dobCell.split(' - ')[0];
-            if (dobInCell !== formattedFilterDate) return false;
+        // Birth Date (Month & Day) filter
+        if (filters.birthMonth || filters.birthDay) {
+            if (!rowData.dateOfBirth) return false;
+            const [rYear, rMonth, rDay] = rowData.dateOfBirth.split('-');
+            
+            if (filters.birthMonth && rMonth !== filters.birthMonth) return false;
+            if (filters.birthDay && rDay !== filters.birthDay) return false;
         }
         
         if (filters.sex && rowData.sex.toLowerCase() !== filters.sex.toLowerCase()) return false;
@@ -1280,7 +1290,7 @@ function clearAdvancedFilters() {
     const url = new URL(window.location);
     const filterMappings = [
         'filterSex', 'filterPurok', 'filterAgeHealthGroup', 'filterPwdStatus',
-        'filterReligion', 'filterCivilStatus', 'filterDateOfBirth', 'filterEthnicity',
+        'filterReligion', 'filterCivilStatus', 'filterBirthMonth', 'filterBirthDay', 'filterEthnicity',
         'filterEducation', 'filterOccupation', 'filterEmploymentStatus', 'filter4ps',
         'filterVoterStatus', 'filterMembershipType', 'filterPhilhealthCategory',
         'filterMedicalHistory', 'filterUsingFpMethod', 'filterFpMethodsUsed', 'filterFpStatus'

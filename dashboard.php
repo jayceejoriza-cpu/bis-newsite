@@ -99,7 +99,7 @@ try {
                 <i class="fas fa-home"></i> Households
             </button>
             <button class="report-tab-btn" data-tab="certificates">
-                <i class="fas fa-certificate"></i> Request History
+                <i class="fas fa-certificate"></i> Issuance History
             </button>
             <button class="report-tab-btn" data-tab="blotter">
                 <i class="fas fa-file-alt"></i> Blotter Records

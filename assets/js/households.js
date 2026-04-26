@@ -117,6 +117,7 @@ function displayHouseholds(households) {
         row.setAttribute('data-water-source', household.water_source_type || '');
         row.setAttribute('data-toilet-facility', household.toilet_facility_type || '');
         row.setAttribute('data-ownership-status', household.ownership_status || '');
+        row.setAttribute('data-landlord', household.landlord_name || 'N/A');
         
         // Get initials for avatar
         const initials = household.head_first_name && household.head_last_name 
@@ -511,6 +512,51 @@ function initializeButtons() {
         });
     }
 
+    // Export CSV Button
+    const exportCsvBtn = document.getElementById('exportCsvBtn');
+    if (exportCsvBtn) {
+        exportCsvBtn.addEventListener('click', function() {
+            let rowsToExport = (householdsTable && householdsTable.filteredRows) 
+                ? householdsTable.filteredRows 
+                : Array.from(document.querySelectorAll('#householdsTableBody tr:not([style*="display: none"])'));
+
+            if (rowsToExport.length === 0) {
+                alert('No data to export.');
+                return;
+            }
+
+            const csvHeaders = ["Household Number", "Household Head", "Members", "Ownership Status", "Landlord"];
+            let csvContent = csvHeaders.join(",") + "\n";
+
+            rowsToExport.forEach(row => {
+                if (row.querySelector('td[colspan]')) return;
+                
+                const hhNum = row.cells[0]?.textContent.trim() || '';
+                const headNameEl = row.querySelector('.head-name a') || row.querySelector('.head-name span:not(.avatar)');
+                const headName = headNameEl ? headNameEl.textContent.trim() : 'N/A';
+                const memberCount = row.querySelector('.member-count .count')?.textContent.trim() || '0';
+                const status = row.cells[3]?.textContent.trim() || 'N/A';
+                const landlord = row.getAttribute('data-landlord') || 'N/A';
+
+                const rowData = [hhNum, headName, memberCount, status, landlord].map(val => 
+                    `"${val.replace(/"/g, '""')}"`
+                );
+                csvContent += rowData.join(",") + "\n";
+            });
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `Household_Masterlist_${new Date().toISOString().slice(0, 10)}.csv`;
+            link.click();
+
+            const logData = new FormData();
+            logData.append('action', 'Export Masterlist');
+            logData.append('description', 'Exported the household masterlist to CSV');
+            fetch('model/log_print_masterlist.php', { method: 'POST', body: logData }).catch(e => console.error(e));
+        });
+    }
+
     // Print button
     const printBtn = document.getElementById('printMasterlistBtn');
     if (printBtn) {
@@ -574,7 +620,8 @@ function initializeButtons() {
                         <th style="width: 40px; text-align: center;">No.</th>
                         <th>Household Number</th>
                         <th>Household Head</th>
-                        <th style="text-align: center; width: 100px;">Members</th>
+                        <th style="text-align: center; width: 100px;">Members</th>  
+                        <th>Ownership Status</th>
                     </tr>
                 </thead>
             `;
@@ -585,11 +632,13 @@ function initializeButtons() {
                 const no = index + 1;
                 const hhNum = row.cells[0]?.textContent.trim() || '';
                 
-                const headNameEl = row.querySelector('.head-name span:last-child');
-                const headName = headNameEl ? headNameEl.textContent.trim() : (row.cells[1]?.textContent.trim() || '');
+                const headNameEl = row.querySelector('.head-name a') || row.querySelector('.head-name span:not(.avatar)');
+                const headName = headNameEl ? headNameEl.textContent.trim() : 'N/A';
                 
                 const memberCountEl = row.querySelector('.member-count .count');
                 const memberCount = memberCountEl ? memberCountEl.textContent.trim() : (row.cells[2]?.textContent.trim() || '');
+                
+                const ownership = row.cells[3]?.textContent.trim() || 'N/A';
 
                 rowsHtml += `
                     <tr style="display: table-row;">
@@ -597,6 +646,7 @@ function initializeButtons() {
                         <td>${hhNum}</td>
                         <td>${headName}</td>
                         <td style="text-align: center;">${memberCount}</td>
+                        <td>${ownership}</td>
                     </tr>
                 `;
             });
@@ -698,7 +748,9 @@ function initializeButtons() {
 
             // Trigger print
             setTimeout(() => {
-                fetch('model/log_print_masterlist.php', { method: 'POST' }).catch(e => console.error(e));
+                const logData = new FormData();
+                logData.append('description', 'Printed the household masterlist');
+                fetch('model/log_print_masterlist.php', { method: 'POST', body: logData }).catch(e => console.error(e));
                 printFrame.contentWindow.focus();
                 printFrame.contentWindow.print();
             }, 500);
@@ -1173,12 +1225,12 @@ function editHousehold(householdId) {
                 const actionTh = document.querySelector('.members-table th:last-child');
                 if (actionTh) actionTh.style.display = '';
                 
-                // Set household number and make it readonly (cannot be edited)
+                // Set household number
                 const householdNumberInput = document.getElementById('householdNumber');
                 householdNumberInput.value = data.household.household_number;
-                householdNumberInput.setAttribute('readonly', 'readonly');
-                householdNumberInput.style.backgroundColor = '#f3f4f6';
-                householdNumberInput.style.cursor = 'not-allowed';
+                householdNumberInput.removeAttribute('readonly');
+                householdNumberInput.style.backgroundColor = '';
+                householdNumberInput.style.cursor = '';
                 
                 document.getElementById('householdContact').value = data.household.household_contact || '';
                 document.getElementById('householdAddress').value = data.household.address;
@@ -1951,17 +2003,17 @@ function saveHousehold() {
         householdHeadId: document.getElementById('selectedResidentId').value
     };
     
-    // Include household number only for CREATE operations
-    if (!isEditMode) {
-        formData.householdNumber = document.getElementById('householdNumber').value.trim();
-        
-        // Validate household number for CREATE
-        if (!formData.householdNumber) {
-            showNotification('Please enter the household number', 'error');
-            document.getElementById('householdNumber').focus();
-            return;
-        }
-    } else {
+    // Include household number
+    formData.householdNumber = document.getElementById('householdNumber').value.trim();
+    
+    // Validate household number
+    if (!formData.householdNumber) {
+        showNotification('Please enter the household number', 'error');
+        document.getElementById('householdNumber').focus();
+        return;
+    }
+
+    if (isEditMode) {
         // Include household ID for UPDATE operations
         formData.householdId = householdId;
     }

@@ -158,9 +158,10 @@ try {
 // ============================================
 // Build Resident Full Name
 // ============================================
+$mi = !empty($resident['middlename']) ? strtoupper(substr(trim($resident['middlename']), 0, 1)) . '.' : '';
 $residentFullName = ucwords(trim(
     $resident['firstname'] . ' ' .
-    ($resident['middlename'] ? $resident['middlename'] . ' ' : '') .
+   ($mi ? $mi . ' ' : '') .
     $resident['lastname'] .
     ($resident['suffix'] ? ' ' . $resident['suffix'] : '')
 ));

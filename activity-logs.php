@@ -65,6 +65,43 @@ if (isset($conn)) {
         $types .= "s";
     }
 
+    // AJAX / Export Handler: Fetch ALL filtered data (ignoring pagination)
+    if (isset($_GET['action'])) {
+        $sql_all = "SELECT * FROM activity_logs" . $where_sql . " ORDER BY timestamp DESC";
+        $stmt_all = $conn->prepare($sql_all);
+        if (!empty($params)) {
+            $stmt_all->bind_param($types, ...$params);
+        }
+        $stmt_all->execute();
+        $res_all = $stmt_all->get_result();
+
+        if ($_GET['action'] === 'export_csv') {
+            header('Content-Type: text/csv; charset=utf-8');
+            header('Content-Disposition: attachment; filename=Activity_Logs_Full_' . date('Y-m-d') . '.csv');
+            $output = fopen('php://output', 'w');
+            fprintf($output, chr(0xEF).chr(0xBB).chr(0xBF)); // UTF-8 BOM for Excel
+            fputcsv($output, ['ID', 'User', 'Action', 'Description', 'Timestamp']);
+            while ($row = $res_all->fetch_assoc()) {
+                fputcsv($output, [$row['id'], $row['user'], $row['action'], $row['description'], date('M d, Y h:i A', strtotime($row['timestamp']))]);
+            }
+            fclose($output);
+            
+            // Log activity
+            $log_user = $_SESSION['username'] ?? 'System';
+            $conn->query("INSERT INTO activity_logs (user, action, description) VALUES ('$log_user', 'Export Masterlist', 'Exported full filtered logs to CSV')");
+            exit;
+        } elseif ($_GET['action'] === 'fetch_all') {
+            $data = [];
+            while ($r = $res_all->fetch_assoc()) {
+                $r['timestamp_fmt'] = date('M d, Y h:i A', strtotime($r['timestamp']));
+                $data[] = $r;
+            }
+            header('Content-Type: application/json');
+            echo json_encode(['success' => true, 'data' => $data]);
+            exit;
+        }
+    }
+
     // Count total records for pagination
     $count_query = "SELECT COUNT(*) as total FROM activity_logs" . $where_sql;
     if (!empty($params)) {
@@ -120,6 +157,8 @@ if (isset($conn)) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo $pageTitle; ?> - <?php echo SITE_NAME; ?></title>
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="assets/bootstrap/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="assets/css/style.css">
@@ -287,10 +326,17 @@ if (isset($conn)) {
                 </div>
                 <div class="page-header-actions">
                     <?php if (hasPermission('perm_settings_logs_print')): ?>
-                    <button class="btn-print" id="printMasterlistBtn" title="Print Masterlist">
-                        <i class="fas fa-print"></i>
-                        Print Masterlist
-                    </button>
+                    <div class="dropdown d-inline-block ms-2">
+                        <button class="btn-print dropdown-toggle" type="button" id="exportPrintDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-file-export"></i>
+                            Export / Print Masterlist
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0" aria-labelledby="exportPrintDropdown" style="font-size: 14px;">
+                            <li><button class="dropdown-item py-2" type="button" id="exportCsvBtn"><i class="fas fa-file-csv me-2 text-success"></i> Export Csv</button></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><button class="dropdown-item py-2" type="button" id="printMasterlistBtn"><i class="fas fa-print me-2 text-primary"></i> Print Masterlist</button></li>
+                        </ul>
+                    </div>
                     <?php endif; ?>
                 </div>
             </div>
@@ -438,19 +484,39 @@ if (isset($conn)) {
                         of <strong><?php echo number_format($total_records); ?></strong></span>
                 </div>
                 <?php if ($total_pages > 1 || $page > 1): ?>
-                <div class="pagination">
-                    <a href="?page=<?php echo max(1, $page - 1); ?>&limit=<?php echo $limit; ?>&search=<?php echo urlencode($search); ?>&filter_user=<?php echo urlencode($filter_user); ?>&filter_action=<?php echo urlencode($filter_action); ?>&filter_from_date=<?php echo urlencode($filter_from_date); ?>&filter_to_date=<?php echo urlencode($filter_to_date); ?>" 
-                       class="page-btn <?php echo ($page <= 1) ? 'disabled' : ''; ?>" title="Previous">
-                        <i class="fas fa-chevron-left"></i>
-                    </a>
-                    
-                    <button class="page-btn active"><?php echo $page; ?></button>
-                    
-                    <a href="?page=<?php echo min($total_pages, $page + 1); ?>&limit=<?php echo $limit; ?>&search=<?php echo urlencode($search); ?>&filter_user=<?php echo urlencode($filter_user); ?>&filter_action=<?php echo urlencode($filter_action); ?>&filter_from_date=<?php echo urlencode($filter_from_date); ?>&filter_to_date=<?php echo urlencode($filter_to_date); ?>" 
-                       class="page-btn <?php echo ($page >= $total_pages) ? 'disabled' : ''; ?>" title="Next">
-                        <i class="fas fa-chevron-right"></i>
-                    </a>
-                </div>
+               <div class="pagination">
+    <a href="?page=<?php echo max(1, $page - 1); ?>&limit=<?php echo $limit; ?>&search=<?php echo urlencode($search); ?>&filter_user=<?php echo urlencode($filter_user); ?>&filter_action=<?php echo urlencode($filter_action); ?>&filter_from_date=<?php echo urlencode($filter_from_date); ?>&filter_to_date=<?php echo urlencode($filter_to_date); ?>" 
+       class="page-btn <?php echo ($page <= 1) ? 'disabled' : ''; ?>">
+        <i class="fas fa-chevron-left"></i>
+    </a>
+
+    <?php
+    $range = 2; // How many numbers to show around the current page
+    $show_initial_pages = 5; // Initial numbers before ellipsis
+
+    for ($i = 1; $i <= $total_pages; $i++) {
+        // Condition to show page numbers:
+        // 1. Show first 5 pages
+        // 2. Show the last page
+        // 3. Show pages around the current page
+        if ($i <= $show_initial_pages || $i == $total_pages || ($i >= $page - $range && $i <= $page + $range)) {
+            $activeClass = ($i == $page) ? 'active' : '';
+            $url = "?page=$i&limit=$limit&search=".urlencode($search)."&filter_user=".urlencode($filter_user)."&filter_action=".urlencode($filter_action)."&filter_from_date=".urlencode($filter_from_date)."&filter_to_date=".urlencode($filter_to_date);
+            
+            echo "<a href='$url' class='page-btn $activeClass'>$i</a>";
+        } 
+        // Show ellipsis if there is a gap
+        elseif ($i == $show_initial_pages + 1 || $i == $total_pages - 1) {
+            echo "<span class='spacer'>...</span>";
+        }
+    }
+    ?>
+
+    <a href="?page=<?php echo min($total_pages, $page + 1); ?>&limit=<?php echo $limit; ?>&search=<?php echo urlencode($search); ?>&filter_user=<?php echo urlencode($filter_user); ?>&filter_action=<?php echo urlencode($filter_action); ?>&filter_from_date=<?php echo urlencode($filter_from_date); ?>&filter_to_date=<?php echo urlencode($filter_to_date); ?>" 
+       class="page-btn <?php echo ($page >= $total_pages) ? 'disabled' : ''; ?>">
+        <i class="fas fa-chevron-right"></i>
+    </a>
+</div>
                 <?php endif; ?>
             </div>
             
@@ -471,6 +537,8 @@ if (isset($conn)) {
             </div>
         </div>
     </main>
+    <!-- Bootstrap JS Bundle (includes Popper) -->
+    <script src="assets/bootstrap/js/bootstrap.bundle.min.js"></script>
     <script src="assets/js/script.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
@@ -582,42 +650,45 @@ if (isset($conn)) {
                 });
             }
             
-            // Print Masterlist
             const printBtn = document.getElementById('printMasterlistBtn');
+            const exportCsvBtn = document.getElementById('exportCsvBtn');
+
+            if (exportCsvBtn) {
+                exportCsvBtn.addEventListener('click', () => {
+                    const url = new URL(window.location.href);
+                    url.searchParams.set('action', 'export_csv');
+                    window.location.href = url.toString();
+                });
+            }
+
             if (printBtn) {
                 printBtn.addEventListener('click', async () => {
-                    let brgyInfo = {
+                    const url = new URL(window.location.href);
+                    url.searchParams.set('action', 'fetch_all');
+                    
+                    const response = await fetch(url.toString());
+                    const result = await response.json();
+
+                    if (!result.success || result.data.length === 0) {
+                        alert('No data to print.');
+                        return;
+                    }
+
+                    const brgyInfo = <?php echo json_encode($barangayInfo); ?> || {
                         province_name: 'Province',
                         town_name: 'Municipality',
                         barangay_name: 'Barangay',
                         barangay_logo: '',
-                        official_emblem: ''
+                        municipal_logo: ''
                     };
                     
-                    try {
-                        const response = await fetch('model/get_barangay_info.php');
-                        if (response.ok) {
-                            const data = await response.json();
-                            if (data.success && data.data) {
-                                brgyInfo = data.data;
-                            }
-                        }
-                    } catch (error) {
-                        console.error('Error fetching barangay info:', error);
-                    }
-                    
-                    const brgyLogoHtml = brgyInfo.barangay_logo 
-                        ? `<img src="${brgyInfo.barangay_logo}" class="logo-img" alt="Barangay Logo">`
-                        : `<div class="logo-placeholder-box"></div>`;
-                        
-                    const govLogoHtml = brgyInfo.official_emblem
-                        ? `<img src="${brgyInfo.official_emblem}" class="logo-img" alt="Official Emblem">`
-                        : `<div class="logo-placeholder-box"></div>`;
+                    const captainName = <?php echo json_encode($captainName); ?> || 'Barangay Captain';
+                    const preparedBy = <?php echo json_encode($_SESSION['full_name'] ?? 'Authorized Staff'); ?>;
 
-                    let printFrame = document.getElementById('logsPrintFrame');
+                    let printFrame = document.getElementById('activityLogsPrintFrame');
                     if (!printFrame) {
                         printFrame = document.createElement('iframe');
-                        printFrame.id = 'logsPrintFrame';
+                        printFrame.id = 'activityLogsPrintFrame';
                         printFrame.style.position = 'fixed';
                         printFrame.style.bottom = '0';
                         printFrame.style.right = '0';
@@ -630,141 +701,87 @@ if (isset($conn)) {
                     const doc = printFrame.contentWindow.document;
                     doc.open();
 
-                    const tableHeaderHtml = `
-                        <thead>
-                            <tr>
-                                <th style="width: 40px; text-align: center;">No.</th>
-                                <th>ID</th>
-                                <th>User</th>
-                                <th>Action</th>
-                                <th>Description</th>
-                                <th>Timestamp</th>
-                            </tr>
-                        </thead>
-                    `;
-
                     let rowsHtml = '';
-                    let rowsToPrint = Array.from(document.querySelectorAll('.activity-table tbody tr:not([style*="display: none"])'));
-                    
-                    if (rowsToPrint.length === 1 && rowsToPrint[0].cells.length === 1) {
-                        rowsHtml = `<tr><td colspan="6" style="text-align: center;">No activity logs found.</td></tr>`;
-                    } else {
-                        rowsToPrint.forEach((row, index) => {
-                            if (row.cells.length < 5) return;
-                            const no = index + 1;
-                            const id = row.cells[0]?.textContent.trim() || '';
-                            const user = row.cells[1]?.textContent.trim() || '';
-                            const action = row.cells[2]?.textContent.trim() || '';
-                            const desc = row.cells[3]?.textContent.trim() || '';
-                            const time = row.cells[4]?.textContent.trim() || '';
+                    result.data.forEach(log => {
+                        rowsHtml += `
+                            <tr>
+                                <td style="text-align: center;">${log.id}</td>
+                                <td>${log.user}</td>
+                                <td>${log.action}</td>
+                                <td>${log.description}</td>
+                                <td>${log.timestamp_fmt}</td>
+                            </tr>
+                        `;
+                    });
 
-                            rowsHtml += `
-                                <tr style="display: table-row;">
-                                    <td style="text-align: center;">${no}</td>
-                                    <td>${id}</td>
-                                    <td>${user}</td>
-                                    <td>${action}</td>
-                                    <td>${desc}</td>
-                                    <td>${time}</td>
-                                </tr>
-                            `;
-                        });
-                    }
-
-                    const styles = Array.from(document.querySelectorAll('link[rel="stylesheet"], style')).map(s => s.outerHTML).join('\n');
-                    const printFooter = document.querySelector('.print-footer') ? document.querySelector('.print-footer').cloneNode(true) : null;
-
-                    let finalTitle = "Activity Logs Masterlist";
-                    const printHeader = document.querySelector('.print-header');
-                    if (printHeader) {
-                        const countBadge = printHeader.querySelector('#printTotalRecords');
-                        if (countBadge) countBadge.textContent = "<?php echo $total_records; ?>";
+                    const brgyLogoHtml = brgyInfo.barangay_logo 
+                        ? `<img src="${brgyInfo.barangay_logo}" style="width: 80px; height: 80px; object-fit: contain;">`
+                        : `<div style="width: 80px; height: 80px;"></div>`;
                         
-                        const activeFilters = [];
-                        const fUser = document.getElementById('filterUser')?.value;
-                        const fAction = document.getElementById('filterAction')?.value;
-                        const fFrom = document.getElementById('filterFromDate')?.value;
-                        const fTo = document.getElementById('filterToDate')?.value;
-                        
-                        if (fUser) activeFilters.push(`User: ${fUser}`);
-                        if (fAction) activeFilters.push(`Action: ${fAction}`);
-                        if (fFrom) activeFilters.push(`From: ${fFrom}`);
-                        if (fTo) activeFilters.push(`To: ${fTo}`);
-                        
-                        const searchInput = document.querySelector('input[name="search"]');
-                        if (searchInput && searchInput.value.trim()) {
-                            activeFilters.push(`Search: "${searchInput.value.trim()}"`);
-                        }
-                        if (activeFilters.length > 0) {
-                            finalTitle += " - " + activeFilters.join(', ');
-                        }
-                    }
+                    const municipalLogoHtml = brgyInfo.municipal_logo
+                        ? `<img src="${brgyInfo.municipal_logo}" style="width: 80px; height: 80px; object-fit: contain;">`
+                        : `<div style="width: 80px; height: 80px;"></div>`;
 
                     doc.write(`
                         <!DOCTYPE html>
                         <html>
                         <head>
-<link rel="icon" type="image/png" href="uploads/favicon.png">
                             <title>Activity Logs Masterlist</title>
-                            ${styles}
                             <style>
-                                body { background: white !important; color: black !important; padding: 20px !important; }
-                                .main-content, .dashboard-content { margin: 0 !important; padding: 0 !important; width: 100% !important; }
-                                .print-only { display: flex !important; }
-                                .data-table { width: 100% !important; border-collapse: collapse !important; margin-top: 20px; }
-                                .data-table th, .data-table td { border: 1px solid #333 !important; padding: 6px !important; font-size: 9px !important; text-align: left; }
-                                .data-table th { background-color: #f3f4f6 !important; -webkit-print-color-adjust: exact; }
+                                @page { size: A4 landscape; margin: 15mm; }
+                                body { font-family: 'Inter', sans-serif; color: #000; background: #fff; margin: 0; padding: 0; }
                                 .cert-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; text-align: center; border-bottom: 3px double #7a51c9; padding-bottom: 10px; }
                                 .header-center { flex: 1; }
                                 .header-center p { margin: 2px 0; font-size: 14px; }
-                                .header-center .brgy-name { font-weight: bold; font-size: 16px; margin-top: 5px; }
-                                .logo-img { width: 80px; height: 80px; object-fit: contain; }
-                                .logo-placeholder-box { width: 80px; height: 80px; }
-                                @page { size: A4; margin: 15mm; }
+                                .brgy-name { font-weight: bold; font-size: 16px; text-transform: uppercase; margin-top: 5px; }
+                                .report-title { text-align: center; margin: 20px 0; text-transform: uppercase; font-size: 18px; font-weight: bold; text-decoration: underline; }
+                                .data-table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 11px; }
+                                .data-table th, .data-table td { border: 1px solid #000; padding: 8px; text-align: left; }
+                                .data-table th { background-color: #f3f4f6 !important; -webkit-print-color-adjust: exact; }
+                                .print-footer { margin-top: 50px; display: flex; justify-content: space-between; padding: 0 50px; }
+                                .sig-box { text-align: center; width: 250px; }
+                                .sig-line { border-bottom: 1px solid #000; margin-bottom: 5px; height: 40px; }
+                                .sig-name { font-weight: bold; text-transform: uppercase; font-size: 13px; margin: 0; }
+                                .sig-title { font-size: 11px; color: #666; margin: 0; }
                             </style>
                         </head>
                         <body>
-                            <div class="dashboard-content">
-                                <div class="cert-header">
-                                    ${brgyLogoHtml}
-                                    <div class="header-center">
-                                        <p>Republic of the Philippines</p>
-                                        <p>Province of ${brgyInfo.province_name || 'Province'}</p>
-                                        <p>Municipality of ${brgyInfo.town_name || 'Municipality'}</p>
-                                        <p class="brgy-name">${(brgyInfo.barangay_name || 'Barangay').toUpperCase()}</p>
-                                    </div>
-                                    ${govLogoHtml}
+                            <div class="cert-header">
+                                ${brgyLogoHtml}
+                                <div class="header-center">
+                                    <p>Republic of the Philippines</p>
+                                    <p>Province of ${brgyInfo.province_name}</p>
+                                    <p>Municipality of ${brgyInfo.town_name}</p>
+                                    <p class="brgy-name">${brgyInfo.barangay_name.toUpperCase()}</p>
                                 </div>
-                                <div style="text-align: center; margin: 15px 0;">
-                                    <h3 style="margin: 0; text-transform: uppercase;">${finalTitle}</h3>
-                                    <p style="margin: 5px 0 0 0; font-size: 12px;">Records on Page: ${rowsToPrint.length > 0 && rowsToPrint[0].cells.length > 1 ? rowsToPrint.length : 0} (Total: <?php echo $total_records; ?>)</p>
-                                </div>
-                                <table class="data-table">
-                                    ${tableHeaderHtml}
-                                    <tbody>${rowsHtml}</tbody>
-                                </table>
-                                ${printFooter ? printFooter.outerHTML : ''}
+                                ${municipalLogoHtml}
                             </div>
-                        </body>
-                        </html>
-                    `);
-                    doc.close();
-
-                    setTimeout(() => {
-                        fetch('model/log_print_masterlist.php', { method: 'POST' }).catch(e => console.error(e));
-                        printFrame.contentWindow.focus();
-                        printFrame.contentWindow.print();
-                    }, 500);
-                });
-            }
-        });
-    </script>
-</body>
-</html>                         <table class="data-table">
-                                    ${tableHeaderHtml}
-                                    <tbody>${rowsHtml}</tbody>
-                                </table>
-                                ${printFooter ? printFooter.outerHTML : ''}
+                            <h2 class="report-title">Activity Logs Masterlist</h2>
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 50px; text-align: center;">ID</th>
+                                        <th style="width: 120px;">User</th>
+                                        <th style="width: 150px;">Action</th>
+                                        <th>Description</th>
+                                        <th style="width: 180px;">Timestamp</th>
+                                    </tr>
+                                </thead>
+                                <tbody>${rowsHtml}</tbody>
+                            </table>
+                            <div class="print-footer">
+                                <div class="sig-box">
+                                    <p style="text-align: left; font-size: 12px; margin-bottom: 5px;">Prepared by:</p>
+                                    <div class="sig-line"></div>
+                                    <p class="sig-name">${preparedBy}</p>
+                                    <p class="sig-title">Authorized Staff</p>
+                                </div>
+                                <div class="sig-box">
+                                    <p style="text-align: left; font-size: 12px; margin-bottom: 5px;">Certified Correct:</p>
+                                    <div class="sig-line"></div>
+                                    <p class="sig-name">${captainName}</p>
+                                    <p class="sig-title">Barangay Captain</p>
+                                </div>
                             </div>
                         </body>
                         </html>

@@ -145,9 +145,10 @@ try {
 // ============================================
 // Build Resident Full Name
 // ============================================
+$mi = !empty($resident['middlename']) ? strtoupper(substr(trim($resident['middlename']), 0, 1)) . '.' : '';
 $residentFullName = ucwords(trim(
     $resident['firstname'] . ' ' .
-    ($resident['middlename'] ? $resident['middlename'] . ' ' : '') .
+    ($mi ? $mi . ' ' : '') .
     $resident['lastname'] .
     ($resident['suffix'] ? ' ' . $resident['suffix'] : '')
 ));
@@ -576,14 +577,14 @@ $birthdateFmt = !empty($resident['birthdate'])
                                         <div class="signature-space"></div>
                                         
                                         <?php if (!empty($captain)): ?>
-                                        <div class="sig-name">HON. <?= strtoupper($captain['name']) ?></div>
+                                        <div class="sig-name"><?= strtoupper($captain['name']) ?></div>
                                         <div class="sig-title">Punong Barangay</div>
                                         <?php endif; ?>
                                         
                                         <div class="signature-space-small"></div>
                                         
                                         <?php if (!empty($witness_name)): ?>
-                                            <div class="sig-name">HON. <?= strtoupper(htmlspecialchars($witness_name)) ?></div>
+                                            <div class="sig-name"><?= strtoupper(htmlspecialchars($witness_name)) ?></div>
                                         <div class="sig-title">Barangay Kagawad</div>
                                         <?php endif; ?>
                                         
