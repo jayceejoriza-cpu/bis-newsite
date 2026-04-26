@@ -53,26 +53,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['restore'])) {
                             $failedStatements = [];
                             $query = '';
 
-                            // Disable foreign key checks during restore
-                            $conn->query("SET FOREIGN_KEY_CHECKS=0");
+                            // Execute SET FOREIGN_KEY_CHECKS = 0; at the start
+                            $conn->query("SET FOREIGN_KEY_CHECKS = 0");
 
-                            // The 'Wipe Out' Strategy: Fetch all Table and View names and DROP ALL of them.
-                            // This prevents "Table already exists" or "View already exists" errors.
-                            $tablesResult = $conn->query("SHOW FULL TABLES");
+                            // Fetch all table and view names from the current database and DROP them
+                            $dbName = DB_NAME;
+                            $tablesResult = $conn->query("SELECT TABLE_NAME, TABLE_TYPE FROM information_schema.TABLES WHERE TABLE_SCHEMA = '$dbName'");
                             if ($tablesResult) {
-                                while ($row = $tablesResult->fetch_array()) {
-                                    $name = $row[0];
-                                    $type = $row[1]; // 'BASE TABLE' or 'VIEW'
-                                    
-                                    if ($type === 'VIEW') {
-                                        $conn->query("DROP VIEW IF EXISTS `$name`");
+                                while ($row = $tablesResult->fetch_assoc()) {
+                                    $name = $row['TABLE_NAME'];
+                                    if ($row['TABLE_TYPE'] === 'VIEW') {
+                                        $conn->query("DROP VIEW IF EXISTS `$name` ");
                                     } else {
-                                        $conn->query("DROP TABLE IF EXISTS `$name`");
+                                        $conn->query("DROP TABLE IF EXISTS `$name` ");
                                     }
                                 }
                             }
 
-                            // Read the file line by line to handle multi-line statements and ignore comments
+                            // Read the uploaded .sql file and execute it query-by-query
                             $handle = fopen($file['tmp_name'], "r");
                             if ($handle) {
                                 while (($line = fgets($handle)) !== false) {
@@ -93,6 +91,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['restore'])) {
                                             $errorSnippet = htmlspecialchars(substr(trim($query), 0, 250));
                                             $failedStatements[] = "<strong>MySQL Error:</strong> " . $conn->error . "<br><strong>Problematic SQL:</strong> <code>" . $errorSnippet . "...</code>";
                                         } else {
+                                            // Add a counter to show exactly how many statements were executed
                                             $executedCount++;
                                         }
                                         $query = '';
@@ -101,8 +100,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['restore'])) {
                                 fclose($handle);
                             }
 
-                            // Re-enable foreign key checks
-                            $conn->query("SET FOREIGN_KEY_CHECKS=1");
+                            // Execute SET FOREIGN_KEY_CHECKS = 1; at the end
+                            $conn->query("SET FOREIGN_KEY_CHECKS = 1");
 
                             if (!empty($failedStatements)) {
                                 $error = "Restore completed with " . count($failedStatements) . " error(s). " . $executedCount . " statement(s) were successful. <br><br><strong>Detailed Error:</strong> " . end($failedStatements);
