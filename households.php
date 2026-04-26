@@ -504,7 +504,7 @@ $pageTitle = 'Households';
                         
                         <div class="form-group half-width">
                             <label for="memberDateOfBirth">Date of Birth</label>
-                            <input type="date" id="memberDateOfBirth" name="memberDateOfBirth" class="form-control">
+                            <input type="date" id="memberDateOfBirth" name="memberDateOfBirth" class="form-control" max="<?php echo date('Y-m-d'); ?>">
                         </div>
                     </div>
                     

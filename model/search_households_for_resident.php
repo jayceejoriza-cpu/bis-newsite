@@ -27,7 +27,7 @@ try {
                 h.toilet_facility_type,
                 h.household_head_id,
                 CONCAT(r.first_name, ' ', IFNULL(CONCAT(r.middle_name, ' '), ''), r.last_name, IFNULL(CONCAT(' ', r.suffix), '')) AS head_name,
-                (SELECT COUNT(*) FROM household_members WHERE household_id = h.id) AS member_count
+                ((SELECT COUNT(*) FROM household_members WHERE household_id = h.id) + COALESCE(JSON_LENGTH(h.outside_members_data), 0)) AS member_count
             FROM households h
             LEFT JOIN residents r ON h.household_head_id = r.id";
 

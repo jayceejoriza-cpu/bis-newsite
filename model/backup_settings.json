@@ -1,7 +1,7 @@
 {
     "frequency": "Daily",
-    "backup_time": "20:00",
-    "target_folder": "C:\\xampp\\htdocs\\bis-newsite\\bis-newsite\\database",
+    "backup_time": "23:00",
+    "target_folder": "C:\\laragon\\www\\bmis\\bis-newsite\\backups",
     "zip_password": "password",
     "last_run": "2026-04-09 20:08:38"
 }

@@ -163,7 +163,8 @@ try {
     $officialsByLevel = [
         1 => [], // Top level (Captain)
         2 => [], // Middle level (Kagawads)
-        3 => []  // Bottom level (SK, Secretary, Treasurer)
+        3 => [], // Bottom level (SK, Secretary, Treasurer)
+        4 => []  // Level 4 (Custom Positions)
     ];
     
     foreach ($officials as $official) {
@@ -328,6 +329,36 @@ try {
                         <?php if (!empty($officialsByLevel[3])): ?>
                         <div class="hierarchy-level bottom">
                             <?php foreach ($officialsByLevel[3] as $official): 
+                                $fullName = !empty($official['first_name']) 
+                                    ? formatFullName($official['first_name'], $official['middle_name'], $official['last_name'], $official['suffix'])
+                                    : 'Vacant';
+                                $initials = !empty($official['first_name']) 
+                                    ? getInitials($official['first_name'], $official['last_name'])
+                                    : 'V';
+                                $photo = $official['photo'] ?? $official['resident_photo'] ?? null;
+                            ?>
+                            <div class="official-card" data-official-id="<?php echo $official['id']; ?>">
+                                <div class="official-photo <?php echo empty($photo) ? 'placeholder' : ''; ?>">
+                                    <?php if (!empty($photo)): ?>
+                                        <img src="<?php echo htmlspecialchars($photo); ?>" alt="<?php echo htmlspecialchars($fullName); ?>">
+                                    <?php else: ?>
+                                        <?php echo htmlspecialchars($initials); ?>
+                                    <?php endif; ?>
+                                </div>
+                                <div class="official-name"><?php echo htmlspecialchars(formatFullName($official['first_name'], $official['middle_name'], $official['last_name'], $official['suffix'], $official['appointment_type'])); ?></div>
+                                <div class="official-position"><?php echo htmlspecialchars($official['position']); ?></div>
+                                <?php if (!empty($official['committee'])): ?>
+                                    <div class="official-committee"><?php echo htmlspecialchars($official['committee']); ?></div>
+                                <?php endif; ?>
+                            </div>
+                            <?php endforeach; ?>
+                        </div>
+                        <?php endif; ?>
+
+                        <!-- Level 4 (Custom Positions) -->
+                        <?php if (!empty($officialsByLevel[4])): ?>
+                        <div class="hierarchy-level custom">
+                            <?php foreach ($officialsByLevel[4] as $official): 
                                 $fullName = !empty($official['first_name']) 
                                     ? formatFullName($official['first_name'], $official['middle_name'], $official['last_name'], $official['suffix'])
                                     : 'Vacant';

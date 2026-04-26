@@ -18,6 +18,21 @@ if ($resident_id <= 0 || empty($cert_title)) {
     exit;
 }
 
+// Check for 1-time limit (RA 11261) before saving log
+$isOneTime = (stripos($cert_title, 'Job Seeker') !== false || stripos($cert_title, 'Oath') !== false || stripos($cert_title, 'First Time') !== false);
+if ($isOneTime) {
+    $checkStmt = $conn->prepare("SELECT COUNT(*) as count FROM certificate_requests WHERE resident_id = ? AND (certificate_name LIKE '%Job%Seeker%' OR certificate_name LIKE '%Oath%' OR certificate_name LIKE '%RA 11261%')");
+    $checkStmt->bind_param("i", $resident_id);
+    $checkStmt->execute();
+    $res = $checkStmt->get_result()->fetch_assoc();
+    $checkStmt->close();
+    
+    if ($res && $res['count'] >= 1) {
+        echo json_encode(['success' => false, 'message' => 'Limit reached: This resident has already availed of the one-time benefit (RA 11261).']);
+        exit;
+    }
+}
+
 // Generate Reference No
 $ref_no = 'REQ-' . date('Ymd') . '-' . rand(1000, 9999);
 $created_by = $_SESSION['username'] ?? 'System';

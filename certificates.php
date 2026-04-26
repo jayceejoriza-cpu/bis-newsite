@@ -1074,11 +1074,11 @@ if ($kagStmt) {
                     </div>
                     <div class="cert-field-group">
                         <label class="cert-field-label">FROM DATE <span class="required-star">*</span></label>
-                        <input type="date" id="vesselDockingFromDate" class="form-control cert-input" value="<?php echo date('Y-m-d'); ?>" required>
+                        <input type="date" id="vesselDockingFromDate" class="form-control cert-input" min="<?php echo date('Y-m-d'); ?>" required>
                     </div>
                     <div class="cert-field-group">
                         <label class="cert-field-label">TO DATE <span class="required-star">*</span></label>
-                        <input type="date" id="vesselDockingToDate" class="form-control cert-input" value="<?php echo date('Y-m-d'); ?>" required>
+                        <input type="date" id="vesselDockingToDate" class="form-control cert-input" min="<?php echo date('Y-m-d'); ?>" required>
                     </div>
                     <div class="cert-field-group">
                         <label class="cert-field-label">ISSUED DATE <span class="required-star">*</span></label>

@@ -9,6 +9,7 @@ $include_deceased = isset($_GET['include_deceased']) && $_GET['include_deceased'
 $dob_before = isset($_GET['dob_before']) ? $_GET['dob_before'] : null;
 $certificate_type = isset($_GET['certificate_type']) ? trim($_GET['certificate_type']) : '';
 $filter = isset($_GET['filter']) ? trim($_GET['filter']) : '';
+$exclude_resident_id = isset($_GET['exclude_resident_id']) ? intval($_GET['exclude_resident_id']) : 0;
 
 try {
     $query = "SELECT id, resident_id, first_name, middle_name, last_name, suffix, sex, date_of_birth, activity_status, current_address, mobile_number, fourps_member 
@@ -26,6 +27,12 @@ try {
         $query .= " AND TIMESTAMPDIFF(YEAR, date_of_birth, CURDATE()) >= 18";
     } elseif ($filter === 'minor') {
         $query .= " AND TIMESTAMPDIFF(YEAR, date_of_birth, CURDATE()) < 18";
+    }
+
+    if ($exclude_resident_id > 0) {
+        $query .= " AND id != ?";
+        $params[] = $exclude_resident_id;
+        $types .= "i";
     }
 
     if ($dob_before) {
@@ -78,15 +85,14 @@ try {
         // Calculate limits if requested
         if (!empty($certificate_type) && isset($certificateTypeMap[$certificate_type])) {
             $db_name = $certificateTypeMap[$certificate_type];
-            $isOneTime = in_array($certificate_type, ['ftjobseeker', 'oath']);
+            $isOneTime = (in_array($certificate_type, ['ftjobseeker', 'oath']) || stripos($db_name, 'Job Seeker') !== false || stripos($db_name, 'Oath') !== false);
             
             if ($isOneTime) {
                 $limitStmt = $conn->prepare("
                     SELECT COUNT(*) as count FROM certificate_requests 
-                    WHERE resident_id = ? AND (certificate_name LIKE ? OR certificate_name LIKE ? OR certificate_name LIKE ?)
+                    WHERE resident_id = ? AND (certificate_name LIKE '%Job%Seeker%' OR certificate_name LIKE '%Oath%' OR certificate_name LIKE '%RA 11261%')
                 ");
-                $s1 = '%First Time Jobseeker%'; $s2 = '%Jobseeker%'; $s3 = '%Oath%';
-                $limitStmt->bind_param("isss", $row['id'], $s1, $s2, $s3);
+                $limitStmt->bind_param("i", $row['id']);
             } else {
                 $today = date('Y-m-d');
                 $limitStmt = $conn->prepare("

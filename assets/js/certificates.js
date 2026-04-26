@@ -2323,7 +2323,7 @@ if (lowIncomePrintBtn) {
 
     function searchRbcChildResidents(term) {
         // Build query with exclude_resident_id if parent is selected
-        var url = 'model/search_residents.php?search=' + encodeURIComponent(term);
+        var url = 'model/search_residents.php?search=' + encodeURIComponent(term) + '&filter=minor';
         if (rbcSelectedParentId) {
             url += '&exclude_resident_id=' + encodeURIComponent(rbcSelectedParentId);
         }

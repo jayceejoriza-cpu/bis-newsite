@@ -373,7 +373,7 @@ function updateProfileAgeVisibility() {
     }
 
     const editMobileInput = document.querySelector('input[name="mobile_number"]');
-    const editMobileGroup = editMobileInput ? editMobileInput.closest('.col-md-3') || editMobileInput.closest('.form-group') : null;
+    const editMobileGroup = editMobileInput ? editMobileInput.closest('.info-item') || editMobileInput.closest('.col-md-3') || editMobileInput.closest('.form-group') : null;
     const is11Plus = age >= 11;
 
     if (editMobileGroup) {

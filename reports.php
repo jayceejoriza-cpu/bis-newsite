@@ -45,7 +45,7 @@ $householdSizeData = $pdo->query("
         END AS size_category,
         COUNT(*) as cnt
     FROM (
-        SELECT h.id, (SELECT COUNT(*) FROM household_members hm WHERE hm.household_id = h.id) as member_count
+        SELECT h.id, ((SELECT COUNT(*) FROM household_members hm WHERE hm.household_id = h.id) + COALESCE(JSON_LENGTH(h.outside_members_data), 0)) as member_count
         FROM households h
     ) as subquery
     GROUP BY size_category

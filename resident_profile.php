@@ -786,7 +786,7 @@ if (!empty($resident['date_of_birth'])) {
                                     <p class="view-field"><?php echo htmlspecialchars($resident['street_name'] ?: 'N/A'); ?></p>
                                     <input type="text" name="street_name" id="streetNameInput" class="form-control edit-field" value="<?php echo htmlspecialchars($resident['street_name'] ?? ''); ?>" style="display:none;" >
                                 </div>
-                                <div class="info-item">
+                                <div class="info-item age-10-plus" <?php echo ($ageNumeric <= 10) ? 'style="display: none;"' : ''; ?>>
                                     <label>Mobile Number</label>
                                     <p class="view-field"><?php echo htmlspecialchars($resident['mobile_number'] ?: 'N/A'); ?></p>
                                     <input type="text" name="mobile_number" class="form-control edit-field"  placeholder="9XX XXX XXXX" pattern="[0-9 ]+" maxlength="12" oninput="let v=this.value.replace(/\D/g,'').substring(0,10);if(v.length>0&&v[0]!=='9')v='';if(v.length>6)this.value=v.slice(0,3)+' '+v.slice(3,6)+' '+v.slice(6);else if(v.length>3)this.value=v.slice(0,3)+' '+v.slice(3);else this.value=v;" value="<?php echo htmlspecialchars($resident['mobile_number'] ?? ''); ?>" style="display:none;">

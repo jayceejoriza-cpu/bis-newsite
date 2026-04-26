@@ -525,20 +525,22 @@ function initializeButtons() {
                 return;
             }
 
-            const csvHeaders = ["Household Number", "Household Head", "Members", "Ownership Status", "Landlord"];
+            const csvHeaders = ["Household Number", "Household Head", "Members", "Ownership Status", "Landlord", "Water Source", "Toilet Facility"];
             let csvContent = csvHeaders.join(",") + "\n";
 
             rowsToExport.forEach(row => {
                 if (row.querySelector('td[colspan]')) return;
                 
                 const hhNum = row.cells[0]?.textContent.trim() || '';
-                const headNameEl = row.querySelector('.head-name a') || row.querySelector('.head-name span:not(.avatar)');
+                const headNameEl = row.querySelector('.head-    name a') || row.querySelector('.head-name span:not(.avatar)');
                 const headName = headNameEl ? headNameEl.textContent.trim() : 'N/A';
                 const memberCount = row.querySelector('.member-count .count')?.textContent.trim() || '0';
                 const status = row.cells[3]?.textContent.trim() || 'N/A';
                 const landlord = row.getAttribute('data-landlord') || 'N/A';
+                const waterSource = row.getAttribute('data-water-source') || 'N/A';
+                const toiletFacility = row.getAttribute('data-toilet-facility') || 'N/A';
 
-                const rowData = [hhNum, headName, memberCount, status, landlord].map(val => 
+                const rowData = [hhNum, headName, memberCount, status, landlord, waterSource, toiletFacility].map(val => 
                     `"${val.replace(/"/g, '""')}"`
                 );
                 csvContent += rowData.join(",") + "\n";
@@ -1144,23 +1146,49 @@ function viewHousehold(householdId) {
                 const form = document.getElementById('createHouseholdForm');
                 form.setAttribute('data-household-id', householdId);
                 form.setAttribute('data-view-mode', 'true');
+
+                // Combine resident members and outside members for display
+                let allMembers = [...(data.members || [])];
+                if (data.household.outside_members_data) {
+                    try {
+                        const outside = JSON.parse(data.household.outside_members_data);
+                        outside.forEach(m => {
+                            m.is_outside = true;
+                            m.full_name = m.name;
+                            m.date_of_birth = m.dateOfBirth;
+                            m.mobile_number = m.mobileNumber;
+                            m.relationship_to_head = m.relationship;
+                        });
+                        allMembers = allMembers.concat(outside);
+                    } catch(e) { console.error('Error parsing outside members:', e); }
+                }
                 
-                if (data.members && data.members.length > 0) {
+                if (allMembers.length > 0) {
 // Sort members youngest to oldest (ascending age)
-                    data.members.sort((a, b) => new Date(a.date_of_birth) - new Date(b.date_of_birth));
+                    allMembers.sort((a, b) => {
+                        const dateA = a.date_of_birth ? new Date(a.date_of_birth) : new Date(0);
+                        const dateB = b.date_of_birth ? new Date(b.date_of_birth) : new Date(0);
+                        return dateA - dateB;
+                    });
                     
                     const tbody = document.getElementById('membersTableBody');
                     tbody.innerHTML = '';
                     
-                    data.members.forEach((member, index) => {
+                    allMembers.forEach((member, index) => {
                         const row = document.createElement('tr');
                         if (member.resident_id) {
                             row.dataset.residentId = member.resident_id;
+                        } else if (member.is_outside) {
+                            row.dataset.isOutside = "true";
+                            row.dataset.name = member.full_name;
+                            row.dataset.dob = member.date_of_birth || '';
+                            row.dataset.sex = member.sex || '';
+                            row.dataset.mobile = member.mobile_number || '';
                         }
                         
                         const memberNameHtml = member.resident_id 
                             ? `<a href="resident_profile.php?id=${member.resident_id}" style="color: var(--text-primary); text-decoration: none; transition: color 0.2s;" onmouseover="this.style.color='var(--primary-color)'" onmouseout="this.style.color='var(--text-primary)'">${member.full_name}</a>`
-                            : member.full_name;
+                            : `<span>${member.full_name} <small class="text-muted">(Outside)</small></span>`;
                         
                         row.innerHTML = `
                             <td>${index + 1}</td>
@@ -1277,22 +1305,48 @@ function editHousehold(householdId) {
                 document.getElementById('createHouseholdForm').setAttribute('data-household-id', householdId);
                 document.getElementById('saveHouseholdBtn').innerHTML = '<i class="fas fa-save"></i> Update';
                 
-                if (data.members && data.members.length > 0) {
+                // Handle outside members for edit mode
+                let allMembers = [...(data.members || [])];
+                if (data.household.outside_members_data) {
+                    try {
+                        const outside = JSON.parse(data.household.outside_members_data);
+                        outside.forEach(m => {
+                            m.is_outside = true;
+                            m.full_name = m.name;
+                            m.date_of_birth = m.dateOfBirth;
+                            m.mobile_number = m.mobileNumber;
+                            m.relationship_to_head = m.relationship;
+                        });
+                        allMembers = allMembers.concat(outside);
+                    } catch(e) { console.error('Error parsing outside members:', e); }
+                }
+
+                if (allMembers.length > 0) {
 // Sort members youngest to oldest (ascending age)
-                    data.members.sort((a, b) => new Date(a.date_of_birth) - new Date(b.date_of_birth));
+                    allMembers.sort((a, b) => {
+                        const dateA = a.date_of_birth ? new Date(a.date_of_birth) : new Date(0);
+                        const dateB = b.date_of_birth ? new Date(b.date_of_birth) : new Date(0);
+                        return dateA - dateB;
+                    });
                     
                     const tbody = document.getElementById('membersTableBody');
                     tbody.innerHTML = '';
                     
-                    data.members.forEach((member, index) => {
+                    allMembers.forEach((member, index) => {
                         const row = document.createElement('tr');
                         if (member.resident_id) {
                             row.dataset.residentId = member.resident_id;
+                        } else if (member.is_outside) {
+                            row.dataset.isOutside = "true";
+                            row.dataset.name = member.full_name;
+                            row.dataset.dob = member.date_of_birth || '';
+                            row.dataset.sex = member.sex || '';
+                            row.dataset.mobile = member.mobile_number || '';
                         }
                         
                         const memberNameHtml = member.resident_id 
                             ? `<a href="resident_profile.php?id=${member.resident_id}" style="color: var(--text-primary); text-decoration: none; transition: color 0.2s;" onmouseover="this.style.color='var(--primary-color)'" onmouseout="this.style.color='var(--text-primary)'">${member.full_name}</a>`
-                            : member.full_name;
+                            : `<span>${member.full_name} <small class="text-muted">(Outside)</small></span>`;
                         
                         row.innerHTML = `
                             <td>${index + 1}</td>
@@ -1591,7 +1645,7 @@ function loadResidents(searchTerm = '') {
     const searchModal = document.getElementById('searchResidentModal');
     const isSelectingMember = searchModal && searchModal.getAttribute('data-search-for') === 'member';
     
-    let url = `model/search_residents.php?search=${encodeURIComponent(searchTerm)}&filter_households=true`;
+    let url = `model/search_householdmember.php?search=${encodeURIComponent(searchTerm)}`;
     if (!isSelectingMember) {
         url += '&filter=adult'; // Ensure head is an adult
     }
@@ -1965,6 +2019,12 @@ function addMemberToTable(member) {
     
     if (member.residentId) {
         newRow.dataset.residentId = member.residentId;
+    } else {
+        newRow.dataset.isOutside = "true";
+        newRow.dataset.name = member.name;
+        newRow.dataset.dob = member.dateOfBirth || '';
+        newRow.dataset.sex = member.sex || '';
+        newRow.dataset.mobile = member.mobileNumber || '';
     }
     
     newRow.innerHTML = `
@@ -2037,11 +2097,13 @@ function saveHousehold() {
         const cells = row.cells;
         members.push({
             residentId: row.dataset.residentId || null,
-            name: cells[1].textContent,
-            dateOfBirth: cells[2].textContent,
-            sex: cells[3].textContent,
+            name: row.dataset.name || cells[1].textContent.trim().replace(/\s*\(Outside\)$/, ''),
+            dateOfBirth: row.dataset.residentId ? cells[2].textContent.trim() : (row.dataset.dob || ''),
+            sex: row.dataset.residentId ? cells[3].textContent.trim() : (row.dataset.sex || ''),
             relationship: cells[4].textContent,
-            mobileNumber: cells[5].textContent === 'N/A' ? '' : cells[5].textContent
+            mobileNumber: row.dataset.residentId 
+                ? (cells[5].textContent.trim() === 'N/A' ? '' : cells[5].textContent.trim()) 
+                : (row.dataset.mobile || '')
         });
     });
     
@@ -2335,7 +2397,29 @@ async function printHousehold(householdId) {
         }
 
         const household = hhData.household;
-        const members = hhData.members || [];
+        
+        // Combine resident members and outside members for printing
+        let allMembers = [...(hhData.members || [])];
+        if (household.outside_members_data) {
+            try {
+                const outside = JSON.parse(household.outside_members_data);
+                outside.forEach(m => {
+                    m.is_outside = true;
+                    m.full_name = m.name;
+                    m.date_of_birth = m.dateOfBirth;
+                    m.mobile_number = m.mobileNumber;
+                    m.relationship_to_head = m.relationship;
+                });
+                allMembers = allMembers.concat(outside);
+            } catch(e) { console.error('Error parsing outside members for print:', e); }
+        }
+
+        // Sort members (youngest to oldest, consistent with view/edit modals)
+        allMembers.sort((a, b) => {
+            const dateA = a.date_of_birth ? new Date(a.date_of_birth) : new Date(0);
+            const dateB = b.date_of_birth ? new Date(b.date_of_birth) : new Date(0);
+            return dateA - dateB;
+        });
 
         const brgyLogoHtml = brgyInfo.barangay_logo 
             ? `<img src="${brgyInfo.barangay_logo}" class="logo-img" alt="Barangay Logo">`
@@ -2364,15 +2448,16 @@ async function printHousehold(householdId) {
 
         // Build members rows
         let rowsHtml = '';
-        if (members.length === 0) {
+        if (allMembers.length === 0) {
             rowsHtml = `<tr><td colspan="6" class="text-center" style="text-align: center; padding: 15px;">No members found in this household.</td></tr>`;
         } else {
-            members.forEach((member, index) => {
-                const isHead = (member.is_head == 1 || member.is_head === true || member.is_head === '1') ? '<strong>(Head)</strong>' : '';
+            allMembers.forEach((member, index) => {
+                const isHead = (member.resident_id && (member.is_head == 1 || member.is_head === true || member.is_head === '1')) ? '<strong>(Head)</strong>' : '';
+                const outsideTag = member.is_outside ? ' <small class="text-muted">(Outside)</small>' : '';
                 rowsHtml += `
                     <tr>
                         <td style="text-align: center;">${index + 1}</td>
-                        <td>${member.full_name} ${isHead}</td>
+                        <td>${member.full_name} ${isHead} ${outsideTag}</td>
                         <td>${member.date_of_birth ? formatDobAndAge(member.date_of_birth) : 'N/A'}</td>
                         <td>${member.sex || 'N/A'}</td>
                         <td>${member.relationship_to_head || 'N/A'}</td>
@@ -2470,6 +2555,11 @@ async function printHousehold(householdId) {
             </html>
         `);
         doc.close();
+
+        // Add activity log
+        const logData = new FormData();
+        logData.append('description', 'Printed household details for: ' + household.household_number);
+        fetch('model/log_print_masterlist.php', { method: 'POST', body: logData }).catch(e => console.error(e));
 
         // Trigger print
         setTimeout(() => {

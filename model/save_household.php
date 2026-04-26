@@ -59,6 +59,20 @@ try {
             }
         }
     }
+
+    // Separate members into resident links and outside data
+    $residentMembers = [];
+    $outsideMembers = [];
+    if (!empty($data['members']) && is_array($data['members'])) {
+        foreach ($data['members'] as $m) {
+            if (!empty($m['residentId'])) {
+                $residentMembers[] = $m;
+            } else {
+                $outsideMembers[] = $m;
+            }
+        }
+    }
+    $outsideMembersJson = !empty($outsideMembers) ? json_encode($outsideMembers) : null;
     
     if ($isUpdate) {
         // UPDATE OPERATION
@@ -81,13 +95,14 @@ try {
                       landlord_resident_id = ?,
                       landlord_name = ?,
                       notes = ?,
+                      outside_members_data = ?,
                       updated_at = NOW()
                       WHERE id = ?";
         
         $updateStmt = $conn->prepare($updateSql);
         $landlordId = !empty($data['landlordResidentId']) ? intval($data['landlordResidentId']) : null;
         $updateStmt->bind_param(
-            'sisssssissi',
+            'sisssssisssi',
             $data['householdNumber'],
             $data['householdHeadId'],
             $data['householdContact'],
@@ -98,6 +113,7 @@ try {
             $landlordId,
             $data['landlordName'],
             $data['householdNotes'],
+            $outsideMembersJson,
             $householdId
         );
         
@@ -135,7 +151,7 @@ try {
         $deleteMembersStmt->close();
         
         // Insert updated members
-        if (!empty($data['members']) && is_array($data['members'])) {
+        if (!empty($residentMembers)) {
             $memberSql = "INSERT INTO household_members (
                 household_id,
                 resident_id,
@@ -147,7 +163,7 @@ try {
             
             $addedMembers = [];
 
-            foreach ($data['members'] as $member) {
+            foreach ($residentMembers as $member) {
                 // Only insert if resident_id exists (from database)
                 if (!empty($member['residentId'])) {
                     // NOTE: We don't validate if member is already in another household during UPDATE
@@ -348,13 +364,14 @@ try {
             landlord_resident_id,
             landlord_name,
             notes,
+            outside_members_data,
             created_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())";
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())";
         
         $stmt = $conn->prepare($sql);
         $landlordId = !empty($data['landlordResidentId']) ? intval($data['landlordResidentId']) : null;
         $stmt->bind_param(
-            'sisssssiss',
+            'sisssssisss',
             $data['householdNumber'],
             $data['householdHeadId'],
             $data['householdContact'],
@@ -364,7 +381,8 @@ try {
             $data['ownershipStatus'],
             $landlordId,
             $data['landlordName'],
-            $data['householdNotes']
+            $data['householdNotes'],
+            $outsideMembersJson
         );
         
         if (!$stmt->execute()) {
@@ -375,7 +393,7 @@ try {
         $stmt->close();
         
         // Insert household members if any
-        if (!empty($data['members']) && is_array($data['members'])) {
+        if (!empty($residentMembers)) {
             $memberSql = "INSERT INTO household_members (
                 household_id,
                 resident_id,
@@ -385,7 +403,7 @@ try {
             
             $memberStmt = $conn->prepare($memberSql);
             
-            foreach ($data['members'] as $member) {
+            foreach ($residentMembers as $member) {
                 // Only insert if resident_id exists (from database)
                 if (!empty($member['residentId'])) {
                     $memberStmt->bind_param(

@@ -64,6 +64,21 @@ $certificateTypeMap = [
 // Get the actual certificate name for database storage
 $certificate_name = isset($certificateTypeMap[$certificate_type]) ? $certificateTypeMap[$certificate_type] : $certificate_type;
 
+// Check for 1-time limit (RA 11261) before saving log
+$isOneTime = (stripos($certificate_name, 'Job Seeker') !== false || stripos($certificate_name, 'Oath') !== false || stripos($certificate_name, 'First Time') !== false);
+if ($isOneTime) {
+    $checkStmt = $conn->prepare("SELECT COUNT(*) as count FROM certificate_requests WHERE resident_id = ? AND (certificate_name LIKE '%Job%Seeker%' OR certificate_name LIKE '%Oath%' OR certificate_name LIKE '%RA 11261%')");
+    $checkStmt->bind_param("i", $resident_id);
+    $checkStmt->execute();
+    $res = $checkStmt->get_result()->fetch_assoc();
+    $checkStmt->close();
+    
+    if ($res && $res['count'] >= 1) {
+        echo json_encode(['success' => false, 'message' => 'Limit reached: This resident has already availed of this one-time certificate.']);
+        exit;
+    }
+}
+
 // Use certificate_id = 1 as default (Certificate of Residency exists in the certificates table if it exists)
 $certificate_id = 1;
 

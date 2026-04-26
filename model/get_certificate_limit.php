@@ -38,23 +38,13 @@ $certificateTypeMap = [
 ];
 $db_certificate_name = isset($certificateTypeMap[$certificate_type]) ? $certificateTypeMap[$certificate_type] : $certificate_type;
 
-// Define certificate types that have 1-time only limit
-$oneTimeCertificates = [
-    'certificate-ft-jobseeker-assistance.php',
-    'certificate-oathofundertaking.php',
-    'First Time Jobseeker',
-    'Oath of Undertaking',
-    'Barangay ID Card'
-];
-
 // Determine if this is a 1-time only certificate
-$isOneTime = false;
-foreach ($oneTimeCertificates as $oneTimeCert) {
-    if (stripos($certificate_type, $oneTimeCert) !== false) {
-        $isOneTime = true;
-        break;
-    }
-}
+$isOneTime = (
+    in_array($certificate_type, ['ftjobseeker', 'oath']) || 
+    stripos($db_certificate_name, 'Job Seeker') !== false || 
+    stripos($db_certificate_name, 'Oath') !== false || 
+    $db_certificate_name === 'Barangay ID Card'
+);
 
 // Define daily limit for regular certificates
 $dailyLimit = 3;
@@ -62,21 +52,18 @@ $dailyLimit = 3;
 try {
     if ($isOneTime) {
         // For 1-time certificates, check total count (not daily)
+        $targetGroup = "certificate_name = 'Barangay ID Card'";
+        if (in_array($certificate_type, ['ftjobseeker', 'oath']) || stripos($db_certificate_name, 'Job Seeker') !== false || stripos($db_certificate_name, 'Oath') !== false) {
+            $targetGroup = "(certificate_name LIKE '%Job%Seeker%' OR certificate_name LIKE '%Oath%' OR certificate_name LIKE '%RA 11261%')";
+        }
+
         $stmt = $conn->prepare("
             SELECT COUNT(*) as total_count 
             FROM certificate_requests 
             WHERE resident_id = ? 
-            AND (
-                certificate_name LIKE ? 
-                OR certificate_name LIKE ?
-                OR certificate_name LIKE ?
-                OR certificate_name = 'Barangay ID Card'
-            )
+            AND $targetGroup
         ");
-        $searchTerm1 = '%First Time Jobseeker%';
-        $searchTerm2 = '%Jobseeker%';
-        $searchTerm3 = '%Oath%';
-        $stmt->bind_param("isss", $resident_id, $searchTerm1, $searchTerm2, $searchTerm3);
+        $stmt->bind_param("i", $resident_id);
     } else {
         // For regular certificates, check today's count
         $today = date('Y-m-d');
