@@ -214,10 +214,15 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-setupAutocomplete('fatherName', 'fatherNameDropdown', 'Male', true);
-setupAutocomplete('motherName', 'motherNameDropdown', 'Female', true);
+setupAutocomplete('fatherName', 'fatherNameDropdown', 'Male', true, true);
+setupAutocomplete('motherName', 'motherNameDropdown', 'Female', true, true);
 setupAutocomplete('spouseNameInput', 'spouseNameDropdown', null, false, true);
 setupAutocomplete('guardianNameInput', 'guardianNameDropdown', null, false, true);
+
+    const editSexSelect = document.querySelector('select[name="sex"]');
+    if (editSexSelect) {
+        editSexSelect.addEventListener('change', updateProfileAgeVisibility);
+    }
 
     // Adoption / Legal Guardian toggle logic for Profile Edit
     const btnShowLegalGuardian = document.getElementById('btnShowLegalGuardian');
@@ -278,9 +283,32 @@ function updateProfileAgeVisibility() {
     const isMinor = age < 18;
     const is15Plus = age >= 15;
     const is10Plus = age >= 10;
+    const isWRAage = age >= 15 && age <= 49;
+
+    const sexSelect = document.querySelector('select[name="sex"]');
+    const sex = sexSelect ? sexSelect.value : '';
+    const isWRA = (sex === 'Female' && isWRAage);
 
     document.querySelectorAll('.adult-only').forEach(el => {
         el.style.display = isMinor ? 'none' : '';
+        if (isMinor) {
+            el.style.display = 'none';
+        } else {
+            // Respect 4Ps membership status for the ID field visibility
+            if (el.id === 'profileFourPsIdGroup') {
+                const select = document.getElementById('profileFourPsSelect');
+                const isMember = select && select.value === 'Yes';
+                el.style.display = isMember ? '' : 'none';
+                // Synchronize required attribute
+                const input = el.querySelector('input');
+                if (input) {
+                    if (isMember) input.setAttribute('required', 'required');
+                    else input.removeAttribute('required');
+                }
+            } else {
+                el.style.display = '';
+            }
+        }
         el.querySelectorAll('input, select, textarea').forEach(input => input.disabled = isMinor);
     });
 
@@ -291,14 +319,80 @@ function updateProfileAgeVisibility() {
 
     document.querySelectorAll('.voter-only').forEach(el => {
         el.style.display = is15Plus ? '' : 'none';
+        if (!is15Plus) {
+            el.style.display = 'none';
+        } else {
+            // Respect Voter status for the Precinct Number field visibility
+            if (el.id === 'profilePrecinctNumberGroup') {
+                const select = document.getElementById('profileVoterStatusSelect');
+                const isVoter = select && select.value === 'Yes';
+                el.style.display = isVoter ? '' : 'none';
+                // Synchronize required attribute
+                const input = el.querySelector('input');
+                if (input) {
+                    if (isVoter) input.setAttribute('required', 'required');
+                    else input.removeAttribute('required');
+                }
+            } else {
+                el.style.display = '';
+            }
+        }
         el.querySelectorAll('input, select, textarea').forEach(input => input.disabled = !is15Plus);
     });
 
-    document.querySelectorAll('.age-10-plus').forEach(el => {
-        el.style.display = is10Plus ? '' : 'none';
-        el.querySelectorAll('input, select, textarea').forEach(input => input.disabled = !is10Plus);
-    });
+    // Sync PWD fields visibility (Independent of age thresholds)
+    const pwdSelect = document.getElementById('profilePwdStatus');
+    const isPwd = pwdSelect && pwdSelect.value === 'Yes';
+    const pwdTypeGroup = document.getElementById('profilePwdTypeGroup');
+    const pwdIdGroup = document.getElementById('profilePwdIdGroup');
 
+    if (pwdTypeGroup) {
+        pwdTypeGroup.style.display = isPwd ? '' : 'none';
+        const input = pwdTypeGroup.querySelector('input');
+        if (input) {
+            if (isPwd) input.setAttribute('required', 'required');
+            else input.removeAttribute('required');
+        }
+    }
+    if (pwdIdGroup) pwdIdGroup.style.display = isPwd ? '' : 'none';
+
+    // Sync WRA section visibility
+    const wraSection = document.getElementById('wraSection');
+    if (wraSection) {
+        wraSection.style.display = isWRA ? '' : 'none';
+        if (!isWRA) {
+            // Clear WRA fields when hiding to maintain data integrity
+            wraSection.querySelectorAll('input, select').forEach(input => {
+                if (input.type === 'date') input.value = '';
+                else if (input.tagName === 'SELECT') input.value = '';
+                else if (input.type === 'text') input.value = '';
+            });
+            const fpMethodOther = document.getElementById('fpMethodOther');
+            if (fpMethodOther) fpMethodOther.style.display = 'none';
+        }
+    }
+
+    const editMobileInput = document.querySelector('input[name="mobile_number"]');
+    const editMobileGroup = editMobileInput ? editMobileInput.closest('.col-md-3') || editMobileInput.closest('.form-group') : null;
+    const is11Plus = age >= 11;
+
+    if (editMobileGroup) {
+        editMobileGroup.style.display = is11Plus ? '' : 'none';
+        if (editMobileInput) {
+            if (is11Plus) {
+                if (!isMinor) editMobileInput.setAttribute('required', 'required');
+                else editMobileInput.removeAttribute('required');
+            } else {
+                editMobileInput.removeAttribute('required');
+                editMobileInput.value = '';
+            }
+        }
+    }
+
+    document.querySelectorAll('.age-10-plus').forEach(el => {
+
+        el.style.display = is10Plus ? '' : 'none';
+    });
     document.querySelectorAll('.gov-programs-section').forEach(el => {
         el.style.display = is15Plus ? '' : 'none';
     });
@@ -423,14 +517,21 @@ function toggleOtherFpMethod() {
 
 function handleCivilStatusChange() {
     const civilStatusSelect = document.getElementById('civilStatusSelect');
+    const spouseGroup = document.getElementById('spouseNameGroup');
     const spouseLabel = document.getElementById('spouseNameLabel');
     const spouseInput = document.getElementById('spouseNameInput');
     
     if (civilStatusSelect && spouseLabel && spouseInput) {
-        if (civilStatusSelect.value === 'Married') {
-            spouseLabel.innerHTML = 'Spouse Name <span style="color:red;">*</span>';
+        if (civilStatusSelect.value === 'Married' || civilStatusSelect.value === 'Live-In') {
+            if (spouseGroup) spouseGroup.style.display = 'block';
             spouseInput.required = true;
+            if (civilStatusSelect.value === 'Married') {
+                spouseLabel.innerHTML = 'Spouse Name <span style="color:red;">*</span>';
+            } else {
+                spouseLabel.innerHTML = 'Live-In Partner Name <span style="color:red;">*</span>';
+            }
         } else {
+            if (spouseGroup) spouseGroup.style.display = 'none';
             spouseLabel.innerHTML = 'Spouse Name';
             spouseInput.required = false;
         }
@@ -955,7 +1056,7 @@ if (!document.getElementById('notification-animations')) {
 // ===================================
 // Autocomplete Setup
 // ===================================
-function setupAutocomplete(inputId, dropdownId, filterSex = null, requireOlder = false, onlyAdult = false) {
+function setupAutocomplete(inputId, dropdownId, filterSex = null, requireOlder = false, onlyAdult = false, onlyMinor = false) {
     const input = document.getElementById(inputId);
     const dropdown = document.getElementById(dropdownId);
     let timeout = null;
@@ -991,6 +1092,9 @@ function setupAutocomplete(inputId, dropdownId, filterSex = null, requireOlder =
             if (onlyAdult) {
                 url += `&filter=adult`;
             }
+            if (onlyMinor) {
+                url += `&filter=minor`;
+            }
             
             fetch(url)
                 .then(res => res.json())
@@ -1006,6 +1110,18 @@ function setupAutocomplete(inputId, dropdownId, filterSex = null, requireOlder =
                                 if (new Date(resident.date_of_birth) >= new Date(currentDob)) return;
                             }
                             
+                            // Age check for minor/adult filtering
+                            if ((onlyMinor || onlyAdult) && resident.date_of_birth) {
+                                const dob = new Date(resident.date_of_birth);
+                                const today = new Date();
+                                let age = today.getFullYear() - dob.getFullYear();
+                                const m = today.getMonth() - dob.getMonth();
+                                if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) age--;
+                                
+                                if (onlyMinor && age >= 18) return;
+                                if (onlyAdult && age < 18) return;
+                            }
+
                             count++;
                             const item = document.createElement('div');
                             item.className = 'autocomplete-item';
@@ -1026,6 +1142,24 @@ function setupAutocomplete(inputId, dropdownId, filterSex = null, requireOlder =
                                 const hiddenId = document.getElementById(inputId + 'Id');
                                 if (hiddenId) hiddenId.value = resident.id;
                                 
+                                // Auto-fill guardian mobile number if selecting a guardian
+                                if (inputId === 'guardianNameInput' && resident.mobile_number) {
+                                    const contactInput = document.querySelector('input[name="guardian_contact"]');
+                                    if (contactInput) {
+                                        contactInput.value = resident.mobile_number;
+                                        contactInput.dispatchEvent(new Event('input'));
+                                    }
+                                }
+
+                                // Auto-fill number of children if selecting a spouse/live-in partner
+                                if (inputId === 'spouseNameInput' && resident.number_of_children !== undefined) {
+                                    const childrenInput = document.querySelector('input[name="number_of_children"]');
+                                    if (childrenInput) {
+                                        childrenInput.value = resident.number_of_children;
+                                        childrenInput.dispatchEvent(new Event('input'));
+                                    }
+                                }
+
                                 input.dispatchEvent(new Event('input'));
                             });
                             dropdown.appendChild(item);

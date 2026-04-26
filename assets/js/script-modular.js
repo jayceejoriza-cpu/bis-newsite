@@ -8,10 +8,6 @@ function initializeApp() {
     initializeThemeToggle();
     initializeCharts();
     initializeNavigation();
-    
-    console.log('%c🏘️ Barangay Management System', 'color: #3b82f6; font-size: 20px; font-weight: bold;');
-    console.log('%cDashboard Template v1.0.0 (Modular)', 'color: #6b7280; font-size: 14px;');
-    console.log('%cBuilt with ❤️ for community management', 'color: #10b981; font-size: 12px;');
 }
 
 // ===================================

@@ -35,12 +35,13 @@ function getInitials($firstName, $lastName) {
     return $first . $last;
 }
 
-function formatFullName($firstName, $middleName, $lastName, $suffix) {
-    $name = trim($firstName);
-    if (!empty($middleName)) $name .= ' ' . trim($middleName);
-    $name .= ' ' . trim($lastName);
-    if (!empty($suffix))     $name .= ' ' . trim($suffix);
-    return $name;
+function formatFullName($firstName, $middleName, $lastName, $suffix, $appointmentType = 'Elected') {
+    $mi = !empty($middleName) ? strtoupper(substr(trim((string)$middleName), 0, 1)) . '.' : '';
+    $nameParts = array_filter([trim((string)$firstName), $mi, trim((string)$lastName), trim((string)$suffix)]);
+    $name = strtoupper(implode(' ', $nameParts));
+    
+    $prefix = ($appointmentType === 'Elected') ? 'HON. ' : '';
+    return $prefix . $name;
 }
 
 // ============================================
@@ -224,10 +225,17 @@ try {
                 </div>
                 <div class="page-header-actions">
                     <?php if (hasPermission('perm_officials_print')): ?>
-                    <button class="btn-print" id="printOfficialsBtn" title="Print Officials List">
-                        <i class="fas fa-print"></i>
-                        Print List
-                    </button>
+                    <div class="dropdown d-inline-block">
+                        <button class="btn-print dropdown-toggle" type="button" id="exportPrintDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-file-export"></i>
+                            Export / Print Masterlist
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0" aria-labelledby="exportPrintDropdown" style="font-size: 14px;">
+                            <li><button class="dropdown-item py-2" id="exportCsvBtn"><i class="fas fa-file-csv me-2 text-success"></i> Export Csv</button></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><button class="dropdown-item py-2" id="printOfficialsBtn"><i class="fas fa-print me-2 text-primary"></i> Print List</button></li>
+                        </ul>
+                    </div>
                     <?php endif; ?>
                     <?php if (hasPermission('perm_officials_create')): ?>
                     <button class="btn btn-primary" id="createOfficialBtn">
@@ -276,7 +284,7 @@ try {
                                         <?php echo htmlspecialchars($initials); ?>
                                     <?php endif; ?>
                                 </div>
-                                <div class="official-name"><?php echo htmlspecialchars($fullName); ?></div>
+                                <div class="official-name"><?php echo htmlspecialchars(formatFullName($official['first_name'], $official['middle_name'], $official['last_name'], $official['suffix'], $official['appointment_type'])); ?></div>
                                 <div class="official-position"><?php echo htmlspecialchars($official['position']); ?></div>
                                 <?php if (!empty($official['committee'])): ?>
                                     <div class="official-committee"><?php echo htmlspecialchars($official['committee']); ?></div>
@@ -306,7 +314,7 @@ try {
                                         <?php echo htmlspecialchars($initials); ?>
                                     <?php endif; ?>
                                 </div>
-                                <div class="official-name"><?php echo htmlspecialchars($fullName); ?></div>
+                                <div class="official-name"><?php echo htmlspecialchars(formatFullName($official['first_name'], $official['middle_name'], $official['last_name'], $official['suffix'], $official['appointment_type'])); ?></div>
                                 <div class="official-position"><?php echo htmlspecialchars($official['position']); ?></div>
                                 <?php if (!empty($official['committee'])): ?>
                                     <div class="official-committee"><?php echo htmlspecialchars($official['committee']); ?></div>
@@ -336,7 +344,7 @@ try {
                                         <?php echo htmlspecialchars($initials); ?>
                                     <?php endif; ?>
                                 </div>
-                                <div class="official-name"><?php echo htmlspecialchars($fullName); ?></div>
+                                <div class="official-name"><?php echo htmlspecialchars(formatFullName($official['first_name'], $official['middle_name'], $official['last_name'], $official['suffix'], $official['appointment_type'])); ?></div>
                                 <div class="official-position"><?php echo htmlspecialchars($official['position']); ?></div>
                                 <?php if (!empty($official['committee'])): ?>
                                     <div class="official-committee"><?php echo htmlspecialchars($official['committee']); ?></div>
@@ -421,12 +429,10 @@ try {
                         <tbody id="officialsTableBody">
                             <?php foreach ($officials as $official):
                                     // Resolve display name
-                                    if (!empty($official['fullname'])) {
-                                        $fullName = $official['fullname'];
-                                    } elseif (!empty($official['first_name'])) {
-                                        $fullName = formatFullName($official['first_name'], $official['middle_name'], $official['last_name'], $official['suffix']);
+                                    if (!empty($official['first_name'])) {
+                                        $fullName = formatFullName($official['first_name'], $official['middle_name'], $official['last_name'], $official['suffix'], $official['appointment_type']);
                                     } else {
-                                        $fullName = 'Vacant';
+                                        $fullName = !empty($official['fullname']) ? $official['fullname'] : 'Vacant';
                                     }
 
                                     // Initials
@@ -600,7 +606,7 @@ try {
                                 <option value="SK Kagawad">SK Kagawad</option>
                                 <option value="Barangay Secretary">Barangay Secretary</option>
                                 <option value="Barangay Treasurer">Barangay Treasurer</option>
-                                <option value="Barangay Administator">Barangay Administator</option>
+                                <option value="Barangay Administrator">Barangay Administrator</option>
                                 <option value="Bookkeeper">Bookkeeper</option>
                                 <option value="Other">Add Another Position</option>
                             </select>
@@ -624,7 +630,7 @@ try {
 
                         <!-- Status -->
                         <div class="mb-3">
-                            <small class="text-muted">Status is automatically determined based on term dates</small>
+                            <small class="text-muted">New officials are set to <strong>Active</strong> by default.</small>
                         </div>
 
                     </form>
@@ -813,7 +819,7 @@ try {
                                 <option value="SK Kagawad">SK Kagawad</option>
                                 <option value="Barangay Secretary">Barangay Secretary</option>
                                 <option value="Barangay Treasurer">Barangay Treasurer</option>
-                                <option value="Barangay Administator">Barangay Administator</option>
+                                <option value="Barangay Administrator">Barangay Administrator</option>
                                 <option value="Bookkeeper">Bookkeeper</option>
                                 <option value="Other">Add Another Position</option>
                             </select>

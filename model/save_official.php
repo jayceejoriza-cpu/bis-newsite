@@ -32,7 +32,7 @@ try {
     $position          = trim($_POST['position']          ?? '');
     $termStart         = $_POST['term_start']             ?? '';
     $termEnd           = $_POST['term_end']               ?? '';
-    $status            = $_POST['status']                 ?? 'Active';
+    $status            = !empty($_POST['status'])         ? $_POST['status'] : 'Active';
     $contactNumber     = trim($_POST['contact_number']    ?? '');
     $residentPhotoPath = trim($_POST['resident_photo_path'] ?? '');
 
@@ -60,7 +60,7 @@ try {
             'SK Chairman' => 1,
             'Barangay Secretary' => 1,
             'Barangay Treasurer' => 1,
-            'Barangay Administator' => 1,
+            'Barangay Administrator' => 1,
             'Bookkeeper' => 1,
             'Barangay Kagawad' => 7,
             'Kagawad' => 7,
@@ -89,12 +89,10 @@ try {
     if ($residentId) {
         $resStmt = $pdo->prepare("
             SELECT
-                TRIM(CONCAT(
-                    first_name, ' ',
-                    IFNULL(CONCAT(middle_name, ' '), ''),
-                    last_name,
-                    IFNULL(CONCAT(' ', suffix), '')
-                )) AS full_name,
+                first_name,
+                middle_name,
+                last_name,
+                suffix,
                 mobile_number,
                 photo
             FROM residents
@@ -107,7 +105,9 @@ try {
         if ($resident) {
             // Use resident's name if fullname not explicitly provided
             if (empty($fullname)) {
-                $fullname = $resident['full_name'];
+                $mi = !empty($resident['middle_name']) ? strtoupper(substr(trim($resident['middle_name']), 0, 1)) . '.' : '';
+                $nameParts = array_filter([trim($resident['first_name']), $mi, trim($resident['last_name']), trim($resident['suffix'])]);
+                $fullname = strtoupper(implode(' ', $nameParts));
             }
             // Use resident's contact if not provided
             if (empty($contactNumber) && !empty($resident['mobile_number'])) {
@@ -131,17 +131,24 @@ try {
     }
 
     // ── Hierarchy level ──────────────────────────────────────
-    $hierarchyLevel = 2;
     if ($position === 'Barangay Captain') {
         $hierarchyLevel = 1;
-    } elseif (in_array($position, ['SK Chairman','SK Kagawad',  'Barangay Secretary', 'Barangay Treasurer', 'Barangay Administator', 'Bookkeeper'])) {
+    } elseif (in_array($position, ['Barangay Kagawad', 'Kagawad'])) {
+        $hierarchyLevel = 2;
+    } elseif (in_array($position, ['SK Chairman', 'SK Kagawad'])) {
         $hierarchyLevel = 3;
+    } else {
+        // Other/Custom positions go to the bottom
+        $hierarchyLevel = 4;
     }
 
     // ── Appointment type ─────────────────────────────────────
-    $appointmentType = 'Elected';
-    if (in_array($position, ['Barangay Secretary', 'Barangay Treasurer', 'Barangay Administator'])) {
-        $appointmentType = 'Appointed';
+    $electedPositions = ['Barangay Captain', 'Barangay Kagawad', 'Kagawad', 'SK Chairman', 'SK Kagawad'];
+    $appointmentType  = in_array($position, $electedPositions) ? 'Elected' : 'Appointed';
+
+    // ── Format Name with HON. prefix for Elected officials ───────────
+    if ($appointmentType === 'Elected' && strpos($fullname, 'HON.') !== 0) {
+        $fullname = 'HON. ' . $fullname;
     }
 
     // ── Insert ───────────────────────────────────────────────

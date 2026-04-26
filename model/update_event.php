@@ -23,9 +23,21 @@ try {
     $approved_by = !empty($_POST['approved_by']) ? intval($_POST['approved_by']) : null;
     $status = $_POST['status'] ?? 'Active';
 
-    if (!$id || empty($title) || empty($date) || empty($start_time) || empty($location)) {
+    if (!$id || empty($title) || empty($location)) {
         throw new Exception('Required fields are missing.');
     }
+
+    // Fetch existing record to preserve date/time if they are empty (common when postponing)
+    $getStmt = $conn->prepare("SELECT event_date, start_time FROM events WHERE id = ?");
+    $getStmt->bind_param("i", $id);
+    $getStmt->execute();
+    $existing = $getStmt->get_result()->fetch_assoc();
+    $getStmt->close();
+
+    if (!$existing) throw new Exception('Event not found.');
+
+    if (empty($date)) $date = $existing['event_date'];
+    if (empty($start_time)) $start_time = $existing['start_time'];
 
     // If end_time is not provided, assume a 1-hour duration for conflict checking
     $effective_end_time = $end_time;
@@ -60,7 +72,8 @@ try {
 
     $updated_by = $_SESSION['user_id'] ?? 0;
     $stmt = $conn->prepare("UPDATE events SET title=?, event_date=?, start_time=?, end_time=?, location=?, description=?, event_type=?, resident_id=?, organizer=?, approved_by=?, updated_by=?, status=?, updated_at=NOW() WHERE id=?");
-    $stmt->bind_param("sssssssisisi i", $title, $date, $start_time, $end_time, $location, $description, $event_type, $resident_id, $organizer, $approved_by, $updated_by, $status, $id);
+    // Fixed variable names ($date) and order to match the SQL placeholders
+    $stmt->bind_param('sssssssisissi', $title, $date, $start_time, $end_time, $location, $description, $event_type, $resident_id, $organizer, $approved_by, $updated_by, $status, $id);
 
     if ($stmt->execute()) {
         // Log Activity

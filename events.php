@@ -73,6 +73,33 @@ if (isset($conn)) {
     <style>
         .no-print { display: block; }
         @media print { .no-print { display: none !important; } }
+
+        .btn-print {
+            padding: 9px 18px;
+            background-color: var(--bg-secondary);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--color-transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .btn-print:hover {
+            background-color: var(--bg-primary);
+            border-color: var(--primary-color);
+        }
+
+        /* Standard Bootstrap dropdown styling for our custom button */
+        .btn-print.dropdown-toggle::after {
+            margin-left: 0.5em;
+            vertical-align: middle;
+        }
     </style>
     
     <!-- FullCalendar CSS -->
@@ -136,13 +163,27 @@ if (isset($conn)) {
                     <h1 class="page-title"><?php echo $pageTitle; ?></h1>
                     <p class="page-subtitle">Community events calendar and scheduling system</p>
                 </div>
-                <div class="page-header-actions">
+                <div class="page-header-actions">  
+                    <?php if (hasPermission('perm_events_print')): ?> 
+                    <div class="dropdown d-inline-block ms-2">
+                        <button class="btn-print dropdown-toggle" type="button" id="exportPrintDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-file-export"></i>
+                            Export / Print Masterlist
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0" aria-labelledby="exportPrintDropdown" style="font-size: 14px;">
+                            <li><button class="dropdown-item py-2" id="exportCsvBtn"><i class="fas fa-file-csv me-2 text-success"></i> Export Csv</button></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><button class="dropdown-item py-2" id="printMasterlistBtn"><i class="fas fa-print me-2 text-primary"></i> Print Masterlist</button></li>
+                        </ul>
+                    </div>
+                     <?php endif; ?>
                     <?php if (hasPermission('perm_events_create')): ?>
                     <button class="btn btn-primary create-event-btn" title="Create New Event">
                         <i class="fas fa-plus"></i>
                         Create New Event
                     </button>
                     <?php endif; ?>
+                  
                 </div>
             </div>
             
@@ -283,7 +324,7 @@ if (isset($conn)) {
                                                     <i class="fas fa-eye"></i> View Details
                                                 </button>
                                                 <?php endif; ?>
-                                                <?php if (hasPermission('perm_events_edit')): ?>
+                                                <?php if (hasPermission('perm_events_edit') && $status !== 'Postponed'): ?>
                                                 <button type="button" class="action-menu-item" data-action="edit">
                                                     <i class="fas fa-edit"></i> Edit Event
                                                 </button>
@@ -401,7 +442,9 @@ if (isset($conn)) {
             </div>
             <div class="modal-footer" style="padding: 15px; border-top: 1px solid var(--border-color); display: flex; justify-content: flex-end; gap: 10px;">
                 <button class="btn btn-secondary" onclick="document.getElementById('eventDetailModal').style.display='none'">Close</button>
+               <?php if (hasPermission('perm_events_print')): ?>
                 <button class="btn btn-primary" id="printEventApprovalBtn"><i class="fas fa-print"></i> Print Approval</button>
+                 <?php endif; ?>
             </div>
         </div>
     </div>
@@ -512,7 +555,7 @@ if (isset($conn)) {
                             <select id="eventApprovedBy" name="approved_by" class="form-control">
                                 <option value="">Select Official</option>
                                 <?php foreach ($officials as $official): ?>
-                                    <option value="<?php echo htmlspecialchars($official['id']); ?>">HON. <?php echo htmlspecialchars($official['fullname']); ?></option>
+                                    <option value="<?php echo htmlspecialchars($official['id']); ?>"><?php echo htmlspecialchars($official['fullname']); ?></option>
                                 <?php endforeach; ?>
                             </select>
                         </div>
@@ -537,8 +580,8 @@ if (isset($conn)) {
     </div>
 
     <!-- Search Resident Modal -->
-    <div id="searchResidentModal" class="search-resident-modal" style="display: none; position: fixed; z-index: 1100; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); align-items: center; justify-content: center;">
-        <div class="search-resident-modal-content" style="background: var(--bg-secondary); padding: 20px; border-radius: 12px; width: 90%; max-width: 500px;">
+    <div id="searchResidentModal" class="search-resident-modal" style="display: none; position: fixed; z-index: 1100; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); align-items: center; justify-content: flex-start;">
+<div class="search-resident-modal-content" style="background: var(--bg-secondary); padding: 20px; border-radius: 12px; width: 90%; max-width: 500px; margin-left: 100px;">
             <div class="search-resident-modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
                 <h4 style="margin:0;"><i class="fas fa-search"></i> Search Resident</h4>
                 <button type="button" class="btn-close" onclick="closeSearchResidentModal()" style="background:none; border:none; font-size: 20px;">&times;</button>
@@ -603,7 +646,7 @@ if (isset($conn)) {
 
         function loadResidentsForModal(query) {
             const container = document.getElementById('residentsListContainer');
-            fetch(`model/search_residents.php?search=${encodeURIComponent(query)}`)
+            fetch(`model/search_residents.php?search=${encodeURIComponent(query)}&filter=adult`)
                 .then(res => res.json())
                 .then(data => {
                     container.innerHTML = '';

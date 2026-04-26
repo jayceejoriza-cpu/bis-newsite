@@ -199,7 +199,7 @@ function restoreEvent($conn, $data) {
     // List of columns to restore
     $allowedColumns = [
         'title', 'description', 'event_date', 'start_time', 'end_time', 
-        'location', 'event_type', 'resident_id', 'status', 'created_by', 'created_at'
+        'location', 'event_type', 'resident_id', 'organizer', 'approved_by', 'status', 'created_by', 'created_at'
     ];
     
     $columns = [];
@@ -211,7 +211,7 @@ function restoreEvent($conn, $data) {
             $columns[] = "`$column`";
             $values[] = $data[$column];
             
-            if (in_array($column, ['resident_id', 'created_by'])) {
+            if (in_array($column, ['resident_id', 'approved_by', 'created_by'])) {
                 $types .= 'i';
             } else {
                 $types .= 's';

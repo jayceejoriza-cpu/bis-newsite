@@ -69,8 +69,9 @@ try {
         // 2. It will always be the same resident, so validation would always pass for the current household
         // 3. The frontend prevents changing the household head during edit
         
-        // Update household (NOTE: household_number and household_head_id are NOT updated)
+        // Update household
         $updateSql = "UPDATE households SET
+                      household_number = ?,
                       household_head_id = ?,
                       household_contact = ?,
                       address = ?,
@@ -86,7 +87,8 @@ try {
         $updateStmt = $conn->prepare($updateSql);
         $landlordId = !empty($data['landlordResidentId']) ? intval($data['landlordResidentId']) : null;
         $updateStmt->bind_param(
-            'isssssissi',
+            'sisssssissi',
+            $data['householdNumber'],
             $data['householdHeadId'],
             $data['householdContact'],
             $data['householdAddress'],

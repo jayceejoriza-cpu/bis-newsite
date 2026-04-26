@@ -159,10 +159,17 @@ try {
                 </div>
                 <div class="page-header-actions">
                     <?php if (hasPermission('perm_req_print')): ?>
-                    <button class="btn-print" id="printMasterlistBtn" title="Print Masterlist">
-                        <i class="fas fa-print"></i>
-                        Print Masterlist
-                    </button>
+                    <div class="dropdown d-inline-block ms-2">
+                        <button class="btn-print dropdown-toggle" type="button" id="exportPrintDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-file-export"></i>
+                            Export / Print Masterlist
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0" aria-labelledby="exportPrintDropdown" style="font-size: 14px;">
+                            <li><button class="dropdown-item py-2" id="exportCsvBtn"><i class="fas fa-file-csv me-2 text-success"></i> Export Csv</button></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><button class="dropdown-item py-2" id="printMasterlistBtn"><i class="fas fa-print me-2 text-primary"></i> Print Masterlist</button></li>
+                        </ul>
+                    </div>
                     <?php endif; ?>
                 </div>
             </div>
@@ -374,6 +381,14 @@ try {
 
     <script>
     document.addEventListener('DOMContentLoaded', () => {
+        const exportCsvBtn = document.getElementById('exportCsvBtn');
+        if (exportCsvBtn) {
+            exportCsvBtn.addEventListener('click', function() {
+                // Trigger server-side export with current URL filters to match the table display
+                window.location.href = 'model/export_requests_csv.php' + window.location.search;
+            });
+        }
+
         const printBtn = document.getElementById('printMasterlistBtn');
         if (printBtn) {
             printBtn.addEventListener('click', async () => {

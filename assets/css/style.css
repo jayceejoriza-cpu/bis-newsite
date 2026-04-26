@@ -286,6 +286,7 @@ body.modal-open .sidebar.collapsed {
     font-weight: 500;
     gap: 12px;
     position: relative;
+    line-height: 1.2;
 }
 
 .nav-link i:first-child {
@@ -373,6 +374,7 @@ body.modal-open .submenu-item.active .submenu-link {
     font-size: 13px;
     font-weight: 500;
     gap: 10px;
+    line-height: 1.2;
 }
 
 .submenu-link i {

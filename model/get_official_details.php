@@ -61,20 +61,17 @@ try {
         exit;
     }
 
-    // Build display name
-    if (!empty($official['fullname'])) {
-        $displayName = $official['fullname'];
-    } elseif (!empty($official['first_name'])) {
-        $displayName = trim($official['first_name']);
-        if (!empty($official['middle_name'])) {
-            $displayName .= ' ' . trim($official['middle_name']);
-        }
-        $displayName .= ' ' . trim($official['last_name']);
-        if (!empty($official['suffix'])) {
-            $displayName .= ' ' . trim($official['suffix']);
+    // Build display name with HON. and Middle Initial
+    $mi = !empty($official['middle_name']) ? strtoupper(substr(trim($official['middle_name']), 0, 1)) . '.' : '';
+    $nameParts = array_filter([trim($official['first_name'] ?? ''), $mi, trim($official['last_name'] ?? ''), trim($official['suffix'] ?? '')]);
+    
+    if (!empty($nameParts)) {
+        $displayName = strtoupper(implode(' ', $nameParts));
+        if ($official['appointment_type'] === 'Elected') {
+            $displayName = 'HON. ' . $displayName;
         }
     } else {
-        $displayName = 'Vacant';
+        $displayName = !empty($official['fullname']) ? $official['fullname'] : 'Vacant';
     }
 
     // Determine photo

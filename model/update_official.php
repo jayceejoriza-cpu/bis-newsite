@@ -46,11 +46,23 @@ $hierarchyMap = [
     'Barangay Treasurer' => 3,
 ];
 $hierarchyLevel = $hierarchyMap[$position] ?? 2;
+if ($position === 'Barangay Captain') {
+    $hierarchyLevel = 1;
+} elseif (in_array($position, ['Barangay Kagawad', 'Kagawad'])) {
+    $hierarchyLevel = 2;
+} elseif (in_array($position, ['SK Chairman', 'SK Kagawad'])) {
+    $hierarchyLevel = 3;
+} else {
+    // Other/Custom positions go to the bottom
+    $hierarchyLevel = 4;
+}
 
 // Determine appointment type
 $appointmentType = in_array($position, ['Barangay Secretary', 'Barangay Treasurer'])
     ? 'Appointed'
     : 'Elected';
+$electedPositions = ['Barangay Captain', 'Barangay Kagawad', 'Kagawad', 'SK Chairman', 'SK Kagawad'];
+$appointmentType  = in_array($position, $electedPositions) ? 'Elected' : 'Appointed';
 
 try {
     $pdo = new PDO(

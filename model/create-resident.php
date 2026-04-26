@@ -23,19 +23,19 @@ if (isset($menu_items)) {
 $pageTitle = 'Create Resident';
 
 // Calculate next Resident ID
-$nextResidentId = 'W-00001'; // Default fallback
+$nextResidentId = 'W-' . date('y') . '0001'; // Default fallback
 if (isset($conn)) {
-    $result = $conn->query("SHOW TABLE STATUS LIKE 'residents'");
+    $result = $conn->query("SELECT MAX(id) AS max_id FROM residents");
     if ($result && $row = $result->fetch_assoc()) {
-        $nextId = $row['Auto_increment'];
-        $nextResidentId = "W-" . str_pad($nextId % 100000, 5, '0', STR_PAD_LEFT);
+        $nextId = ($row['max_id'] ?? 0) + 1;
+        $year = date('y');
+        $sequence = str_pad($nextId % 10000, 4, '0', STR_PAD_LEFT);
+        $nextResidentId = "W-{$year}{$sequence}";
     }
 }
 ?>
 <!DOCTYPE html>
 <html lang="en">
-<head>
-<link rel="icon" type="image/png" href="uploads/favicon.png">
 <head> 
 <link rel="icon" type="image/png" href="../uploads/favicon.png"> 
     <meta charset="UTF-8">
@@ -402,6 +402,7 @@ if (isset($conn)) {
                                             <option value="">Select</option>
                                             <option value="Single">Single</option>
                                             <option value="Married">Married</option>
+                                            <option value="Live-In">Live-In</option>
                                             <option value="Widow/er">Widow/er</option>
                                             <option value="Separated">Separated</option>
                                             <option value="Cohabitation">Cohabitation</option>
@@ -546,8 +547,8 @@ if (isset($conn)) {
                                         </div>
 
                                         <div class="form-group">
-                                            <label for="waterSourceType">Water Source Type</label>
-                                            <select id="waterSourceType" name="waterSourceType" class="form-control">
+                                            <label for="waterSourceType">Water Source Type<span class="required">*</span></label>
+                                            <select id="waterSourceType" name="waterSourceType" class="form-control" required>
                                                 <option value="">Select Water Source</option>
                                                 <option value="Level I (Point Spring)">Level I (Point Spring)</option>
                                                 <option value="Level II (Communal Faucet system or stand post)">Level II (Communal Faucet system or stand post)</option>
@@ -557,8 +558,8 @@ if (isset($conn)) {
                                         </div>
 
                                         <div class="form-group">
-                                            <label for="toiletFacilityType">Toilet Facility Type</label>
-                                            <select id="toiletFacilityType" name="toiletFacilityType" class="form-control">
+                                            <label for="toiletFacilityType">Toilet Facility Type<span class="required">*</span></label>
+                                            <select id="toiletFacilityType" name="toiletFacilityType" class="form-control" required>
                                                 <option value="">Select Toilet Facility</option>
                                                 <option value="" disabled>----Sanitary Toilet----</option>
                                                 <option value="P - Pour/Flush toilet connected to septic tank)">P - (Pour/Flush toilet connected to septic tank)</option>
@@ -589,7 +590,7 @@ if (isset($conn)) {
                                         <div class="form-group position-relative" id="landlordNameGroup" style="display: none;">
                                             <label for="landlordName">Landlord's Name <span class="required">*</span></label>
                                             <input type="hidden" id="landlordNameId" name="landlordResidentId" value="">
-                                            <input type="text" id="landlordName" name="landlordName" class="form-control" placeholder="Search resident..." autocomplete="off">
+                                            <input type="text" id="landlordName" name="landlordName" class="form-control" placeholder="Enter Landlord's Name" autocomplete="off">
                                             <div id="landlordNameDropdown" class="autocomplete-dropdown" style="display: none;"></div>
                                         </div>
                                     </div>
@@ -653,25 +654,31 @@ if (isset($conn)) {
                             <div class="row">
                                 <div id="educationContainer" class="col-md-4">
                                     <div class="form-group">
-                                        <label for="educationalAttainment">Educational Attainment</label>
-                                        <select id="educationalAttainment" name="educationalAttainment" class="form-control">
+                                        <label for="educationalAttainment">Educational Attainment<span class="required">*</span></label>
+                                        <select id="educationalAttainment" name="educationalAttainment" class="form-control" required>
                                             <option value="">Select</option>
                                             <option value="No Formal Education">No Formal Education</option>
+                                            <option value="Pre-School">Pre-School</option>
                                             <option value="Elementary Level">Elementary Level</option>
                                             <option value="Elementary Graduate">Elementary Graduate</option>
+                                            <option value="Elementary Undergraduate">Elementary Undergraduate</option>
                                             <option value="High School Level">High School Level</option>
                                             <option value="High School Graduate">High School Graduate</option>
+                                            <option value="High School Undergraduate">High School Undergraduate</option>    
+                                            <option value="Senior High School">Senior High School</option>
+                                            <option value="Adv Learning System">Adv Learning System</option>
+                                            <option value="Vocational Course">Vocational Course</option>
                                             <option value="College Level">College Level</option>
+                                            <option value="College Undergraduate">College Undergraduate</option>
                                             <option value="College Graduate">College Graduate</option>
-                                            <option value="Vocational">Vocational</option>
-                                            <option value="Post Graduate">Post Graduate</option>
+                                            <option value="Post Graduate/ Material/ Doctorate">Post Graduate/ Material/ Doctorate</option>
                                         </select>
                                     </div>
                                 </div>
                                 <div id="employmentContainer" class="col-md-4">
                                     <div class="form-group">
-                                        <label for="employmentStatus">Employment Status</label>
-                                        <select id="employmentStatus" name="employmentStatus" class="form-control">
+                                        <label for="employmentStatus">Employment Status<span class="required">*</span></label>
+                                        <select id="employmentStatus" name="employmentStatus" class="form-control" required>
                                             <option value="">Select</option>
                                             <option value="Employed">Employed</option>
                                             <option value="Unemployed">Unemployed</option>
@@ -713,7 +720,7 @@ if (isset($conn)) {
                                 <div class="col-md-2 adult-only" id="fourpsIdGroup" style="display: none;">
                                     <div class="form-group">
                                         <label for="fourpsId">4Ps ID Number <span class="required">*</span></label>
-                                        <input type="text" id="fourpsId" name="fourpsId" class="form-control" placeholder="XX-YYYY-ZZZZ" maxlength="12" oninput="let v=this.value.replace(/[^a-zA-Z0-9]/g,'').toUpperCase().substring(0,10);if(v.length > 6) this.value = v.slice(0,2) + '-' + v.slice(2,6) + '-' + v.slice(6);else if(v.length > 2) this.value = v.slice(0,2) + '-' + v.slice(2);else this.value = v;" required>
+                                        <input type="text" id="fourpsId" name="fourpsId" class="form-control" placeholder="Enter 4Ps ID No." maxlength="15" oninput="this.value = this.value.replace(/[^a-zA-Z0-9]/g,'').toUpperCase();" required>
                                     </div>
                                 </div>
                                 <div id="voterStatusContainer" class="col-md-2">
@@ -742,7 +749,7 @@ if (isset($conn)) {
                                 <div class="col-md-2 adult-only">
                                     <div class="form-group">
                                         <label for="philhealthId">Philhealth ID Number</label>
-                                        <input type="text" id="philhealthId" name="philhealthId" class="form-control" placeholder="1234-5678-9012" maxlength="14">
+                                        <input type="text" id="philhealthId" name="philhealthId" class="form-control" placeholder="Enter Philhealth ID No." maxlength="15" oninput="this.value = this.value.replace(/\D/g,'');">
                                     </div>
                                 </div>
                                 <div class="col-md-2 adult-only">
@@ -825,11 +832,14 @@ if (isset($conn)) {
                                 <hr style="margin: 0 0 20px 0;">
                                 
                                 <div class="row">
+                                     <div class="col-md-4">
                                     <div class="form-group">
                                         <label for="lmpDate">Last Menstrual Period (LMP)</label>
-                                        <input type="date" id="lmpDate" name="lmpDate" class="form-control">
+                                        <input type="date" id="lmpDate" name="lmpDate" class="form-control" max="<?php echo date('Y-m-d'); ?>" >
                                     </div>
-                                    
+                                      </div>
+
+                                      <div class="col-md-4">
                                     <div class="form-group">
                                         <label for="usingFpMethod">Using FP Method</label>
                                         <select id="usingFpMethod" name="usingFpMethod" class="form-control">
@@ -838,7 +848,9 @@ if (isset($conn)) {
                                             <option value="No">No</option>
                                         </select>
                                     </div>
-                                    
+                                      </div>
+
+                                      <div class="col-md-4">
                                     <div class="form-group" id="fpMethodsGroup" style="display: none;">
                                         <label for="fpMethodsUsed">FP Methods Used</label>
                                         <select id="fpMethodsUsed" name="fpMethodsUsed" class="form-control">
@@ -849,10 +861,11 @@ if (isset($conn)) {
                                             <option value="Condom">Condom</option>
                                             <option value="Implant">Implant</option>
                                             <option value="Natural">Natural</option>
-                                            <option value="Other">Other</option>
+                                          
                                         </select>
                                     </div>
-                                    
+                                      </div>
+                                      <div class="col-md-4">
                                     <div class="form-group" id="fpStatusGroup" style="display: none;">
                                         <label for="fpStatus">FP Status</label>
                                         <select id="fpStatus" name="fpStatus" class="form-control">
@@ -862,6 +875,7 @@ if (isset($conn)) {
                                             <option value="New Acceptor">New Acceptor</option>
                                         </select>
                                     </div>
+                                      </div>
                                 </div>
                             </div>
                                 <!-- OFW Section (Conditional) -->

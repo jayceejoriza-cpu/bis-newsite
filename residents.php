@@ -43,17 +43,24 @@ function calculateAge($dateOfBirth) {
     if (empty($dateOfBirth)) return 0;
     $dob = new DateTime($dateOfBirth);
     $now = new DateTime();
-    return $now->diff($dob)->y;
+    $diff = $now->diff($dob);
+
+    if ($diff->y > 0) return $diff->y . ' year' . ($diff->y > 1 ? 's' : '') . ' old';
+
+    if ($diff->m > 0) {
+        return $diff->m . ' month' . ($diff->m > 1 ? 's' : '') . ' old';
+    }
+    return $diff->d . ' day' . ($diff->d > 1 ? 's' : '') . ' old';
 }
 
 /**
  * Generate formatted resident ID
  */
 function generateResidentId($id) {
-    // Format: W-00000 (W- followed by 5 random numbers)
-    // Use the database ID to generate a consistent 5-digit number
-    $fiveDigitNumber = str_pad($id % 100000, 5, '0', STR_PAD_LEFT);
-    return "W-{$fiveDigitNumber}";
+    // Format: W-YY0001
+    $year = date('y');
+    $sequence = str_pad($id % 10000, 4, '0', STR_PAD_LEFT);
+    return "W-{$year}{$sequence}";
 }
 
 /**
@@ -82,6 +89,9 @@ function formatFullName($firstName, $middleName, $lastName, $suffix) {
     }
     if (!empty($suffix)) {
         $name .= ' ' . trim($suffix);
+    }
+    if (!empty($middleName)) {
+        $name .= ' ' . strtoupper(substr(trim($middleName), 0, 1)) . '.';
     }
     return $name;
 }
@@ -203,11 +213,18 @@ try {
                     <p class="page-subtitle">View and manage resident records</p>
                 </div>
                 <div class="page-header-actions">
-                    <?php if (hasPermission('perm_resident_print_list')): ?>
-                    <button class="btn-print" id="printMasterlistBtn" title="Print Masterlist">
-                        <i class="fas fa-print"></i>
-                        Print Masterlist
-                    </button>
+                    <?php if (hasPermission('perm_resident_print')): ?>
+                    <div class="dropdown d-inline-block">
+                        <button class="btn-print dropdown-toggle" type="button" id="exportPrintDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-file-export"></i>
+                            Export / Print Masterlist
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0" aria-labelledby="exportPrintDropdown" style="font-size: 14px;">
+                            <li><button class="dropdown-item py-2" id="exportCsvBtn"><i class="fas fa-file-csv me-2 text-success"></i> Export Csv</button></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><button class="dropdown-item py-2" id="printMasterlistBtn"><i class="fas fa-print me-2 text-primary"></i> Print Masterlist</button></li>
+                        </ul>
+                    </div>
                     <?php endif; ?>
                     <?php if (hasPermission('perm_resident_create')): ?>
                     <button class="btn btn-primary" id="createResidentBtn">
@@ -356,16 +373,37 @@ try {
                             <select id="filterCivilStatus" class="filter-select">
                                 <option value="">All</option>
                                 <option value="Single">Single</option>
-                                <option value="Married">Married</option>
-                                <option value="Widowed">Widowed</option>
-                                <option value="Separated">Separated</option>
-                                <option value="Divorced">Divorced</option>
+                                 <option value="Married">Married</option>
+                                <option value="Live-In">Live-In</option>
+                                 <option value="Widow/er">Widow/er</option>
+                                   <option value="Separated">Separated</option>
+                                 <option value="Cohabitation">Cohabitation</option>
                             </select>
                         </div>
                         
                         <div class="filter-item">
-                            <label for="filterDateOfBirth">Date of Birth</label>
-                            <input type="date" id="filterDateOfBirth" class="filter-select" max="<?php echo date('Y-m-d'); ?>">
+                            <label>Birth Date (Month & Day)</label>
+                            <div class="d-flex gap-1">
+                                <select id="filterBirthMonth" class="filter-select" style="flex: 2;">
+                                    <option value="">Month</option>
+                                    <?php
+                                    for ($m = 1; $m <= 12; $m++) {
+                                        $m_padded = str_pad($m, 2, '0', STR_PAD_LEFT);
+                                        $m_name = date('F', mktime(0, 0, 0, $m, 1));
+                                        echo "<option value='$m_padded'>$m_name</option>";
+                                    }
+                                    ?>
+                                </select>
+                                <select id="filterBirthDay" class="filter-select" style="flex: 1;">
+                                    <option value="">Day</option>
+                                    <?php
+                                    for ($d = 1; $d <= 31; $d++) {
+                                        $d_padded = str_pad($d, 2, '0', STR_PAD_LEFT);
+                                        echo "<option value='$d_padded'>$d_padded</option>";
+                                    }
+                                    ?>
+                                </select>
+                            </div>
                         </div>
                         
                         <div class="filter-item">
@@ -381,15 +419,21 @@ try {
                             <label for="filterEducation">Educational Attainment</label>
                             <select id="filterEducation" class="filter-select">
                                 <option value="">All</option>
-                                <option value="No Formal Education">No Formal Education</option>
-                                <option value="Elementary Level">Elementary Level</option>
-                                <option value="Elementary Graduate">Elementary Graduate</option>
-                                <option value="High School Level">High School Level</option>
-                                <option value="High School Graduate">High School Graduate</option>
-                                <option value="College Level">College Level</option>
-                                <option value="College Graduate">College Graduate</option>
-                                <option value="Vocational">Vocational</option>
-                                <option value="Post Graduate">Post Graduate</option>
+                                            <option value="No Formal Education">No Formal Education</option>
+                                            <option value="Pre-School">Pre-School</option>
+                                            <option value="Elementary Level">Elementary Level</option>
+                                            <option value="Elementary Graduate">Elementary Graduate</option>
+                                            <option value="Elementary Undergraduate">Elementary Undergraduate</option>
+                                            <option value="High School Level">High School Level</option>
+                                            <option value="High School Graduate">High School Graduate</option>
+                                            <option value="High School Undergraduate">High School Undergraduate</option>
+                                            <option value="Senior High School">Senior High School</option>
+                                            <option value="Adv Learning System">Adv Learning System</option>
+                                            <option value="Vocational Course">Vocational Course</option>
+                                            <option value="College Level">College Level</option>
+                                            <option value="College Undergraduate">College Undergraduate</option>
+                                            <option value="College Graduate">College Graduate</option>
+                                            <option value="Post Graduate/ Material/ Doctorate">Post Graduate/ Material/ Doctorate</option>
                             </select>
                         </div>
                         
@@ -564,6 +608,7 @@ try {
                                 data-pwd-status="<?php echo htmlspecialchars($resident['pwd_status'] ?? 'No'); ?>"
                                 data-sex="<?php echo htmlspecialchars($resident['sex'] ?? ''); ?>"
                                 data-purok="<?php echo htmlspecialchars($resident['purok'] ?? ''); ?>"
+                                data-date-of-birth="<?php echo htmlspecialchars($resident['date_of_birth'] ?? ''); ?>"
                                 data-voter-status="<?php echo htmlspecialchars($resident['voter_status'] ?? ''); ?>"
                                 data-occupation="<?php echo htmlspecialchars($resident['occupation'] ?? ''); ?>"
                                 data-membership-type="<?php echo htmlspecialchars($resident['membership_type'] ?? ''); ?>"
@@ -847,7 +892,7 @@ try {
         resident_edit:   <?php echo hasPermission('perm_resident_edit')   ? 'true' : 'false'; ?>,
         resident_delete: <?php echo hasPermission('perm_resident_delete') ? 'true' : 'false'; ?>,
         resident_status: <?php echo hasPermission('perm_resident_status') ? 'true' : 'false'; ?>,
-        resident_print_id: <?php echo hasPermission('perm_resident_print_id') ? 'true' : 'false'; ?>,
+        resident_print_id: <?php echo hasPermission('perm_resident_print') ? 'true' : 'false'; ?>,
         resident_archive: <?php echo hasPermission('perm_resident_archive') ? 'true' : 'false'; ?>
     };
     </script>
@@ -857,6 +902,17 @@ try {
     <script src="assets/js/table.js"></script>
     <script src="assets/js/residents.js"></script>
     
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const exportCsvBtn = document.getElementById('exportCsvBtn');
+        if (exportCsvBtn) {
+            exportCsvBtn.addEventListener('click', function() {
+                // Trigger server-side export with current URL filters to match the table display
+                window.location.href = 'model/export_residents_csv.php' + window.location.search;
+            });
+        }
+    });
+    </script>
     <script>
     document.addEventListener('DOMContentLoaded', function() {
         const archiveModal = document.getElementById('archiveModal');
